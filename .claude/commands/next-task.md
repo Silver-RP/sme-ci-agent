@@ -1,0 +1,1 @@
+Đọc TASKS.md và docs/PLAN.md. Tôi là vai $ARGUMENTS (Data, Tools, Core hoặc Demo). Liệt kê 3 task chưa tick gần hạn nhất của vai đó, chỉ ra task nào đang chặn người khác, rồi hỏi tôi muốn bắt đầu task nào. Không bắt đầu code trước khi tôi chọn.

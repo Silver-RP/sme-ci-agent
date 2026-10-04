@@ -1,0 +1,64 @@
+# ĐỀ XUẤT, cần team duyệt ở T-004. Mọi con số chỉ để mô phỏng (illustrative).
+
+id: scenario1
+name: Defect tăng bất thường do setpoint nhiệt bị đổi
+status: draft
+domain: manufacturing
+
+plant:
+  description: Công ty linh kiện điện tử quy mô nhỏ, 3 lò hàn reflow, 3 ca/ngày
+  machines: [M01, M02, M03]
+  shifts: [morning, afternoon, night]
+  horizon_months: 6
+
+baseline:
+  kpi: defect_rate
+  value: 0.02           # 2.0%
+  noise_sd: 0.004
+  zone3_setpoint_c: 180 # theo SOP
+
+injected_anomalies:
+  - id: A1
+    description: Ca đêm chỉnh nhiệt vùng 3 của M02 lên 195 °C và không cập nhật SOP
+    machine: M02
+    shift: night
+    start: "2026-03-10T22:00:00"
+    effect:
+      defect_rate: 0.062
+    ground_truth:         # ẨN với agent, chỉ dùng để chấm
+      hidden: true
+      root_cause: wrong_setpoint
+      evidence:
+        - machine_log đổi zone3_setpoint 180 -> 195 tại thời điểm start
+        - "shift_schedule: ca đêm có nhân sự thay thế tạm thời"
+        - SOP vẫn ghi 180 °C
+      correct_fix: Khôi phục 180 °C và thêm bước kiểm tra setpoint vào SOP
+  - id: A2_recurrence
+    description: Cùng loại thay đổi setpoint lặp lại ở M01 sau khi đã Learn từ A1
+    machine: M01
+    shift: night
+    start: "2026-06-02T22:00:00"
+    effect:
+      defect_rate: 0.055
+    ground_truth:
+      hidden: true
+      root_cause: wrong_setpoint
+      purpose: đo tỷ lệ tái diễn và MTTD/MTTR sau khi learning_store có bài học
+
+distractors:              # giả thuyết gây nhiễu, tương quan yếu
+  - hypothesis: material_batch
+    note: Có lô nguyên liệu mới cùng tuần nhưng không liên quan thống kê
+  - hypothesis: ambient_temperature
+    note: Nhiệt độ môi trường dao động bình thường
+
+false_positive_case:      # làm ở G6
+  id: FP1
+  machine: M03
+  description: Bảo trì định kỳ làm defect tăng tạm thời, có lịch bảo trì
+  expected_agent_behavior: Nhận ra có kế hoạch, không đề xuất đổi SOP
+
+success_criteria:
+  diagnosis_correct: Agent kết luận root_cause = wrong_setpoint cho A1
+  asks_human_when_uncertain: Có ít nhất một câu hỏi khi thiếu bằng chứng
+  kpi_improves_after_fix: defect_rate về gần baseline sau khi apply
+  metrics: [defect_rate, mttd, mttr, recurrence_rate]

@@ -1,0 +1,16 @@
+# Domain config: bản khung, hoàn thiện ở T-015 (Demo/Domain).
+
+domain: manufacturing
+kpis:
+  - name: defect_rate
+    unit: ratio
+    target: 0.02
+    alert_threshold_sd: 3   # theo control limits
+hypothesis_groups:          # Ishikawa
+  machine: [wrong_setpoint, wear, calibration]
+  method: [outdated_sop, missing_check]
+  material: [material_batch]
+  environment: [ambient_temperature]
+  people: [new_operator, training_gap]
+sop:
+  files: []                 # thêm SOP mẫu ở T-015

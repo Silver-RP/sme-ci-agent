@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sme-ci-agent/events/v0.1",
+  "title": "Agent event v0.1 (hợp đồng backend <-> dashboard)",
+  "description": "Mọi sự kiện stream qua SSE đều theo envelope này. Đổi file này phải qua PR riêng.",
+  "type": "object",
+  "required": ["event_id", "run_id", "ts", "type", "agent", "domain", "payload"],
+  "properties": {
+    "event_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "ts": { "type": "string", "format": "date-time" },
+    "type": {
+      "type": "string",
+      "enum": [
+        "anomaly_detected",
+        "hypothesis_updated",
+        "tool_called",
+        "question_asked",
+        "answer_received",
+        "proposal_created",
+        "approval_decided",
+        "sop_applied",
+        "kpi_measured",
+        "rollback_done",
+        "learning_saved",
+        "run_finished"
+      ]
+    },
+    "agent": {
+      "type": "string",
+      "enum": ["quality", "investigation", "improvement", "system"],
+      "description": "Vai đang chạy. Chỉ là nhãn; MVP vẫn là một agent."
+    },
+    "domain": { "type": "string", "description": "Ví dụ: manufacturing" },
+    "payload": {
+      "type": "object",
+      "description": "Nội dung theo từng type; mô tả ở docs/schema/payloads.md (tạo ở T-002)."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "event_id": "evt_0001",
+      "run_id": "run_001",
+      "ts": "2026-10-08T09:00:00Z",
+      "type": "anomaly_detected",
+      "agent": "quality",
+      "domain": "manufacturing",
+      "payload": {
+        "kpi": "defect_rate",
+        "value": 0.062,
+        "baseline": 0.02,
+        "machine": "M02",
+        "shift": "night"
+      }
+    }
+  ]
+}
