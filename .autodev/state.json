@@ -21,8 +21,10 @@
       "commit": "0ff8abc"
     },
     "dev-04": {
-      "status": "TODO",
-      "round": 0
+      "status": "DONE",
+      "round": 1,
+      "base": "e4c953d88e039ed20ab92d59fcd8ee7bd9ea67df",
+      "commit": "10f757d"
     }
   },
   "verify": {

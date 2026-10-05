@@ -1,0 +1,29 @@
+{
+  "task_id": "M1/dev-04",
+  "status": "PASS",
+  "criteria": [
+    {
+      "criterion": "Gọi graph với state không có domain thì mọi event có domain == config.domain; có test",
+      "met": true,
+      "evidence": "tests/test_graph.py::test_domain_falls_back_to_config_when_state_has_none (state thiếu domain, và new_state mặc định); backend/agent/graph.py make_event dùng `state.get('domain') or default_domain`, các node truyền config.domain. Probe với state {'run_id':'a'}, domain='' và domain=None: cả 4 event đều có domain 'manufacturing'."
+    },
+    {
+      "criterion": "Gọi cùng một graph đã compile nhiều lần (run_id/thread_id khác nhau) thì event_id mỗi lần bắt đầu từ 1 và duy nhất trong lần chạy; có test",
+      "met": true,
+      "evidence": "tests/test_graph.py::test_event_ids_restart_per_run_on_same_graph (3 lần chạy trên cùng một graph, kiểm tra seq là 1..n, tính duy nhất và tiền tố run_id). graph.py bỏ itertools.count trong closure, dùng seq_of(state) = len(state.events)+offset+1. Probe: chạy graph g với run a, b, c thì mỗi lần ra evt_X_0001..0004; một graph g2 mới với run z cho kết quả tương tự."
+    },
+    {
+      "criterion": "Test cũ vẫn xanh; không đổi docs/schema/events.json",
+      "met": true,
+      "evidence": "uv run pytest -q: 27 passed, 0 failed. python3 .autodev/verify.py: sạch so với baseline. `git diff e4c953d..HEAD --stat -- docs` không có thay đổi; diff chỉ gồm backend/agent/graph.py và tests/test_graph.py."
+    }
+  ],
+  "blocking_issues": [],
+  "non_blocking": [
+    "seq_of suy ra số thứ tự từ len(state.events). Nếu người gọi truyền state có sẵn events (ví dụ resume sau interrupt) thì số tiếp nối từ đó, đúng với ý đồ. Nhưng nếu events có sự kiện trùng run_id từ nguồn khác thì event_id có thể trùng. Với MVP thì chấp nhận được.",
+    "Dòng make_event trong node detect dài hơn 100 ký tự. Ruff vẫn sạch theo baseline, nhưng nên xuống dòng cho gọn."
+  ],
+  "tests_rerun": {"command": "uv run pytest -q", "passed": 27, "failed": 0},
+  "plan_suggestions": [],
+  "summary": "Hai lỗi đã được sửa: domain lấy từ config khi state thiếu hoặc rỗng, và event_id không còn dùng bộ đếm chung giữa các lần chạy. Cả hai có test; probe cho kết quả đúng và test cùng verify đều xanh."
+}

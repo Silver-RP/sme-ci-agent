@@ -8,7 +8,8 @@ Mỗi task một mục: thời gian, số vòng, commit, kết quả review, % h
 |---|---|---|---|---|---|---|
 | M1/dev-01 (T-015) | 1 | 0 | PASS | (người dùng điền) | dev ~61s + review ~33s | |
 | M1/dev-02 (T-017 p1) | 1 | 0 | PASS | (người dùng điền) | dev ~81s + review ~24s | |
-| M1/dev-03 (T-017 p2) | 1 | 0 | PASS | (người dùng điền) | dev ~97s + review ~107s | |
+| M1/dev-03 (T-017 p2) | 1 | 0 | PASS | (người dùng điền) | dev ~97s + review ~107s | 2 (domain rỗng; event_id không reset), sửa ở dev-04 |
+| M1/dev-04 (T-017 bổ sung) | 1 | 0 | PASS | (người dùng điền) | dev ~80s + review ~35s | |
 
 ## Nhật ký
 
@@ -30,6 +31,15 @@ Mỗi task một mục: thời gian, số vòng, commit, kết quả review, % h
 - Event được validate bằng code tự viết theo events.json, vì chưa có `jsonschema`.
 - Non-blocking: bộ đếm event_id nằm trong closure (nên đưa vào state); DEFAULT_PERIOD và `kpis[0]` là giá trị tạm; Investigate mock luôn chọn nhóm đầu tiên.
 - T-017 xong (dev-02 và dev-03), đã tick trong TASKS.md.
+
+### M1/dev-04 (T-017 bổ sung): DONE
+- Ngày: 2026-10-06. Nhánh: milestone/M1-r3. Vòng: 1. Commit: 10f757d. Review: .autodev/reviews/M1-dev-04-r1.json (PASS).
+- Chạy với prompt mới (reviewer phải probe trường hợp biên, developer viết test biên).
+- `make_event` lấy domain từ `config.domain` khi state thiếu hoặc rỗng. Bỏ `itertools.count` trong closure; số thứ tự event tính từ `len(state["events"])` của lần chạy hiện tại.
+- Test mới: `test_domain_falls_back_to_config_when_state_has_none`, `test_event_ids_restart_per_run_on_same_graph`. Tổng 27 test pass, verify sạch so với baseline.
+- Non-blocking: event_id có thể trùng nếu state đầu vào đã có events cùng run_id từ nguồn khác; có một dòng `make_event` ở node detect dài hơn 100 ký tự.
+- Bài học: ở dev-03, reviewer cũ đã ghi bộ đếm closure là non-blocking nhưng không probe chạy graph hai lần, nên bỏ sót lỗi. Lần này reviewer mới có probe (chạy 3 run trên cùng graph, thử domain rỗng hoặc None).
+- T-017 vẫn ở trạng thái đã tick trong TASKS.md, không đổi.
 
 ## Đề xuất chờ duyệt (c)
 
