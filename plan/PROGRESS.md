@@ -11,6 +11,7 @@ Mỗi task một mục: thời gian, số vòng, commit, kết quả review, % h
 | M1/dev-03 (T-017 p2) | 1 | 0 | PASS | (người dùng điền) | dev ~97s + review ~107s | 2 (domain rỗng; event_id không reset), sửa ở dev-04 |
 | M1/dev-04 (T-017 bổ sung) | 1 | 0 | PASS | (người dùng điền) | dev ~80s + review ~35s | |
 | M2/dev-01 (T-010) | 2 | 0 | FAIL → PASS | (người dùng điền) | dev ~150s + review ~134s; rework ~158s + review ~77s | |
+| M2/dev-02 (T-011) | 1 | 0 | PASS | (người dùng điền) | dev ~199s + review ~306s | |
 
 ## Nhật ký
 
@@ -51,6 +52,16 @@ Mỗi task một mục: thời gian, số vòng, commit, kết quả review, % h
 - Non-blocking: `params_from_config` báo KeyError khó đọc khi thiếu khóa YAML; mặc định `materials` ('MAT-A', 'MAT-B') và `start_date` vẫn nằm trong code; bảng `sop` rỗng nếu không đi qua `params_from_config`.
 - Developer vòng 1 tự báo đã sửa YAML bằng heredoc, trái quy tắc shell. Vòng 2 đã dùng Edit.
 - 42 test pass. Đã tick T-010 trong TASKS.md.
+
+### M2/dev-02 (T-011): DONE
+- Ngày: 2026-10-06. Vòng: 1. Commit: d150ff1. Review: .autodev/reviews/M2-dev-02-r1.json (PASS).
+- Hook SubagentStop chạy (`hook_runs` 2 → 3, PASS).
+- `backend/sandbox/injector.py`: `generate_dataset(seed, scenario_path, profile_path) -> Dataset(tables, ground_truth)`, `inject`, `GroundTruth` (frozen dataclass). `scripts/gen_data.py` ghi CSV và `ground_truth.json` riêng vào `data/generated/` (đã thêm vào .gitignore).
+- Cửa sổ hiệu lực `[start, end)`; A1/A2 không có `end` nên kéo dài đến hết horizon. FP1 ghi 2 dòng `maintenance` (start/end) trong `machine_log`. Ca đêm M02 quanh A1 có `OP-SUB01` thay thế (3 đêm).
+- Điều chỉnh (a): thêm các khóa `trace.*` vào `scenario1.yaml` (xem plan/M2.md).
+- Reviewer probe: quét seed 1..59, không seed nào lệch quá 1 noise_sd trong cả 3 cửa sổ; quét giá trị và tên cột không lộ ground truth. 62 test chạy trong 2.32s.
+- Non-blocking: `setpoint_sensitivity_per_c` và `effect` là hai nguồn độc lập cho mức KPI; FP1 chỉ có 6 điểm nên biên an toàn của tiêu chí 3 hẹp.
+- Đã tick T-011 trong TASKS.md.
 
 ## Đề xuất chờ duyệt (c)
 
