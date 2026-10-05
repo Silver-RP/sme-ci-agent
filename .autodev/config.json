@@ -1,0 +1,16 @@
+{
+  "verify": [
+    {"name": "lint", "cmd": "uv run ruff check . --output-format=concise", "parser": "ruff"},
+    {"name": "test", "cmd": "uv run pytest -q -rfE -p no:cacheprovider", "parser": "pytest"}
+  ],
+  "max_rounds": 3,
+  "max_verify_blocks": 3,
+  "blocked_policy": "continue_independent",
+  "plan_dir": "plan",
+  "progress_file": "plan/PROGRESS.md",
+  "app": {
+    "run": null,
+    "url": null,
+    "note": "M1 chưa có app web; bàn giao bằng kết quả verify và output test."
+  }
+}

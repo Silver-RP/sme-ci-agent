@@ -4,9 +4,11 @@
 
 MVP = scenario 1 chạy đủ vòng Detect → Learn từ dashboard, trên dữ liệu sandbox (synthetic). Ngôn ngữ: code và tên biến bằng tiếng Anh; tài liệu bằng tiếng Việt.
 
-## Mốc cứng
+## Mốc (tham khảo)
 
 Proposal nộp hạn 5/10 21:59 JST · tag v0.1-e2e 13/10 · freeze code 20/10 (v0.2-freeze) · Pitch Day 24/10 · Demo Day 07/11.
+
+Các ngày ở đây và hạn (Due) trong TASKS.md, docs/PLAN.md chỉ để tham khảo; leader tự điều chỉnh. Agent không tự hoãn, cắt việc hay từ chối task vì hạn.
 
 ## Kiến trúc đã chốt (xem docs/decisions.md)
 
@@ -55,3 +57,11 @@ uv run ruff check .          # lint
 ## Khi được giao một task
 
 Đọc TASKS.md (mục task, DoD), docs/PLAN.md, rồi làm đúng phạm vi task. Không mở rộng sang multi-agent, scenario 2–3 hay biểu đồ phức tạp. Xong thì tick checkbox trong TASKS.md trong cùng PR.
+
+## Auto-dev (thử nghiệm, chế độ A)
+
+- Thiết kế: docs/autodev/auto-dev-review-design.md. Plan theo mốc: plan/Mx.md (dev-xx kèm mã T-0xx); nhật ký: plan/PROGRESS.md. TASKS.md vẫn là nguồn chung cho team.
+- Chạy một mốc: `/run-milestone M1`. Agent: .claude/agents/developer.md (code) và reviewer.md (chỉ đọc).
+- Kiểm tra cứng: `uv run python .autodev/verify.py` (ruff → pytest, so với .autodev/baseline.json).
+- developer không sửa tiêu chí chấp nhận hay phạm vi mốc; chỉ ghi vào "Đề xuất chờ duyệt" trong plan/PROGRESS.md.
+- Không đọc hay in nội dung .env.
