@@ -10,12 +10,14 @@ plant:
   machines: [M01, M02, M03]
   shifts: [morning, afternoon, night]
   horizon_months: 6
+  shift_start_hours: {morning: 6, afternoon: 14, night: 22}   # đề xuất chờ T-004
 
 baseline:
   kpi: defect_rate
   value: 0.02           # 2.0%
   noise_sd: 0.004
   zone3_setpoint_c: 180 # theo SOP
+  setpoint_sensitivity_per_c: 0.0028   # đề xuất chờ T-004: tỉ lệ lỗi tăng mỗi °C lệch SOP (15 °C -> +0.042 = 0.062)
 
 injected_anomalies:
   - id: A1
