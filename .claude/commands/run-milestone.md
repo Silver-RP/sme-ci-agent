@@ -12,7 +12,8 @@ Chạy mốc $ARGUMENTS theo chế độ A của auto-dev (thiết kế: docs/au
    - Đang ở `milestone/$ARGUMENTS` hoặc `milestone/$ARGUMENTS-rN` và nhánh này **chưa merge** thì dùng tiếp. Chưa merge nghĩa là: chưa có commit nào ngoài `origin/main` (`git log origin/main..HEAD` rỗng VÀ `HEAD` = `origin/main`, tức nhánh mới tạo), hoặc còn commit chưa có trong `origin/main` (`git log origin/main..HEAD` không rỗng).
    - Ngược lại (đang ở `main`, HEAD tách rời, hoặc nhánh đã merge: không còn commit riêng nhưng `HEAD` khác `origin/main`) thì tạo nhánh mới từ `origin/main`: `git switch -c milestone/$ARGUMENTS-rN origin/main`, N là số nhỏ nhất ≥ 2 chưa có (dùng `milestone/$ARGUMENTS` nếu tên này chưa có).
    - Không bao giờ commit lên `main`.
-3. Nếu `state.json` có task đang dở (`current_task`), tiếp tục từ task đó.
+3. Nếu `state.json` → `milestone` khác `$ARGUMENTS`: chuyển `tasks` cũ vào `history.<mốc cũ>.tasks`, đặt `milestone = $ARGUMENTS`, `current_task = null`, tạo `tasks` mới từ danh sách dev-xx trong plan (TODO, round 0), đặt `verify.last_status = null` và `consecutive_blocks = 0` (giữ `hook_runs`). Tên task (dev-01…) chỉ có nghĩa trong mốc hiện tại.
+4. Nếu `state.json` có task đang dở (`current_task`), tiếp tục từ task đó.
 
 ## Vòng lặp mỗi task (theo thứ tự phụ thuộc, bỏ qua task DONE)
 1. Ghi `base = git rev-parse HEAD` và `hook_runs` hiện tại (`verify.hook_runs` trong state.json, mặc định 0); đặt task `IN_PROGRESS`.
