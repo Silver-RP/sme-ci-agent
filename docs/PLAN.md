@@ -2,6 +2,8 @@
 
 Cập nhật 5/10/2026. Lịch đã dời lại so với bản gốc vì repo mới được dựng ngày 5/10 (xem mục 3).
 
+> Các ngày, hạn và điểm go/no-go trong file này chỉ để tham khảo; leader điều chỉnh khi cần (xem CLAUDE.md, mục Mốc).
+
 ## 1. Mục tiêu
 
 Sản phẩm: MVP chạy scenario 1 (defect tăng bất thường) đủ vòng Detect → Learn từ dashboard, trên dữ liệu sandbox.
