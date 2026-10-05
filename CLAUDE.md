@@ -43,6 +43,14 @@ docs/schema/events.json là hợp đồng backend ↔ dashboard. Đổi file nà
 - Không commit API key. Tag: v0.1-e2e (13/10), v0.2-freeze (20/10).
 - Sync 15 phút mỗi ngày; review mốc mỗi thứ Bảy.
 
+## Công cụ (Claude Code)
+
+- ADR trong docs/decisions.md và TASKS.md là cố định: không đề xuất lại multi-agent hay Agent Manager.
+- Brainstorm/lập kế hoạch chỉ trong phạm vi một task; ghi kế hoạch vào PR, không tạo file kế hoạch mới ở gốc repo.
+- Dùng TDD cho backend/detect, backend/sandbox, backend/tools.
+- Chỉ dùng subagent cho T-020 và T-024; các task khác làm trực tiếp để tiết kiệm token. Ngoại lệ: developer/reviewer khi chạy /run-milestone (auto-dev).
+- Không đọc hay in nội dung .env.
+
 ## Lệnh thường dùng
 
 ```bash
