@@ -10,6 +10,7 @@ Mỗi task một mục: thời gian, số vòng, commit, kết quả review, % h
 | M1/dev-02 (T-017 p1) | 1 | 0 | PASS | (người dùng điền) | dev ~81s + review ~24s | |
 | M1/dev-03 (T-017 p2) | 1 | 0 | PASS | (người dùng điền) | dev ~97s + review ~107s | 2 (domain rỗng; event_id không reset), sửa ở dev-04 |
 | M1/dev-04 (T-017 bổ sung) | 1 | 0 | PASS | (người dùng điền) | dev ~80s + review ~35s | |
+| M2/dev-01 (T-010) | 2 | 0 | FAIL → PASS | (người dùng điền) | dev ~150s + review ~134s; rework ~158s + review ~77s | |
 
 ## Nhật ký
 
@@ -40,6 +41,16 @@ Mỗi task một mục: thời gian, số vòng, commit, kết quả review, % h
 - Non-blocking: event_id có thể trùng nếu state đầu vào đã có events cùng run_id từ nguồn khác; có một dòng `make_event` ở node detect dài hơn 100 ký tự.
 - Bài học: ở dev-03, reviewer cũ đã ghi bộ đếm closure là non-blocking nhưng không probe chạy graph hai lần, nên bỏ sót lỗi. Lần này reviewer mới có probe (chạy 3 run trên cùng graph, thử domain rỗng hoặc None).
 - T-017 vẫn ở trạng thái đã tick trong TASKS.md, không đổi.
+
+### M2/dev-01 (T-010): DONE
+- Ngày: 2026-10-06. Nhánh: milestone/M2. Vòng: 2. Commit: a8f908a (code), 8019445 (fix). Review: .autodev/reviews/M2-dev-01-r1.json (FAIL), M2-dev-01-r2.json (PASS).
+- Hook SubagentStop chạy cả 2 vòng (`hook_runs` 0 → 1 → 2, `last_status` PASS). Đây là lần đầu xác nhận hook hoạt động.
+- `backend/sandbox/schema.py` (6 bảng, schema cố định), `backend/sandbox/simulator.py` (`SimParams`, `SetpointChange`, `params_from_config`, `simulate`, `expected_kpi_value`). Hàm lỗi: `baseline + sensitivity * |setpoint − sop_setpoint|`, rồi clip vào [0, 1].
+- Vòng 1 FAIL (B1): hàm công khai tên `defect_mean`, trái tiêu chí 5. Vòng 2 đổi thành `expected_kpi_value` và thêm test `test_sandbox_public_names_are_domain_neutral`.
+- Điều chỉnh (a): thêm `setpoint_sensitivity_per_c` và `shift_start_hours` vào `scenario1.yaml` (xem plan/M2.md).
+- Non-blocking: `params_from_config` báo KeyError khó đọc khi thiếu khóa YAML; mặc định `materials` ('MAT-A', 'MAT-B') và `start_date` vẫn nằm trong code; bảng `sop` rỗng nếu không đi qua `params_from_config`.
+- Developer vòng 1 tự báo đã sửa YAML bằng heredoc, trái quy tắc shell. Vòng 2 đã dùng Edit.
+- 42 test pass. Đã tick T-010 trong TASKS.md.
 
 ## Đề xuất chờ duyệt (c)
 

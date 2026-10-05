@@ -1,0 +1,23 @@
+{
+  "task_id": "M2/dev-01",
+  "status": "FAIL",
+  "criteria": [
+    {"criterion": "1. Trả về đủ 6 bảng, schema cột cố định, có test tên cột và kiểu", "met": true, "evidence": "tests/test_sandbox_simulator.py::test_six_tables_with_fixed_schema, ::test_schema_holds_for_empty_tables_and_defaults; backend/sandbox/schema.py. Probe: days=1, shifts=('night',) cho kpi_log shape (3, 6), đúng schema."},
+    {"criterion": "2. Cùng seed giống hệt, khác seed khác, có test", "met": true, "evidence": "tests/test_sandbox_simulator.py::test_same_seed_identical_different_seed_differs_and_repeatable (có gọi lại seed=7 sau seed=8, không rò trạng thái). simulate dùng np.random.default_rng(params.seed) cục bộ, không có biến module dùng chung."},
+    {"criterion": "3. Đổi setpoint thì tỉ lệ lỗi tăng ít nhất 3 noise_sd; khôi phục thì về baseline ± 1 noise_sd", "met": true, "evidence": "tests/test_sandbox_simulator.py::test_setpoint_shift_raises_then_restore_returns_to_baseline. Probe: setpoint M02 = 195 từ 2026-03-10T22:00, seed 1, trung bình = 0.0617, kỳ vọng 0.062 và baseline 0.02 + 3*0.004 = 0.032."},
+    {"criterion": "4. Cột tỉ lệ không âm và không lớn hơn 1, có test với noise lớn", "met": true, "evidence": "tests/test_sandbox_simulator.py::test_rate_column_bounded_with_large_noise (noise 0, 0.05, 0.5, 5.0 và setpoint 400). Probe: setpoint -1e9, noise 0 cho min 0.02, max 1.0, không NaN."},
+    {"criterion": "5. Tên cột và tên hàm trung tính; giá trị kpi lấy từ config", "met": false, "evidence": "Cột trung tính (schema.py) và kpi lấy từ config (simulator.py params_from_config, test_kpi_name_comes_from_config). Nhưng hàm công khai tên theo defect: backend/sandbox/simulator.py:71 `defect_mean`, export ở backend/sandbox/__init__.py:7 và :17, có test gọi trực tiếp (test_defect_mean_function_zero_deviation_is_baseline). Probe dir(backend.sandbox) chứa 'defect_mean'. Trái tiêu chí 5 và CLAUDE.md (tên trung tính). Docstring đầu simulator.py cũng ghi 'Defect-like KPI model'."}
+  ],
+  "blocking_issues": [
+    {"id": "B1", "file": "backend/sandbox/simulator.py", "description": "Hàm `defect_mean` đặt tên theo 'defect', trái tiêu chí 5 ('tên hàm trung tính, không đặt tên theo defect') và quy tắc CLAUDE.md. Hàm còn được export công khai trong backend/sandbox/__init__.py và test tham chiếu tên này.", "required_action": "Đổi tên thành tên trung tính, ví dụ `expected_kpi_value` hoặc `kpi_mean`. Cập nhật simulator.py:71 và :120, __init__.py (import và __all__), tên test và docstring đầu module. Chạy lại verify và pytest."}
+  ],
+  "non_blocking": [
+    "Hai khóa developer thêm vào scenario1.yaml (baseline.setpoint_sensitivity_per_c và plant.shift_start_hours) không vi phạm quy ước. Simulator đọc cả hai từ YAML (params_from_config), không hard-code trong code, và đều ghi rõ 'đề xuất chờ T-004'. Về phạm vi: plan/M2.md dev-01 yêu cầu hàm 'có tham số' và dev-02 chỉ liệt kê start_date và FP1, nên đây là mở rộng ngoài danh sách. Chúng cần thiết cho tiêu chí 3 (độ nhạy) và độ phân giải theo ca (giờ bắt đầu ca). Nên ghi vào 'Ghi chú điều chỉnh' hoặc 'Đề xuất chờ duyệt' trong plan/PROGRESS.md để leader duyệt ở T-004.",
+    "params_from_config đọc trực tiếp base['setpoint_sensitivity_per_c'] và plant['shift_start_hours'] không có giá trị mặc định. Thiếu khóa sẽ báo KeyError khó đọc. Chấp nhận được vì giá trị lấy từ YAML, nhưng nên bọc lỗi cho rõ.",
+    "SimParams.materials có mặc định hard-code ('MAT-A', 'MAT-B'). Đây là dữ liệu synthetic cho bảng inventory và supplier nên không nghiêm trọng, nhưng nên chuyển sang YAML khi có dịp.",
+    "Bảng sop trống khi params không có sop_entries. Chỉ params_from_config mới nạp SOP từ context_profile.yaml, nên simulate gọi trực tiếp với SimParams tự dựng sẽ ra bảng sop rỗng."
+  ],
+  "tests_rerun": {"command": "uv run pytest -q", "passed": 41, "failed": 0},
+  "plan_suggestions": [],
+  "summary": "Verify sạch (không lỗi mới so với baseline), pytest 41 pass. Tiêu chí 1–4 đạt, và hai khóa YAML mới được đọc từ YAML đúng quy ước. FAIL vì tiêu chí 5 chưa đạt: hàm công khai `defect_mean` đặt tên theo 'defect', cần đổi sang tên trung tính."
+}
