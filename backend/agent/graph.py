@@ -5,7 +5,6 @@ Interrupt/Postgres checkpointer come later (T-021); the checkpointer is injectab
 
 from __future__ import annotations
 
-import itertools
 from datetime import UTC, datetime
 from typing import Any
 
@@ -20,7 +19,12 @@ DEFAULT_PERIOD = ("2026-10-01", "2026-10-07")
 
 
 def make_event(
-    state: AgentState, type_: str, agent: str, payload: dict[str, Any], seq: int
+    state: AgentState,
+    type_: str,
+    agent: str,
+    payload: dict[str, Any],
+    seq: int,
+    default_domain: str = "",
 ) -> dict[str, Any]:
     """Build an event following docs/schema/events.json."""
     return {
@@ -29,7 +33,7 @@ def make_event(
         "ts": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "type": type_,
         "agent": agent,
-        "domain": state.get("domain", ""),
+        "domain": state.get("domain") or default_domain,
         "payload": payload,
     }
 
@@ -37,7 +41,10 @@ def make_event(
 def build_graph(config: DomainConfig, checkpointer: Any | None = None):
     """Compile the graph. KPI and hypothesis groups come from `config`, not from code."""
     kpi = config.kpis[0]  # kpi type is a parameter derived from config
-    counter = itertools.count(1)
+
+    def seq_of(state: AgentState, offset: int = 0) -> int:
+        # derived from this run's own events, so no counter leaks between runs
+        return len(state.get("events", [])) + offset + 1
 
     def observe(state: AgentState) -> dict[str, Any]:
         start, end = DEFAULT_PERIOD
@@ -47,7 +54,8 @@ def build_graph(config: DomainConfig, checkpointer: Any | None = None):
             "tool_called",
             "quality",
             {"tool": "fetch_kpi_breakdown", "kpi": kpi.name, "start": start, "end": end},
-            next(counter),
+            seq_of(state),
+            config.domain,
         )
         return {"evidence": [*state.get("evidence", []), data], "events": [ev]}
 
@@ -59,7 +67,7 @@ def build_graph(config: DomainConfig, checkpointer: Any | None = None):
             "baseline": obs["baseline"],
             **obs["breakdown"],
         }
-        ev = make_event(state, "anomaly_detected", "quality", dict(anomaly), next(counter))
+        ev = make_event(state, "anomaly_detected", "quality", dict(anomaly), seq_of(state), config.domain)
         return {"anomaly": anomaly, "events": [ev]}
 
     def investigate(state: AgentState) -> dict[str, Any]:
@@ -76,14 +84,16 @@ def build_graph(config: DomainConfig, checkpointer: Any | None = None):
                 "tool_called",
                 "investigation",
                 {"tool": "fetch_kpi_breakdown", "kpi": anomaly["kpi"], "start": start, "end": end},
-                next(counter),
+                seq_of(state),
+                config.domain,
             ),
             make_event(
                 state,
                 "hypothesis_updated",
                 "investigation",
                 {"hypotheses": [h.model_dump() for h in hypotheses]},
-                next(counter),
+                seq_of(state, 1),
+                config.domain,
             ),
         ]
         return {
