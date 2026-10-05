@@ -1,0 +1,20 @@
+{
+  "task_id": "M1/dev-01",
+  "status": "PASS",
+  "criteria": [
+    {"criterion": "1. Hàm load trả về object có domain, kpis, hypothesis_groups, sop; có test load file thật", "met": true, "evidence": "backend/domain_config.py:36 load_domain_config -> DomainConfig (dòng 29-33); tests/test_domain_config.py::test_load_real_file"},
+    {"criterion": "2. Thiếu trường bắt buộc hoặc sai kiểu -> lỗi validation rõ ràng; có test", "met": true, "evidence": "tests/test_domain_config.py::test_missing_required_field (4 tham số, match tên trường); ::test_wrong_type (target sai kiểu); extra=forbid ở _Strict"},
+    {"criterion": "3. Ít nhất 1 SOP mẫu synthetic có id và version; có test", "met": true, "evidence": "data/context_profile.yaml có SOP-INJ-001 và SOP-CAL-002, cả hai version 1, title ghi 'synthetic'; tests/test_domain_config.py::test_sop_requires_id_and_version"},
+    {"criterion": "4. Không hard-code tên KPI hay nhóm giả thuyết trong code Python", "met": true, "evidence": "backend/domain_config.py không chứa tên KPI hay nhóm cụ thể nào; tests/test_domain_config.py::test_no_hardcoded_names_in_code kiểm tra bằng regex với tên đọc từ YAML"}
+  ],
+  "blocking_issues": [],
+  "non_blocking": [
+    "test_no_hardcoded_names_in_code chỉ quét backend/domain_config.py, chưa quét toàn bộ backend/. Nên mở rộng khi có thêm module.",
+    "Tên KPI 'defect_rate' trong YAML là dữ liệu domain nên chấp nhận được. Code Python vẫn trung tính.",
+    ".autodev/state.json có thay đổi chưa commit nhưng nằm ngoài phạm vi task.",
+    "Vị trí loader (backend/domain_config.py) chưa kiểm chứng là đã ghi trong báo cáo của developer."
+  ],
+  "tests_rerun": {"command": "uv run pytest -q", "passed": 12, "failed": 0},
+  "plan_suggestions": [],
+  "summary": "Cả 4 tiêu chí đều có bằng chứng và test thật. verify.py sạch so với baseline, pytest 12 passed, 0 failed. Diff chỉ gồm loader, YAML và test; không đổi docs/schema/events.json, không có secret, không hard-code tên model."
+}

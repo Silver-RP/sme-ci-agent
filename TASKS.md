@@ -16,7 +16,7 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 - [ ] T-012 [Data] Detect thống kê: baseline, control limits, xuất anomaly event đúng schema. DoD: bắt đúng anomaly của scenario 1, không báo bảo trì có kế hoạch là lỗi thật. Due 8/10
 - [ ] T-013 [Tools] DB models + migration: runs, events, audit_log, sop_versions, learning_store. Due 6/10
 - [ ] T-014 [Tools] query_logs, correlate, get_shift_schedule, read_sop (chỉ đọc) + test. Due 8/10
-- [ ] T-015 [Demo] data/context_profile.yaml (KPI, nhóm giả thuyết Ishikawa, SOP mẫu). Due 6/10
+- [x] T-015 [Demo] data/context_profile.yaml (KPI, nhóm giả thuyết Ishikawa, SOP mẫu). Due 6/10
 - [ ] T-016 [Demo] Khởi tạo Next.js (yarn) và dashboard skeleton (bảng anomaly + timeline trace) chạy bằng mock events; freeze 7/10. Due 7/10
 - [ ] T-017 [Core] state.py trung tính + graph skeleton nối fake tool; Investigate bản mock. Due 6/10
 

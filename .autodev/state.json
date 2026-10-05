@@ -1,7 +1,22 @@
 {
-  "milestone": null,
+  "milestone": "M1",
   "current_task": null,
-  "tasks": {},
+  "tasks": {
+    "dev-01": {
+      "status": "DONE",
+      "round": 1,
+      "base": "0244c355c8e0debff334e41bf6dd9b408b670448",
+      "commit": "3cc91ce"
+    },
+    "dev-02": {
+      "status": "TODO",
+      "round": 0
+    },
+    "dev-03": {
+      "status": "TODO",
+      "round": 0
+    }
+  },
   "verify": {
     "consecutive_blocks": 0,
     "last_status": null
