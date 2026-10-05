@@ -15,9 +15,9 @@ Chạy mốc $ARGUMENTS theo chế độ A của auto-dev (thiết kế: docs/au
 3. Nếu `state.json` có task đang dở (`current_task`), tiếp tục từ task đó.
 
 ## Vòng lặp mỗi task (theo thứ tự phụ thuộc, bỏ qua task DONE)
-1. Ghi `base = git rev-parse HEAD`; đặt task `IN_PROGRESS` trong state.json.
+1. Ghi `base = git rev-parse HEAD` và `hook_runs` hiện tại (`verify.hook_runs` trong state.json, mặc định 0); đặt task `IN_PROGRESS`.
 2. Gọi `developer` với: task_id, đường dẫn plan, và (nếu là vòng sau) nguyên văn `blocking_issues` của reviewer.
-3. Sau khi developer trả về: đọc `state.json` → `verify.last_status`.
+3. Sau khi developer trả về: đọc `state.json` → `verify`. Nếu `hook_runs` không tăng thì hook SubagentStop KHÔNG chạy: tự chạy `python3 .autodev/verify.py`, ghi "hook không chạy" vào PROGRESS.md cho task này. Sau đó xét `verify.last_status`.
    - `VERIFY_FAILED` → task `BLOCKED` (lý do: verify không sạch sau nhiều lần), sang task kế.
    - Không có commit mới (`git log base..HEAD` rỗng) → coi như một vòng FAIL.
 4. Gọi `reviewer` với: task_id, `base..HEAD`, đường dẫn plan. Lưu JSON nguyên văn vào `.autodev/reviews/<task>-r<vòng>.json` (tên file thay `/` bằng `-`).
@@ -35,5 +35,9 @@ Task BLOCKED: chạy tiếp các task không phụ thuộc vào nó (`blocked_po
 3. Viết báo cáo vào `.autodev/reports/$ARGUMENTS.md` theo mục 6.10: tóm tắt so với tiêu chí cấp mốc; bảng task (trạng thái, số vòng, commit); BLOCKED + việc cần người quyết; điều chỉnh (a)/(b); đề xuất (c); kết quả verify so với baseline; cách chạy thử (`app` trong config); thời gian chạy. Nội dung này dùng làm mô tả PR.
 4. Nhắc người dùng xem `/usage` (bảng theo subagent) và điền cột "% hạn mức" trong PROGRESS.md.
 5. DỪNG. Không tự sang mốc tiếp theo.
+
+## Lệnh shell (để không phải hỏi quyền)
+- Tạo/sửa file bằng công cụ Write/Edit, KHÔNG dùng `cat > file`, `echo >`, heredoc ghi file hay `python3 - <<EOF` để sửa file.
+- Mỗi lệnh một việc; tránh `$(...)`, `$((...))`, và không ghi file ra ngoài repo (kể cả /tmp). Đo thời gian bằng cách ghi giờ bắt đầu/kết thúc (`date`) rồi tự trừ.
 
 Trả lời người dùng ngắn gọn bằng tiếng Việt; chi tiết để trong file.
