@@ -13,6 +13,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 from collections import Counter
 from pathlib import Path
 
@@ -96,8 +97,12 @@ def main():
         print("Thiếu .autodev/config.json", file=sys.stderr)
         return 1
 
+    hook_input = {}
     if "--hook" in args:
-        sys.stdin.read()  # hook input not needed; counter below prevents endless loops
+        try:
+            hook_input = json.loads(sys.stdin.read() or "{}")
+        except json.JSONDecodeError:
+            hook_input = {}
 
     results = run_all(config)
 
@@ -114,6 +119,10 @@ def main():
 
     state = load(STATE, {})
     verify_state = state.setdefault("verify", {})
+    # Trace so the orchestrator can confirm the hook actually fired.
+    verify_state["hook_runs"] = verify_state.get("hook_runs", 0) + 1
+    verify_state["last_hook_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    verify_state["last_hook_agent"] = hook_input.get("agent_type", "")
     if not found:
         verify_state.update(consecutive_blocks=0, last_status="PASS")
         save(STATE, state)
