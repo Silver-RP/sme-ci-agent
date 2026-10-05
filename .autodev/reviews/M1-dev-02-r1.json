@@ -1,0 +1,17 @@
+{
+  "task_id": "M1/dev-02",
+  "status": "PASS",
+  "criteria": [
+    {"criterion": "AgentState dùng được với LangGraph StateGraph; có test state rỗng và state đầy đủ", "met": true, "evidence": "backend/agent/state.py:30-38 (TypedDict AgentState, events dùng reducer operator.add); tests/test_state.py::test_empty_state; tests/test_state.py::test_full_state_works_in_stategraph (compile và invoke thật qua StateGraph)"},
+    {"criterion": "Không có tên trường hay tên kiểu chứa 'defect'; có test kiểm tra", "met": true, "evidence": "tests/test_state.py::test_no_defect_names (kiểm tra các key của AgentState, field của Hypothesis và mọi tên trong module state); grep file state.py không thấy 'defect'"},
+    {"criterion": "Hypothesis có nhóm (khớp key hypothesis_groups trong YAML), mô tả, confidence trong [0,1]; có test giá trị biên", "met": true, "evidence": "backend/agent/state.py:14-19 (Hypothesis) và :22-26 (validate_hypothesis_groups); tests/test_state.py::test_confidence_boundaries_ok (0, 1, 0.5); tests/test_state.py::test_confidence_out_of_range (-0.001, 1.001); tests/test_state.py::test_group_matches_yaml_keys (dùng YAML thật qua load_domain_config)"}
+  ],
+  "blocking_issues": [],
+  "non_blocking": [
+    "Việc khớp group với key trong YAML chỉ nằm ở hàm validate_hypothesis_groups riêng, Hypothesis không tự kiểm tra. Cách này chấp nhận được vì model không biết config. dev-03 cần gọi hàm này khi tạo hypothesis.",
+    "Không có hard-code tên model, không có secret, và docs/schema/events.json không bị đổi."
+  ],
+  "tests_rerun": {"command": "uv run pytest -q", "passed": 21, "failed": 0},
+  "plan_suggestions": [],
+  "summary": "Diff chỉ gồm backend/agent/state.py và tests/test_state.py, đáp ứng cả 3 tiêu chí kèm test cụ thể. verify.py báo sạch so với baseline và pytest 21/21 pass."
+}

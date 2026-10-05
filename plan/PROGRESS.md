@@ -6,10 +6,30 @@ Mỗi task một mục: thời gian, số vòng, commit, kết quả review, % h
 
 | Task | Vòng dev↔review | Verify bị chặn | Kết quả | % hạn mức | Thời gian | Lỗi người dùng phát hiện sau |
 |---|---|---|---|---|---|---|
+| M1/dev-01 (T-015) | 1 | 0 | PASS | (người dùng điền) | dev ~61s + review ~33s | |
+| M1/dev-02 (T-017 p1) | 1 | 0 | PASS | (người dùng điền) | dev ~81s + review ~24s | |
+| M1/dev-03 (T-017 p2) | 1 | 0 | PASS | (người dùng điền) | dev ~97s + review ~107s | |
 
 ## Nhật ký
 
-(chưa có)
+### M1/dev-01 (T-015): DONE
+- Ngày: 2026-10-06. Vòng: 1. Commit: 3cc91ce. Review: .autodev/reviews/M1-dev-01-r1.json (PASS).
+- Loader: `backend/domain_config.py` (`load_domain_config`). YAML có thêm KPI `rework_rate`, SOP synthetic SOP-INJ-001 và SOP-CAL-002.
+- Non-blocking: test quét hard-code mới chỉ quét `backend/domain_config.py`.
+- Ghi chú: hook Stop của developer không ghi `verify.last_status` vào state.json (vẫn là null). Session điều phối tự chạy verify và kết quả sạch.
+
+### M1/dev-02 (T-017 phần 1): DONE
+- Ngày: 2026-10-06. Vòng: 1. Commit: bc5d995. Review: .autodev/reviews/M1-dev-02-r1.json (PASS).
+- `AgentState` (TypedDict, `events` có reducer cộng dồn), `Hypothesis` (Pydantic), `validate_hypothesis_groups(hypotheses, config)`.
+- Non-blocking: việc khớp group với YAML nằm ở hàm riêng; dev-03 cần gọi hàm này.
+- Hook Stop vẫn không ghi `verify.last_status`.
+
+### M1/dev-03 (T-017 phần 2): DONE
+- Ngày: 2026-10-06. Vòng: 1. Commit: 0ff8abc. Review: .autodev/reviews/M1-dev-03-r1.json (PASS).
+- `backend/agent/graph.py` (Observe → Detect → Investigate → END, `build_graph(config, checkpointer=None)`, mặc định InMemorySaver); `backend/tools/fake_metrics.py` (`fetch_kpi_breakdown(kpi, start, end)`).
+- Event được validate bằng code tự viết theo events.json, vì chưa có `jsonschema`.
+- Non-blocking: bộ đếm event_id nằm trong closure (nên đưa vào state); DEFAULT_PERIOD và `kpis[0]` là giá trị tạm; Investigate mock luôn chọn nhóm đầu tiên.
+- T-017 xong (dev-02 và dev-03), đã tick trong TASKS.md.
 
 ## Đề xuất chờ duyệt (c)
 

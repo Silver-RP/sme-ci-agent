@@ -1,1 +1,51 @@
-"""State trung tính: anomaly, hypotheses, evidence, proposal, domain. Cài đặt ở T-017."""
+"""Neutral agent state: anomaly, hypotheses, evidence, proposal, domain.
+
+Names stay industry-agnostic; KPI/hypothesis groups come from the domain config.
+"""
+
+from __future__ import annotations
+
+import operator
+from typing import Annotated, Any, TypedDict
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from backend.domain_config import DomainConfig
+
+
+class Hypothesis(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    group: str = Field(min_length=1)  # key in hypothesis_groups of the domain config
+    description: str = Field(min_length=1)
+    confidence: float = Field(ge=0.0, le=1.0)
+
+
+def validate_hypothesis_groups(hypotheses: list[Hypothesis], config: DomainConfig) -> None:
+    """Raise ValueError if any hypothesis group is not a key of config.hypothesis_groups."""
+    unknown = {h.group for h in hypotheses} - set(config.hypothesis_groups)
+    if unknown:
+        raise ValueError(f"unknown hypothesis group(s): {sorted(unknown)}")
+
+
+class AgentState(TypedDict, total=False):
+    run_id: str
+    domain: str
+    anomaly: dict[str, Any] | None
+    hypotheses: list[Hypothesis]
+    evidence: list[dict[str, Any]]
+    proposal: dict[str, Any] | None
+    events: Annotated[list[dict[str, Any]], operator.add]
+
+
+def new_state(run_id: str = "", domain: str = "") -> AgentState:
+    """Empty initial state."""
+    return AgentState(
+        run_id=run_id,
+        domain=domain,
+        anomaly=None,
+        hypotheses=[],
+        evidence=[],
+        proposal=None,
+        events=[],
+    )
