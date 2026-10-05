@@ -9,8 +9,10 @@
       "commit": "3cc91ce"
     },
     "dev-02": {
-      "status": "TODO",
-      "round": 0
+      "status": "DONE",
+      "round": 1,
+      "base": "82085690d3ed60b4fbe67d912208bf2ddfcfdfed",
+      "commit": "bc5d995"
     },
     "dev-03": {
       "status": "TODO",
