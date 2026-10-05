@@ -70,3 +70,30 @@ def test_investigate_calls_tool_with_params(monkeypatch):
 def test_fake_tool_is_parametric_and_offline():
     a = fake_metrics.fetch_kpi_breakdown("rework_rate", "2026-10-01", "2026-10-02")
     assert a["kpi"] == "rework_rate" and (a["start"], a["end"]) == ("2026-10-01", "2026-10-02")
+
+
+def _seqs(out):
+    return [int(e["event_id"].rsplit("_", 1)[1]) for e in out["events"]]
+
+
+def test_domain_falls_back_to_config_when_state_has_none():
+    cfg = load_domain_config()
+    g = build_graph(cfg)
+    for state in ({"run_id": "r_nodomain", "evidence": [], "events": []}, new_state("r_empty")):
+        out = g.invoke(state, config={"configurable": {"thread_id": f"d_{state['run_id']}"}})
+        assert out["events"]
+        assert all(e["domain"] == cfg.domain for e in out["events"])
+
+
+def test_event_ids_restart_per_run_on_same_graph():
+    cfg = load_domain_config()
+    g = build_graph(cfg)
+    outs = [
+        g.invoke(new_state(f"run_{i}", cfg.domain), config={"configurable": {"thread_id": f"x{i}"}})
+        for i in (1, 2, 3)
+    ]
+    for i, out in enumerate(outs, 1):
+        seqs = _seqs(out)
+        assert seqs == list(range(1, len(seqs) + 1))
+        assert len({e["event_id"] for e in out["events"]}) == len(out["events"])
+        assert all(e["event_id"].startswith(f"evt_run_{i}_") for e in out["events"])
