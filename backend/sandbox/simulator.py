@@ -1,7 +1,7 @@
 """Parameterised simulator producing "normal" synthetic plant data.
 
 Resolution: one ``kpi_log`` row per (date, shift, machine).
-Defect-like KPI model (KPI name is a parameter, not hard-coded):
+Setpoint-sensitive KPI model (KPI name is a parameter, not hard-coded):
 
     mean  = baseline + sensitivity_per_c * |setpoint - sop_setpoint|
     value = clip(Normal(mean, noise_sd), 0, 1)
@@ -68,7 +68,7 @@ class SimParams:
         return replace(self, **changes)
 
 
-def defect_mean(
+def expected_kpi_value(
     setpoint: float | np.ndarray, sop_setpoint: float, baseline: float, sensitivity_per_c: float
 ):
     """Expected KPI value given the deviation of the setpoint from the SOP value."""
@@ -117,7 +117,9 @@ def simulate(params: SimParams) -> dict[str, pd.DataFrame]:
                 )
         times = pd.DatetimeIndex(ts_list)
         setpoints = _setpoint_series(params, machine, times)
-        mean = defect_mean(setpoints, params.sop_setpoint, params.baseline, params.sensitivity_per_c)
+        mean = expected_kpi_value(
+            setpoints, params.sop_setpoint, params.baseline, params.sensitivity_per_c
+        )
         values = np.clip(rng.normal(mean, params.noise_sd), 0.0, 1.0)
         kpi_rows.append(
             pd.DataFrame(

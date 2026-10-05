@@ -4,7 +4,7 @@ from backend.sandbox.schema import TABLE_NAMES, TABLE_SCHEMAS
 from backend.sandbox.simulator import (
     SetpointChange,
     SimParams,
-    defect_mean,
+    expected_kpi_value,
     params_from_config,
     simulate,
 )
@@ -14,7 +14,7 @@ __all__ = [
     "TABLE_SCHEMAS",
     "SetpointChange",
     "SimParams",
-    "defect_mean",
+    "expected_kpi_value",
     "params_from_config",
     "simulate",
 ]

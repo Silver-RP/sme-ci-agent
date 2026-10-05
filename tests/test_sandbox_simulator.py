@@ -7,7 +7,7 @@ from backend.sandbox import (
     TABLE_NAMES,
     TABLE_SCHEMAS,
     SetpointChange,
-    defect_mean,
+    expected_kpi_value,
     params_from_config,
     simulate,
 )
@@ -119,10 +119,27 @@ def test_setpoint_shift_raises_then_restore_returns_to_baseline():
     assert set(ml["event_type"]) == {"setpoint_change"}
 
 
-def test_defect_mean_function_zero_deviation_is_baseline():
-    assert defect_mean(180, 180, 0.02, 0.0028) == pytest.approx(0.02)
-    assert defect_mean(195, 180, 0.02, 0.0028) == pytest.approx(0.062)
-    assert defect_mean(165, 180, 0.02, 0.0028) == pytest.approx(0.062)  # symmetric
+def test_expected_kpi_value_zero_deviation_is_baseline():
+    assert expected_kpi_value(180, 180, 0.02, 0.0028) == pytest.approx(0.02)
+    assert expected_kpi_value(195, 180, 0.02, 0.0028) == pytest.approx(0.062)
+    assert expected_kpi_value(165, 180, 0.02, 0.0028) == pytest.approx(0.062)  # symmetric
+
+
+def test_sandbox_public_names_are_domain_neutral():
+    import ast
+    from pathlib import Path
+
+    from backend import sandbox
+
+    assert not [n for n in sandbox.__all__ if "defect" in n.lower()]
+    for path in Path(sandbox.__file__).parent.glob("*.py"):
+        tree = ast.parse(path.read_text())
+        names = [
+            n.name
+            for n in ast.walk(tree)
+            if isinstance(n, ast.FunctionDef | ast.ClassDef)
+        ]
+        assert not [n for n in names if "defect" in n.lower()], path.name
 
 
 @pytest.mark.parametrize("noise", [0.0, 0.05, 0.5, 5.0])
