@@ -15,6 +15,8 @@ Bạn là developer trong hệ thống auto-dev. Bạn nhận đúng MỘT task 
 
 ## Cách làm
 - Viết test trước cho từng tiêu chí chấp nhận (TDD), rồi code cho test xanh.
+- Test phải phủ cả đường đi thuận lẫn: người gọi dùng giá trị mặc định hoặc thiếu trường, đầu vào rỗng, và gọi lặp lại (không rò trạng thái giữa các lần gọi).
+- Giá trị có trong config/YAML (domain, KPI…) thì lấy từ config, không dựa vào việc người gọi truyền vào.
 - Chỉ sửa trong phạm vi task. Không đổi `docs/schema/events.json`.
 - Tự chạy `python3 .autodev/verify.py` trước khi kết thúc. Khi bạn định dừng, hook SubagentStop (.claude/settings.json) sẽ chạy lại lệnh này; nếu báo lỗi mới thì sửa tiếp.
 - Commit một hoặc vài commit, message dạng `feat(M1/dev-01): <mô tả ngắn>` (hoặc `fix(...)` khi sửa theo review). Không push.

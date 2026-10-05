@@ -8,7 +8,10 @@ Chạy mốc $ARGUMENTS theo chế độ A của auto-dev (thiết kế: docs/au
 ## Chuẩn bị
 0. Nếu `$ARGUMENTS` rỗng: lấy `milestone` trong `.autodev/state.json`; nếu vẫn rỗng và `plan/` chỉ có một file `M*.md` thì dùng mốc đó; nếu không thì hỏi người dùng. Dưới đây `$ARGUMENTS` nghĩa là mốc đã chọn.
 1. Đọc `.autodev/config.json`, `.autodev/state.json`, `plan/$ARGUMENTS.md`. Không đọc thêm file khác nếu không cần.
-2. Nhánh: nếu đang ở `main` thì dừng và báo. Nếu chưa ở `milestone/$ARGUMENTS` thì `git switch -c milestone/$ARGUMENTS` (hoặc `git switch` nếu đã có).
+2. Nhánh: chạy `git fetch origin`, rồi quyết định:
+   - Đang ở `milestone/$ARGUMENTS` hoặc `milestone/$ARGUMENTS-rN` và nhánh này **chưa merge** thì dùng tiếp. Chưa merge nghĩa là: chưa có commit nào ngoài `origin/main` (`git log origin/main..HEAD` rỗng VÀ `HEAD` = `origin/main`, tức nhánh mới tạo), hoặc còn commit chưa có trong `origin/main` (`git log origin/main..HEAD` không rỗng).
+   - Ngược lại (đang ở `main`, HEAD tách rời, hoặc nhánh đã merge: không còn commit riêng nhưng `HEAD` khác `origin/main`) thì tạo nhánh mới từ `origin/main`: `git switch -c milestone/$ARGUMENTS-rN origin/main`, N là số nhỏ nhất ≥ 2 chưa có (dùng `milestone/$ARGUMENTS` nếu tên này chưa có).
+   - Không bao giờ commit lên `main`.
 3. Nếu `state.json` có task đang dở (`current_task`), tiếp tục từ task đó.
 
 ## Vòng lặp mỗi task (theo thứ tự phụ thuộc, bỏ qua task DONE)
