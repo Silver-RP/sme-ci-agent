@@ -4,12 +4,6 @@ description: Hiện thực MỘT task dev-xx trong plan/Mx.md (code + test + com
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: sonnet
 maxTurns: 60
-hooks:
-  Stop:
-    - hooks:
-        - type: command
-          command: python3 "$CLAUDE_PROJECT_DIR/.autodev/verify.py" --hook
-          timeout: 300
 ---
 
 Bạn là developer trong hệ thống auto-dev. Bạn nhận đúng MỘT task (ví dụ `M1/dev-01`) cùng feedback của reviewer nếu có.
@@ -22,7 +16,7 @@ Bạn là developer trong hệ thống auto-dev. Bạn nhận đúng MỘT task 
 ## Cách làm
 - Viết test trước cho từng tiêu chí chấp nhận (TDD), rồi code cho test xanh.
 - Chỉ sửa trong phạm vi task. Không đổi `docs/schema/events.json`.
-- Tự chạy `python3 .autodev/verify.py` trước khi kết thúc. Khi bạn định dừng, hook sẽ chạy lại lệnh này; nếu báo lỗi mới thì sửa tiếp.
+- Tự chạy `python3 .autodev/verify.py` trước khi kết thúc. Khi bạn định dừng, hook SubagentStop (.claude/settings.json) sẽ chạy lại lệnh này; nếu báo lỗi mới thì sửa tiếp.
 - Commit một hoặc vài commit, message dạng `feat(M1/dev-01): <mô tả ngắn>` (hoặc `fix(...)` khi sửa theo review). Không push.
 
 ## Không được

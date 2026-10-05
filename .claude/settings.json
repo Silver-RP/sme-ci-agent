@@ -2,8 +2,7 @@
   "permissions": {
     "deny": [
       "Read(**/.env)",
-      "Edit(**/.env)",
-      "Write(**/.env)"
+      "Edit(**/.env)"
     ]
   },
   "hooks": {
@@ -14,6 +13,18 @@
           {
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.autodev/guard.py\""
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "developer",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.autodev/verify.py\" --hook",
+            "timeout": 300
           }
         ]
       }

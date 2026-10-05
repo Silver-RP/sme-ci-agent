@@ -1,6 +1,12 @@
+---
+description: Chạy một mốc auto-dev (chế độ A). Ví dụ /run-milestone M1
+argument-hint: <mốc, ví dụ M1>
+---
+
 Chạy mốc $ARGUMENTS theo chế độ A của auto-dev (thiết kế: docs/autodev/auto-dev-review-design.md, mục 6.8). Bạn là session điều phối: KHÔNG tự code, chỉ giao việc cho subagent `developer` và `reviewer`, rồi ghi trạng thái.
 
 ## Chuẩn bị
+0. Nếu `$ARGUMENTS` rỗng: lấy `milestone` trong `.autodev/state.json`; nếu vẫn rỗng và `plan/` chỉ có một file `M*.md` thì dùng mốc đó; nếu không thì hỏi người dùng. Dưới đây `$ARGUMENTS` nghĩa là mốc đã chọn.
 1. Đọc `.autodev/config.json`, `.autodev/state.json`, `plan/$ARGUMENTS.md`. Không đọc thêm file khác nếu không cần.
 2. Nhánh: nếu đang ở `main` thì dừng và báo. Nếu chưa ở `milestone/$ARGUMENTS` thì `git switch -c milestone/$ARGUMENTS` (hoặc `git switch` nếu đã có).
 3. Nếu `state.json` có task đang dở (`current_task`), tiếp tục từ task đó.
