@@ -1,0 +1,20 @@
+{
+  "task_id": "M1/dev-03",
+  "status": "PASS",
+  "criteria": [
+    {"criterion": "Graph chạy end-to-end với checkpointer in-memory, state cuối có hypotheses không rỗng", "met": true, "evidence": "tests/test_graph.py::test_graph_runs_end_to_end_with_hypotheses; backend/agent/graph.py build_graph dùng InMemorySaver mặc định, không cần Postgres"},
+    {"criterion": "Mọi event hợp lệ theo events.json (agent, domain, type thuộc enum) và có test validate", "met": true, "evidence": "tests/test_graph.py::test_events_valid_against_contract (_validate_event kiểm required, enum type/agent, additionalProperties, domain, event_id duy nhất); docs/schema/events.json không bị đổi"},
+    {"criterion": "Investigate mock gọi fake tool qua tham số (KPI, khoảng thời gian), không ngầm hiểu defect", "met": true, "evidence": "backend/agent/graph.py:68-72 gọi fetch_kpi_breakdown(anomaly['kpi'], start, end); backend/tools/fake_metrics.py; tests/test_graph.py::test_investigate_calls_tool_with_params và test_fake_tool_is_parametric_and_offline"},
+    {"criterion": "Không gọi mạng, không cần API key", "met": true, "evidence": "graph.py và fake_metrics.py không import LLM hay HTTP; toàn bộ test chạy offline, 25 test pass"}
+  ],
+  "blocking_issues": [],
+  "non_blocking": [
+    "build_graph tạo bộ đếm event (itertools.count) trong closure, nên event_id không reset giữa các lần invoke trên cùng graph. Với một run_id trùng thì có thể lệch số thứ tự; cân nhắc đưa seq vào state.",
+    "DEFAULT_PERIOD và việc chọn config.kpis[0] là hard-code tạm thời trong graph. Nên lấy từ tham số run hoặc profile ở task sau.",
+    "Investigate mock luôn chọn nhóm giả thuyết đầu tiên và cause đầu tiên, nên chỉ kiểm tra được cấu trúc, chưa kiểm tra logic.",
+    "Test dùng load_domain_config() thật (file data/context_profile.yaml), không dùng fixture. Cách này phù hợp vì dev-01 đã DONE."
+  ],
+  "tests_rerun": {"command": "uv run pytest -q", "passed": 25, "failed": 0},
+  "plan_suggestions": [],
+  "summary": "Cả 4 tiêu chí của dev-03 đạt. verify.py sạch so với baseline, pytest 25 pass 0 fail, events.json không đổi, không có secret hay tên model hard-code. Các góp ý còn lại chỉ là non-blocking."
+}

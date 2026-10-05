@@ -18,7 +18,7 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 - [ ] T-014 [Tools] query_logs, correlate, get_shift_schedule, read_sop (chỉ đọc) + test. Due 8/10
 - [x] T-015 [Demo] data/context_profile.yaml (KPI, nhóm giả thuyết Ishikawa, SOP mẫu). Due 6/10
 - [ ] T-016 [Demo] Khởi tạo Next.js (yarn) và dashboard skeleton (bảng anomaly + timeline trace) chạy bằng mock events; freeze 7/10. Due 7/10
-- [ ] T-017 [Core] state.py trung tính + graph skeleton nối fake tool; Investigate bản mock. Due 6/10
+- [x] T-017 [Core] state.py trung tính + graph skeleton nối fake tool; Investigate bản mock. Due 6/10
 
 ## M2: Agent core + API (10/10)
 

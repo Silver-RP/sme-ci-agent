@@ -15,12 +15,14 @@
       "commit": "bc5d995"
     },
     "dev-03": {
-      "status": "TODO",
-      "round": 0
+      "status": "DONE",
+      "round": 1,
+      "base": "c9a123cf9877e13240ad9de927bc2e8df393fe35",
+      "commit": "0ff8abc"
     }
   },
   "verify": {
     "consecutive_blocks": 0,
-    "last_status": null
+    "last_status": "PASS"
   }
 }
