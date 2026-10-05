@@ -41,7 +41,9 @@ def main():
         if re.search(pattern, command, flags=re.IGNORECASE):
             print(f"Bị chặn bởi .autodev/guard.py: {reason}", file=sys.stderr)
             return 2
-    if re.search(r"\bgit\s+(push|commit)\b", command) and current_branch() in ("main", "master"):
+    switches_first = re.search(r"\bgit\s+(switch|checkout)\b.*\bgit\s+(push|commit)\b", command)
+    on_main = current_branch() in ("main", "master")
+    if re.search(r"\bgit\s+(push|commit)\b", command) and on_main and not switches_first:
         print("Bị chặn bởi .autodev/guard.py: đang ở main; tạo nhánh riêng trước.", file=sys.stderr)
         return 2
     return 0

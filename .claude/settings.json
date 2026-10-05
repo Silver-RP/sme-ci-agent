@@ -16,6 +16,18 @@
           }
         ]
       }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "developer",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.autodev/verify.py\" --hook",
+            "timeout": 300
+          }
+        ]
+      }
     ]
   }
 }
