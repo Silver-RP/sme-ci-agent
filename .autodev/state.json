@@ -1,6 +1,6 @@
 {
   "milestone": "M2",
-  "current_task": "dev-02",
+  "current_task": null,
   "tasks": {
     "dev-01": {
       "status": "DONE",
@@ -15,15 +15,17 @@
       "commit": "d150ff1"
     },
     "dev-03": {
-      "status": "TODO",
-      "round": 0
+      "status": "DONE",
+      "round": 1,
+      "base": "5815190e7d36eb84ecd8113dc8ddcde4edf51535",
+      "commit": "009e77b"
     }
   },
   "verify": {
     "consecutive_blocks": 0,
     "last_status": "PASS",
-    "hook_runs": 3,
-    "last_hook_at": "2026-10-05T18:17:20Z",
+    "hook_runs": 4,
+    "last_hook_at": "2026-10-05T18:37:28Z",
     "last_hook_agent": "developer"
   },
   "history": {

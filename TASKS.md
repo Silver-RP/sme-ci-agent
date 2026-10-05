@@ -13,7 +13,7 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 
 - [x] T-010 [Data] Data model 6 bảng (kpi_log, machine_log, shift_schedule, inventory, supplier, sop) + simulator có tham số. DoD: test "đổi setpoint → defect về baseline" xanh. Due 6/10
 - [x] T-011 [Data] Anomaly injector đọc YAML + ground truth ẩn có timestamp inject; có nguyên nhân tái diễn. DoD: sinh 6 tháng dữ liệu có ground truth. Due 7/10
-- [ ] T-012 [Data] Detect thống kê: baseline, control limits, xuất anomaly event đúng schema. DoD: bắt đúng anomaly của scenario 1, không báo bảo trì có kế hoạch là lỗi thật. Due 8/10
+- [x] T-012 [Data] Detect thống kê: baseline, control limits, xuất anomaly event đúng schema. DoD: bắt đúng anomaly của scenario 1, không báo bảo trì có kế hoạch là lỗi thật. Due 8/10
 - [ ] T-013 [Tools] DB models + migration: runs, events, audit_log, sop_versions, learning_store. Due 6/10
 - [ ] T-014 [Tools] query_logs, correlate, get_shift_schedule, read_sop (chỉ đọc) + test. Due 8/10
 - [x] T-015 [Demo] data/context_profile.yaml (KPI, nhóm giả thuyết Ishikawa, SOP mẫu). Due 6/10

@@ -12,6 +12,7 @@ Mỗi task một mục: thời gian, số vòng, commit, kết quả review, % h
 | M1/dev-04 (T-017 bổ sung) | 1 | 0 | PASS | (người dùng điền) | dev ~80s + review ~35s | |
 | M2/dev-01 (T-010) | 2 | 0 | FAIL → PASS | (người dùng điền) | dev ~150s + review ~134s; rework ~158s + review ~77s | |
 | M2/dev-02 (T-011) | 1 | 0 | PASS | (người dùng điền) | dev ~199s + review ~306s | |
+| M2/dev-03 (T-012) | 1 | 0 | PASS | (người dùng điền) | dev ~838s + review ~84s | |
 
 ## Nhật ký
 
@@ -63,6 +64,16 @@ Mỗi task một mục: thời gian, số vòng, commit, kết quả review, % h
 - Non-blocking: `setpoint_sensitivity_per_c` và `effect` là hai nguồn độc lập cho mức KPI; FP1 chỉ có 6 điểm nên biên an toàn của tiêu chí 3 hẹp.
 - Đã tick T-011 trong TASKS.md.
 
+### M2/dev-03 (T-012): DONE
+- Ngày: 2026-10-06. Vòng: 1. Commit: 009e77b. Review: .autodev/reviews/M2-dev-03-r1.json (PASS).
+- Hook SubagentStop chạy (`hook_runs` 3 → 4, PASS).
+- `backend/detect/statistical.py`: tham chiếu 28 ngày đầu theo (máy, KPI); giới hạn trên = baseline + `alert_threshold_sd` × sigma (hệ số đọc từ YAML); luật 2 trên 3 điểm; gộp các điểm xác nhận cách nhau ≤ 3 ca; loại điểm trong cửa sổ bảo trì (`machine_log` event_type="maintenance") trước khi áp luật. Event dùng lại `make_event` của graph, `agent="quality"`.
+- Seed 1..5: 0 báo động giả, mỗi seed đúng 2 event (M02 từ 2026-03-10 22:00, M01 từ 2026-06-02 22:00). Toàn repo 79 test, 3.3s.
+- Developer mất ~14 phút (lâu nhất mốc), chủ yếu để dò tham số cho các test ngưỡng.
+- Non-blocking: `DetectParams` (28 ngày, 2/3, gộp 3 ca) nằm trong code; bảo trì chồng lên anomaly làm báo trễ; bảo trì thiếu dòng end che đến hết horizon; dữ liệu < 28 ngày thì không bao giờ báo; chưa có sàn sigma khi sigma = 0; chưa phát event `planned: true`.
+- Đã tick T-012 trong TASKS.md.
+
 ## Đề xuất chờ duyệt (c)
 
-(chưa có)
+- **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
+- **M2-c2 (từ dev-01, dev-02):** leader duyệt các khóa đã thêm vào `scenario1.yaml` khi làm T-004: `baseline.setpoint_sensitivity_per_c`, `plant.shift_start_hours`, `plant.start_date`, FP1 (`start`, `end`, `effect`, `planned`), `injected_anomalies[].trace.*`. Cần quyết định thêm: `effect` của A2 (0.055) không khớp với hàm setpoint (195 °C cho 0.062); giữ hai nguồn độc lập hay buộc khớp.
