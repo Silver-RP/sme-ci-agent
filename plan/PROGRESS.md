@@ -124,6 +124,11 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - `dashboard/lib/{sources,validate,useRunEvents}.ts`, `components/RunView.tsx`: SSE và phát lại fixture cùng giao diện (`?source=fixture|sse&run=<id>`), bỏ event sai schema và báo lỗi trên UI, reconnect tối đa 3 lần. 23 test vitest pass.
 - Non-blocking: validator viết tay có thể lệch events.json (nên có test đối chiếu); chưa thử với SSE backend thật.
 
+### R6/dev-03 (T-026 phần 2): DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: 595facf. Review: .autodev/reviews/dev-03-r1.json (PASS).
+- `dashboard/lib/api.ts`, `components/{RunControls,LiveRun}.tsx`, `?source=live`: start → answer → approval, chỉ gửi khi người bấm; lỗi 404/409/422 hiển thị rõ; README chạy fixture và backend thật; tick T-016, T-026. 34 test vitest pass.
+- Non-blocking: nút Approve/Reject chưa chặn khi `decided_by` trống (backend trả 422); chưa chạy tay với backend thật.
+
 ## Đề xuất chờ duyệt (c)
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
