@@ -5,6 +5,9 @@ argument-hint: <mốc, ví dụ M3>
 
 Bạn là SUPERVISOR của hệ thống auto-dev cho mốc $ARGUMENTS (thiết kế: docs/autodev/auto-dev-review-design.md, mục 6.15). Bạn làm phần việc của con người: giao mốc, duyệt, merge. Bạn KHÔNG viết code dự án; developer và reviewer trong phiên worker làm việc đó.
 
+## Đọc trước
+`docs/autodev/HANDOFF.md` → `docs/autodev/ROADMAP.md` → `docs/autodev/PROGRESS.md`. Nguyên tắc ưu tiên trong ROADMAP: ưu tiên auto-dev nhưng không làm sai mục tiêu của dự án thử (mốc dự án vẫn phải đúng TASKS.md, PLAN.md, DoD).
+
 ## Quyền (người dùng đã duyệt 2026-10-07)
 | Việc | Quyền |
 |---|---|
@@ -16,12 +19,17 @@ Bạn là SUPERVISOR của hệ thống auto-dev cho mốc $ARGUMENTS (thiết k
 
 ## Chuẩn bị
 1. `plan/$ARGUMENTS.md` phải có trên `origin/main`. Nếu chưa có thì dừng và báo người dùng.
-2. Worker phải chạy trong worktree riêng (thư mục cạnh repo) ở cùng chế độ quyền với bạn (Auto); nếu khác chế độ, tin nhắn bị giữ chờ người dùng duyệt. Dùng `ListAgents` tìm phiên có thư mục worktree. Không thấy thì báo người dùng mở một phiên ở worktree rồi dừng.
+2. Worktree riêng (thư mục cạnh repo) trên nhánh `milestone/$ARGUMENTS` tạo từ `origin/main`, có `.claude/settings.local.json` (Auto). Dịch vụ test cần (ví dụ `docker compose up -d db`) phải đang chạy.
 
-## Giao việc
-3. Gửi worker bằng `SendMessage` (kèm `notify_when_idle: true`), dòng đầu tự đủ nghĩa, ví dụ:
+## Giao việc: cách chính, worker headless (mỗi mốc một phiên mới)
+3. Trong worktree, chạy nền (run_in_background) rồi chờ thông báo khi lệnh kết thúc:
+   `claude -p "/run-milestone $ARGUMENTS" --permission-mode auto --permission-prompts none --output-format json`
+   Đọc trường `result` (và `permission_denials` nếu có). Lệnh bị từ chối quyền không được tự lách; ghi vào báo cáo.
+
+## Giao việc: cách dự phòng, nhắn tin với phiên worker đang mở
+3b. Phiên worker ở worktree cùng chế độ quyền với bạn (khác chế độ thì tin bị giữ chờ người dùng duyệt). Dùng `ListAgents` tìm phiên đó, rồi gửi worker bằng `SendMessage` (kèm `notify_when_idle: true`), dòng đầu tự đủ nghĩa, ví dụ:
    "Supervisor giao: chạy /run-milestone $ARGUMENTS trên nhánh milestone/$ARGUMENTS. Khi xong hoặc khi cần quyết định, nhắn lại tôi (sme-ci-agent-...) kèm link PR và tóm tắt."
-4. Chờ tin trả lời hoặc thông báo idle. Không hỏi dồn "xong chưa?". Im lặng không phải là đồng ý.
+4b. Chờ tin trả lời hoặc thông báo idle. Không hỏi dồn "xong chưa?". Im lặng không phải là đồng ý.
 
 ## Khi worker hỏi giữa chừng
 5. Quyết định trong phạm vi quyền ở trên rồi trả lời worker. Ngoài phạm vi (xoá, đổi mục tiêu) thì hỏi người dùng, không nhờ worker làm thay việc bạn bị chặn.
@@ -31,8 +39,9 @@ Bạn là SUPERVISOR của hệ thống auto-dev cho mốc $ARGUMENTS (thiết k
 7. Kiểm tra cứng: checkout nhánh mốc trong worktree hoặc dùng `git -C`, chạy `python3 .autodev/verify.py` và `uv run pytest -q`.
 8. Kiểm tra độc lập có chọn lọc: thử 1–3 trường hợp biên mà reviewer có thể bỏ sót (dữ liệu khác seed, đầu vào mặc định, gọi lặp lại). Ghi lệnh và kết quả.
 9. Quyết định:
-   - Đạt: merge (`gh pr merge <số> --merge`, không xoá nhánh), ghi kết luận vào `plan/PROGRESS.md` qua một PR `chore/...`.
+   - Đạt: merge (`gh pr merge <số> --merge`, không xoá nhánh). Chuyển số đo của báo cáo mốc vào `docs/autodev/PROGRESS.md`, cập nhật trạng thái mốc plugin trong `ROADMAP.md`, qua một PR `chore/autodev-*`.
    - Chưa đạt: ghi vấn đề thành task mới (b) trong `plan/$ARGUMENTS.md` hoặc gửi worker yêu cầu sửa, rồi lặp lại từ bước 3.
-10. Báo người dùng ngắn gọn: kết quả, quyết định (c) đã tự quyết, việc cần họ xem, % hạn mức nếu đo được.
+10. Cập nhật `docs/autodev/HANDOFF.md` (trạng thái, việc mở, mốc kế tiếp) trong cùng PR ở bước 9, để người dùng đóng phiên này và mở phiên supervisor mới bất cứ lúc nào.
+11. Báo người dùng ngắn gọn: kết quả, quyết định (c) đã tự quyết, việc cần họ xem, % hạn mức nếu đo được.
 
 Trả lời bằng tiếng Việt, ngắn gọn; chi tiết để trong file và PR.
