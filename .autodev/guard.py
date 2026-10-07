@@ -44,7 +44,9 @@ def main():
         if any(re.search(pattern, part, flags=re.IGNORECASE) for part in parts):
             print(f"Bị chặn bởi .autodev/guard.py: {reason}", file=sys.stderr)
             return 2
-    switches_first = re.search(r"\bgit\s+(switch|checkout)\b.*\bgit\s+(push|commit)\b", command)
+    switches_first = re.search(
+        r"\bgit\s+(switch|checkout)\b.*\bgit\s+(push|commit)\b", command, flags=re.DOTALL
+    )
     on_main = current_branch() in ("main", "master")
     if re.search(r"\bgit\s+(push|commit)\b", command) and on_main and not switches_first:
         print("Bị chặn bởi .autodev/guard.py: đang ở main; tạo nhánh riêng trước.", file=sys.stderr)
