@@ -1,40 +1,59 @@
 {
-  "milestone": "R4",
-  "current_task": null,
+  "milestone": "R5",
+  "current_task": "dev-02",
   "tasks": {
     "dev-01": {
       "status": "DONE",
       "round": 1,
-      "base": "de41fc166c1ce00a6fcbea136b39aad399aae4b4",
-      "commit": "8563495"
+      "base": "438a849325eab3ab49a549767a082d174dd75fac",
+      "commit": "f2daf09"
     },
     "dev-02": {
-      "status": "DONE",
-      "round": 1,
-      "base": "1a3567f71f0edd5cfcfa1ea5c8fd113818296048",
-      "commit": "350e08b"
+      "status": "IN_PROGRESS",
+      "round": 0,
+      "base": "f2daf098e83e2a77effc56241ceb3e08b334e20c"
     },
     "dev-03": {
-      "status": "DONE",
-      "round": 1,
-      "base": "400717917c57282d139beecbe90f893b7248ce88",
-      "commit": "d30aadf"
-    },
-    "dev-04": {
-      "status": "DONE",
-      "round": 1,
-      "base": "385d695dcc7190e06aa78ff9d5b9ee42321ff876",
-      "commit": "870465a"
+      "status": "TODO",
+      "round": 0
     }
   },
   "verify": {
     "consecutive_blocks": 0,
     "last_status": "PASS",
-    "hook_runs": 11,
-    "last_hook_at": "2026-10-07T16:21:57Z",
+    "hook_runs": 12,
+    "last_hook_at": "2026-10-07T16:28:35Z",
     "last_hook_agent": "developer"
   },
   "history": {
+    "R4": {
+      "tasks": {
+        "dev-01": {
+          "status": "DONE",
+          "round": 1,
+          "base": "de41fc166c1ce00a6fcbea136b39aad399aae4b4",
+          "commit": "8563495"
+        },
+        "dev-02": {
+          "status": "DONE",
+          "round": 1,
+          "base": "1a3567f71f0edd5cfcfa1ea5c8fd113818296048",
+          "commit": "350e08b"
+        },
+        "dev-03": {
+          "status": "DONE",
+          "round": 1,
+          "base": "400717917c57282d139beecbe90f893b7248ce88",
+          "commit": "d30aadf"
+        },
+        "dev-04": {
+          "status": "DONE",
+          "round": 1,
+          "base": "385d695dcc7190e06aa78ff9d5b9ee42321ff876",
+          "commit": "870465a"
+        }
+      }
+    },
     "M3": {
       "tasks": {
         "dev-01": {
