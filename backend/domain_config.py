@@ -28,8 +28,20 @@ class SOP(_Strict):
     steps: list[str] = Field(default_factory=list)
 
 
+class DetectParams(_Strict):
+    """Detect parameters (YAML key ``detect:``). The defaults here are the only place they live."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    reference_days: int = Field(default=28, ge=1)
+    rule_window: int = Field(default=3, ge=1)
+    rule_hits: int = Field(default=2, ge=1)
+    max_gap: int = Field(default=3, ge=0)  # points (shifts) of normal data that keep one anomaly open
+
+
 class DomainConfig(_Strict):
     domain: str = Field(min_length=1)
+    detect: DetectParams = Field(default_factory=DetectParams)
     kpis: list[KPI] = Field(min_length=1)
     hypothesis_groups: dict[str, list[str]] = Field(min_length=1)
     sop: list[SOP]

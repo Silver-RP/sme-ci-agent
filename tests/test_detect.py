@@ -165,3 +165,40 @@ def test_anomalies_are_merged_not_per_point():
     a1 = [a for a in detect_anomalies(d.tables, CFG, KPI) if a.machine_id == "M02"]
     assert len(a1) == 1 and a1[0].n_points > 10  # lasts to the end of the horizon
     assert DetectParams().rule_hits == 2 and DetectParams().rule_window == 3
+
+
+# dev-01 (M3): detect parameters live in the YAML `detect:` key
+def _cfg_with_yaml(tmp_path, mutate):
+    import yaml
+
+    from backend.domain_config import DEFAULT_PROFILE_PATH
+
+    data = yaml.safe_load(DEFAULT_PROFILE_PATH.read_text(encoding="utf-8"))
+    mutate(data)
+    p = tmp_path / "profile.yaml"
+    p.write_text(yaml.safe_dump(data), encoding="utf-8")
+    return load_domain_config(p)
+
+
+def test_yaml_detect_params_change_results(tmp_path):
+    t = ds(42).tables
+    base = detect_anomalies(t, CFG, KPI)
+    cfg = _cfg_with_yaml(tmp_path, lambda d: d["detect"].update(rule_hits=1))
+    assert cfg.detect.rule_hits == 1
+    loose = detect_anomalies(t, cfg, KPI)
+    assert len(loose) > len(base)  # single-point exceedances now count
+    # explicit params still win over the config
+    assert detect_anomalies(t, cfg, KPI, DetectParams()) == base
+
+
+def test_missing_detect_key_uses_defaults(tmp_path):
+    t = ds(42).tables
+    cfg = _cfg_with_yaml(tmp_path, lambda d: d.pop("detect"))
+    assert cfg.detect == DetectParams()
+    assert detect_anomalies(t, cfg, KPI) == detect_anomalies(t, CFG, KPI)
+    assert detect_anomalies(t, cfg, KPI) == detect_anomalies(t, CFG, KPI, DetectParams())
+
+
+def test_no_detect_param_constants_in_detect_package():
+    src = (Path(__file__).resolve().parents[1] / "backend" / "detect" / "statistical.py").read_text()
+    assert "reference_days: int" not in src and "class DetectParams" not in src
