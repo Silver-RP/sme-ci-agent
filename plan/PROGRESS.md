@@ -84,6 +84,11 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - `backend/agent/llm.py` (AnthropicLLM đọc `MODEL_REASONING`, ScriptedLLM), `backend/agent/prompts/system.py` sinh từ YAML. 116 test pass.
 - Non-blocking: chưa có test tool_result trong messages (thuộc dev-02).
 
+### R4/dev-02 (T-020 phần 2): DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: 350e08b. Review: .autodev/reviews/dev-02-r1.json (PASS).
+- `backend/agent/nodes/investigate.py` (vòng tool use), `backend/agent/events.py`, `build_graph(config, checkpointer, llm=None, tool_ctx=None)`. Điều chỉnh (a): `investigate.max_tool_steps` trong YAML, khóa `evidence_gap` trong state. 132 test pass.
+- Non-blocking: giả thuyết rỗng không đặt evidence_gap; `_run_tool` chỉ bắt TypeError/ValueError/KeyError.
+
 ## Đề xuất chờ duyệt (c)
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
