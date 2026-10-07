@@ -36,6 +36,8 @@ class AgentState(TypedDict, total=False):
     evidence: list[dict[str, Any]]
     proposal: dict[str, Any] | None
     evidence_gap: bool  # Investigate could not conclude; Ask should handle it
+    question_count: int  # questions asked so far in this run (bounded by config.ask.max_questions)
+    status: str  # "" while running; "awaiting_human" when the run stopped waiting for a person
     events: Annotated[list[dict[str, Any]], operator.add]
 
 

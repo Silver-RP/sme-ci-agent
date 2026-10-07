@@ -47,8 +47,18 @@ class InvestigateParams(_Strict):
     max_tool_steps: int = Field(default=6, ge=1)  # max LLM rounds in one investigation
 
 
+class AskParams(_Strict):
+    """Ask parameters (YAML key ``ask:``)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    confidence_threshold: float = Field(default=0.6, ge=0.0, le=1.0)  # top confidence below this -> ask
+    max_questions: int = Field(default=2, ge=0)  # max questions per run
+
+
 class DomainConfig(_Strict):
     domain: str = Field(min_length=1)
+    ask: AskParams = Field(default_factory=AskParams)
     detect: DetectParams = Field(default_factory=DetectParams)
     investigate: InvestigateParams = Field(default_factory=InvestigateParams)
     kpis: list[KPI] = Field(min_length=1)

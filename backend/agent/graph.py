@@ -1,6 +1,7 @@
 """Agent graph skeleton: Observe -> Detect -> Investigate (LLM tool use, or mock when no LLM is given) -> end.
 
-Interrupt/Postgres checkpointer come later (T-021); the checkpointer is injectable.
+With an LLM the graph adds Ask (interrupt) after Investigate; the checkpointer is injectable
+(see backend/agent/checkpoint.py for Postgres).
 """
 
 from __future__ import annotations
@@ -12,6 +13,12 @@ from langgraph.graph import END, START, StateGraph
 
 from backend.agent.events import make_event
 from backend.agent.llm import LLM
+from backend.agent.nodes.ask import (
+    make_ask_node,
+    make_halt_node,
+    make_wait_answer_node,
+    route_after_investigate,
+)
 from backend.agent.nodes.investigate import run_investigation
 from backend.agent.state import AgentState, Hypothesis, validate_hypothesis_groups
 from backend.domain_config import DomainConfig
@@ -104,5 +111,18 @@ def build_graph(
     g.add_edge(START, "observe")
     g.add_edge("observe", "detect")
     g.add_edge("detect", "investigate")
-    g.add_edge("investigate", END)
+    if llm is None:
+        g.add_edge("investigate", END)  # legacy mock skeleton: no Ask
+    else:
+        g.add_node("ask", make_ask_node(config))
+        g.add_node("wait_answer", make_wait_answer_node(config))
+        g.add_node("halt", make_halt_node(config))
+        g.add_conditional_edges(
+            "investigate",
+            lambda s: route_after_investigate(s, config),
+            {"end": END, "ask": "ask", "halt": "halt"},
+        )
+        g.add_edge("ask", "wait_answer")
+        g.add_edge("wait_answer", "investigate")
+        g.add_edge("halt", END)
     return g.compile(checkpointer=checkpointer or InMemorySaver())
