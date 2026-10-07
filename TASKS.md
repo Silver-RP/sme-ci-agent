@@ -17,7 +17,7 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 - [x] T-013 [Tools] DB models + migration: runs, events, audit_log, sop_versions, learning_store. Due 6/10
 - [x] T-014 [Tools] query_logs, correlate, get_shift_schedule, read_sop (chỉ đọc) + test. Due 8/10
 - [x] T-015 [Demo] data/context_profile.yaml (KPI, nhóm giả thuyết Ishikawa, SOP mẫu). Due 6/10
-- [ ] T-016 [Demo] Khởi tạo Next.js (yarn) và dashboard skeleton (bảng anomaly + timeline trace) chạy bằng mock events; freeze 7/10. Due 7/10
+- [x] T-016 [Demo] Khởi tạo Next.js (yarn) và dashboard skeleton (bảng anomaly + timeline trace) chạy bằng mock events; freeze 7/10. Due 7/10
 - [x] T-017 [Core] state.py trung tính + graph skeleton nối fake tool; Investigate bản mock. Due 6/10
 
 ## M2: Agent core + API (10/10)
@@ -28,7 +28,7 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 - [x] T-023 [Tools] propose_sop/apply_sop (cần duyệt, có phiên bản), measure (before/after, MTTD/MTTR), learning_store. Due 10/10
 - [x] T-024 [Core] Node Act/Measure/Learn; điều phối bằng cạnh điều kiện theo ngưỡng KPI. Due 10/10
 - [x] T-025 [Tools] FastAPI: start run, answer, approve/reject; SSE stream trace. Due 9/10
-- [ ] T-026 [Demo] Dashboard đọc SSE (phát lại fixture qua đúng endpoint), sau đó ghép API thật. Due 10/10
+- [x] T-026 [Demo] Dashboard đọc SSE (phát lại fixture qua đúng endpoint), sau đó ghép API thật. Due 10/10
 
 ## M3: End-to-end (11/10)
 
