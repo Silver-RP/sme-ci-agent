@@ -56,9 +56,31 @@ class AskParams(_Strict):
     max_questions: int = Field(default=2, ge=0)  # max questions per run
 
 
+class MeasureParams(_Strict):
+    """Measure parameters (YAML key ``measure:``): the KPI threshold that decides rollback."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    window_days: int = Field(default=7, ge=1)  # before/after window passed to the measure tool
+    # KPI passes when it is within ``tolerance`` (relative) of the KPI target on the good side:
+    # decrease: after <= target * (1 + tolerance); increase: after >= target * (1 - tolerance)
+    tolerance: float = Field(default=0.25, ge=0.0)
+
+
+class LoopParams(_Strict):
+    """Loop limits (YAML key ``loop:``) so Improve/rollback cycles end and wait for a person."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    max_rejections: int = Field(default=3, ge=1)  # proposals a person may reject before the run halts
+    max_rollbacks: int = Field(default=2, ge=1)  # rollbacks per run before the run halts
+
+
 class DomainConfig(_Strict):
     domain: str = Field(min_length=1)
     ask: AskParams = Field(default_factory=AskParams)
+    measure: MeasureParams = Field(default_factory=MeasureParams)
+    loop: LoopParams = Field(default_factory=LoopParams)
     detect: DetectParams = Field(default_factory=DetectParams)
     investigate: InvestigateParams = Field(default_factory=InvestigateParams)
     kpis: list[KPI] = Field(min_length=1)
