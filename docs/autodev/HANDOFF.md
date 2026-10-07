@@ -8,7 +8,7 @@ Supervisor cập nhật file này ở cuối mỗi mốc (và trước khi ngư�
 - Người dùng giao tiếp bằng tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa và được báo ngắn gọn.
 
 ## Bước tiếp theo (chờ người dùng chọn, 2026-10-08)
-1. ~~Xoá 11 file `* 2.py`~~ (người dùng duyệt, đã xoá 2026-10-08). ~~Sửa runner~~ (PR `chore/autodev-runner-fixes`): đưa worktree worker về `origin/main` trước mỗi mốc (giữ nhánh `milestone/<Rx>` còn commit chưa merge; worktree bẩn hoặc thiếu `plan/<Rx>.md` → dừng exit 2); worker không mở PR → exit 4, không gọi supervisor; thông báo macOS khi dừng/xong (`AUTODEV_NOTIFY=0` để tắt); `STOPPED.md` cũ được đổi tên `STOPPED-<giờ>.md`, không xoá.
+1. ~~Xoá 11 file `* 2.py`~~ (người dùng duyệt, đã xoá 2026-10-08). ~~Sửa runner~~ (PR `chore/autodev-runner-fixes`): đưa worktree worker về `origin/main` trước mỗi mốc (giữ nhánh `milestone/<Rx>` còn commit chưa merge; worktree bẩn hoặc thiếu `plan/<Rx>.md` → dừng exit 2); worker không mở PR → exit 4, không gọi supervisor; thông báo macOS khi dừng/xong (mặc định tắt theo yêu cầu người dùng; bật bằng `AUTODEV_NOTIFY=1`); `STOPPED.md` cũ được đổi tên `STOPPED-<giờ>.md`, không xoá.
 2. Còn của P4: kiểm chứng nhánh chờ reset khi gặp hạn mức thật (đối chiếu `LIMIT_RE`/`RESET_RE`), rồi đóng P4.
 3. **Đề xuất (người dùng hỏi, chưa duyệt):** dashboard cục bộ chỉ đọc để xem worker headless trực tiếp (dòng thời gian dev-xx/review, tool gần nhất, chi phí), đọc transcript `~/.claude/projects/<worktree>/*.jsonl`; có thể chuyển runner sang `--output-format stream-json`. Đây là việc plugin (P4/P5), không phải TASKS.md.
 4. Sau đó chọn mốc dự án tiếp theo: dashboard T-016/T-026 (cần cho demo) và việc mở của R5.
@@ -31,7 +31,7 @@ Cách khởi chạy chế độ B (đã chạy thật): từ repo chính `nohup 
 - Guard so khớp theo chữ: commit message hay chuỗi thử chứa lệnh bị cấm cũng bị chặn; viết lại câu chữ hoặc đưa chuỗi thử vào file.
 - Dự án: `correlate` chưa có tín hiệu cho nhóm people và `ambient_temperature` (cần cho T-020, T-004). Dashboard (T-016, T-026) chưa có ai làm, cần cho demo.
 - Dự án (từ R5): (1) `apply_sop` gọi trực tiếp chưa chặn `approved_by='llm'`; `parse_decision` là deny-list (`bot`, `claude` lọt) → nên dùng một danh sách người duyệt hợp lệ (allow-list) dùng chung. (2) Detect thật chưa nối vào graph mặc định; registry run của API trong bộ nhớ; factory mặc định chưa test thật.
-- Repo nằm trong Desktop đồng bộ iCloud → iCloud sinh file "tên 2" khi xung đột. Nên chuyển repo và worktree ra ngoài (ví dụ `~/dev/`); việc này cần người dùng làm và duyệt.
+- Repo nằm trong Desktop đồng bộ iCloud → iCloud sinh file "tên 2" khi xung đột (đã gặp cả `.git/index 2` ở repo chính). Nên chuyển repo và worktree ra ngoài (ví dụ `~/dev/`); việc này cần người dùng làm và duyệt.
 - Để sau (người dùng chốt): đo độ dài phiên và chất lượng theo thời gian; hook trước khi nén ngữ cảnh (ROADMAP, "Để sau").
 
 ## Lịch sử ngắn

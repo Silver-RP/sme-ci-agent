@@ -37,6 +37,28 @@ Hai luồng không sửa chung file nên chạy song song không xung đột. Li
 - Đo chất lượng theo thời gian: số vòng review, số lần verify chặn, lỗi tìm ra sau merge.
 - Hook trước khi Claude Code nén ngữ cảnh (cần kiểm chứng tên và cú pháp) để nhắc cập nhật HANDOFF và mở phiên mới.
 
+### Thông báo khi runner dừng hoặc xong (người dùng nêu 2026-10-08)
+- **Máy tính (đã có, đang tắt):** thông báo macOS có tiếng trong `.autodev/run.py`, bật bằng `AUTODEV_NOTIFY=1 .autodev/autodev-run.sh R6`. Mặc định tắt theo yêu cầu người dùng.
+- **Điện thoại (chưa làm), các lựa chọn:**
+  - ntfy.sh: miễn phí, có app iOS/Android, runner chỉ cần một lệnh POST HTTP. Tên topic phải ngẫu nhiên vì ai đoán được tên đều đọc được; không gửi nội dung nhạy cảm.
+  - Telegram bot: miễn phí, riêng tư hơn; cần tạo bot, token lưu ngoài repo và không commit.
+  - Pushover: trả phí một lần, ổn định.
+  - App Claude trên điện thoại: chỉ báo cho phiên Claude Code (Remote Control), không báo cho tiến trình `claude -p` của runner; cần kiểm chứng trước khi dùng.
+  - Instagram: không khuyến nghị. API nhắn tin chỉ dành cho tài khoản doanh nghiệp trả lời khách trong 24 giờ, không gửi được thông báo cho chính mình; dùng công cụ không chính thức thì dễ bị khoá tài khoản.
+
+### Giao diện xem `claude -p` đang làm gì (người dùng nêu 2026-10-08)
+- Đã có: `.autodev/watch.sh` (terminal, chỉ đọc): runner còn chạy không, `run.log`, commit và file đang đổi ở từng worktree, transcript cập nhật bao lâu trước, số lệnh tool, tool gần nhất.
+- Dashboard web cục bộ, chỉ đọc (đề xuất làm trước): server Python nhỏ, không thư viện ngoài, mở trong Simple Browser của VS Code. Đọc transcript `~/.claude/projects/<worktree>/*.jsonl` (cả của sub-agent), `run.log`, `.autodev/state.json`, `runs/*.json`, git log.
+- Có thể chuyển runner sang `--output-format stream-json` để có luồng sự kiện đầy đủ, ghi ra file, dashboard đọc trực tiếp.
+- Chức năng có thể thêm:
+  - dòng thời gian mốc: worker → developer/reviewer từng dev-xx (PASS/FAIL, số vòng) → supervisor → merge;
+  - luồng sự kiện trực tiếp: tool đang chạy, file đang sửa, lệnh bị guard chặn, verify đạt/trượt;
+  - "còn sống": cảnh báo khi transcript không cập nhật quá N phút;
+  - chi phí và hạn mức cộng dồn mỗi mốc, so với các mốc trước;
+  - lịch sử các lần chạy (đọc `runs/*.json`), mở nhanh PR và báo cáo mốc;
+  - nút thao tác (dừng runner, chạy mốc kế): để sau cùng, vì cần guard và xác nhận của người dùng.
+- Xa hơn: extension VS Code (webview) hoặc statusline của Claude Code hiện một dòng tiến độ.
+
 ## Tiêu chí "plugin đạt" cho từng mốc
 - Không cần người dùng chuyển tin giữa các phiên trong suốt một mốc.
 - Lỗi người dùng phát hiện sau khi mốc đã merge: 0, hoặc mỗi lỗi dẫn tới một sửa đổi prompt/gate.
