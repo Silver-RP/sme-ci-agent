@@ -73,6 +73,12 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Môi trường: Postgres cài trên host chiếm localhost:5432 trước container docker (`role "sme" does not exist`). Developer chạy container tạm `sme-dev02-pg` cổng 55432 (còn chạy, chưa xoá) và đặt `DATABASE_URL=postgresql+psycopg://sme:sme@localhost:55432/sme_ci`. Hook verify của developer chạy với cổng mặc định nên ghi `BLOCKED_BY_VERIFY` (không phải VERIFY_FAILED); verify chạy lại với DATABASE_URL trên thì sạch.
 - Non-blocking: `events.domain` rỗng vẫn ghi được; `get_sop_version` không có race guard (UniqueConstraint chặn).
 
+### M3/dev-03 (T-014): DONE
+- Ngày: 2026-10-08. Vòng: 0. Commit: a1fccfd. Review: .autodev/reviews/M3-dev-03-r0.json (PASS).
+- `backend/tools/readonly.py`: `query_logs`, `correlate`, `get_shift_schedule`, `read_sop`, `ToolContext`, dict `TOOLS`; decorator ghi đúng một dòng `audit_log` mỗi lần gọi (kể cả lỗi). `tests/conftest.py` có fixture DB dùng chung. 106 test pass.
+- Điều chỉnh (a): `ambient_temperature` no_data (sandbox thiếu chuỗi). Seed 42: wrong_setpoint r≈0.98, material_batch r≈0.
+- Non-blocking: docstring correlate sai chữ; M01 cũng có r=0.957 (decoy), Investigate không được coi r cao là đủ; giả thuyết lạ trả no_data thay vì lỗi; fixture trùng với tests/test_db.py.
+
 ## Đề xuất chờ duyệt (c)
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
