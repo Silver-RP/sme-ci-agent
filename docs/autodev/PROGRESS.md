@@ -26,13 +26,14 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
 | M1 (4 task) | phiên VS Code | ~10 phút | không đo | ~7% | |
 | M2 (3 task) | phiên VS Code | ~36 phút | không đo | ~18% | 1 vòng REWORK |
 | M3 (3 task) | **headless từ supervisor** | 12,3 phút, 41 lượt | 1,72 USD | ~16–22% (người dùng ước) | 1 lệnh bị từ chối đúng (xoá file) |
-| R4 (4 task) | worker headless (chạy lần 2 sau lần no-op) | ~18 phút | chưa có (log runs/ không có trên máy supervisor) | chưa đo | 4 task PASS vòng 1, 162 test (trước 106); verify sạch; supervisor merge #19 |
-| R5 (3 task) | worker headless, supervisor headless | ~18 phút | chưa có | chưa đo | T-022, T-024, T-025; dev-02 REWORK 1 vòng (apply SOP rồi crash ở Measure khi thiếu `change_time`); 226 test tracked, verify sạch; supervisor merge #21 |
+| R4 (4 task) | **chế độ B** (`autodev-run.sh`), worker + supervisor headless | 19 phút (worker 17, supervisor 2) | 2,29 USD (worker 2,00 + supervisor 0,28); thêm 0,31 cho lần no-op | chưa đo | 4 task PASS vòng 1, 162 test (trước 106); verify sạch; supervisor merge #19 |
+| R5 (3 task) | **chế độ B**, nối tiếp R4 | 21 phút (worker 18, supervisor 3) | 3,01 USD (worker 2,68 + supervisor 0,33) | chưa đo | T-022, T-024, T-025; dev-02 REWORK 1 vòng (apply SOP rồi crash ở Measure khi thiếu `change_time`); 226 test tracked, verify sạch; supervisor merge #21 |
 
 ## Hạn mức (người dùng đo bằng `/usage`)
 
 - 2026-10-07: mỗi lần chạy `/run-milestone` tốn khoảng **7–18% hạn mức của cửa sổ 5 giờ** (gói Pro). Mốc nhỏ (M1, 3–4 task đơn giản) ở mức thấp; M2 (3 task phụ thuộc nhau, 1 vòng REWORK, ~36 phút) ở mức cao. Chưa đo hạn mức tuần.
 - 2026-10-08: M3 chạy headless (phiên điều phối Sonnet) tốn ~16–22%, ngang M2 dù nhanh hơn 3 lần (12 phút so với 36 phút). Chạy headless không làm rẻ hơn; chi phí chủ yếu nằm ở developer/reviewer. Đối chiếu: 1,72 USD ước tính ≈ 16–22%.
+- 2026-10-08: chế độ B chạy R4 + R5 liền nhau trong 40 phút, tổng 5,29 USD ước tính (cả lần no-op: 5,60), **không chạm hạn mức**, nên chưa kiểm chứng được nhánh chờ reset của `run.py`. Supervisor headless chiếm ~10% chi phí mỗi mốc.
 - Hệ quả: một cửa sổ 5 giờ chạy được khoảng 5–14 mốc cỡ này; cần đo thêm hạn mức tuần trước khi làm chế độ B (chạy qua đêm).
 
 ## Bài học (đã thành sửa đổi prompt, gate hoặc quy tắc)
@@ -54,3 +55,5 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
 - R4: developer dev-02 dùng script Python inline sửa code (trái quy ước), reviewer vẫn bắt được kết quả đúng; `apply_sop` chấp nhận `approved_by='llm'` (chuyển thành tiêu chí 5 của R5/dev-02).
 - R5: reviewer bắt đúng lỗi thứ tự (apply trước khi kiểm tra `change_time`) ở dev-02 vòng 1. Supervisor probe: `parse_decision` chặn `llm/agent/system` nhưng chỉ là deny-list (`bot`, `claude` lọt); `apply_sop` gọi trực tiếp vẫn chỉ chặn `agent/system`, chưa chặn `llm`. Ghi vào việc mở.
 - R5: worktree supervisor có file rác `* 2.py` (untracked, bản sao) làm `verify.py` báo 7 lỗi lint N999 và pytest chạy 282 thay vì 226; không thuộc PR. Cần người dùng duyệt xoá.
+- R5: nguyên nhân file `* 2.py`: thư mục Desktop của máy này đồng bộ iCloud Drive, iCloud tạo bản sao "tên 2" khi xung đột. Nên chuyển repo và worktree ra ngoài Desktop/Documents (ví dụ `~/dev/`), hoặc tắt đồng bộ Desktop.
+- P4 chạy thật: runner chạy `nohup` tách khỏi phiên chat nên phiên chat không được báo khi xong; người dùng phải tự hỏi. Thêm `.autodev/watch.sh` (chỉ đọc) để xem tiến độ; cần thêm thông báo khi runner dừng (macOS notification) và tuỳ chọn để phiên chat đang mở theo dõi runner (Monitor / chạy nền có báo).

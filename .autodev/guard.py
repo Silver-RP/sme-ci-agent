@@ -5,6 +5,7 @@ Stdlib only.
 """
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -25,14 +26,29 @@ RULES = [
 ]
 
 
-def current_branch():
+def current_branch(cwd=None):
     try:
         out = subprocess.run(
-            ["git", "branch", "--show-current"], capture_output=True, text=True, check=False
+            ["git", "branch", "--show-current"],
+            capture_output=True, text=True, check=False, cwd=cwd,
         )
         return out.stdout.strip()
     except OSError:
         return ""
+
+
+DIR_ARG = r"""("[^"]+"|'[^']+'|\S+)"""
+
+
+def target_dir(command):
+    """Directory a git commit/push in the command runs in: `git -C <dir>` or a leading `cd <dir>`."""
+    m = re.search(r"\bgit\s+-C\s+" + DIR_ARG + r"\s+(push|commit)\b", command)
+    if not m:
+        m = re.match(r"\s*cd\s+" + DIR_ARG + r"\s*(&&|;|\n)", command)
+    if not m:
+        return None
+    path = os.path.expanduser(m.group(1).strip("\"'"))
+    return path if os.path.isdir(path) else None
 
 
 def main():
@@ -51,8 +67,9 @@ def main():
     switches_first = re.search(
         r"\bgit\s+(switch|checkout)\b.*\bgit\s+(push|commit)\b", command, flags=re.DOTALL
     )
-    on_main = current_branch() in ("main", "master")
-    if re.search(r"\bgit\s+(push|commit)\b", command) and on_main and not switches_first:
+    on_main = current_branch(target_dir(command)) in ("main", "master")
+    commits = re.search(r"\bgit\s+(-C\s+" + DIR_ARG + r"\s+)?(push|commit)\b", command)
+    if commits and on_main and not switches_first:
         print("Bị chặn bởi .autodev/guard.py: đang ở main; tạo nhánh riêng trước.", file=sys.stderr)
         return 2
     return 0
