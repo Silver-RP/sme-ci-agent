@@ -72,6 +72,15 @@ def _expected(state: AgentState) -> dict[str, Any]:
     return (state.get("proposal") or {})["expected_kpi"]
 
 
+def resolve_change_time(state: AgentState) -> str:
+    """When the change takes effect: ``state['change_time']`` if given, else the end of the anomaly window
+    (the sandbox clock: the fix is applied once the anomaly run ends). Raises if neither exists."""
+    value = state.get("change_time") or (state.get("anomaly") or {}).get("end")
+    if not value:
+        raise ValueError("change_time is required: set state['change_time'] or an anomaly with an 'end' time")
+    return str(value)
+
+
 def route_after_approval(state: AgentState, config: DomainConfig) -> str:
     approval = state.get("approval") or {}
     if approval.get("decision") == APPROVED:
@@ -98,6 +107,8 @@ def route_after_rollback(state: AgentState, config: DomainConfig) -> str:
 def make_wait_approval_node(config: DomainConfig, ctx: ToolContext):
     def wait_approval(state: AgentState) -> dict[str, Any]:
         proposal = state.get("proposal") or {}
+        if proposal.get("sop_proposal"):
+            resolve_change_time(state)  # fail now, not after a person approved something that cannot be measured
         raw = interrupt({"kind": "proposal", "proposal": proposal, "run_id": state.get("run_id", "")})
         d = parse_decision(raw)
         repo.append_audit(
@@ -130,6 +141,7 @@ def make_act_node(config: DomainConfig, ctx: ToolContext):
         if not sop:
             emit("sop_applied", "improvement", {"applied": False, "reason": "proposal has no SOP change"})
             return {"applied": None, "events": emit.events}
+        change_time = resolve_change_time(state)  # validate BEFORE any side effect
         res = apply_sop(
             ctx,
             sop_id=sop["sop_id"],
@@ -143,6 +155,7 @@ def make_act_node(config: DomainConfig, ctx: ToolContext):
             "previous_version": previous.version if previous else None,
             "previous_content": previous.content if previous else None,
             "approved_by": res["approved_by"],
+            "change_time": change_time,
         }
         emit("sop_applied", "improvement", {"applied": True, **{k: v for k, v in applied.items() if k != "previous_content"}})
         return {"applied": applied, "events": emit.events, "proposal": {**proposal, "status": "applied"}}
@@ -153,9 +166,7 @@ def make_act_node(config: DomainConfig, ctx: ToolContext):
 def make_measure_node(config: DomainConfig, ctx: ToolContext):
     def measure_node(state: AgentState) -> dict[str, Any]:
         expected = _expected(state)
-        change_time = state.get("change_time")
-        if not change_time:
-            raise ValueError("state['change_time'] is required to measure the KPI after the change")
+        change_time = (state.get("applied") or {}).get("change_time") or resolve_change_time(state)
         anomaly = state.get("anomaly") or {}
         res = measure(
             ctx,
@@ -211,12 +222,16 @@ def make_learn_node(config: DomainConfig, ctx: ToolContext):
     return learn
 
 
+def _fmt(value: Any) -> str:
+    return "n/a" if value is None else f"{value:.4f}"
+
+
 def make_rollback_propose_node(config: DomainConfig, ctx: ToolContext):
     def rollback_propose(state: AgentState) -> dict[str, Any]:
         applied = state.get("applied")
         m = state.get("measurement") or {}
         rationale = (
-            f"{m.get('kpi')} after the change is {m.get('after'):.4f}, outside the limit "
+            f"{m.get('kpi')} after the change is {_fmt(m.get('after'))}, outside the limit "
             f"(target {m.get('target')}, tolerance {m.get('tolerance')})."
         )
         sop_prop = None

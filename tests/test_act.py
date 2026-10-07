@@ -11,7 +11,13 @@ from sqlalchemy import select
 
 from backend.agent.graph import build_graph
 from backend.agent.llm import LLMResponse, ScriptedLLM, ToolCall
-from backend.agent.nodes.act import DecisionError, evaluate_kpi, make_measure_node, parse_decision
+from backend.agent.nodes.act import (
+    DecisionError,
+    evaluate_kpi,
+    make_act_node,
+    make_measure_node,
+    parse_decision,
+)
 from backend.agent.state import new_state
 from backend.db.models import AuditLog, LearningEntry, SopVersion
 from backend.domain_config import LoopParams, load_domain_config
@@ -324,6 +330,56 @@ def test_measure_requires_change_time(db_session):
     s["proposal"] = json.loads(improve_answer())
     with pytest.raises(ValueError, match="change_time"):
         node(s)
+
+
+def test_act_records_change_time_from_anomaly_end_and_measure_uses_it(db_session):
+    """No state['change_time']: Act derives it (anomaly end), stores it in applied; Measure reuses it."""
+    ctx = make_ctx(db_session, _fixed_tables())
+    s = new_state("run_act", CFG.domain)
+    assert "change_time" not in s
+    s["anomaly"] = {"machine": "M02", "kpi": KPI, "end": CHANGE}
+    s["proposal"] = json.loads(improve_answer()) | {
+        "hypothesis": {}, "sop_proposal": {"sop_id": SOP_ID, "new_content": "Verify setpoint 180 again."},
+    }
+    s["approval"] = {"decision": "approved", "decided_by": "alice"}
+    s.update(make_act_node(CFG, ctx)(s))
+    assert s["applied"]["change_time"] == CHANGE
+    m = make_measure_node(CFG, ctx)(s)["measurement"]
+    assert m["change_time"].startswith(CHANGE) and m["passed"] is True
+
+
+def test_default_state_without_change_time_stops_before_approval_and_apply(db_session):
+    """new_state() with no change_time and no anomaly end (how a bare API run starts): the run fails
+    BEFORE asking a person to approve, and nothing is applied (no half-applied SOP)."""
+    graph, _ = make(db_session, [*investigate_script(), improve_answer()])
+    cfg = cfg_run()
+    s = new_state("run_act", CFG.domain)
+    assert "change_time" not in s
+    with pytest.raises(ValueError, match="change_time"):
+        graph.invoke(s, cfg)
+    assert versions(db_session) == {}
+    assert "apply_sop" not in audit_actions(db_session)
+
+
+def test_act_node_validates_change_time_before_apply_sop(db_session):
+    ctx = make_ctx(db_session, _fixed_tables())
+    s = new_state("run_act", CFG.domain)
+    s["proposal"] = {"sop_proposal": {"sop_id": SOP_ID, "new_content": "x"}}
+    s["approval"] = {"decision": "approved", "decided_by": "alice"}
+    with pytest.raises(ValueError, match="change_time"):
+        make_act_node(CFG, ctx)(s)
+    assert versions(db_session) == {} and "apply_sop" not in audit_actions(db_session)
+
+
+def test_rollback_propose_survives_missing_after(db_session):
+    from backend.agent.nodes.act import make_rollback_propose_node
+
+    node = make_rollback_propose_node(CFG, make_ctx(db_session, _fixed_tables()))
+    s = new_state("run_m", CFG.domain)
+    s["measurement"] = {"kpi": KPI, "after": None}
+    s["applied"] = None
+    out = node(s)
+    assert out["proposal"]["kind"] == "rollback"
 
 
 def test_config_defaults_and_yaml_values():
