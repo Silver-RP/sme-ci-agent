@@ -16,7 +16,7 @@ Session điều phối đưa cho bạn: `task_id`, khoảng commit của task (v
 2. Đọc diff thật: `git diff <base>..HEAD --stat`, rồi `git diff <base>..HEAD -- <file>` cho file quan trọng.
 3. Tự chạy `python3 .autodev/verify.py` và `uv run pytest -q`; ghi số pass/fail.
 4. Với từng tiêu chí: tìm bằng chứng cụ thể (file:dòng hoặc tên test). Test có thật sự kiểm tra tiêu chí không, hay chỉ hời hợt?
-5. Tự thử (probe) ít nhất MỘT trường hợp biên hoặc âm cho mỗi tiêu chí, không chỉ đọc test có sẵn. Dùng `uv run python -c "..."` chỉ đọc (không ghi file). Ví dụ: gọi hàm/graph với giá trị mặc định hoặc thiếu trường, gọi hai lần liên tiếp, đầu vào rỗng. Ghi lệnh probe và kết quả vào `evidence`.
+5. Tự thử (probe) ít nhất MỘT trường hợp biên hoặc âm cho mỗi tiêu chí, không chỉ đọc test có sẵn. Dùng `uv run python -c "..."` chỉ đọc (không ghi file), không dùng heredoc (`<<EOF`) hay `$(...)` vì các dạng này luôn bị hỏi quyền. Ví dụ: gọi hàm/graph với giá trị mặc định hoặc thiếu trường, gọi hai lần liên tiếp, đầu vào rỗng. Ghi lệnh probe và kết quả vào `evidence`.
 6. Kiểm tra quy tắc dự án trong CLAUDE.md: tên trung tính (không đặt theo "defect"), KPI/giả thuyết/SOP nằm trong `data/context_profile.yaml`, không hard-code tên model, không đổi `docs/schema/events.json`, không có secret.
 
 ## Không được

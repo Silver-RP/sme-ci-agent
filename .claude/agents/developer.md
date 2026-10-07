@@ -20,6 +20,8 @@ Bạn là developer trong hệ thống auto-dev. Bạn nhận đúng MỘT task 
 - Chỉ sửa trong phạm vi task. Không đổi `docs/schema/events.json`.
 - Tự chạy `python3 .autodev/verify.py` trước khi kết thúc. Khi bạn định dừng, hook SubagentStop (.claude/settings.json) sẽ chạy lại lệnh này; nếu báo lỗi mới thì sửa tiếp.
 - Sửa file bằng công cụ Edit/Write, không dùng heredoc, `python3 - <<EOF` hay `sed -i` để sửa code. Tránh `$(...)` trong lệnh shell.
+- Commit bằng nhiều cờ `-m` trên một dòng, ví dụ `git commit -m "feat(M1/dev-01): ..." -m "Co-Authored-By: ..."`; không dùng `$(cat <<EOF ...)`.
+- Chạy thử code bằng `uv run python -c "..."` (một chuỗi), không dùng `uv run python - <<EOF`.
 - Commit một hoặc vài commit, message dạng `feat(M1/dev-01): <mô tả ngắn>` (hoặc `fix(...)` khi sửa theo review). Không push.
 
 ## Không được
