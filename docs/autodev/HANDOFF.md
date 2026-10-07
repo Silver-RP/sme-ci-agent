@@ -7,27 +7,19 @@ Supervisor cập nhật file này ở cuối mỗi mốc (và trước khi ngư�
 - Phiên supervisor = **vai con người**: lập plan, giao mốc, duyệt, merge, sửa plugin. Không viết code dự án (developer/reviewer trong worker làm). Quyền: thiết kế mục 6.15.
 - Người dùng giao tiếp bằng tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa và được báo ngắn gọn.
 
-## Bước tiếp theo (người dùng đã duyệt 2026-10-08)
-1. Kiểm tra nhanh điều kiện chạy:
-   - Docker DB: `docker compose ps` trong `../sme-ci-agent-autodev` thấy `sme-ci-agent-autodev-db-1` chạy ở cổng 5432 (nếu dừng: `docker compose up -d db` trong thư mục đó).
-   - `gh auth status` đã đăng nhập; `claude --version` chạy được (wrapper `~/.local/bin/claude`).
-   - Worktree: `../sme-ci-agent-autodev` (worker, đang ở `milestone/M3` đã merge; `/run-milestone` sẽ tự tạo `milestone/R4` từ `origin/main`) và `../sme-ci-agent-supervisor` (supervisor, detached). Cả hai có `.claude/settings.local.json` (Auto, tắt Superpowers).
-2. Khởi chạy chế độ B cho **R4 rồi R5**, tách khỏi phiên để vẫn chạy khi đóng VS Code (chạy từ thư mục repo chính):
-   `nohup .autodev/autodev-run.sh R4 R5 > .autodev/runs/nohup.out 2>&1 &`
-3. Báo người dùng: đã khởi chạy, cách theo dõi (`.autodev/runs/run.log`), dự kiến 30–90 phút cộng thời gian chờ reset nếu chạm hạn mức (ước 35–50% cửa sổ 5 giờ cho 2 mốc).
-4. Khi chạy xong hoặc dừng: đọc `run.log`, các file JSON trong `.autodev/runs/`, `STOPPED.md` nếu có (exit 2 lỗi, 3 hạn mức, 4 mốc chưa merge). Supervisor headless đã duyệt/merge từng mốc; phiên này tóm tắt cho người dùng, ghi số đo (thời gian, `total_cost_usd`, có chạm hạn mức không, script có tự chờ và chạy tiếp đúng không) vào `PROGRESS.md`, cập nhật ROADMAP (P4) và file này qua một PR `chore/autodev-*`.
+## Bước tiếp theo (chờ người dùng chọn, 2026-10-08)
+1. **Cần duyệt xoá:** 11 file `* 2.py` untracked trong worktree `../sme-ci-agent-supervisor` (bản sao do iCloud, xem "Việc mở"). Chưa xoá thì verify ở worktree đó báo lỗi lint và pytest đếm sai.
+2. **Sửa runner (tổng kết P4):** (a) trước khi giao worker, đưa worktree worker về `milestone/<Rx>` tạo từ `origin/main`; (b) worker exit 0 mà không có PR/báo cáo → exit 4; (c) khi runner dừng (xong, lỗi, hạn mức) gửi thông báo macOS; (d) xoá `STOPPED.md` cũ khi bắt đầu lần chạy mới là thao tác xoá → thay bằng đổi tên kèm thời gian hoặc ghi đè nội dung.
+3. **Đề xuất (người dùng hỏi, chưa duyệt):** dashboard cục bộ chỉ đọc để xem worker headless trực tiếp (dòng thời gian dev-xx/review, tool gần nhất, chi phí), đọc transcript `~/.claude/projects/<worktree>/*.jsonl`; có thể chuyển runner sang `--output-format stream-json`. Đây là việc plugin (P4/P5), không phải TASKS.md.
+4. Sau đó chọn mốc dự án tiếp theo: dashboard T-016/T-026 (cần cho demo) và việc mở của R5.
+
+Cách khởi chạy chế độ B (đã chạy thật): từ repo chính `nohup .autodev/autodev-run.sh R6 R7 > .autodev/runs/nohup.out 2>&1 &`; theo dõi bằng `.autodev/watch.sh` trong một terminal. Phiên chat **không** tự được báo khi runner xong (tiến trình tách rời); nếu muốn phiên chat được gọi lại thì khởi chạy bằng Bash chạy nền của chính phiên đó hoặc dùng Monitor theo dõi `run.log`.
 
 ## Trạng thái hiện tại (2026-10-08)
-- Plugin: P1, P2, P3 xong. P4 đang làm: bộ chạy `.autodev/run.py` + `.autodev/autodev-run.sh` đã viết, 10 test với `claude` giả (`python3 -m unittest discover .autodev/tests`), **chưa chạy thật**.
-- Dự án: TASKS.md nhóm M1 xong 7/8 (còn T-016 dashboard, chưa ai làm). R4 = T-020, T-021, T-023; R5 = T-022, T-024, T-025. Test không gọi LLM thật, không cần API key.
-- Hạn mức: mỗi mốc 7–22% cửa sổ 5 giờ; M3 (headless) ~16–22%, ~1,72 USD ước tính. Chưa đo hạn mức tuần.
-- Máy này: đã dừng dịch vụ Homebrew `postgresql@14` theo yêu cầu người dùng (bật lại: `brew services start postgresql@14`). Máy nào cần đổi cổng DB: `DB_PORT` + `.autodev/env.local.json`.
-
-## Cập nhật 2026-10-08 (supervisor headless, R4 --review-only): R4 ĐÃ MERGE
-- Worker R4 chạy xong (lần chạy sau lần no-op), PR #19 merge vào main: T-020, T-021, T-023 xong, 162 test, verify sạch. Tôi chạy lại verify + pytest, kiểm tra LLM thật báo `LLMConfigError` khi thiếu `MODEL_REASONING`.
-- Còn R5 (T-022, T-024, T-025). Đã thêm tiêu chí 5 vào R5/dev-02: approval chỉ từ người, `apply_sop` từ chối `approved_by` như `llm`.
-- Việc cho runner (P4): tạo `milestone/<Rx>` từ `origin/main` trước khi giao worker; coi worker "exit 0 mà không có PR/báo cáo" là lỗi (exit 4). Worker `../sme-ci-agent-autodev` cần `git fetch` và chuyển sang `milestone/R5` từ origin/main trước khi chạy R5.
-- Chưa có số `total_cost_usd` và % hạn mức của R4.
+- Plugin: P1–P3 xong. P4 đã chạy thật: R4 + R5 liền nhau, 40 phút, 5,29 USD ước tính, không chạm hạn mức (nhánh chờ reset chưa kiểm chứng). Còn sửa runner (bước 2) rồi đóng P4.
+- Dự án: R4 (PR #19: T-020, T-021, T-023) và R5 (PR #21: T-022, T-024, T-025) đã merge; 226 test, verify sạch. TASKS.md nhóm M1 còn T-016; dashboard T-026 chưa ai làm.
+- Worktree: `../sme-ci-agent-autodev` (worker, ở `milestone/R5` đã merge), `../sme-ci-agent-supervisor` (supervisor). Docker DB `sme-ci-agent-autodev-db-1` cổng 5432.
+- Máy này: đã dừng Homebrew `postgresql@14` (bật lại: `brew services start postgresql@14`). Desktop đồng bộ iCloud.
 
 ## Quyền và quy tắc đang áp dụng
 - Supervisor tự merge PR mốc sau khi chạy lại verify; worker không merge.
@@ -38,6 +30,8 @@ Supervisor cập nhật file này ở cuối mỗi mốc (và trước khi ngư�
 - Chưa biết `claude -p` báo hết hạn mức dạng nào; `run.py` đoán theo chữ "limit" + "resets <giờ>". Lần chạy thật đầu tiên gặp hết hạn mức thì đối chiếu và sửa `LIMIT_RE` / `RESET_RE` nếu cần.
 - Guard so khớp theo chữ: commit message hay chuỗi thử chứa lệnh bị cấm cũng bị chặn; viết lại câu chữ hoặc đưa chuỗi thử vào file.
 - Dự án: `correlate` chưa có tín hiệu cho nhóm people và `ambient_temperature` (cần cho T-020, T-004). Dashboard (T-016, T-026) chưa có ai làm, cần cho demo.
+- Dự án (từ R5): (1) `apply_sop` gọi trực tiếp chưa chặn `approved_by='llm'`; `parse_decision` là deny-list (`bot`, `claude` lọt) → nên dùng một danh sách người duyệt hợp lệ (allow-list) dùng chung. (2) Detect thật chưa nối vào graph mặc định; registry run của API trong bộ nhớ; factory mặc định chưa test thật.
+- Repo nằm trong Desktop đồng bộ iCloud → iCloud sinh file "tên 2" khi xung đột. Nên chuyển repo và worktree ra ngoài (ví dụ `~/dev/`); việc này cần người dùng làm và duyệt.
 - Để sau (người dùng chốt): đo độ dài phiên và chất lượng theo thời gian; hook trước khi nén ngữ cảnh (ROADMAP, "Để sau").
 
 ## Lịch sử ngắn
