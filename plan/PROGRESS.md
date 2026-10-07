@@ -79,6 +79,11 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Điều chỉnh (a): `ambient_temperature` no_data (sandbox thiếu chuỗi). Seed 42: wrong_setpoint r≈0.98, material_batch r≈0.
 - Non-blocking: docstring correlate sai chữ; M01 cũng có r=0.957 (decoy), Investigate không được coi r cao là đủ; giả thuyết lạ trả no_data thay vì lỗi; fixture trùng với tests/test_db.py.
 
+### R4/dev-01 (T-020 phần 1): DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: 8563495. Review: .autodev/reviews/dev-01-r1.json (PASS).
+- `backend/agent/llm.py` (AnthropicLLM đọc `MODEL_REASONING`, ScriptedLLM), `backend/agent/prompts/system.py` sinh từ YAML. 116 test pass.
+- Non-blocking: chưa có test tool_result trong messages (thuộc dev-02).
+
 ## Đề xuất chờ duyệt (c)
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
