@@ -18,6 +18,10 @@ RULES = [
     (r"\bdocker\s+(compose\s+down\s+.*-v\b|volume\s+(rm|prune))", "Không xoá volume DB."),
     (r"\b(dropdb|DROP\s+(DATABASE|TABLE|SCHEMA)|TRUNCATE\s)", "Không xoá dữ liệu DB."),
     (r"(?<![\w.])\.env(?![\w.-]*example)(?:\.[\w-]+)*(?![\w])", "Không đọc hay in nội dung .env."),
+    (r"\bgh\s+pr\s+merge\b.*--delete-branch", "Không xoá nhánh khi merge; xoá phải được người dùng duyệt."),
+    (r"\bgit\s+worktree\s+(remove|prune)\b", "Không xoá worktree khi chưa được người dùng duyệt."),
+    (r"\bgit\s+branch\s+(-[a-zA-Z]*[dD]\b|--delete\b)", "Không xoá nhánh khi chưa được người dùng duyệt."),
+    (r"\bgit\s+push\b.*(\s--delete\b|\s-d\b|\s:[\w/-]+)", "Không xoá nhánh remote khi chưa được người dùng duyệt."),
 ]
 
 
