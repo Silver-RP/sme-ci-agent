@@ -23,6 +23,11 @@ Supervisor cập nhật file này ở cuối mỗi mốc (và trước khi ngư�
 - Hạn mức: mỗi mốc 7–22% cửa sổ 5 giờ; M3 (headless) ~16–22%, ~1,72 USD ước tính. Chưa đo hạn mức tuần.
 - Máy này: đã dừng dịch vụ Homebrew `postgresql@14` theo yêu cầu người dùng (bật lại: `brew services start postgresql@14`). Máy nào cần đổi cổng DB: `DB_PORT` + `.autodev/env.local.json`.
 
+## Cập nhật 2026-10-08 (supervisor headless, R4 --review-only): R4 CHƯA CHẠY, không merge gì
+- Worker `R4` kết thúc exit=0 sau 40 giây nhưng không làm gì: worktree worker `../sme-ci-agent-autodev` đang ở nhánh `milestone/M3` (tại `abe5636`), chưa có `plan/R4.md` (chỉ có M1–M3). Không có nhánh `milestone/R4`, không có PR, không có `.autodev/reports/R4.md`. Log: `.autodev/runs/20261008-010046-R4-worker.json`.
+- Nguyên nhân: runner chạy khi worktree worker chưa cập nhật từ `origin/main` (đổi tên M→R ở PR #17). Runner nên tạo `milestone/<Mx>` từ `origin/main` trước khi giao worker, và coi worker "exit 0 nhưng không có PR/báo cáo" là lỗi (exit 4) thay vì chuyển sang supervisor.
+- Việc cần làm: trong worktree worker chạy `git fetch origin && git switch -c milestone/R4 origin/main` (không xoá gì), rồi chạy lại `.autodev/autodev-run.sh R4 R5`.
+
 ## Quyền và quy tắc đang áp dụng
 - Supervisor tự merge PR mốc sau khi chạy lại verify; worker không merge.
 - Không xoá file, thư mục, nhánh, worktree, container nếu người dùng chưa duyệt (guard chặn các lệnh xoá phổ biến; merge không kèm xoá nhánh).
