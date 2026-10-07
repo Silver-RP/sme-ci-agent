@@ -1,60 +1,32 @@
 {
-  "milestone": "M2",
-  "current_task": null,
+  "milestone": "M3",
+  "current_task": "dev-02",
   "tasks": {
-    "dev-01": {
-      "status": "DONE",
-      "round": 2,
-      "base": "4736050098fee497eecd9a2be863fffd37c46d0c",
-      "commit": "8019445"
-    },
-    "dev-02": {
-      "status": "DONE",
-      "round": 1,
-      "base": "abcfa00c176d1f1b50c6dc617a45288dbfb881a7",
-      "commit": "d150ff1"
-    },
-    "dev-03": {
-      "status": "DONE",
-      "round": 1,
-      "base": "5815190e7d36eb84ecd8113dc8ddcde4edf51535",
-      "commit": "009e77b"
-    }
+    "dev-01": {"status": "DONE", "round": 0, "base": "df9c752204fb5ef7975336450843142d33cb1725", "commit": "18e4804"},
+    "dev-02": {"status": "IN_PROGRESS", "round": 0, "base": "PLACEHOLDER"},
+    "dev-03": {"status": "TODO", "round": 0}
   },
   "verify": {
     "consecutive_blocks": 0,
     "last_status": "PASS",
-    "hook_runs": 4,
-    "last_hook_at": "2026-10-05T18:37:28Z",
+    "hook_runs": 5,
+    "last_hook_at": "2026-10-07T14:56:00Z",
     "last_hook_agent": "developer"
   },
   "history": {
     "M1": {
       "tasks": {
-        "dev-01": {
-          "status": "DONE",
-          "round": 1,
-          "base": "0244c355c8e0debff334e41bf6dd9b408b670448",
-          "commit": "3cc91ce"
-        },
-        "dev-02": {
-          "status": "DONE",
-          "round": 1,
-          "base": "82085690d3ed60b4fbe67d912208bf2ddfcfdfed",
-          "commit": "bc5d995"
-        },
-        "dev-03": {
-          "status": "DONE",
-          "round": 1,
-          "base": "c9a123cf9877e13240ad9de927bc2e8df393fe35",
-          "commit": "0ff8abc"
-        },
-        "dev-04": {
-          "status": "DONE",
-          "round": 1,
-          "base": "e4c953d88e039ed20ab92d59fcd8ee7bd9ea67df",
-          "commit": "10f757d"
-        }
+        "dev-01": {"status": "DONE", "round": 1, "base": "0244c355c8e0debff334e41bf6dd9b408b670448", "commit": "3cc91ce"},
+        "dev-02": {"status": "DONE", "round": 1, "base": "82085690d3ed60b4fbe67d912208bf2ddfcfdfed", "commit": "bc5d995"},
+        "dev-03": {"status": "DONE", "round": 1, "base": "c9a123cf9877e13240ad9de927bc2e8df393fe35", "commit": "0ff8abc"},
+        "dev-04": {"status": "DONE", "round": 1, "base": "e4c953d88e039ed20ab92d59fcd8ee7bd9ea67df", "commit": "10f757d"}
+      }
+    },
+    "M2": {
+      "tasks": {
+        "dev-01": {"status": "DONE", "round": 2, "base": "4736050098fee497eecd9a2be863fffd37c46d0c", "commit": "8019445"},
+        "dev-02": {"status": "DONE", "round": 1, "base": "abcfa00c176d1f1b50c6dc617a45288dbfb881a7", "commit": "d150ff1"},
+        "dev-03": {"status": "DONE", "round": 1, "base": "5815190e7d36eb84ecd8113dc8ddcde4edf51535", "commit": "009e77b"}
       }
     }
   }

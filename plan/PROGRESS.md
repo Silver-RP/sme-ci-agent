@@ -61,6 +61,12 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Non-blocking: `DetectParams` (28 ngày, 2/3, gộp 3 ca) nằm trong code; bảo trì chồng lên anomaly làm báo trễ; bảo trì thiếu dòng end che đến hết horizon; dữ liệu < 28 ngày thì không bao giờ báo; chưa có sàn sigma khi sigma = 0; chưa phát event `planned: true`.
 - Đã tick T-012 trong TASKS.md.
 
+### M3/dev-01 (M2-c1, M2-c2): DONE
+- Ngày: 2026-10-07. Nhánh: milestone/M3. Vòng: 0 (PASS ngay lần đầu). Commit: 18e4804. Review: .autodev/reviews/M3-dev-01-r0.json (PASS).
+- `DetectParams` chuyển thành model Pydantic trong `backend/domain_config.py` (`DomainConfig.detect`, mặc định 28/3/2/3), khóa `detect:` trong `context_profile.yaml`; `backend.detect.DetectParams` vẫn export. Chú thích quy ước `effect` trong `scenario1.yaml`. 82 test pass.
+- Không thêm sàn sigma (plan ghi "nếu có", code chưa có). Seed 42: `rule_hits=3` hoặc `reference_days=7` cho kết quả như mặc định nên test dùng `rule_hits=1`.
+- Non-blocking: test "không còn hằng số" chỉ kiểm tra chuỗi.
+
 ## Đề xuất chờ duyệt (c)
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
