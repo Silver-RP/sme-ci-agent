@@ -192,7 +192,7 @@ def pr_merged(milestone: str, cwd: Path) -> bool:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("milestones", nargs="+", help="ví dụ: M4 M5")
+    ap.add_argument("milestones", nargs="+", help="ví dụ: R4 R5")
     ap.add_argument("--worker-dir", default=str(ROOT.parent / f"{ROOT.name}-autodev"))
     ap.add_argument("--supervisor-dir", default=str(ROOT.parent / f"{ROOT.name}-supervisor"))
     ap.add_argument("--skip-merge-check", action="store_true", help="chỉ dùng khi thử nghiệm")
