@@ -24,17 +24,9 @@ from typing import Any
 import pandas as pd
 
 from backend.agent.graph import make_event
-from backend.domain_config import DomainConfig
+from backend.domain_config import DetectParams, DomainConfig
 
 MAINTENANCE_EVENT = "maintenance"
-
-
-@dataclass(frozen=True)
-class DetectParams:
-    reference_days: int = 28
-    rule_window: int = 3
-    rule_hits: int = 2
-    max_gap: int = 3  # points (shifts) of normal data that still keep one anomaly open
 
 
 @dataclass(frozen=True)
@@ -113,7 +105,7 @@ def detect_anomalies(
     ``kpi``: KPI name (default: every KPI in the config). ``threshold_sd`` overrides the config
     ``alert_threshold_sd`` (for experiments only; the default comes from the config).
     """
-    params = params or DetectParams()
+    params = params or config.detect  # defaults come from the domain config (YAML `detect:`)
     kpi_log = tables.get("kpi_log")
     if kpi_log is None or kpi_log.empty:
         return []

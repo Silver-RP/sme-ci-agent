@@ -10,6 +10,11 @@ kpis:
     unit: ratio
     target: 0.03
     alert_threshold_sd: 3
+detect:                     # tham số detect (mặc định = giá trị cũ trong code)
+  reference_days: 28        # số ngày đầu dùng làm kỳ tham chiếu
+  rule_window: 3            # luật k trên n: n điểm
+  rule_hits: 2              # luật k trên n: k điểm vượt ngưỡng
+  max_gap: 3                # khoảng gộp tối đa (điểm) giữa hai điểm xác nhận
 hypothesis_groups:          # Ishikawa
   machine: [wrong_setpoint, wear, calibration]
   method: [outdated_sop, missing_check]

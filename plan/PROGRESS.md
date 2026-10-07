@@ -61,6 +61,24 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Non-blocking: `DetectParams` (28 ngày, 2/3, gộp 3 ca) nằm trong code; bảo trì chồng lên anomaly làm báo trễ; bảo trì thiếu dòng end che đến hết horizon; dữ liệu < 28 ngày thì không bao giờ báo; chưa có sàn sigma khi sigma = 0; chưa phát event `planned: true`.
 - Đã tick T-012 trong TASKS.md.
 
+### M3/dev-01 (M2-c1, M2-c2): DONE
+- Ngày: 2026-10-07. Nhánh: milestone/M3. Vòng: 0 (PASS ngay lần đầu). Commit: 18e4804. Review: .autodev/reviews/M3-dev-01-r0.json (PASS).
+- `DetectParams` chuyển thành model Pydantic trong `backend/domain_config.py` (`DomainConfig.detect`, mặc định 28/3/2/3), khóa `detect:` trong `context_profile.yaml`; `backend.detect.DetectParams` vẫn export. Chú thích quy ước `effect` trong `scenario1.yaml`. 82 test pass.
+- Không thêm sàn sigma (plan ghi "nếu có", code chưa có). Seed 42: `rule_hits=3` hoặc `reference_days=7` cho kết quả như mặc định nên test dùng `rule_hits=1`.
+- Non-blocking: test "không còn hằng số" chỉ kiểm tra chuỗi.
+
+### M3/dev-02 (T-013): DONE
+- Ngày: 2026-10-07. Vòng: 0. Commit: 0effbb2. Review: .autodev/reviews/M3-dev-02-r0.json (PASS).
+- `backend/db/{config,models,repo,session}.py`, migration Alembic `0001_initial.py`, `tests/test_db.py`. Enum type/agent kiểm tra ở repo và bằng CHECK constraint; `audit_log` chỉ có `append_audit` và trigger DB chặn UPDATE/DELETE; `sop_versions` UNIQUE(sop_id, version). Test dùng DB riêng tên ngẫu nhiên + rollback; thiếu DB thì `pytest.fail`. 92 test pass.
+- Môi trường: Postgres cài trên host chiếm localhost:5432 trước container docker (`role "sme" does not exist`). Developer chạy container tạm `sme-dev02-pg` cổng 55432 (còn chạy, chưa xoá) và đặt `DATABASE_URL=postgresql+psycopg://sme:sme@localhost:55432/sme_ci`. Hook verify của developer chạy với cổng mặc định nên ghi `BLOCKED_BY_VERIFY` (không phải VERIFY_FAILED); verify chạy lại với DATABASE_URL trên thì sạch.
+- Non-blocking: `events.domain` rỗng vẫn ghi được; `get_sop_version` không có race guard (UniqueConstraint chặn).
+
+### M3/dev-03 (T-014): DONE
+- Ngày: 2026-10-08. Vòng: 0. Commit: a1fccfd. Review: .autodev/reviews/M3-dev-03-r0.json (PASS).
+- `backend/tools/readonly.py`: `query_logs`, `correlate`, `get_shift_schedule`, `read_sop`, `ToolContext`, dict `TOOLS`; decorator ghi đúng một dòng `audit_log` mỗi lần gọi (kể cả lỗi). `tests/conftest.py` có fixture DB dùng chung. 106 test pass.
+- Điều chỉnh (a): `ambient_temperature` no_data (sandbox thiếu chuỗi). Seed 42: wrong_setpoint r≈0.98, material_batch r≈0.
+- Non-blocking: docstring correlate sai chữ; M01 cũng có r=0.957 (decoy), Investigate không được coi r cao là đủ; giả thuyết lạ trả no_data thay vì lỗi; fixture trùng với tests/test_db.py.
+
 ## Đề xuất chờ duyệt (c)
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".

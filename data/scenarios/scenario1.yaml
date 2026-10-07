@@ -20,6 +20,9 @@ baseline:
   zone3_setpoint_c: 180 # theo SOP
   setpoint_sensitivity_per_c: 0.0028   # đề xuất chờ T-004: tỉ lệ lỗi tăng mỗi °C lệch SOP (15 °C -> +0.042 = 0.062)
 
+# Quy ước: `effect` của mỗi anomaly là NGUỒN CHÍNH quyết định mức KPI bị đẩy lên.
+# Hàm setpoint (setpoint_sensitivity_per_c * độ lệch) chỉ dùng cho phép thử phản thực tế
+# (counterfactual), không dùng để sinh dữ liệu anomaly.
 injected_anomalies:
   - id: A1
     description: Ca đêm chỉnh nhiệt vùng 3 của M02 lên 195 °C và không cập nhật SOP
