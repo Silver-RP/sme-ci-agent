@@ -8,12 +8,14 @@ import datetime as dt
 import importlib.util
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+os.environ["AUTODEV_NOTIFY"] = "0"  # no real macOS notifications from tests
 spec = importlib.util.spec_from_file_location("autodev_run", HERE.parent / "run.py")
 run = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(run)
@@ -117,6 +119,99 @@ class Loop(unittest.TestCase):
     def test_error_then_ok(self):
         self._queue({"out": {"result": "crash", "is_error": True}, "exit": 1}, {"out": {"result": "ok"}})
         self.assertEqual(self._step()["result"], "ok")
+
+
+def git(cwd, *args):
+    return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True).stdout.strip()
+
+
+class PrepareWorker(unittest.TestCase):
+    """The worker worktree is moved to origin/main before /run-milestone (R4 no-op, 2026-10-08)."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        base = Path(self.tmp.name)
+        self.old_runs = run.RUNS
+        run.RUNS = base / "runs"
+        origin, seed = base / "origin.git", base / "seed"
+        git(base, "init", "-q", "--bare", "-b", "main", str(origin))
+        git(base, "clone", "-q", str(origin), str(seed))
+        for args in (("config", "user.email", "t@t"), ("config", "user.name", "t")):
+            git(seed, *args)
+        (seed / "plan").mkdir()
+        (seed / "plan" / "M1.md").write_text("old\n")
+        git(seed, "add", ".")
+        git(seed, "commit", "-q", "-m", "init")
+        git(seed, "push", "-q", "origin", "main")
+        self.worker = base / "worker"
+        git(base, "clone", "-q", str(origin), str(self.worker))
+        for args in (("config", "user.email", "t@t"), ("config", "user.name", "t")):
+            git(self.worker, *args)
+        git(self.worker, "switch", "-q", "-c", "milestone/M1")
+        # main moves on: plan for R4 lands after the worker last synced
+        (seed / "plan" / "R4.md").write_text("new\n")
+        git(seed, "add", ".")
+        git(seed, "commit", "-q", "-m", "plan R4")
+        git(seed, "push", "-q", "origin", "main")
+        self.seed = seed
+
+    def tearDown(self):
+        run.RUNS = self.old_runs
+        self.tmp.cleanup()
+
+    def test_stale_worktree_moved_to_origin_main(self):
+        run.prepare_worker("R4", self.worker)
+        self.assertTrue((self.worker / "plan" / "R4.md").exists())
+        self.assertEqual(git(self.worker, "rev-parse", "HEAD"), git(self.seed, "rev-parse", "HEAD"))
+
+    def test_unmerged_branch_of_same_milestone_kept(self):
+        git(self.worker, "fetch", "-q", "origin")
+        git(self.worker, "switch", "-q", "-c", "milestone/R4", "origin/main")
+        (self.worker / "work.txt").write_text("wip\n")
+        git(self.worker, "add", ".")
+        git(self.worker, "commit", "-q", "-m", "wip")
+        head = git(self.worker, "rev-parse", "HEAD")
+        run.prepare_worker("R4", self.worker)
+        self.assertEqual(git(self.worker, "rev-parse", "HEAD"), head)
+        self.assertEqual(git(self.worker, "branch", "--show-current"), "milestone/R4")
+
+    def test_dirty_worktree_stops(self):
+        (self.worker / "plan" / "M1.md").write_text("edited\n")
+        with self.assertRaises(SystemExit) as cm:
+            run.prepare_worker("R4", self.worker)
+        self.assertEqual(cm.exception.code, 2)
+
+    def test_missing_plan_stops(self):
+        with self.assertRaises(SystemExit) as cm:
+            run.prepare_worker("R9", self.worker)
+        self.assertEqual(cm.exception.code, 2)
+        self.assertIn("plan/R9.md", (run.RUNS / "STOPPED.md").read_text())
+
+
+class Helpers(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.old_runs = run.RUNS
+        run.RUNS = Path(self.tmp.name) / "runs"
+
+    def tearDown(self):
+        run.RUNS = self.old_runs
+        self.tmp.cleanup()
+
+    def test_old_stopped_file_archived_not_deleted(self):
+        run.RUNS.mkdir(parents=True)
+        (run.RUNS / "STOPPED.md").write_text("old stop\n")
+        run.archive_stopped()
+        self.assertFalse((run.RUNS / "STOPPED.md").exists())
+        archived = list(run.RUNS.glob("STOPPED-*.md"))
+        self.assertEqual(len(archived), 1)
+        self.assertEqual(archived[0].read_text(), "old stop\n")
+
+    def test_milestone_pr_match(self):
+        heads = ["chore/x", "milestone/R4-r2", "milestone/R40"]
+        self.assertTrue(run.has_milestone_head(heads, "R4"))
+        self.assertFalse(run.has_milestone_head(heads, "R5"))
+        self.assertFalse(run.has_milestone_head(["milestone/R40"], "R4"))
 
 
 if __name__ == "__main__":

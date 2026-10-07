@@ -17,7 +17,7 @@ def git(cwd, *args):
 def run_guard(command, cwd):
     data = json.dumps({"tool_input": {"command": command}})
     return subprocess.run(
-        [sys.executable, GUARD], input=data, text=True, capture_output=True, cwd=cwd
+        [sys.executable, GUARD], input=data, text=True, capture_output=True, cwd=cwd, check=False
     ).returncode
 
 

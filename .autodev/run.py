@@ -1,8 +1,10 @@
-# ruff: noqa: DTZ005, FLY002  (usage-limit reset times are local wall-clock times, so naive local datetimes are intended)
+# ruff: noqa: DTZ005, DTZ006, FLY002  (usage-limit reset times are local wall-clock times, so naive local datetimes are intended)
 """Mode B runner (plugin milestone P4): run several milestones unattended.
 
-For each milestone: worker headless (/run-milestone) -> supervisor headless review
-(/supervise <M> --review-only, which merges) -> check the PR is merged -> next milestone.
+For each milestone: move the worker worktree to origin/main -> worker headless (/run-milestone)
+-> check the worker opened a PR -> supervisor headless review (/supervise <M> --review-only,
+which merges) -> check the PR is merged -> next milestone. A macOS notification is sent when
+the run stops or finishes.
 
 Usage-limit handling (ROADMAP P4, approved 2026-10-08):
   1. detect the limit message in the run result, read the reset time;
@@ -167,24 +169,77 @@ def save(path: Path, data: dict) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def notify(title: str, message: str) -> None:
+    """One-way macOS notification (Q1). Off with AUTODEV_NOTIFY=0 or on other systems."""
+    if os.environ.get("AUTODEV_NOTIFY", "1") == "0" or sys.platform != "darwin":
+        return
+    script = f"display notification {json.dumps(message[:200])} with title {json.dumps(title)} sound name \"Glass\""
+    subprocess.run(["osascript", "-e", script], capture_output=True, check=False)
+
+
 def stop(reason: str, code: int) -> None:
     save_text = f"# Dừng lúc {dt.datetime.now():%Y-%m-%d %H:%M}\n\n{reason}\n"
     RUNS.mkdir(parents=True, exist_ok=True)
     (RUNS / "STOPPED.md").write_text(save_text, encoding="utf-8")
     log(f"STOP (exit {code}): {reason.splitlines()[0]}")
+    notify(f"auto-dev dừng (exit {code})", reason.splitlines()[0])
     sys.exit(code)
 
 
-def pr_merged(milestone: str, cwd: Path) -> bool:
+def archive_stopped() -> None:
+    """Keep an old STOPPED.md from an earlier run under a timestamped name (never delete)."""
+    old = RUNS / "STOPPED.md"
+    if old.exists():
+        stamp = dt.datetime.fromtimestamp(old.stat().st_mtime).strftime("%Y%m%d-%H%M%S")
+        old.rename(RUNS / f"STOPPED-{stamp}.md")
+
+
+def git_out(cwd: Path, *args: str) -> tuple[int, str]:
+    proc = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=False)
+    return proc.returncode, (proc.stdout + proc.stderr).strip()
+
+
+def prepare_worker(milestone: str, worker: Path) -> None:
+    """Put the worker worktree on origin/main before /run-milestone (it reads plan/<M>.md first).
+
+    An unmerged milestone/<M> branch (resume after a stop) is kept; a dirty worktree stops the run.
+    """
+    code, out = git_out(worker, "fetch", "-q", "origin")
+    if code:
+        stop(f"git fetch ở worktree worker lỗi:\n\n{out}", 2)
+    _, dirty = git_out(worker, "status", "--porcelain")
+    if dirty:
+        stop(f"Worktree worker {worker} có thay đổi chưa commit; cần người xem trước khi chạy {milestone}.\n\n{dirty}", 2)
+    _, branch = git_out(worker, "branch", "--show-current")
+    _, ahead = git_out(worker, "log", "--oneline", "origin/main..HEAD")
+    if has_milestone_head([branch], milestone) and ahead:
+        log(f"worker giữ nhánh {branch} (còn commit chưa merge)")
+    else:
+        code, out = git_out(worker, "switch", "-q", "--detach", "origin/main")
+        if code:
+            stop(f"Không chuyển được worktree worker về origin/main:\n\n{out}", 2)
+        log(f"worker chuyển về origin/main (trước đó: {branch or 'detached'})")
+    if not (worker / "plan" / f"{milestone}.md").exists():
+        stop(f"Không có plan/{milestone}.md trong worktree worker (sau khi cập nhật từ origin/main).", 2)
+
+
+def has_milestone_head(heads: list[str], milestone: str) -> bool:
+    return any(h == f"milestone/{milestone}" or h.startswith(f"milestone/{milestone}-r") for h in heads)
+
+
+def pr_heads(cwd: Path, state: str) -> list[str]:
     out = subprocess.run(
-        ["gh", "pr", "list", "--state", "merged", "--json", "headRefName", "--limit", "50"],
+        ["gh", "pr", "list", "--state", state, "--json", "headRefName", "--limit", "50"],
         cwd=cwd, capture_output=True, text=True, check=False,
     ).stdout
     try:
-        heads = [p["headRefName"] for p in json.loads(out or "[]")]
+        return [p["headRefName"] for p in json.loads(out or "[]")]
     except json.JSONDecodeError:
-        return False
-    return any(h == f"milestone/{milestone}" or h.startswith(f"milestone/{milestone}-r") for h in heads)
+        return []
+
+
+def pr_merged(milestone: str, cwd: Path) -> bool:
+    return has_milestone_head(pr_heads(cwd, "merged"), milestone)
 
 
 # ---------------------------------------------------------------- main
@@ -203,15 +258,20 @@ def main(argv: list[str] | None = None) -> int:
         if not d.is_dir():
             stop(f"Thiếu worktree {d}. Tạo bằng git worktree add (xem docs/autodev/HANDOFF.md).", 2)
 
+    archive_stopped()
     total = 0.0
     for m in args.milestones:
+        prepare_worker(m, worker)
         w = run_step(f"/run-milestone {m}", worker, WORKER_ALLOWED, f"{m}-worker")
+        if not args.skip_merge_check and not has_milestone_head(pr_heads(worker, "all"), m):
+            stop(f"Worker {m} kết thúc mà không mở PR (có thể không làm gì); không chuyển sang supervisor.\n\n{w.get('result', '')[-1500:]}", 4)
         s = run_step(f"/supervise {m} --review-only", supervisor, SUPERVISOR_ALLOWED, f"{m}-supervisor")
         total += float(w.get("total_cost_usd") or 0) + float(s.get("total_cost_usd") or 0)
         if not args.skip_merge_check and not pr_merged(m, supervisor):
             stop(f"PR của {m} chưa merge sau bước supervisor; cần xem báo cáo.\n\n{s.get('result', '')[-1500:]}", 4)
         log(f"{m} xong; tổng chi phí ước tính đến giờ {total:.2f} USD")
     log(f"Hoàn tất {' '.join(args.milestones)}; tổng chi phí ước tính {total:.2f} USD")
+    notify("auto-dev xong", f"{' '.join(args.milestones)} đã merge; ~{total:.2f} USD")
     return 0
 
 
