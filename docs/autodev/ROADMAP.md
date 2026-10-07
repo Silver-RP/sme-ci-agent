@@ -39,12 +39,11 @@ Hai luồng không sửa chung file nên chạy song song không xung đột. Li
 
 ### Thông báo khi runner dừng hoặc xong (người dùng nêu 2026-10-08)
 - **Máy tính (đã có, đang tắt):** thông báo macOS có tiếng trong `.autodev/run.py`, bật bằng `AUTODEV_NOTIFY=1 .autodev/autodev-run.sh R6`. Mặc định tắt theo yêu cầu người dùng.
-- **Điện thoại (chưa làm), các lựa chọn:**
+- **Điện thoại (chưa làm). Người dùng chọn Telegram (2026-10-08):** tạo bot qua @BotFather, lấy `chat_id` của người dùng, runner gửi bằng một lệnh POST tới Bot API (`sendMessage`), chỉ dùng thư viện chuẩn. Token và `chat_id` lưu ở file cục bộ không commit (ví dụ `.autodev/env.local.json`), bật bằng biến môi trường giống `AUTODEV_NOTIFY`. Nội dung chỉ gồm mốc, trạng thái, chi phí, không gửi code hay log dài.
+- Các lựa chọn khác (dự phòng):
   - ntfy.sh: miễn phí, có app iOS/Android, runner chỉ cần một lệnh POST HTTP. Tên topic phải ngẫu nhiên vì ai đoán được tên đều đọc được; không gửi nội dung nhạy cảm.
-  - Telegram bot: miễn phí, riêng tư hơn; cần tạo bot, token lưu ngoài repo và không commit.
   - Pushover: trả phí một lần, ổn định.
   - App Claude trên điện thoại: chỉ báo cho phiên Claude Code (Remote Control), không báo cho tiến trình `claude -p` của runner; cần kiểm chứng trước khi dùng.
-  - Instagram: không khuyến nghị. API nhắn tin chỉ dành cho tài khoản doanh nghiệp trả lời khách trong 24 giờ, không gửi được thông báo cho chính mình; dùng công cụ không chính thức thì dễ bị khoá tài khoản.
 
 ### Giao diện xem `claude -p` đang làm gì (người dùng nêu 2026-10-08)
 - Đã có: `.autodev/watch.sh` (terminal, chỉ đọc): runner còn chạy không, `run.log`, commit và file đang đổi ở từng worktree, transcript cập nhật bao lâu trước, số lệnh tool, tool gần nhất.
