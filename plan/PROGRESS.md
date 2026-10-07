@@ -119,6 +119,11 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - `dashboard/` Next.js (App Router, TS, yarn): kiểu event, fixture scenario1 (12 event), bảng anomaly, timeline; test ajv + component. lint/test/build đạt.
 - Ghi chú (a): Node 22.12 làm yarn lỗi engine (cần >=22.13), thêm `dashboard/.yarnrc` `ignore-engines true`; nên nâng Node sau. `docs/schema/payloads.md` chưa có nên payload fixture tự dựng theo emit của backend.
 
+### R6/dev-02 (T-026 phần 1): DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: e450d22. Review: .autodev/reviews/dev-02-r1.json (PASS).
+- `dashboard/lib/{sources,validate,useRunEvents}.ts`, `components/RunView.tsx`: SSE và phát lại fixture cùng giao diện (`?source=fixture|sse&run=<id>`), bỏ event sai schema và báo lỗi trên UI, reconnect tối đa 3 lần. 23 test vitest pass.
+- Non-blocking: validator viết tay có thể lệch events.json (nên có test đối chiếu); chưa thử với SSE backend thật.
+
 ## Đề xuất chờ duyệt (c)
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
