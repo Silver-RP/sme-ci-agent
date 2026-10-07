@@ -17,6 +17,11 @@ Mục tiêu chính: xây và hoàn thiện plugin auto-dev (thiết kế: `auto-
 
 Hai luồng không sửa chung file nên chạy song song không xung đột. Liên kết: mỗi mốc plugin dưới đây ghi mốc dự án dùng để thử; mỗi `plan/Mx.md` ghi dòng "Phục vụ plugin: Px".
 
+## Quy ước tên mốc
+- Mốc **plugin**: P1, P2… (file này).
+- Mốc **auto-dev chạy trên dự án** (`plan/`): từ 2026-10-08 đặt tên **R4, R5…** (R = run) để không trùng với mốc M0–M4 trong TASKS.md của team. Các mốc đã chạy trước đó giữ tên cũ: `plan/M1.md`, `M2.md`, `M3.md`.
+- Nhánh: `milestone/R4`… Mỗi `plan/Rx.md` ghi mã T-0xx của TASKS.md.
+
 ## Các mốc plugin
 
 | Mốc | Tính năng cần chứng minh | Thử qua | Trạng thái |
@@ -24,8 +29,13 @@ Hai luồng không sửa chung file nên chạy song song không xung đột. Li
 | P1 | Chế độ A: developer ⇄ reviewer, verify + baseline, guard, plan Mx/dev-xx | plan/M1.md | ✅ Xong (2026-10-06); phát hiện reviewer bỏ sót trường hợp biên → sửa prompt |
 | P2 | Vòng FAIL → REWORK, hook `SubagentStop` chạy thật, task phụ thuộc nhau | plan/M2.md | ✅ Xong (2026-10-07) |
 | P3 | Supervisor (vai con người) tự giao mốc, duyệt, merge; worker headless (`claude -p`) mỗi mốc một phiên mới; verify khi test cần Postgres; HANDOFF giữa các phiên supervisor | plan/M3.md | ✅ Xong (2026-10-08): worker headless chạy trọn mốc, supervisor duyệt + merge PR #14; cổng verify có biến môi trường riêng từng máy (`.autodev/env.local.json`, `DB_PORT`) |
-| P4 | Chế độ B: script `autodev-run.sh` chạy nhiều mốc liên tiếp (supervisor headless + worker headless). Xử lý hết hạn mức: (1) nhận biết từ kết quả JSON / sự kiện `api_retry` (`rate_limit`), lấy giờ reset; (2) chờ đến giờ reset + 5 phút; (3) chạy lại `/run-milestone` bằng phiên mới, tiếp tục từ `state.json` (giữa vòng review thì chỉ chạy lại reviewer); (4) hết hạn mức tuần thì dừng, ghi HANDOFF, báo người dùng. Tự ghi `total_cost_usd` mỗi mốc và quy đổi ra % hạn mức; kiểm tra ngân sách trước khi bắt đầu mốc; thông báo một chiều (Q1) | plan/M4.md + plan/M5.md (chạy nối tiếp) | 🔄 Đang làm: `.autodev/run.py` + `.autodev/autodev-run.sh` đã viết, 10 test với `claude` giả (hết hạn mức → chờ → chạy lại; hết hạn mức tuần → dừng; lỗi → thử lại 1 lần). Chưa chạy thật. |
+| P4 | Chế độ B: script `autodev-run.sh` chạy nhiều mốc liên tiếp (supervisor headless + worker headless). Xử lý hết hạn mức: (1) nhận biết từ kết quả JSON / sự kiện `api_retry` (`rate_limit`), lấy giờ reset; (2) chờ đến giờ reset + 5 phút; (3) chạy lại `/run-milestone` bằng phiên mới, tiếp tục từ `state.json` (giữa vòng review thì chỉ chạy lại reviewer); (4) hết hạn mức tuần thì dừng, ghi HANDOFF, báo người dùng. Tự ghi `total_cost_usd` mỗi mốc và quy đổi ra % hạn mức; kiểm tra ngân sách trước khi bắt đầu mốc; thông báo một chiều (Q1) | plan/R4.md + plan/R5.md (chạy nối tiếp) | 🔄 Đang làm: `.autodev/run.py` + `.autodev/autodev-run.sh` đã viết, 10 test với `claude` giả (hết hạn mức → chờ → chạy lại; hết hạn mức tuần → dừng; lỗi → thử lại 1 lần). Chưa chạy thật. |
 | P5 | Đóng gói plugin: tách sang repo riêng, `plugin.json`, cài bằng marketplace, onboarding dự án thứ hai | dự án thứ hai | ⏳ |
+
+## Để sau (người dùng chốt 2026-10-08)
+- Đo độ dài phiên: ghi `num_turns`, token, thời gian của mỗi phiên headless vào PROGRESS; ngưỡng cảnh báo mốc quá to.
+- Đo chất lượng theo thời gian: số vòng review, số lần verify chặn, lỗi tìm ra sau merge.
+- Hook trước khi Claude Code nén ngữ cảnh (cần kiểm chứng tên và cú pháp) để nhắc cập nhật HANDOFF và mở phiên mới.
 
 ## Tiêu chí "plugin đạt" cho từng mốc
 - Không cần người dùng chuyển tin giữa các phiên trong suốt một mốc.
