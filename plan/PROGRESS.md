@@ -94,6 +94,11 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - `backend/agent/nodes/ask.py` (hai node ask/wait_answer, interrupt), `backend/agent/checkpoint.py` (Postgres saver từ `DATABASE_URL`). Điều chỉnh (a): mục `ask` trong YAML, `question_count`/`status` trong state. 145 test pass.
 - Non-blocking: llm=None vẫn dùng nhánh mock không có Ask; câu trả lời của người không kiểm tra kiểu; event Ask mang agent `investigation`.
 
+### R4/dev-04 (T-023): DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: 870465a. Review: .autodev/reviews/dev-04-r1.json (PASS).
+- `backend/tools/actions.py`: `propose_sop`, `apply_sop` (approval là dict tham số; SOP trong config được chép thành bản nền rồi +1), `measure`, `save_learning`; dùng lại decorator audit của readonly.py. 162 test pass. Đã tick T-020, T-021, T-023 trong TASKS.md.
+- Non-blocking: approval chưa đối chiếu bản ghi duyệt thật (approved_by='llm' vẫn qua); R5 chỉ được truyền approval lấy từ resume của người.
+
 ## Đề xuất chờ duyệt (c)
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
