@@ -3,8 +3,8 @@
 
 For each milestone: move the worker worktree to origin/main -> worker headless (/run-milestone)
 -> check the worker opened a PR -> supervisor headless review (/supervise <M> --review-only,
-which merges) -> check the PR is merged -> next milestone. A macOS notification is sent when
-the run stops or finishes.
+which merges) -> check the PR is merged -> next milestone. With AUTODEV_NOTIFY=1 a macOS notification is sent
+when the run stops or finishes (off by default).
 
 Usage-limit handling (ROADMAP P4, approved 2026-10-08):
   1. detect the limit message in the run result, read the reset time;
@@ -170,8 +170,8 @@ def save(path: Path, data: dict) -> None:
 
 
 def notify(title: str, message: str) -> None:
-    """One-way macOS notification (Q1). Off with AUTODEV_NOTIFY=0 or on other systems."""
-    if os.environ.get("AUTODEV_NOTIFY", "1") == "0" or sys.platform != "darwin":
+    """One-way macOS notification (Q1). Only with AUTODEV_NOTIFY=1 and on macOS."""
+    if os.environ.get("AUTODEV_NOTIFY", "0") != "1" or sys.platform != "darwin":
         return
     script = f"display notification {json.dumps(message[:200])} with title {json.dumps(title)} sound name \"Glass\""
     subprocess.run(["osascript", "-e", script], capture_output=True, check=False)
