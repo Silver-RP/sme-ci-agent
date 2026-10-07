@@ -79,6 +79,26 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Điều chỉnh (a): `ambient_temperature` no_data (sandbox thiếu chuỗi). Seed 42: wrong_setpoint r≈0.98, material_batch r≈0.
 - Non-blocking: docstring correlate sai chữ; M01 cũng có r=0.957 (decoy), Investigate không được coi r cao là đủ; giả thuyết lạ trả no_data thay vì lỗi; fixture trùng với tests/test_db.py.
 
+### R4/dev-01 (T-020 phần 1): DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: 8563495. Review: .autodev/reviews/dev-01-r1.json (PASS).
+- `backend/agent/llm.py` (AnthropicLLM đọc `MODEL_REASONING`, ScriptedLLM), `backend/agent/prompts/system.py` sinh từ YAML. 116 test pass.
+- Non-blocking: chưa có test tool_result trong messages (thuộc dev-02).
+
+### R4/dev-02 (T-020 phần 2): DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: 350e08b. Review: .autodev/reviews/dev-02-r1.json (PASS).
+- `backend/agent/nodes/investigate.py` (vòng tool use), `backend/agent/events.py`, `build_graph(config, checkpointer, llm=None, tool_ctx=None)`. Điều chỉnh (a): `investigate.max_tool_steps` trong YAML, khóa `evidence_gap` trong state. 132 test pass.
+- Non-blocking: giả thuyết rỗng không đặt evidence_gap; `_run_tool` chỉ bắt TypeError/ValueError/KeyError.
+
+### R4/dev-03 (T-021): DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: d30aadf. Review: .autodev/reviews/dev-03-r1.json (PASS).
+- `backend/agent/nodes/ask.py` (hai node ask/wait_answer, interrupt), `backend/agent/checkpoint.py` (Postgres saver từ `DATABASE_URL`). Điều chỉnh (a): mục `ask` trong YAML, `question_count`/`status` trong state. 145 test pass.
+- Non-blocking: llm=None vẫn dùng nhánh mock không có Ask; câu trả lời của người không kiểm tra kiểu; event Ask mang agent `investigation`.
+
+### R4/dev-04 (T-023): DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: 870465a. Review: .autodev/reviews/dev-04-r1.json (PASS).
+- `backend/tools/actions.py`: `propose_sop`, `apply_sop` (approval là dict tham số; SOP trong config được chép thành bản nền rồi +1), `measure`, `save_learning`; dùng lại decorator audit của readonly.py. 162 test pass. Đã tick T-020, T-021, T-023 trong TASKS.md.
+- Non-blocking: approval chưa đối chiếu bản ghi duyệt thật (approved_by='llm' vẫn qua); R5 chỉ được truyền approval lấy từ resume của người.
+
 ## Đề xuất chờ duyệt (c)
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".

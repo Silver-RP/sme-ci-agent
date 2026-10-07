@@ -22,10 +22,10 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 
 ## M2: Agent core + API (10/10)
 
-- [ ] T-020 [Core] System prompt + node Investigate (5 Whys, giả thuyết + confidence), LLM tự chọn tool. Due 7/10
-- [ ] T-021 [Core] Node Ask (interrupt) + resume từ checkpointer Postgres. Due 8/10
+- [x] T-020 [Core] System prompt + node Investigate (5 Whys, giả thuyết + confidence), LLM tự chọn tool. Due 7/10
+- [x] T-021 [Core] Node Ask (interrupt) + resume từ checkpointer Postgres. Due 8/10
 - [ ] T-022 [Core] Node Improve (đề xuất + lý giải); trace đúng schema, có agent và domain. Due 9/10
-- [ ] T-023 [Tools] propose_sop/apply_sop (cần duyệt, có phiên bản), measure (before/after, MTTD/MTTR), learning_store. Due 10/10
+- [x] T-023 [Tools] propose_sop/apply_sop (cần duyệt, có phiên bản), measure (before/after, MTTD/MTTR), learning_store. Due 10/10
 - [ ] T-024 [Core] Node Act/Measure/Learn; điều phối bằng cạnh điều kiện theo ngưỡng KPI. Due 10/10
 - [ ] T-025 [Tools] FastAPI: start run, answer, approve/reject; SSE stream trace. Due 9/10
 - [ ] T-026 [Demo] Dashboard đọc SSE (phát lại fixture qua đúng endpoint), sau đó ghép API thật. Due 10/10

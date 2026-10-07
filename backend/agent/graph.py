@@ -1,45 +1,43 @@
-"""Agent graph skeleton: Observe -> Detect -> Investigate (mock, no LLM) -> end.
+"""Agent graph skeleton: Observe -> Detect -> Investigate (LLM tool use, or mock when no LLM is given) -> end.
 
-Interrupt/Postgres checkpointer come later (T-021); the checkpointer is injectable.
+With an LLM the graph adds Ask (interrupt) after Investigate; the checkpointer is injectable
+(see backend/agent/checkpoint.py for Postgres).
 """
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from typing import Any
 
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 
+from backend.agent.events import make_event
+from backend.agent.llm import LLM
+from backend.agent.nodes.ask import (
+    make_ask_node,
+    make_halt_node,
+    make_wait_answer_node,
+    route_after_investigate,
+)
+from backend.agent.nodes.investigate import run_investigation
 from backend.agent.state import AgentState, Hypothesis, validate_hypothesis_groups
 from backend.domain_config import DomainConfig
 from backend.tools.fake_metrics import fetch_kpi_breakdown
+from backend.tools.readonly import ToolContext
 
 DEFAULT_PERIOD = ("2026-10-01", "2026-10-07")
 
 
-def make_event(
-    state: AgentState,
-    type_: str,
-    agent: str,
-    payload: dict[str, Any],
-    seq: int,
-    default_domain: str = "",
-) -> dict[str, Any]:
-    """Build an event following docs/schema/events.json."""
-    return {
-        "event_id": f"evt_{state.get('run_id', '')}_{seq:04d}",
-        "run_id": state.get("run_id", ""),
-        "ts": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "type": type_,
-        "agent": agent,
-        "domain": state.get("domain") or default_domain,
-        "payload": payload,
-    }
+def build_graph(
+    config: DomainConfig,
+    checkpointer: Any | None = None,
+    llm: LLM | None = None,
+    tool_ctx: ToolContext | None = None,
+):
+    """Compile the graph. KPI and hypothesis groups come from `config`, not from code.
 
-
-def build_graph(config: DomainConfig, checkpointer: Any | None = None):
-    """Compile the graph. KPI and hypothesis groups come from `config`, not from code."""
+    With ``llm`` and ``tool_ctx`` Investigate is the LLM tool-use loop; without them the old mock runs.
+    """
     kpi = config.kpis[0]  # kpi type is a parameter derived from config
 
     def seq_of(state: AgentState, offset: int = 0) -> int:
@@ -71,6 +69,10 @@ def build_graph(config: DomainConfig, checkpointer: Any | None = None):
         return {"anomaly": anomaly, "events": [ev]}
 
     def investigate(state: AgentState) -> dict[str, Any]:
+        if llm is not None:
+            if tool_ctx is None:
+                raise ValueError("tool_ctx is required when llm is given")
+            return run_investigation(state, config, llm, tool_ctx)
         anomaly = state["anomaly"] or {}
         start, end = DEFAULT_PERIOD
         data = fetch_kpi_breakdown(anomaly["kpi"], start, end)
@@ -109,5 +111,18 @@ def build_graph(config: DomainConfig, checkpointer: Any | None = None):
     g.add_edge(START, "observe")
     g.add_edge("observe", "detect")
     g.add_edge("detect", "investigate")
-    g.add_edge("investigate", END)
+    if llm is None:
+        g.add_edge("investigate", END)  # legacy mock skeleton: no Ask
+    else:
+        g.add_node("ask", make_ask_node(config))
+        g.add_node("wait_answer", make_wait_answer_node(config))
+        g.add_node("halt", make_halt_node(config))
+        g.add_conditional_edges(
+            "investigate",
+            lambda s: route_after_investigate(s, config),
+            {"end": END, "ask": "ask", "halt": "halt"},
+        )
+        g.add_edge("ask", "wait_answer")
+        g.add_edge("wait_answer", "investigate")
+        g.add_edge("halt", END)
     return g.compile(checkpointer=checkpointer or InMemorySaver())
