@@ -1,0 +1,23 @@
+{
+  "task_id": "M2/dev-02",
+  "status": "PASS",
+  "criteria": [
+    {"criterion": "1. Ground truth có id, máy, thời điểm tiêm, root_cause cho mỗi anomaly; test so với YAML", "met": true, "evidence": "tests/test_sandbox_injector.py::test_ground_truth_matches_yaml; backend/sandbox/injector.py GroundTruth. Probe generate_dataset(42) trả A1/M02/2026-03-10 22:00/wrong_setpoint, A2_recurrence/M01/2026-06-02 22:00/wrong_setpoint, FP1/M03/planned_maintenance."},
+    {"criterion": "2. machine_log có đổi setpoint 180->195 của M02 (A1) và M01 (A2); shift_schedule có nhân sự thay thế ca đêm quanh A1; FP1 có bản ghi bảo trì có kế hoạch", "met": true, "evidence": "test_machine_log_setpoint_changes, test_shift_schedule_has_night_substitute_around_a1, test_fp1_has_planned_maintenance_record. Probe: machine_log có đúng 2 dòng setpoint_change (M02 03-10 22:00, M01 06-02 22:00, new_value=195) và 2 dòng maintenance của M03 (04-15 06:00, 04-17 06:00); shift_schedule có OP-SUB01 is_substitute ở M02 night các ngày 03-09, 03-10, 03-11."},
+    {"criterion": "3. Trong cửa sổ, tỉ lệ lỗi trung bình gần effect (sai số <= 1 noise_sd); ngoài cửa sổ quanh baseline", "met": true, "evidence": "test_mean_in_window_near_effect, test_outside_windows_stays_baseline. Probe seed 42: A1 mean 0.06194 (effect 0.062, n=337), A2 0.05519 (0.055, n=85), FP1 0.04255 (0.045, n=6), trước cửa sổ khoảng 0.0195-0.0200. Quét seed 1..59 cho cả 3 cửa sổ: 0 trường hợp lệch quá 0.004."},
+    {"criterion": "4. A2 cùng root_cause với A1 trên máy khác, sau A1", "met": true, "evidence": "test_a2_recurs_a1_root_cause_on_other_machine_later; probe cho thấy A1 trên M02 vào 03-10, A2 trên M01 vào 06-02, cùng root_cause wrong_setpoint."},
+    {"criterion": "5. Bảng detect nhận không chứa cột hay giá trị lộ root_cause/hidden; có test quét", "met": true, "evidence": "test_tables_do_not_leak_ground_truth, test_ground_truth_is_separate_from_tables. Probe: tự quét regex tên cột (root|hidden|truth) và giá trị chuỗi (wrong_setpoint|hidden|root_cause|ground) trên cả 6 bảng, không có kết quả. Ground truth là list riêng trong Dataset, và gen_data ghi ra ground_truth.json riêng."},
+    {"criterion": "6. gen_data.py --seed 42 chạy được, sinh đủ 6 tháng, in tóm tắt; có test gọi hàm chính với thư mục tạm", "met": true, "evidence": "tests/test_sandbox_injector.py::test_gen_data_main_writes_csv_and_summary, test_gen_data_repeat_call_same_output; scripts/gen_data.py main(). kpi_log trải từ 2026-01-01 06:00 đến 2026-06-30 22:00 (1629 dòng). data/generated/ nằm trong .gitignore:13."}
+  ],
+  "blocking_issues": [],
+  "non_blocking": [
+    "Điểm 1: injector vẽ lại KPI bằng RNG riêng (np.random.default_rng([seed, 1])) thay vì đi qua setpoint của simulator. Điều này nhất quán với machine_log, vì setpoint_change và cửa sổ vẽ lại dùng chung start/end/level từ YAML, và dữ liệu bình thường ngoài cửa sổ không đổi (xác nhận bằng probe inject với scenario rỗng cho bảng kpi_log giống hệt đầu vào, và test_inject_does_not_mutate_input). Hạn chế: setpoint_sensitivity_per_c ở dev-01 và effect trong YAML là hai nguồn độc lập cho cùng một mức. Hiện hai nguồn khớp (0.002 + 15*0.0028 = 0.062), nhưng không có test ràng buộc cho trường hợp A2 (0.055 không khớp 195 °C). Nên ghi chú để dev-03/T-004 không hiểu nhầm đây là quan hệ nhân quả.",
+    "Điểm 3: các khóa trace.* (parameter, new_setpoint_c, substitute_operator, substitute_nights_before/after) nằm ngoài danh sách bổ sung được phép của dev-02. Chúng đều là tham số mô phỏng đặt trong YAML (đúng quy ước không hard-code), đã có chú thích 'đề xuất chờ T-004' trong YAML. Nhưng plan/M2.md mục 'Ghi chú điều chỉnh' mới ghi các khóa của dev-01 (setpoint_sensitivity_per_c, shift_start_hours), chưa ghi các khóa trace của dev-02. Nên bổ sung một dòng ghi chú (a) ở đó.",
+    "Điểm 3: cửa sổ A1/A2 vẽ lại KPI của mọi ca của máy bị tiêm (không chỉ ca đêm) từ lúc start đến hết horizon, kể cả khi YAML không có end. Đúng với docstring và mô tả plan ('đến hết horizon'), nên không coi là lỗi.",
+    "Điểm 4: tổng thời gian test của cả repo là 2.32s (62 test), nằm trong ngưỡng < 30s. Test chậm nhất là 0.16s.",
+    "FP1 chỉ có 6 điểm nên mean dao động khá nhiều (seed 42 lệch 0.0025). Quét seed 1..59 không có seed nào vượt 1 noise_sd, nhưng biên an toàn không lớn."
+  ],
+  "tests_rerun": {"command": "uv run pytest -q; python3 .autodev/verify.py", "passed": 62, "failed": 0},
+  "plan_suggestions": [],
+  "summary": "Cả 6 tiêu chí đều có bằng chứng và đã được probe độc lập. Ground truth tách riêng, không lộ vào bảng, hai nguồn mức KPI nhất quán, quét seed 1..59 không có ca nào lệch quá 1 noise_sd. verify sạch, 62 test pass trong 2.32s, không có blocking issue. Chỉ cần bổ sung ghi chú điều chỉnh cho các khóa trace trong plan/M2.md."
+}

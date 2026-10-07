@@ -10,3 +10,4 @@ dashboard/.env
 pgdata/
 *.log
 .DS_Store
+data/generated/

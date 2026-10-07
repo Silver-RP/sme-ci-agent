@@ -10,12 +10,15 @@ plant:
   machines: [M01, M02, M03]
   shifts: [morning, afternoon, night]
   horizon_months: 6
+  start_date: "2026-01-01"   # đề xuất chờ T-004
+  shift_start_hours: {morning: 6, afternoon: 14, night: 22}   # đề xuất chờ T-004
 
 baseline:
   kpi: defect_rate
   value: 0.02           # 2.0%
   noise_sd: 0.004
   zone3_setpoint_c: 180 # theo SOP
+  setpoint_sensitivity_per_c: 0.0028   # đề xuất chờ T-004: tỉ lệ lỗi tăng mỗi °C lệch SOP (15 °C -> +0.042 = 0.062)
 
 injected_anomalies:
   - id: A1
@@ -25,6 +28,12 @@ injected_anomalies:
     start: "2026-03-10T22:00:00"
     effect:
       defect_rate: 0.062
+    trace:                # dấu vết để lại trong log (đề xuất chờ T-004)
+      parameter: zone3_setpoint_c
+      new_setpoint_c: 195
+      substitute_operator: OP-SUB01
+      substitute_nights_before: 1
+      substitute_nights_after: 1
     ground_truth:         # ẨN với agent, chỉ dùng để chấm
       hidden: true
       root_cause: wrong_setpoint
@@ -40,6 +49,9 @@ injected_anomalies:
     start: "2026-06-02T22:00:00"
     effect:
       defect_rate: 0.055
+    trace:
+      parameter: zone3_setpoint_c
+      new_setpoint_c: 195
     ground_truth:
       hidden: true
       root_cause: wrong_setpoint
@@ -54,6 +66,11 @@ distractors:              # giả thuyết gây nhiễu, tương quan yếu
 false_positive_case:      # làm ở G6
   id: FP1
   machine: M03
+  start: "2026-04-15T06:00:00"   # đề xuất chờ T-004
+  end: "2026-04-17T06:00:00"
+  planned: true
+  effect:
+    defect_rate: 0.045
   description: Bảo trì định kỳ làm defect tăng tạm thời, có lịch bảo trì
   expected_agent_behavior: Nhận ra có kế hoạch, không đề xuất đổi SOP
 

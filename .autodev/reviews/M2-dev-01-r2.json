@@ -1,0 +1,40 @@
+{
+  "task_id": "M2/dev-01",
+  "status": "PASS",
+  "criteria": [
+    {
+      "criterion": "1. Hàm sinh trả về đủ 6 bảng; schema cột cố định, có test tên cột và kiểu",
+      "met": true,
+      "evidence": "tests/test_sandbox_simulator.py::test_six_tables_with_fixed_schema; test_schema_holds_for_empty_tables_and_defaults; backend/sandbox/schema.py. Probe: simulate(params_from_config()) trả 6 bảng (kpi_log 1629 dòng, inventory 362, supplier 2, sop 5). Probe machines=() và days=0 vẫn giữ đúng dtype của kpi_log."
+    },
+    {
+      "criterion": "2. Cùng seed giống hệt; khác seed khác",
+      "met": true,
+      "evidence": "tests/test_sandbox_simulator.py::test_same_seed_identical_different_seed_differs_and_repeatable. Probe: gọi simulate hai lần với cùng params, cả 6 bảng bằng nhau (True). Seed 7 cho kpi_log khác seed 42 (equals=False). Không có trạng thái dùng chung giữa các lần gọi."
+    },
+    {
+      "criterion": "3. Đổi setpoint làm tỉ lệ lỗi tăng rõ (>= 3 noise_sd trên baseline); khôi phục thì về baseline ± 1 noise_sd",
+      "met": true,
+      "evidence": "tests/test_sandbox_simulator.py::test_setpoint_shift_raises_then_restore_returns_to_baseline. Probe M02 180→195 từ 03-01, khôi phục 180 từ 04-01: trung bình trước 0.0195, trong lúc lệch 0.0623, sau khi khôi phục 0.0200. Baseline 0.02, noise_sd 0.004, nên đạt cả hai điều kiện. machine_log ghi đúng old_value/new_value 180→195 rồi 195→180."
+    },
+    {
+      "criterion": "4. Không có giá trị âm hay lớn hơn 1 trong cột tỉ lệ; có test với noise lớn",
+      "met": true,
+      "evidence": "tests/test_sandbox_simulator.py::test_rate_column_bounded_with_large_noise (parametrize noise). Probe noise_sd=5.0, seed=3: min 0.0, max 1.0. Giá trị bị clip trong simulator.py."
+    },
+    {
+      "criterion": "5. Tên cột và tên hàm trung tính; giá trị kpi lấy từ config",
+      "met": true,
+      "evidence": "B1 đã xử lý: defect_mean đổi thành expected_kpi_value (backend/sandbox/simulator.py, __init__.py). grep -i defect trong backend/sandbox không còn kết quả. Test chặn tái phát: test_sandbox_public_names_are_domain_neutral. test_kpi_name_comes_from_config và test_unknown_kpi_in_scenario_rejected cover phần KPI từ config; probe kpi_log.kpi = ['defect_rate'] lấy từ YAML và được kiểm tra với domain config."
+    }
+  ],
+  "blocking_issues": [],
+  "non_blocking": [
+    "scenario1.yaml được thêm shift_start_hours và setpoint_sensitivity_per_c, đã ghi chú 'đề xuất chờ T-004'. Điều này được plan cho phép, chỉ cần team xác nhận sau.",
+    "params_from_config có mặc định start_date 2026-01-01 trong code khi YAML thiếu plant.start_date. dev-02 sẽ bổ sung giá trị này vào YAML.",
+    "Giá trị mặc định materials ('MAT-A', 'MAT-B') nằm trong SimParams. Nên chuyển sang config sau này."
+  ],
+  "tests_rerun": {"command": "uv run pytest -q", "passed": 42, "failed": 0},
+  "plan_suggestions": [],
+  "summary": "Cả 5 tiêu chí đều đạt, B1 (đổi tên defect_mean) đã được xử lý và có test chặn tái phát. verify.py sạch so với baseline, pytest 42/42 pass, các probe biên (noise lớn, khôi phục setpoint, bảng rỗng, chạy hai lần) đều đúng."
+}

@@ -1,0 +1,28 @@
+{
+  "task_id": "dev-03",
+  "status": "PASS",
+  "criteria": [
+    {"criterion": "1. Ngưỡng SD lấy từ alert_threshold_sd trong YAML, KPI là tham số, đổi ngưỡng thì số anomaly đổi đúng hướng", "met": true, "evidence": "backend/detect/statistical.py: k_sd = threshold_sd if threshold_sd is not None else k.alert_threshold_sd. tests/test_detect.py::test_threshold_from_config_and_direction (cfg2 với alert_threshold_sd=20 cho 0 anomaly, 1.5 cho nhiều hơn mặc định), ::test_kpi_is_a_parameter (KPI lạ thì ValueError). Probe: threshold_sd=12 cho 26 anomaly, threshold_sd=8 cho 2 anomaly."},
+    {"criterion": "2. Seed 42: anomaly cho M02 trong 1 ngày sau A1, cho M01 trong 1 ngày sau A2", "met": true, "evidence": "tests/test_detect.py::test_detects_a1_and_a2_seed42. Probe: M02 bắt đầu 2026-03-10 22:00 (đúng thời điểm A1), M01 bắt đầu 2026-06-02 22:00 (đúng thời điểm A2). Mỗi máy đúng 1 anomaly."},
+    {"criterion": "3. Không có anomaly cần điều tra cho M03 trong cửa sổ FP1", "met": true, "evidence": "tests/test_detect.py::test_no_anomaly_in_fp1_window (M03 không có anomaly nào); ::test_maintenance_log_is_what_suppresses_fp1 (bỏ dòng maintenance khỏi machine_log thì M03 có anomaly, nên chính log bảo trì là thứ chặn FP1). Probe: bảo trì chỉ có dòng start thì cửa sổ mở đến hết horizon, kết quả vẫn đúng."},
+    {"criterion": "4. Mỗi seed 1..5, số anomaly ngoài A1, A2, FP1 ≤ 2", "met": true, "evidence": "tests/test_detect.py::test_false_alarms_at_most_two[1..5] pass. Test cũng xác nhận A1 và A2 vẫn được tìm thấy ở từng seed."},
+    {"criterion": "5. Event hợp lệ theo events.json: type, agent=quality, domain từ config, payload đủ kpi/máy/start/value/baseline/upper_limit", "met": true, "evidence": "tests/test_detect.py::test_events_valid_against_schema, ::test_domain_comes_from_config (domain đổi theo config, không rỗng). statistical.py::anomaly_events dùng make_event với config.domain. Không đụng docs/schema/events.json (diff chỉ gồm backend/detect/* và tests/test_detect.py)."},
+    {"criterion": "6. Detect chỉ nhận bảng dữ liệu, không có tham số ground truth; đầu vào rỗng hoặc dữ liệu bình thường thì không có anomaly", "met": true, "evidence": "tests/test_detect.py::test_signature_has_no_ground_truth, ::test_empty_input (cả {} và bảng rỗng), ::test_normal_data_only_has_no_anomaly (seed 1..3), ::test_repeated_calls_same_result_and_no_mutation (gọi hai lần cho kết quả như nhau, không sửa input). Probe: kpi_log của M01 đặt hằng 0.01 (sigma=0) thì không có anomaly; dữ liệu chỉ 2 ngày (thiếu tham chiếu) thì trả []."},
+    {"criterion": "Cấp mốc 1 và 2: verify sạch; test không cần Docker/API key; tổng thời gian < 30s", "met": true, "evidence": "python3 .autodev/verify.py: 'sạch (không có lỗi mới so với baseline)'. uv run pytest -q: 79 passed, 3.26s (tổng 4.4s kể cả khởi động)."},
+    {"criterion": "Cấp mốc 3: end-to-end seed mặc định, có anomaly cho A1 và A2, không có anomaly thật trong FP1", "met": true, "evidence": "Probe generate_dataset(seed=42) rồi detect_anomalies: chỉ có M02 (từ 2026-03-10 22:00, 337 điểm) và M01 (từ 2026-06-02 22:00, 85 điểm); M03 không có gì. Lưu ý: generate_dataset không có tham số seed mặc định ngoài seed=42 được test, nên tiêu chí này dựa trên seed 42."},
+    {"criterion": "Cấp mốc 4: detect không đọc được ground truth", "met": true, "evidence": "detect/detect_anomalies chỉ nhận tables (dict), config, kpi, params, threshold_sd. ground_truth là thuộc tính riêng của dataset, không nằm trong tables. Test chữ ký ở tests/test_detect.py::test_signature_has_no_ground_truth."}
+  ],
+  "blocking_issues": [],
+  "non_blocking": [
+    "Điểm (1): DetectParams (reference_days=28, rule 2-trên-3, max_gap=3) để mặc định trong code (backend/detect/statistical.py). Không chặn: quy ước mốc liệt kê cụ thể baseline, noise, setpoint, ngưỡng SD, và CLAUDE.md chỉ yêu cầu KPI, Ishikawa, SOP nằm trong YAML. Ngưỡng SD thì đúng là lấy từ YAML. Đây là siêu tham số của thuật toán, được test (DetectParams().rule_hits == 2). Nên đưa vào context_profile.yaml ở mốc sau để leader chỉnh mà không sửa code.",
+    "Điểm (3): ngưỡng 12 SD tách A1 thành 26 anomaly không phải lỗi gộp. Ở 12 SD giới hạn gần bằng mức effect của A1, nên các điểm vượt xen kẽ và khoảng trống lớn hơn max_gap=3 làm tách anomaly. Với ngưỡng mặc định 3 SD, A1 vẫn là 1 anomaly (test_anomalies_are_merged_not_per_point).",
+    "Điểm (2): bảo trì chồng lên A1 (probe thêm bảo trì M02 từ 03-09 22:00 đến 03-13 22:00) làm A1 bị báo trễ đến 03-13 22:00, tức vẫn tìm thấy nhưng sau cửa sổ 1 ngày. Hành vi này nhất quán với thiết kế loại điểm bảo trì khỏi chuỗi, nhưng có thể ghi vào docs.",
+    "Điểm (2): bảo trì thiếu dòng end coi như mở đến hết horizon, nên che mọi anomaly thật sau thời điểm start của máy đó. Chấp nhận được cho MVP; nên ghi chú để người dùng biết.",
+    "Dữ liệu ngắn hơn reference_days (28 ngày) thì mọi điểm thuộc giai đoạn tham chiếu và bị coi là không báo động, nên máy mới sẽ không bao giờ có anomaly. Có thể thêm test ghi nhận hành vi này.",
+    "Máy có sigma tham chiếu = 0 thì giới hạn bằng đúng baseline, nên mọi giá trị nhỉnh hơn một chút đều vượt ngưỡng. Hiện chưa có test và chưa có sàn sigma.",
+    "tests/test_detect.py có một dòng lambda gán tên (strip = lambda ...) kèm khoảng trắng cuối dòng; ruff đang sạch nên chỉ là vấn đề style."
+  ],
+  "tests_rerun": {"command": "uv run pytest -q", "passed": 79, "failed": 0},
+  "plan_suggestions": [],
+  "summary": "Tất cả tiêu chí của dev-03 và tiêu chí cấp mốc 1-4 đều đạt: verify sạch, 79 test pass trong 3.3s, probe seed 42 cho đúng 1 anomaly cho A1 (M02) và A2 (M01), không có gì cho M03. Siêu tham số luật 2-trên-3, gộp 3 ca và tham chiếu 28 ngày nằm trong code nhưng không vi phạm quy ước đã nêu nên chỉ ghi vào non_blocking."
+}
