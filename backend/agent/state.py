@@ -38,6 +38,12 @@ class AgentState(TypedDict, total=False):
     evidence_gap: bool  # Investigate could not conclude; Ask should handle it
     question_count: int  # questions asked so far in this run (bounded by config.ask.max_questions)
     status: str  # "" while running; "awaiting_human" when the run stopped waiting for a person
+    change_time: str  # ISO time the change takes effect; measure compares windows around it
+    approval: dict[str, Any] | None  # the human decision record for the current proposal
+    applied: dict[str, Any] | None  # SOP version created by Act (+ previous version, for rollback)
+    measurement: dict[str, Any] | None  # last measure result + threshold verdict
+    rejection_count: int
+    rollback_count: int
     events: Annotated[list[dict[str, Any]], operator.add]
 
 

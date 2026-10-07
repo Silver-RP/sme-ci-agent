@@ -20,6 +20,12 @@ investigate:
 ask:
   confidence_threshold: 0.6 # độ tin cậy giả thuyết đứng đầu dưới ngưỡng này thì hỏi người
   max_questions: 2          # số lần hỏi tối đa mỗi run; vượt thì dừng chờ người
+measure:
+  window_days: 7            # cửa sổ before/after khi đo KPI sau khi áp dụng
+  tolerance: 0.25           # đạt khi KPI trong 25% so với target (đúng phía tốt); không đạt -> đề xuất rollback
+loop:
+  max_rejections: 3         # số đề xuất bị từ chối tối đa trước khi dừng chờ người
+  max_rollbacks: 2          # số lần rollback tối đa mỗi run
 hypothesis_groups:          # Ishikawa
   machine: [wrong_setpoint, wear, calibration]
   method: [outdated_sop, missing_check]

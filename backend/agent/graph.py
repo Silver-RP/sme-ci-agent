@@ -13,12 +13,27 @@ from langgraph.graph import END, START, StateGraph
 
 from backend.agent.events import make_event
 from backend.agent.llm import LLM
+from backend.agent.nodes.act import (
+    make_act_node,
+    make_learn_node,
+    make_loop_halt_node,
+    make_measure_node,
+    make_rollback_apply_node,
+    make_rollback_propose_node,
+    make_wait_approval_node,
+    make_wait_rollback_node,
+    route_after_approval,
+    route_after_measure,
+    route_after_rollback,
+    route_after_rollback_confirm,
+)
 from backend.agent.nodes.ask import (
     make_ask_node,
     make_halt_node,
     make_wait_answer_node,
     route_after_investigate,
 )
+from backend.agent.nodes.improve import run_improvement
 from backend.agent.nodes.investigate import run_investigation
 from backend.agent.state import AgentState, Hypothesis, validate_hypothesis_groups
 from backend.domain_config import DomainConfig
@@ -33,10 +48,14 @@ def build_graph(
     checkpointer: Any | None = None,
     llm: LLM | None = None,
     tool_ctx: ToolContext | None = None,
+    full_loop: bool = False,
 ):
     """Compile the graph. KPI and hypothesis groups come from `config`, not from code.
 
     With ``llm`` and ``tool_ctx`` Investigate is the LLM tool-use loop; without them the old mock runs.
+    ``full_loop=True`` (needs both) continues after Investigate through Improve -> approval -> Act ->
+    Measure -> Learn, with rollback (person confirms) back to Investigate. Default False keeps the
+    graph ending after Investigate/Ask.
     """
     kpi = config.kpis[0]  # kpi type is a parameter derived from config
 
@@ -104,6 +123,12 @@ def build_graph(
             "events": events,
         }
 
+    if full_loop and (llm is None or tool_ctx is None):
+        raise ValueError("full_loop requires both llm and tool_ctx")
+
+    def improve(state: AgentState) -> dict[str, Any]:
+        return run_improvement(state, config, llm, tool_ctx)
+
     g = StateGraph(AgentState)
     g.add_node("observe", observe)
     g.add_node("detect", detect)
@@ -120,9 +145,49 @@ def build_graph(
         g.add_conditional_edges(
             "investigate",
             lambda s: route_after_investigate(s, config),
-            {"end": END, "ask": "ask", "halt": "halt"},
+            {"end": "improve" if full_loop else END, "ask": "ask", "halt": "halt"},
         )
         g.add_edge("ask", "wait_answer")
         g.add_edge("wait_answer", "investigate")
         g.add_edge("halt", END)
+        if full_loop:
+            _add_act_loop(g, config, tool_ctx, improve)
     return g.compile(checkpointer=checkpointer or InMemorySaver())
+
+
+def _add_act_loop(g: StateGraph, config: DomainConfig, ctx: ToolContext, improve) -> None:
+    """Improve -> approval -> Act -> Measure -> Learn / rollback; all routing is rule-based (no LLM)."""
+    g.add_node("improve", improve)
+    g.add_node("wait_approval", make_wait_approval_node(config, ctx))
+    g.add_node("act", make_act_node(config, ctx))
+    g.add_node("measure", make_measure_node(config, ctx))
+    g.add_node("learn", make_learn_node(config, ctx))
+    g.add_node("rollback_propose", make_rollback_propose_node(config, ctx))
+    g.add_node("wait_rollback", make_wait_rollback_node(config, ctx))
+    g.add_node("rollback_apply", make_rollback_apply_node(config, ctx))
+    g.add_node("loop_halt", make_loop_halt_node(config))
+    g.add_edge("improve", "wait_approval")
+    g.add_conditional_edges(
+        "wait_approval",
+        lambda s: route_after_approval(s, config),
+        {"act": "act", "improve": "improve", "halt": "loop_halt"},
+    )
+    g.add_edge("act", "measure")
+    g.add_conditional_edges(
+        "measure",
+        lambda s: route_after_measure(s, config),
+        {"learn": "learn", "rollback_propose": "rollback_propose"},
+    )
+    g.add_edge("learn", END)
+    g.add_edge("rollback_propose", "wait_rollback")
+    g.add_conditional_edges(
+        "wait_rollback",
+        lambda s: route_after_rollback_confirm(s, config),
+        {"rollback_apply": "rollback_apply", "halt": "loop_halt"},
+    )
+    g.add_conditional_edges(
+        "rollback_apply",
+        lambda s: route_after_rollback(s, config),
+        {"investigate": "investigate", "halt": "loop_halt"},
+    )
+    g.add_edge("loop_halt", END)
