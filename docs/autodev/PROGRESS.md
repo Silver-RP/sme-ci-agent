@@ -25,11 +25,12 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
 |---|---|---|---|---|---|
 | M1 (4 task) | phiên VS Code | ~10 phút | không đo | ~7% | |
 | M2 (3 task) | phiên VS Code | ~36 phút | không đo | ~18% | 1 vòng REWORK |
-| M3 (3 task) | **headless từ supervisor** | 12,3 phút, 41 lượt | 1,72 USD | (chưa đo) | 1 lệnh bị từ chối đúng (xoá file) |
+| M3 (3 task) | **headless từ supervisor** | 12,3 phút, 41 lượt | 1,72 USD | ~16–22% (người dùng ước) | 1 lệnh bị từ chối đúng (xoá file) |
 
 ## Hạn mức (người dùng đo bằng `/usage`)
 
 - 2026-10-07: mỗi lần chạy `/run-milestone` tốn khoảng **7–18% hạn mức của cửa sổ 5 giờ** (gói Pro). Mốc nhỏ (M1, 3–4 task đơn giản) ở mức thấp; M2 (3 task phụ thuộc nhau, 1 vòng REWORK, ~36 phút) ở mức cao. Chưa đo hạn mức tuần.
+- 2026-10-08: M3 chạy headless (phiên điều phối Sonnet) tốn ~16–22%, ngang M2 dù nhanh hơn 3 lần (12 phút so với 36 phút). Chạy headless không làm rẻ hơn; chi phí chủ yếu nằm ở developer/reviewer. Đối chiếu: 1,72 USD ước tính ≈ 16–22%.
 - Hệ quả: một cửa sổ 5 giờ chạy được khoảng 5–14 mốc cỡ này; cần đo thêm hạn mức tuần trước khi làm chế độ B (chạy qua đêm).
 
 ## Bài học (đã thành sửa đổi prompt, gate hoặc quy tắc)

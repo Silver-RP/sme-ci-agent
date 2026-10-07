@@ -70,7 +70,7 @@ uv run ruff check .          # lint
 
 - Plan lớn (plugin): docs/autodev/ (thiết kế, ROADMAP, PROGRESS, HANDOFF). Plan nhỏ (dự án): plan/Mx.md (dev-xx kèm mã T-0xx), nhật ký plan/PROGRESS.md. TASKS.md vẫn là nguồn chung cho team. Ưu tiên auto-dev nhưng không làm sai mục tiêu dự án.
 - Chạy một mốc: `/run-milestone M1`. Agent: .claude/agents/developer.md (code) và reviewer.md (chỉ đọc).
-- Kiểm tra cứng: `uv run python .autodev/verify.py` (ruff → pytest, so với .autodev/baseline.json).
+- Kiểm tra cứng: `uv run python .autodev/verify.py` (ruff → pytest, so với .autodev/baseline.json). Máy nào phải đổi cổng DB: đặt `DB_PORT` khi chạy docker compose và chép `.autodev/env.local.example.json` thành `.autodev/env.local.json` (không commit).
 - developer không sửa tiêu chí chấp nhận hay phạm vi mốc; chỉ ghi vào "Đề xuất chờ duyệt" trong plan/PROGRESS.md. Worker không sửa file plugin (.claude/, .autodev/*.py, docs/autodev/).
 - Supervisor (`/supervise Mx`) giao mốc cho worker headless, duyệt và merge (thiết kế mục 6.15).
 - Không đọc hay in nội dung .env.
