@@ -2,29 +2,37 @@
 
 Supervisor cập nhật file này ở cuối mỗi mốc (và trước khi người dùng đóng phiên). Phiên supervisor mới đọc file này trước tiên, rồi `ROADMAP.md`, rồi `PROGRESS.md`. Ngắn gọn, chỉ những gì phiên mới cần để làm tiếp.
 
+## Bạn là ai, đang làm gì (đọc trước)
+- Hai plan lồng nhau: **plan lớn** = xây plugin auto-dev (`docs/autodev/`), **plan nhỏ** = dự án SME CI Agent dùng để thử (`plan/`, TASKS.md). Ưu tiên auto-dev, nhưng mốc dự án vẫn phải đúng TASKS.md, PLAN.md, DoD (ROADMAP, "Nguyên tắc ưu tiên").
+- Phiên supervisor = **vai con người**: lập plan, giao mốc, duyệt, merge, sửa plugin. Không viết code dự án (developer/reviewer trong worker làm). Quyền: thiết kế mục 6.15.
+- Người dùng giao tiếp bằng tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa và được báo ngắn gọn.
+
+## Bước tiếp theo (người dùng đã duyệt 2026-10-08)
+1. Kiểm tra nhanh điều kiện chạy:
+   - Docker DB: `docker compose ps` trong `../sme-ci-agent-autodev` thấy `sme-ci-agent-autodev-db-1` chạy ở cổng 5432 (nếu dừng: `docker compose up -d db` trong thư mục đó).
+   - `gh auth status` đã đăng nhập; `claude --version` chạy được (wrapper `~/.local/bin/claude`).
+   - Worktree: `../sme-ci-agent-autodev` (worker, đang ở `milestone/M3` đã merge; `/run-milestone` sẽ tự tạo `milestone/R4` từ `origin/main`) và `../sme-ci-agent-supervisor` (supervisor, detached). Cả hai có `.claude/settings.local.json` (Auto, tắt Superpowers).
+2. Khởi chạy chế độ B cho **R4 rồi R5**, tách khỏi phiên để vẫn chạy khi đóng VS Code (chạy từ thư mục repo chính):
+   `nohup .autodev/autodev-run.sh R4 R5 > .autodev/runs/nohup.out 2>&1 &`
+3. Báo người dùng: đã khởi chạy, cách theo dõi (`.autodev/runs/run.log`), dự kiến 30–90 phút cộng thời gian chờ reset nếu chạm hạn mức (ước 35–50% cửa sổ 5 giờ cho 2 mốc).
+4. Khi chạy xong hoặc dừng: đọc `run.log`, các file JSON trong `.autodev/runs/`, `STOPPED.md` nếu có (exit 2 lỗi, 3 hạn mức, 4 mốc chưa merge). Supervisor headless đã duyệt/merge từng mốc; phiên này tóm tắt cho người dùng, ghi số đo (thời gian, `total_cost_usd`, có chạm hạn mức không, script có tự chờ và chạy tiếp đúng không) vào `PROGRESS.md`, cập nhật ROADMAP (P4) và file này qua một PR `chore/autodev-*`.
+
 ## Trạng thái hiện tại (2026-10-08)
-- Mốc plugin: **P3 xong**. M3 (M2-c1/c2, T-013, T-014) chạy bằng worker headless trong 12,3 phút, cả 3 task PASS; supervisor đã chạy lại verify (106 test pass) và probe T-014 với seed 7 (chỉ đọc, 1 audit mỗi lần gọi, `correlate` đúng).
-- PR #14 (M3) đã merge (2026-10-08, sau một lúc GitHub trả HTTP 500 cho mọi thao tác ghi; thử lại sau là được). M3 tốn ~16–22% cửa sổ 5 giờ.
-- **Môi trường trên máy này:** đã dừng dịch vụ Homebrew `postgresql@14` theo yêu cầu người dùng (bật lại: `brew services start postgresql@14`; dữ liệu giữ nguyên). Cổng 5432 giờ là container `sme-ci-agent-autodev-db-1`; test chạy với URL mặc định. Container tạm `sme-dev02-pg` (cổng 55432, developer tự dựng ở M3) vẫn còn, chờ người dùng quyết có xoá không.
-- Worktree: `../sme-ci-agent-autodev` trên nhánh `milestone/M3` (đã đẩy lên GitHub), có `.claude/settings.local.json` (Auto, danh sách lệnh, tắt Superpowers).
-- Lệnh chạy worker: trong worktree, `claude -p "/run-milestone Mx" --model sonnet --permission-mode auto --permission-prompts none --output-format json` (chạy nền). `claude` là wrapper ở `~/.local/bin/claude` trỏ tới bản đi kèm extension VS Code.
+- Plugin: P1, P2, P3 xong. P4 đang làm: bộ chạy `.autodev/run.py` + `.autodev/autodev-run.sh` đã viết, 10 test với `claude` giả (`python3 -m unittest discover .autodev/tests`), **chưa chạy thật**.
+- Dự án: TASKS.md nhóm M1 xong 7/8 (còn T-016 dashboard, chưa ai làm). R4 = T-020, T-021, T-023; R5 = T-022, T-024, T-025. Test không gọi LLM thật, không cần API key.
+- Hạn mức: mỗi mốc 7–22% cửa sổ 5 giờ; M3 (headless) ~16–22%, ~1,72 USD ước tính. Chưa đo hạn mức tuần.
+- Máy này: đã dừng dịch vụ Homebrew `postgresql@14` theo yêu cầu người dùng (bật lại: `brew services start postgresql@14`). Máy nào cần đổi cổng DB: `DB_PORT` + `.autodev/env.local.json`.
 
 ## Quyền và quy tắc đang áp dụng
-- Bảng quyền supervisor: thiết kế mục 6.15. Supervisor tự merge PR mốc sau khi chạy lại verify.
-- Không xoá file, thư mục, nhánh, worktree, container nếu người dùng chưa duyệt (guard chặn các lệnh xoá phổ biến).
-- Ưu tiên auto-dev nhưng không làm sai mục tiêu của SME CI Agent (ROADMAP, nguyên tắc ưu tiên).
+- Supervisor tự merge PR mốc sau khi chạy lại verify; worker không merge.
+- Không xoá file, thư mục, nhánh, worktree, container nếu người dùng chưa duyệt (guard chặn các lệnh xoá phổ biến; merge không kèm xoá nhánh).
+- Không đọc hay in `.env`.
 
 ## Việc mở / cần để ý
-- Máy nào cần đổi cổng DB: `DB_PORT` cho docker compose và `.autodev/env.local.json` cho verify (mẫu `.autodev/env.local.example.json`).
-- P4: hướng xử lý hết hạn mức đã được duyệt (ROADMAP). Chưa gặp hết hạn mức ở headless lần nào.
-- Chưa đo hạn mức tuần.
+- Chưa biết `claude -p` báo hết hạn mức dạng nào; `run.py` đoán theo chữ "limit" + "resets <giờ>". Lần chạy thật đầu tiên gặp hết hạn mức thì đối chiếu và sửa `LIMIT_RE` / `RESET_RE` nếu cần.
 - Guard so khớp theo chữ: commit message hay chuỗi thử chứa lệnh bị cấm cũng bị chặn; viết lại câu chữ hoặc đưa chuỗi thử vào file.
-- Dự án: `correlate` chưa có tín hiệu cho nhóm people và `ambient_temperature` (cần cho T-020, T-004).
-
-## Mốc kế tiếp
-- Plugin P4 (chế độ B): `.autodev/autodev-run.sh M4 M5` chạy worker headless → supervisor headless (`/supervise Mx --review-only`, tự merge) → mốc kế. Log ở `.autodev/runs/` (không commit); dừng thì có `.autodev/runs/STOPPED.md` (exit 2 lỗi, 3 hạn mức, 4 mốc chưa merge).
-- Cần trước khi chạy: worktree `../sme-ci-agent-autodev` (worker) và `../sme-ci-agent-supervisor` (supervisor), Docker DB đang chạy, `gh` đã đăng nhập, người dùng đồng ý dùng khoảng 35–45% hạn mức cho 2 mốc.
-- Dự án: plan/M4.md (T-020, T-021, T-023) và plan/M5.md (T-022, T-024, T-025). Test không gọi LLM thật; chạy thử LLM thật là việc người dùng làm sau.
+- Dự án: `correlate` chưa có tín hiệu cho nhóm people và `ambient_temperature` (cần cho T-020, T-004). Dashboard (T-016, T-026) chưa có ai làm, cần cho demo.
+- Để sau (người dùng chốt): đo độ dài phiên và chất lượng theo thời gian; hook trước khi nén ngữ cảnh (ROADMAP, "Để sau").
 
 ## Lịch sử ngắn
-- P1 (M1), P2 (M2), P3 (M3) xong. Chi tiết trong `PROGRESS.md`.
+- P1 (plan/M1), P2 (plan/M2), P3 (plan/M3) xong. Từ R4, mốc auto-dev đặt tên R4, R5… để không trùng TASKS.md. Chi tiết trong `PROGRESS.md`.
