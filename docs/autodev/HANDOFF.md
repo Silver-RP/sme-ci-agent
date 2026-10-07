@@ -29,6 +29,12 @@ Supervisor cập nhật file này ở cuối mỗi mốc (và trước khi ngư�
 - Việc cho runner (P4): tạo `milestone/<Rx>` từ `origin/main` trước khi giao worker; coi worker "exit 0 mà không có PR/báo cáo" là lỗi (exit 4). Worker `../sme-ci-agent-autodev` cần `git fetch` và chuyển sang `milestone/R5` từ origin/main trước khi chạy R5.
 - Chưa có số `total_cost_usd` và % hạn mức của R4.
 
+## Cập nhật 2026-10-08 (supervisor headless, R5 --review-only): R5 ĐÃ MERGE
+- PR #21 merge (cùng #20): T-022, T-024, T-025 xong, 226 test tracked, ruff sạch. Tôi chạy lại verify + pytest và probe `parse_decision`. Không có quyết định (c).
+- Việc mở của dự án: (1) `apply_sop` trực tiếp chưa chặn `approved_by='llm'` (chỉ `agent/system`); `parse_decision` có chặn; nên thống nhất một danh sách `NON_HUMAN`. (2) Detect thật chưa nối vào graph mặc định; registry run trong bộ nhớ; factory mặc định chưa test thật. (3) Dashboard (T-016, T-026) chưa có ai làm.
+- Cần người dùng: worktree supervisor có file rác `* 2.py` untracked (bản sao các file backend/tests) khiến verify báo lỗi; duyệt xoá thì xoá.
+- Mốc kế: tổng kết P4 (đo `total_cost_usd`, % hạn mức R4/R5, sửa runner no-op), rồi chọn mốc dự án tiếp theo.
+
 ## Quyền và quy tắc đang áp dụng
 - Supervisor tự merge PR mốc sau khi chạy lại verify; worker không merge.
 - Không xoá file, thư mục, nhánh, worktree, container nếu người dùng chưa duyệt (guard chặn các lệnh xoá phổ biến; merge không kèm xoá nhánh).

@@ -27,6 +27,7 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
 | M2 (3 task) | phiên VS Code | ~36 phút | không đo | ~18% | 1 vòng REWORK |
 | M3 (3 task) | **headless từ supervisor** | 12,3 phút, 41 lượt | 1,72 USD | ~16–22% (người dùng ước) | 1 lệnh bị từ chối đúng (xoá file) |
 | R4 (4 task) | worker headless (chạy lần 2 sau lần no-op) | ~18 phút | chưa có (log runs/ không có trên máy supervisor) | chưa đo | 4 task PASS vòng 1, 162 test (trước 106); verify sạch; supervisor merge #19 |
+| R5 (3 task) | worker headless, supervisor headless | ~18 phút | chưa có | chưa đo | T-022, T-024, T-025; dev-02 REWORK 1 vòng (apply SOP rồi crash ở Measure khi thiếu `change_time`); 226 test tracked, verify sạch; supervisor merge #21 |
 
 ## Hạn mức (người dùng đo bằng `/usage`)
 
@@ -51,3 +52,5 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
 
 - R4: lần chạy đầu của worker là no-op (worktree chưa cập nhật từ origin/main nên thiếu plan/R4.md, exit 0 sau 40 giây). Runner cần tạo `milestone/<Rx>` từ origin/main trước khi giao và coi "exit 0 không PR/báo cáo" là lỗi. Lần sau worker chạy đủ.
 - R4: developer dev-02 dùng script Python inline sửa code (trái quy ước), reviewer vẫn bắt được kết quả đúng; `apply_sop` chấp nhận `approved_by='llm'` (chuyển thành tiêu chí 5 của R5/dev-02).
+- R5: reviewer bắt đúng lỗi thứ tự (apply trước khi kiểm tra `change_time`) ở dev-02 vòng 1. Supervisor probe: `parse_decision` chặn `llm/agent/system` nhưng chỉ là deny-list (`bot`, `claude` lọt); `apply_sop` gọi trực tiếp vẫn chỉ chặn `agent/system`, chưa chặn `llm`. Ghi vào việc mở.
+- R5: worktree supervisor có file rác `* 2.py` (untracked, bản sao) làm `verify.py` báo 7 lỗi lint N999 và pytest chạy 282 thay vì 226; không thuộc PR. Cần người dùng duyệt xoá.
