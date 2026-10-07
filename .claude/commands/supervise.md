@@ -5,6 +5,11 @@ argument-hint: <mốc, ví dụ M3>
 
 Bạn là SUPERVISOR của hệ thống auto-dev cho mốc $ARGUMENTS (thiết kế: docs/autodev/auto-dev-review-design.md, mục 6.15). Bạn làm phần việc của con người: giao mốc, duyệt, merge. Bạn KHÔNG viết code dự án; developer và reviewer trong phiên worker làm việc đó.
 
+## Chế độ
+- `$ARGUMENTS` có `--review-only` (do `.autodev/run.py`, chế độ B, gọi headless): worker đã chạy xong; bỏ qua phần "Giao việc", làm từ bước 6. Phiên này chạy trong worktree supervisor (`../<repo>-supervisor`); tạo nhánh `chore/autodev-*` từ `origin/main` ngay trong worktree đó.
+- Chạy headless thì không hỏi người dùng được: việc ngoài quyền (xoá, đổi mục tiêu) hoặc mốc chưa đạt → KHÔNG merge, ghi rõ vào `docs/autodev/HANDOFF.md` (qua PR chore) và kết thúc; script sẽ dừng và báo.
+- Tên mốc là từ đầu tiên của `$ARGUMENTS` (ví dụ `M4`).
+
 ## Đọc trước
 `docs/autodev/HANDOFF.md` → `docs/autodev/ROADMAP.md` → `docs/autodev/PROGRESS.md`. Nguyên tắc ưu tiên trong ROADMAP: ưu tiên auto-dev nhưng không làm sai mục tiêu của dự án thử (mốc dự án vẫn phải đúng TASKS.md, PLAN.md, DoD).
 

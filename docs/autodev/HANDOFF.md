@@ -21,9 +21,10 @@ Supervisor cập nhật file này ở cuối mỗi mốc (và trước khi ngư�
 - Guard so khớp theo chữ: commit message hay chuỗi thử chứa lệnh bị cấm cũng bị chặn; viết lại câu chữ hoặc đưa chuỗi thử vào file.
 - Dự án: `correlate` chưa có tín hiệu cho nhóm people và `ambient_temperature` (cần cho T-020, T-004).
 
-## Mốc kế tiếp đề xuất
-- Plugin: P4 (chế độ B, xử lý hết hạn mức).
-- Dự án (TASKS.md M2): T-020 System prompt + Investigate, T-021 Ask + resume, T-023 propose/apply SOP + measure. Chọn mốc để thử được P4 (nhiều mốc liên tiếp, có thể chạm hạn mức).
+## Mốc kế tiếp
+- Plugin P4 (chế độ B): `.autodev/autodev-run.sh M4 M5` chạy worker headless → supervisor headless (`/supervise Mx --review-only`, tự merge) → mốc kế. Log ở `.autodev/runs/` (không commit); dừng thì có `.autodev/runs/STOPPED.md` (exit 2 lỗi, 3 hạn mức, 4 mốc chưa merge).
+- Cần trước khi chạy: worktree `../sme-ci-agent-autodev` (worker) và `../sme-ci-agent-supervisor` (supervisor), Docker DB đang chạy, `gh` đã đăng nhập, người dùng đồng ý dùng khoảng 35–45% hạn mức cho 2 mốc.
+- Dự án: plan/M4.md (T-020, T-021, T-023) và plan/M5.md (T-022, T-024, T-025). Test không gọi LLM thật; chạy thử LLM thật là việc người dùng làm sau.
 
 ## Lịch sử ngắn
 - P1 (M1), P2 (M2), P3 (M3) xong. Chi tiết trong `PROGRESS.md`.
