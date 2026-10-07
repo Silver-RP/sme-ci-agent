@@ -15,6 +15,8 @@ detect:                     # tham số detect (mặc định = giá trị cũ t
   rule_window: 3            # luật k trên n: n điểm
   rule_hits: 2              # luật k trên n: k điểm vượt ngưỡng
   max_gap: 3                # khoảng gộp tối đa (điểm) giữa hai điểm xác nhận
+investigate:
+  max_tool_steps: 6         # số vòng gọi LLM tối đa khi điều tra
 hypothesis_groups:          # Ishikawa
   machine: [wrong_setpoint, wear, calibration]
   method: [outdated_sop, missing_check]

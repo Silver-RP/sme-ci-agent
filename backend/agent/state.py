@@ -35,6 +35,7 @@ class AgentState(TypedDict, total=False):
     hypotheses: list[Hypothesis]
     evidence: list[dict[str, Any]]
     proposal: dict[str, Any] | None
+    evidence_gap: bool  # Investigate could not conclude; Ask should handle it
     events: Annotated[list[dict[str, Any]], operator.add]
 
 

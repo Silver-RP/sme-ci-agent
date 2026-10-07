@@ -39,9 +39,18 @@ class DetectParams(_Strict):
     max_gap: int = Field(default=3, ge=0)  # points (shifts) of normal data that keep one anomaly open
 
 
+class InvestigateParams(_Strict):
+    """Investigate parameters (YAML key ``investigate:``)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    max_tool_steps: int = Field(default=6, ge=1)  # max LLM rounds in one investigation
+
+
 class DomainConfig(_Strict):
     domain: str = Field(min_length=1)
     detect: DetectParams = Field(default_factory=DetectParams)
+    investigate: InvestigateParams = Field(default_factory=InvestigateParams)
     kpis: list[KPI] = Field(min_length=1)
     hypothesis_groups: dict[str, list[str]] = Field(min_length=1)
     sop: list[SOP]
