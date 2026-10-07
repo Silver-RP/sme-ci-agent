@@ -114,6 +114,11 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - `backend/api/app.py` (`create_app` inject được llm/ctx/checkpointer): `POST /runs`, `GET /runs/{id}`, `POST /runs/{id}/answer`, `POST /runs/{id}/approval`, `GET /runs/{id}/events` (SSE, Last-Event-ID). 404/409/422 rõ ràng; `change_time` bắt buộc. 226 test pass.
 - Non-blocking: ctx.session không đóng khi start_run lỗi (đường mặc định); factory mặc định chưa test thật (cần key/DB).
 
+### R6/dev-01 (T-016): DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: 196aab1. Review: .autodev/reviews/dev-01-r1.json (PASS).
+- `dashboard/` Next.js (App Router, TS, yarn): kiểu event, fixture scenario1 (12 event), bảng anomaly, timeline; test ajv + component. lint/test/build đạt.
+- Ghi chú (a): Node 22.12 làm yarn lỗi engine (cần >=22.13), thêm `dashboard/.yarnrc` `ignore-engines true`; nên nâng Node sau. `docs/schema/payloads.md` chưa có nên payload fixture tự dựng theo emit của backend.
+
 ## Đề xuất chờ duyệt (c)
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
