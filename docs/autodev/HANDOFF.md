@@ -7,19 +7,20 @@ Supervisor cập nhật file này ở cuối mỗi mốc (và trước khi ngư�
 - Phiên supervisor = **vai con người**: lập plan, giao mốc, duyệt, merge, sửa plugin. Không viết code dự án (developer/reviewer trong worker làm). Quyền: thiết kế mục 6.15.
 - Người dùng giao tiếp bằng tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa và được báo ngắn gọn.
 
-## Bước tiếp theo (chờ người dùng chọn, 2026-10-08)
-1. ~~Xoá 11 file `* 2.py`~~ (người dùng duyệt, đã xoá 2026-10-08). ~~Sửa runner~~ (PR `chore/autodev-runner-fixes`): đưa worktree worker về `origin/main` trước mỗi mốc (giữ nhánh `milestone/<Rx>` còn commit chưa merge; worktree bẩn hoặc thiếu `plan/<Rx>.md` → dừng exit 2); worker không mở PR → exit 4, không gọi supervisor; thông báo macOS khi dừng/xong (mặc định tắt theo yêu cầu người dùng; bật bằng `AUTODEV_NOTIFY=1`); `STOPPED.md` cũ được đổi tên `STOPPED-<giờ>.md`, không xoá.
+## Bước tiếp theo (người dùng duyệt 2026-10-08)
+1. **R6 = dashboard** (T-016, T-026), plan ở `plan/R6.md`: Next.js + yarn trong `dashboard/`, fixture → SSE → API thật. Cổng verify có bước `dashboard` (lint + test + build, chỉ chạy khi có `dashboard/package.json`). Trước khi chạy: kiểm tra `node`/`yarn` có trên máy (thiếu thì người dùng cài; worker không tự cài). Chạy bằng chế độ B: `nohup .autodev/autodev-run.sh R6 > .autodev/runs/nohup.out 2>&1 &`.
 2. Còn của P4: kiểm chứng nhánh chờ reset khi gặp hạn mức thật (đối chiếu `LIMIT_RE`/`RESET_RE`), rồi đóng P4.
-3. **Đề xuất (người dùng hỏi, chưa duyệt):** dashboard cục bộ chỉ đọc để xem worker headless trực tiếp (dòng thời gian dev-xx/review, tool gần nhất, chi phí), đọc transcript `~/.claude/projects/<worktree>/*.jsonl`; có thể chuyển runner sang `--output-format stream-json`. Đây là việc plugin (P4/P5), không phải TASKS.md.
-4. Sau đó chọn mốc dự án tiếp theo: dashboard T-016/T-026 (cần cho demo) và việc mở của R5.
+3. Để sau (ROADMAP "Để sau"): dashboard xem tiến trình `claude -p`, thông báo qua Telegram.
+
+Đã xong 2026-10-08: xoá file `* 2.py`; sửa runner (PR #23: worktree worker về `origin/main`, no-op → exit 4, thông báo macOS mặc định tắt, bật bằng `AUTODEV_NOTIFY=1`); chuyển repo ra khỏi iCloud.
 
 Cách khởi chạy chế độ B (đã chạy thật): từ repo chính `nohup .autodev/autodev-run.sh R6 R7 > .autodev/runs/nohup.out 2>&1 &`; theo dõi bằng `.autodev/watch.sh` trong một terminal. Phiên chat **không** tự được báo khi runner xong (tiến trình tách rời); nếu muốn phiên chat được gọi lại thì khởi chạy bằng Bash chạy nền của chính phiên đó hoặc dùng Monitor theo dõi `run.log`.
 
 ## Trạng thái hiện tại (2026-10-08)
-- Plugin: P1–P3 xong. P4 đã chạy thật: R4 + R5 liền nhau, 40 phút, 5,29 USD ước tính, không chạm hạn mức (nhánh chờ reset chưa kiểm chứng). Còn sửa runner (bước 2) rồi đóng P4.
-- Dự án: R4 (PR #19: T-020, T-021, T-023) và R5 (PR #21: T-022, T-024, T-025) đã merge; 226 test, verify sạch. TASKS.md nhóm M1 còn T-016; dashboard T-026 chưa ai làm.
-- Worktree: `../sme-ci-agent-autodev` (worker, ở `milestone/R5` đã merge), `../sme-ci-agent-supervisor` (supervisor). Docker DB `sme-ci-agent-autodev-db-1` cổng 5432.
-- Máy này: đã dừng Homebrew `postgresql@14` (bật lại: `brew services start postgresql@14`). Desktop đồng bộ iCloud.
+- Plugin: P1–P3 xong. P4 đã chạy thật: R4 + R5 liền nhau, 40 phút, 5,29 USD ước tính, không chạm hạn mức (nhánh chờ reset chưa kiểm chứng). Runner đã sửa (PR #23).
+- Dự án: R4 (PR #19: T-020, T-021, T-023) và R5 (PR #21: T-022, T-024, T-025) đã merge; 226 test, verify sạch. Còn T-016, T-026 (dashboard) → R6.
+- **Vị trí repo (từ 2026-10-08):** `~/dev/sme-ci-agent/` chứa 3 worktree cạnh nhau: `sme-ci-agent` (chính), `sme-ci-agent-autodev` (worker), `sme-ci-agent-supervisor` (supervisor). Đã chuyển khỏi Desktop vì iCloud sinh file "tên 2". Tài liệu hackathon vẫn ở Desktop, cạnh alias "sme-ci-agent (code)". Docker DB `sme-ci-agent-autodev-db-1` cổng 5432 (volume có tên, không phụ thuộc đường dẫn).
+- Máy này: đã dừng Homebrew `postgresql@14` (bật lại: `brew services start postgresql@14`).
 
 ## Quyền và quy tắc đang áp dụng
 - Supervisor tự merge PR mốc sau khi chạy lại verify; worker không merge.
@@ -29,9 +30,9 @@ Cách khởi chạy chế độ B (đã chạy thật): từ repo chính `nohup 
 ## Việc mở / cần để ý
 - Chưa biết `claude -p` báo hết hạn mức dạng nào; `run.py` đoán theo chữ "limit" + "resets <giờ>". Lần chạy thật đầu tiên gặp hết hạn mức thì đối chiếu và sửa `LIMIT_RE` / `RESET_RE` nếu cần.
 - Guard so khớp theo chữ: commit message hay chuỗi thử chứa lệnh bị cấm cũng bị chặn; viết lại câu chữ hoặc đưa chuỗi thử vào file.
-- Dự án: `correlate` chưa có tín hiệu cho nhóm people và `ambient_temperature` (cần cho T-020, T-004). Dashboard (T-016, T-026) chưa có ai làm, cần cho demo.
+- Dự án: `correlate` chưa có tín hiệu cho nhóm people và `ambient_temperature` (cần cho T-020, T-004).
 - Dự án (từ R5): (1) `apply_sop` gọi trực tiếp chưa chặn `approved_by='llm'`; `parse_decision` là deny-list (`bot`, `claude` lọt) → nên dùng một danh sách người duyệt hợp lệ (allow-list) dùng chung. (2) Detect thật chưa nối vào graph mặc định; registry run của API trong bộ nhớ; factory mặc định chưa test thật.
-- Repo nằm trong Desktop đồng bộ iCloud → iCloud sinh file "tên 2" khi xung đột (đã gặp cả `.git/index 2` ở repo chính). Nên chuyển repo và worktree ra ngoài (ví dụ `~/dev/`); việc này cần người dùng làm và duyệt.
+- Sau khi chuyển repo (người dùng duyệt 2026-10-08): xoá thư mục shim `~/Desktop/…/Vietnam Japan AI Hackathon 2026/sme-ci-agent/` (chỉ còn `.autodev/guard.py` tạm) và `__pycache__/* 2.pyc` trong worktree supervisor. Thư mục lịch sử Claude cũ `~/.claude/projects/-Users-ishopjapan-Desktop-…` (đã chép sang tên mới) giữ vài ngày rồi xoá.
 - Để sau (người dùng chốt): đo độ dài phiên và chất lượng theo thời gian; hook trước khi nén ngữ cảnh (ROADMAP, "Để sau").
 
 ## Lịch sử ngắn

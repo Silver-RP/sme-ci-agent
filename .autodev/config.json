@@ -1,7 +1,8 @@
 {
   "verify": [
     {"name": "lint", "cmd": "uv run ruff check . --output-format=concise", "parser": "ruff"},
-    {"name": "test", "cmd": "uv run pytest -q -rfE -p no:cacheprovider", "parser": "pytest"}
+    {"name": "test", "cmd": "uv run pytest -q -rfE -p no:cacheprovider", "parser": "pytest"},
+    {"name": "dashboard", "cmd": "[ ! -f dashboard/package.json ] || (cd dashboard && ([ -d node_modules ] || yarn install) && yarn lint && yarn test && yarn build)"}
   ],
   "max_rounds": 3,
   "max_verify_blocks": 3,
