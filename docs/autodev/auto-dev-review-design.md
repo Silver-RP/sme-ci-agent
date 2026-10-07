@@ -1,6 +1,6 @@
 # Thiết kế hệ thống Auto-Dev + Auto-Review với Claude Code
 
-> **Phiên bản:** 1.2. **Ngày:** 2026-10-06 (bản 1.0: 2026-10-05; xem mục 13 về các thay đổi).
+> **Phiên bản:** 1.3. **Ngày:** 2026-10-06 (bản 1.0: 2026-10-05; xem mục 13 về các thay đổi).
 > **Vị trí:** `docs/autodev/auto-dev-review-design.md` trong repo SME CI Agent (dự án chạy thử). Phần thiết lập chế độ A nằm ở `.claude/agents/`, `.autodev/`, `plan/`.
 > **Trạng thái:** Đã thiết lập chế độ A trên SME CI Agent (mục 9.1, nhánh `autodev/setup`), **chưa chạy thử**.
 > **Người sở hữu:** roppyhoangle@gmail.com
@@ -291,7 +291,7 @@ Claude Code → báo cáo → `submit` → file report.md
 5. **Cấu hình agent chỉ viết một lần** và dùng chung cho cả chế độ VS Code lẫn chế độ chạy qua đêm.
 6. **Mọi trạng thái nằm trong file và được commit theo task**, để chạy tiếp được sau khi hết hạn mức, tắt máy hay crash.
 7. **Tiết kiệm hạn mức là ưu tiên số 1** (gói Pro).
-8. **Con người chốt ở mỗi mốc**: hệ thống không tự sang mốc tiếp theo.
+8. **Con người chốt ở mỗi mốc**: hệ thống không tự sang mốc tiếp theo. Từ bản 1.3, phần việc duyệt của con người được giao cho vai **supervisor** (mục 6.15) trong phạm vi quyền người dùng đã duyệt; người dùng thật chỉ quyết các việc ngoài phạm vi đó.
 
 ### 6.2 Cấu trúc: bộ công cụ chung + cấu hình theo dự án
 
@@ -557,6 +557,42 @@ Trạng thái lưu ở `.autodev/state.json` và trong `plan/Mx.md`, được co
 
 **Nguyên tắc:** **không đóng gói plugin trước khi bộ agent chạy ổn trên một dự án.** Claude Code tự viết được các file này. Có sẵn skill hướng dẫn tạo plugin và tạo skill để hỗ trợ.
 
+### 6.15 Supervisor: tự động hoá phần việc của con người (bổ sung ở bản 1.3)
+
+**Bối cảnh (2026-10-07):** sau M1–M2, người dùng vẫn phải chuyển tin giữa các phiên (dán báo cáo, giao mốc, merge). Mục tiêu là bộ công cụ (plugin) tự động hoá cả phần này; SME CI Agent chỉ là dự án chạy thử.
+
+**Mô hình:**
+```
+Người dùng thật  → chỉ xem khi muốn, hoặc khi supervisor hỏi việc ngoài quyền
+   │
+SUPERVISOR (một phiên Claude Code, lệnh /supervise Mx)
+   │  viết plan theo mục tiêu, giao mốc, duyệt, merge
+   ▼  tin nhắn giữa hai phiên (ListAgents / SendMessage / notify_when_idle)
+WORKER (phiên ở worktree, lệnh /run-milestone Mx): developer ⇄ reviewer → push, mở PR
+```
+
+**Cơ chế giao tiếp** `[KIỂM CHỨNG 2026-10-07, theo mô tả tool trong Claude Code]`:
+- Mỗi phiên trên máy có một tên; `ListAgents` liệt kê các phiên khác, `SendMessage` gửi tin chữ theo tên. Tin vào hàng đợi, được đọc ở lượt làm việc kế tiếp của phiên nhận, dạng `<cross-session-message from="...">`; trả lời bằng cách gửi về tên trong `from`.
+- `notify_when_idle`: nhận đúng một thông báo khi phiên kia chạy xong, không cần hỏi dồn.
+- Hai phiên phải cùng chế độ quyền; khác chế độ thì tin bị giữ chờ người dùng duyệt.
+- Quyền mỗi phiên độc lập: không được nhờ phiên kia làm việc mình bị chặn.
+- Gửi thành công chỉ là tin đã tới, không phải đã làm; im lặng không phải đồng ý.
+- `[CHƯA KIỂM CHỨNG]` hoạt động với `claude -p` (chế độ B).
+
+**Quyền của supervisor (người dùng duyệt 2026-10-07):**
+
+| Việc | Quyền |
+|---|---|
+| Duyệt task/mốc, merge PR mốc (merge commit, không xoá nhánh) | Tự làm |
+| Điều chỉnh plan (a)/(b) | Tự làm |
+| Đề xuất (c) | Tự quyết, ghi rõ trong báo cáo cho người dùng |
+| Mọi thao tác xoá (file, thư mục, nhánh, worktree) | Luôn hỏi người dùng (guard chặn các lệnh xoá phổ biến) |
+| Đổi mục tiêu hoặc lộ trình của plugin | Hỏi người dùng |
+
+**Rủi ro:** supervisor, developer và reviewer cùng là Claude, nên cả chuỗi có chung điểm mù (mục 6.12). Lớp chặn còn lại là cổng verify cứng và việc người dùng thỉnh thoảng xem lại báo cáo.
+
+**Bài học dẫn tới quy tắc "không xoá khi chưa duyệt":** ngày 2026-10-07, lệnh `gh pr merge --delete-branch` xoá nhánh mốc đang được dùng trong worktree, và `gh` gỡ luôn thư mục worktree (mất `.claude/settings.local.json`).
+
 ---
 
 ## 7. Điểm chưa chốt `[CHƯA CHỐT]`
@@ -671,5 +707,6 @@ Thay vì chọn giữa "quay lại SME CI Agent" và "nghiên cứu tiếp", **d
 | Phiên bản | Ngày | Thay đổi |
 |---|---|---|
 | 1.0 | 2026-10-05 | Bản đầu: yêu cầu đã xác nhận, các phương án đã loại, thiết kế chốt, các điểm còn mở, lộ trình |
+| 1.3 | 2026-10-07 | Thêm mục 6.15 (supervisor đại diện con người, giao tiếp giữa hai phiên, bảng quyền); sửa nguyên tắc 8; ghi bài học xoá worktree. Kết quả M1–M2: vòng REWORK chạy thật ở M2, hook `SubagentStop` chạy đủ, mỗi lần chạy mốc tốn 7–18% hạn mức cửa sổ 5 giờ. |
 | 1.2 | 2026-10-06 | Chuyển vào `docs/autodev/`. Chốt Q2 (chạy tiếp task không phụ thuộc), Q5 (3 vòng), Q6 (Sonnet), Q7 (Python/uv; verify = ruff + pytest, chưa có typecheck/e2e), Q9 (hạn chỉ tham khảo); Q1 hoãn. Kiểm chứng lại matcher `SubagentStop` và frontmatter agent (`hooks`, `maxTurns`, `isolation`). Thiết lập chế độ A. |
 | 1.1 | 2026-10-06 | Thêm mục 6.13 (thông báo và điều khiển từ xa: ntfy, bot Telegram, Telegram channel, Remote Control), mục 6.14 (giải thích framework và plugin, lộ trình triển khai), mục 9.1 (khuyến nghị dùng SME CI Agent làm dự án chạy thử, có giới hạn thời gian), Q9; cập nhật Q1, Q3, thuật ngữ, nguồn, và 2 rủi ro về bảo mật thông báo |

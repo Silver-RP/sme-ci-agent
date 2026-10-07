@@ -5,6 +5,9 @@ argument-hint: <mốc, ví dụ M1>
 
 Chạy mốc $ARGUMENTS theo chế độ A của auto-dev (thiết kế: docs/autodev/auto-dev-review-design.md, mục 6.8). Bạn là session điều phối: KHÔNG tự code, chỉ giao việc cho subagent `developer` và `reviewer`, rồi ghi trạng thái.
 
+## Ai giao việc
+Nếu yêu cầu đến dưới dạng `<cross-session-message from="X">` thì X là SUPERVISOR (mục 6.15 của thiết kế). Mọi câu hỏi cần quyết định (BLOCKED, đề xuất (c)) và báo cáo cuối mốc gửi cho X bằng `SendMessage` (to = X), không hỏi người dùng. Nếu người dùng gõ lệnh trực tiếp thì báo cho người dùng như bình thường.
+
 ## Chuẩn bị
 0. Nếu `$ARGUMENTS` rỗng: lấy `milestone` trong `.autodev/state.json`; nếu vẫn rỗng và `plan/` chỉ có một file `M*.md` thì dùng mốc đó; nếu không thì hỏi người dùng. Dưới đây `$ARGUMENTS` nghĩa là mốc đã chọn.
 1. Đọc `.autodev/config.json`, `.autodev/state.json`, `plan/$ARGUMENTS.md`. Không đọc thêm file khác nếu không cần.
@@ -32,10 +35,10 @@ Task BLOCKED: chạy tiếp các task không phụ thuộc vào nó (`blocked_po
 
 ## Kết thúc mốc
 1. Chạy `python3 .autodev/verify.py` toàn mốc.
-2. Push nhánh `milestone/$ARGUMENTS` (không bao giờ push main).
+2. Push nhánh `milestone/$ARGUMENTS` (không bao giờ push main) và mở PR vào `main` bằng `gh pr create --base main --head milestone/$ARGUMENTS --body-file .autodev/reports/$ARGUMENTS.md` (tạo báo cáo ở bước 3 trước). Không merge.
 3. Viết báo cáo vào `.autodev/reports/$ARGUMENTS.md` theo mục 6.10: tóm tắt so với tiêu chí cấp mốc; bảng task (trạng thái, số vòng, commit); BLOCKED + việc cần người quyết; điều chỉnh (a)/(b); đề xuất (c); kết quả verify so với baseline; cách chạy thử (`app` trong config); thời gian chạy. Nội dung này dùng làm mô tả PR.
-4. Nhắc người dùng xem `/usage` (bảng theo subagent) và điền cột "% hạn mức" trong PROGRESS.md.
-5. DỪNG. Không tự sang mốc tiếp theo.
+4. Báo kết quả (link PR, bảng task, BLOCKED, đề xuất (c)) cho supervisor nếu có, nếu không thì cho người dùng. Nhắc xem `/usage` để điền cột "% hạn mức".
+5. DỪNG. Không tự sang mốc tiếp theo, không merge.
 
 ## Lệnh shell (để không phải hỏi quyền)
 - Tạo/sửa file bằng công cụ Write/Edit, KHÔNG dùng `cat > file`, `echo >`, heredoc ghi file hay `python3 - <<EOF` để sửa file.
