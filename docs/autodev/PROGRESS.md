@@ -13,6 +13,19 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
 | M2/dev-01 (T-010) | 2 | 0 | FAIL → PASS | (người dùng điền) | dev ~150s + review ~134s; rework ~158s + review ~77s | |
 | M2/dev-02 (T-011) | 1 | 0 | PASS | (người dùng điền) | dev ~199s + review ~306s | |
 | M2/dev-03 (T-012) | 1 | 0 | PASS | (người dùng điền) | dev ~838s + review ~84s | |
+| M3/dev-01 (M2-c1, M2-c2) | 1 | 0 | PASS | (theo mốc) | dev ~80s | |
+| M3/dev-02 (T-013) | 1 | 2* | PASS | (theo mốc) | dev ~225s | |
+| M3/dev-03 (T-014) | 1 | 0* | PASS | (theo mốc) | dev ~134s | |
+
+\* M3: hook ghi `BLOCKED_BY_VERIFY` vì hook không có `DATABASE_URL` (Postgres trên máy chiếm cổng 5432), không phải lỗi code; báo cáo mốc ghi số vòng là 0, ở đây quy về 1 (một lần review).
+
+## Theo mốc
+
+| Mốc | Cách chạy | Thời gian | Chi phí ước tính (`total_cost_usd`) | % cửa sổ 5 giờ | Ghi chú |
+|---|---|---|---|---|---|
+| M1 (4 task) | phiên VS Code | ~10 phút | không đo | ~7% | |
+| M2 (3 task) | phiên VS Code | ~36 phút | không đo | ~18% | 1 vòng REWORK |
+| M3 (3 task) | **headless từ supervisor** | 12,3 phút, 41 lượt | 1,72 USD | (chưa đo) | 1 lệnh bị từ chối đúng (xoá file) |
 
 ## Hạn mức (người dùng đo bằng `/usage`)
 
@@ -29,4 +42,7 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
 - 2026-10-07: gộp PR kèm xoá nhánh đã gỡ luôn worktree đang dùng nhánh đó → không xoá khi chưa được duyệt; guard chặn các lệnh xoá.
 
 - Nhận xét của người duyệt về dự án thử (2026-10-07): anomaly trong scenario1 lớn khoảng 10 lần độ nhiễu nên detect bắt ngay (độ trễ 0, 0 báo động giả trên 30 seed). Khi làm T-004 nên thêm một anomaly nhỏ (khoảng 3–4 lần độ nhiễu) để demo thuyết phục hơn.
-
+- M3: worker headless (`claude -p`, Auto, `--permission-prompts none`) chạy trọn mốc, tự mở PR, 1 lệnh bị từ chối (có `rm` file) → developer chuyển sang cách khác, đúng ý "không xoá khi chưa duyệt".
+- M3: Postgres cài trên máy chiếm `127.0.0.1:5432` trước container Docker → test DB không vào được container; developer tự dựng container tạm `sme-dev02-pg` (cổng 55432). Cổng verify cần biến môi trường riêng cho từng máy; developer không được tự tạo dịch vụ ngoài (container, DB) mà phải dừng và báo.
+- M3: phiên điều phối ghi `round` = 0 cho task PASS ở lần review đầu → quy ước lại: vòng 1 = lần review đầu.
+- M3 (dự án): `correlate` chỉ có tín hiệu cho `wrong_setpoint` và `material_batch`; nhóm people (thay ca đêm) và `ambient_temperature` là `no_data`. Cần cho Investigate (T-020) và T-004.

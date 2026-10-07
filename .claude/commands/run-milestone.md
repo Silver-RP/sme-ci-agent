@@ -28,6 +28,7 @@ Nếu yêu cầu đến dưới dạng `<cross-session-message from="X">` thì X
    - `VERIFY_FAILED` → task `BLOCKED` (lý do: verify không sạch sau nhiều lần), sang task kế.
    - Không có commit mới (`git log base..HEAD` rỗng) → coi như một vòng FAIL.
 4. Gọi `reviewer` với: task_id, `base..HEAD`, đường dẫn plan. Lưu JSON nguyên văn vào `.autodev/reviews/<task>-r<vòng>.json` (tên file thay `/` bằng `-`).
+Quy ước số vòng: vòng 1 = lần review đầu tiên; task PASS ngay lần review đầu có `round = 1`. Tên file review dùng số vòng này (`-r1`, `-r2`…).
 5. `FAIL` → số vòng += 1, trạng thái `REWORK`, quay lại bước 2 với blocking issues.
    - Số vòng > `max_rounds` → `BLOCKED`.
    - Cùng một blocking issue (cùng file + cùng nội dung chính) lặp lại 2 vòng liên tiếp → `BLOCKED`.
