@@ -68,8 +68,9 @@ uv run ruff check .          # lint
 
 ## Auto-dev (thử nghiệm, chế độ A)
 
-- Thiết kế: docs/autodev/auto-dev-review-design.md. Plan theo mốc: plan/Mx.md (dev-xx kèm mã T-0xx); nhật ký: plan/PROGRESS.md. TASKS.md vẫn là nguồn chung cho team.
+- Plan lớn (plugin): docs/autodev/ (thiết kế, ROADMAP, PROGRESS, HANDOFF). Plan nhỏ (dự án): plan/Mx.md (dev-xx kèm mã T-0xx), nhật ký plan/PROGRESS.md. TASKS.md vẫn là nguồn chung cho team. Ưu tiên auto-dev nhưng không làm sai mục tiêu dự án.
 - Chạy một mốc: `/run-milestone M1`. Agent: .claude/agents/developer.md (code) và reviewer.md (chỉ đọc).
 - Kiểm tra cứng: `uv run python .autodev/verify.py` (ruff → pytest, so với .autodev/baseline.json).
-- developer không sửa tiêu chí chấp nhận hay phạm vi mốc; chỉ ghi vào "Đề xuất chờ duyệt" trong plan/PROGRESS.md.
+- developer không sửa tiêu chí chấp nhận hay phạm vi mốc; chỉ ghi vào "Đề xuất chờ duyệt" trong plan/PROGRESS.md. Worker không sửa file plugin (.claude/, .autodev/*.py, docs/autodev/).
+- Supervisor (`/supervise Mx`) giao mốc cho worker headless, duyệt và merge (thiết kế mục 6.15).
 - Không đọc hay in nội dung .env.

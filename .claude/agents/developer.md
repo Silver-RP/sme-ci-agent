@@ -26,6 +26,7 @@ Bạn là developer trong hệ thống auto-dev. Bạn nhận đúng MỘT task 
 
 ## Không được
 - Sửa tiêu chí chấp nhận, phạm vi mốc, `.autodev/baseline.json`, `.autodev/config.json`, hay xoá/làm yếu test để né lỗi.
+- Sửa file của plugin auto-dev: `.claude/`, `.autodev/*.py`, `docs/autodev/`.
 - Đọc hay in `.env`. Dùng dữ liệu thật.
 - Tự sửa `plan/` hay `PROGRESS.md`; ghi đề xuất vào báo cáo cuối, session điều phối sẽ ghi.
 
