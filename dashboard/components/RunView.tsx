@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { AnomalyTable } from "@/components/AnomalyTable";
 import { Timeline } from "@/components/Timeline";
 import type { EventSourceAdapter } from "@/lib/sources";
@@ -9,10 +10,12 @@ export function RunView({
   title,
   makeSource,
   sourceKey,
+  controls,
 }: {
   title: string;
   makeSource: () => EventSourceAdapter | null;
   sourceKey: string;
+  controls?: ReactNode;
 }) {
   const { events, errors, status, detail } = useRunEvents(makeSource, [sourceKey]);
   return (
@@ -23,6 +26,7 @@ export function RunView({
         Connection: {status}
         {detail ? ` (${detail})` : ""}
       </p>
+      {controls}
       {errors.length > 0 && (
         <div role="alert" data-testid="event-errors">
           {errors.length} invalid event(s) ignored:
