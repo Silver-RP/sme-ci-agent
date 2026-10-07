@@ -11,3 +11,4 @@ pgdata/
 *.log
 .DS_Store
 data/generated/
+.autodev/env.local.json

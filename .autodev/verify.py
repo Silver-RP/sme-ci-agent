@@ -10,6 +10,7 @@ so a pre-existing error in the baseline never blocks; only new ones do.
 """
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -20,6 +21,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 AUTODEV = ROOT / ".autodev"
 CONFIG = AUTODEV / "config.json"
+# Per-machine, non-secret variables for the verify commands (e.g. DATABASE_URL with a
+# non-default port). Git-ignored; see .autodev/env.local.example.json.
+ENV_LOCAL = AUTODEV / "env.local.json"
 BASELINE = AUTODEV / "baseline.json"
 STATE = AUTODEV / "state.json"
 MAX_LINES = 20
@@ -48,8 +52,17 @@ def parse(parser, output):
     return keys
 
 
+def gate_env():
+    env = dict(os.environ)
+    extra = load(ENV_LOCAL, {})
+    env.update({str(k): str(v) for k, v in extra.items()})
+    return env
+
+
 def run_step(step):
-    proc = subprocess.run(step["cmd"], shell=True, cwd=ROOT, capture_output=True, text=True, check=False)
+    proc = subprocess.run(
+        step["cmd"], shell=True, cwd=ROOT, capture_output=True, text=True, check=False, env=gate_env()
+    )
     output = proc.stdout + proc.stderr
     keys = parse(step.get("parser"), output)
     if proc.returncode != 0 and not keys:

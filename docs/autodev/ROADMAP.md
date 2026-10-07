@@ -23,8 +23,8 @@ Hai luồng không sửa chung file nên chạy song song không xung đột. Li
 |---|---|---|---|
 | P1 | Chế độ A: developer ⇄ reviewer, verify + baseline, guard, plan Mx/dev-xx | plan/M1.md | ✅ Xong (2026-10-06); phát hiện reviewer bỏ sót trường hợp biên → sửa prompt |
 | P2 | Vòng FAIL → REWORK, hook `SubagentStop` chạy thật, task phụ thuộc nhau | plan/M2.md | ✅ Xong (2026-10-07) |
-| P3 | Supervisor (vai con người) tự giao mốc, duyệt, merge; worker headless (`claude -p`) mỗi mốc một phiên mới; verify khi test cần Postgres; HANDOFF giữa các phiên supervisor | plan/M3.md | 🔄 Đang làm |
-| P4 | Chế độ B: script chạy nhiều mốc liên tiếp (supervisor headless + worker headless), xử lý hết hạn mức (chờ đến giờ reset rồi chạy tiếp), thông báo (Q1) | (chọn sau) | ⏳ |
+| P3 | Supervisor (vai con người) tự giao mốc, duyệt, merge; worker headless (`claude -p`) mỗi mốc một phiên mới; verify khi test cần Postgres; HANDOFF giữa các phiên supervisor | plan/M3.md | ✅ Xong (2026-10-08): worker headless chạy trọn mốc, supervisor duyệt + merge PR #14; cổng verify có biến môi trường riêng từng máy (`.autodev/env.local.json`, `DB_PORT`) |
+| P4 | Chế độ B: script `autodev-run.sh` chạy nhiều mốc liên tiếp (supervisor headless + worker headless). Xử lý hết hạn mức: (1) nhận biết từ kết quả JSON / sự kiện `api_retry` (`rate_limit`), lấy giờ reset; (2) chờ đến giờ reset + 5 phút; (3) chạy lại `/run-milestone` bằng phiên mới, tiếp tục từ `state.json` (giữa vòng review thì chỉ chạy lại reviewer); (4) hết hạn mức tuần thì dừng, ghi HANDOFF, báo người dùng. Tự ghi `total_cost_usd` mỗi mốc và quy đổi ra % hạn mức; kiểm tra ngân sách trước khi bắt đầu mốc; thông báo một chiều (Q1) | (chọn sau) | ⏳ (người dùng duyệt hướng xử lý 2026-10-08) |
 | P5 | Đóng gói plugin: tách sang repo riêng, `plugin.json`, cài bằng marketplace, onboarding dự án thứ hai | dự án thứ hai | ⏳ |
 
 ## Tiêu chí "plugin đạt" cho từng mốc
