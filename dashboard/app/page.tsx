@@ -1,18 +1,38 @@
-import { AnomalyTable } from "@/components/AnomalyTable";
-import { Timeline } from "@/components/Timeline";
-import type { AgentEvent } from "@/lib/events";
+"use client";
+
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { RunView } from "@/components/RunView";
+import { createFixtureSource, createSseSource } from "@/lib/sources";
 import scenario1 from "@/fixtures/scenario1.json";
 
-// dev-01: static fixture only. Live sources (SSE) come in dev-02.
-const events = scenario1 as unknown as AgentEvent[];
-
-export default function Home() {
+// ?source=fixture (default) replays the fixture; ?source=sse&run=<id> reads GET /runs/{id}/events.
+function Home() {
+  const params = useSearchParams();
+  const source = params.get("source") ?? "fixture";
+  const run = params.get("run") ?? "";
+  if (source === "sse" && run) {
+    return (
+      <RunView
+        title={`Run ${run} (live SSE)`}
+        sourceKey={`sse:${run}`}
+        makeSource={() => createSseSource(run)}
+      />
+    );
+  }
   return (
-    <main>
-      <h1>SME CI Agent</h1>
-      <p className="muted">Run {events[0]?.run_id} (fixture, scenario 1)</p>
-      <AnomalyTable events={events} />
-      <Timeline events={events} />
-    </main>
+    <RunView
+      title="Run run_seed42 (fixture replay, scenario 1)"
+      sourceKey="fixture"
+      makeSource={() => createFixtureSource(scenario1 as unknown[], { intervalMs: 300 })}
+    />
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<p>Loading...</p>}>
+      <Home />
+    </Suspense>
   );
 }
