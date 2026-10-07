@@ -39,6 +39,7 @@ Task BLOCKED: chạy tiếp các task không phụ thuộc vào nó (`blocked_po
 
 ## Lệnh shell (để không phải hỏi quyền)
 - Tạo/sửa file bằng công cụ Write/Edit, KHÔNG dùng `cat > file`, `echo >`, heredoc ghi file hay `python3 - <<EOF` để sửa file.
+- Commit bằng nhiều cờ `-m` trên một dòng, ví dụ `git commit -m "feat(M1/dev-01): ..." -m "Co-Authored-By: ..."`; không dùng `$(cat <<EOF ...)`.
 - Mỗi lệnh một việc; tránh `$(...)`, `$((...))`, và không ghi file ra ngoài repo (kể cả /tmp). Đo thời gian bằng cách ghi giờ bắt đầu/kết thúc (`date`) rồi tự trừ.
 
 Trả lời người dùng ngắn gọn bằng tiếng Việt; chi tiết để trong file.

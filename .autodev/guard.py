@@ -37,8 +37,11 @@ def main():
     except json.JSONDecodeError:
         return 0
     command = data.get("tool_input", {}).get("command", "")
+    # Check each subcommand on its own so a push of a feature branch followed by
+    # "gh pr create --base main" is not mistaken for a push to main.
+    parts = [p for p in re.split(r"&&|\|\||;|\||\n", command) if p.strip()] or [command]
     for pattern, reason in RULES:
-        if re.search(pattern, command, flags=re.IGNORECASE):
+        if any(re.search(pattern, part, flags=re.IGNORECASE) for part in parts):
             print(f"Bị chặn bởi .autodev/guard.py: {reason}", file=sys.stderr)
             return 2
     switches_first = re.search(r"\bgit\s+(switch|checkout)\b.*\bgit\s+(push|commit)\b", command)
