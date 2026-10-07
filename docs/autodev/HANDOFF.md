@@ -8,8 +8,8 @@ Supervisor cập nhật file này ở cuối mỗi mốc (và trước khi ngư�
 - Người dùng giao tiếp bằng tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa và được báo ngắn gọn.
 
 ## Bước tiếp theo (chờ người dùng chọn, 2026-10-08)
-1. **Cần duyệt xoá:** 11 file `* 2.py` untracked trong worktree `../sme-ci-agent-supervisor` (bản sao do iCloud, xem "Việc mở"). Chưa xoá thì verify ở worktree đó báo lỗi lint và pytest đếm sai.
-2. **Sửa runner (tổng kết P4):** (a) trước khi giao worker, đưa worktree worker về `milestone/<Rx>` tạo từ `origin/main`; (b) worker exit 0 mà không có PR/báo cáo → exit 4; (c) khi runner dừng (xong, lỗi, hạn mức) gửi thông báo macOS; (d) xoá `STOPPED.md` cũ khi bắt đầu lần chạy mới là thao tác xoá → thay bằng đổi tên kèm thời gian hoặc ghi đè nội dung.
+1. ~~Xoá 11 file `* 2.py`~~ (người dùng duyệt, đã xoá 2026-10-08). ~~Sửa runner~~ (PR `chore/autodev-runner-fixes`): đưa worktree worker về `origin/main` trước mỗi mốc (giữ nhánh `milestone/<Rx>` còn commit chưa merge; worktree bẩn hoặc thiếu `plan/<Rx>.md` → dừng exit 2); worker không mở PR → exit 4, không gọi supervisor; thông báo macOS khi dừng/xong (`AUTODEV_NOTIFY=0` để tắt); `STOPPED.md` cũ được đổi tên `STOPPED-<giờ>.md`, không xoá.
+2. Còn của P4: kiểm chứng nhánh chờ reset khi gặp hạn mức thật (đối chiếu `LIMIT_RE`/`RESET_RE`), rồi đóng P4.
 3. **Đề xuất (người dùng hỏi, chưa duyệt):** dashboard cục bộ chỉ đọc để xem worker headless trực tiếp (dòng thời gian dev-xx/review, tool gần nhất, chi phí), đọc transcript `~/.claude/projects/<worktree>/*.jsonl`; có thể chuyển runner sang `--output-format stream-json`. Đây là việc plugin (P4/P5), không phải TASKS.md.
 4. Sau đó chọn mốc dự án tiếp theo: dashboard T-016/T-026 (cần cho demo) và việc mở của R5.
 
