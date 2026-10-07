@@ -26,6 +26,7 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
 | M1 (4 task) | phiên VS Code | ~10 phút | không đo | ~7% | |
 | M2 (3 task) | phiên VS Code | ~36 phút | không đo | ~18% | 1 vòng REWORK |
 | M3 (3 task) | **headless từ supervisor** | 12,3 phút, 41 lượt | 1,72 USD | ~16–22% (người dùng ước) | 1 lệnh bị từ chối đúng (xoá file) |
+| R4 (4 task) | worker headless (chạy lần 2 sau lần no-op) | ~18 phút | chưa có (log runs/ không có trên máy supervisor) | chưa đo | 4 task PASS vòng 1, 162 test (trước 106); verify sạch; supervisor merge #19 |
 
 ## Hạn mức (người dùng đo bằng `/usage`)
 
@@ -47,3 +48,6 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
 - M3: Postgres cài trên máy chiếm `127.0.0.1:5432` trước container Docker → test DB không vào được container; developer tự dựng container tạm `sme-dev02-pg` (cổng 55432). Cổng verify cần biến môi trường riêng cho từng máy; developer không được tự tạo dịch vụ ngoài (container, DB) mà phải dừng và báo.
 - M3: phiên điều phối ghi `round` = 0 cho task PASS ở lần review đầu → quy ước lại: vòng 1 = lần review đầu.
 - M3 (dự án): `correlate` chỉ có tín hiệu cho `wrong_setpoint` và `material_batch`; nhóm people (thay ca đêm) và `ambient_temperature` là `no_data`. Cần cho Investigate (T-020) và T-004.
+
+- R4: lần chạy đầu của worker là no-op (worktree chưa cập nhật từ origin/main nên thiếu plan/R4.md, exit 0 sau 40 giây). Runner cần tạo `milestone/<Rx>` từ origin/main trước khi giao và coi "exit 0 không PR/báo cáo" là lỗi. Lần sau worker chạy đủ.
+- R4: developer dev-02 dùng script Python inline sửa code (trái quy ước), reviewer vẫn bắt được kết quả đúng; `apply_sop` chấp nhận `approved_by='llm'` (chuyển thành tiêu chí 5 của R5/dev-02).
