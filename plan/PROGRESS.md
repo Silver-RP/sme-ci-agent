@@ -109,6 +109,11 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - `backend/agent/nodes/act.py` (approval, Act, Measure, Learn, rollback; `evaluate_kpi` so ngưỡng trong code), nối vào graph bằng `build_graph(..., full_loop=True)`. 206 test pass. Vòng 1 FAIL: `change_time` không có mặc định, apply SOP rồi mới crash ở Measure; vòng 2 resolve/validate trước khi mời duyệt và trước apply.
 - Non-blocking: POST /runs (dev-03) phải chuyển ValueError thiếu change_time thành 4xx.
 
+### R5/dev-03 (T-025): DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: 03d538c. Review: .autodev/reviews/R5-dev-03-r1.json (PASS).
+- `backend/api/app.py` (`create_app` inject được llm/ctx/checkpointer): `POST /runs`, `GET /runs/{id}`, `POST /runs/{id}/answer`, `POST /runs/{id}/approval`, `GET /runs/{id}/events` (SSE, Last-Event-ID). 404/409/422 rõ ràng; `change_time` bắt buộc. 226 test pass.
+- Non-blocking: ctx.session không đóng khi start_run lỗi (đường mặc định); factory mặc định chưa test thật (cần key/DB).
+
 ## Đề xuất chờ duyệt (c)
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
