@@ -238,7 +238,7 @@ def test_rollback_declined_halts_without_changing_sop(db_session):
     assert "rollback_done" not in types(out)
     assert out["status"] == "awaiting_human"
     assert out["events"][-1]["payload"]["reason"] == "rollback_declined"
-    assert graph.get_state(cfg).next == ()
+    assert graph.get_state(cfg).next == ("wait_halt",)  # R8/dev-05: waits for a person, not a dead end
 
 
 def test_max_rollbacks_halts(db_session):
@@ -279,7 +279,7 @@ def test_max_rejections_halts(db_session):
     start(graph, cfg)
     out = graph.invoke(Command(resume={"decision": "rejected", "decided_by": "alice"}), cfg)
     assert out["status"] == "awaiting_human" and out["events"][-1]["payload"]["reason"] == "max_rejections_reached"
-    assert graph.get_state(cfg).next == ()
+    assert graph.get_state(cfg).next == ("wait_halt",)
 
 
 # ---- decision validation ----

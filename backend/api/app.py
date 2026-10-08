@@ -43,7 +43,7 @@ LLMFactory = Callable[[str], LLM]
 CtxFactory = Callable[[str], ToolContext]
 
 WAIT_ANSWER = "wait_answer"
-WAIT_APPROVAL = ("wait_approval", "wait_rollback")
+WAIT_APPROVAL = ("wait_approval", "wait_rollback", "wait_halt")
 
 
 class StartRun(BaseModel):
@@ -64,8 +64,9 @@ class ApprovalBody(BaseModel):
 
     # what the person was shown: must match the interrupt now waiting, else 409 (a stale or double click)
     proposal_id: str = Field(min_length=1)
-    kind: Literal["proposal", "rollback"]
-    decision: Literal["approved", "rejected"]
+    kind: Literal["proposal", "rollback", "halt"]  # halt: a stopped run (proposal_id = the halt id)
+    # approved/rejected; revise (kind proposal, needs reason); investigate/finish (kind halt)
+    decision: Literal["approved", "rejected", "revise", "investigate", "finish"]
     decided_by: str = Field(min_length=1)
     reason: str = ""
 

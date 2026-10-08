@@ -23,8 +23,10 @@ from backend.agent.nodes.act import (
     make_rollback_propose_node,
     make_wait_approval_node,
     make_wait_evidence_node,
+    make_wait_halt_node,
     make_wait_rollback_node,
     route_after_approval,
+    route_after_halt,
     route_after_measure,
     route_after_rollback,
     route_after_rollback_confirm,
@@ -190,7 +192,11 @@ def build_graph(
         )
         g.add_edge("ask", "wait_answer")
         g.add_edge("wait_answer", "investigate")
-        g.add_edge("halt", END)
+        g.add_node("wait_halt", make_wait_halt_node(config, tool_ctx))
+        g.add_edge("halt", "wait_halt")  # a stopped run waits for a person: investigate again or finish
+        g.add_conditional_edges(
+            "wait_halt", lambda s: route_after_halt(s, config), {"investigate": "investigate", "end": END}
+        )
         if full_loop:
             _add_act_loop(g, config, tool_ctx, improve)
     return g.compile(checkpointer=checkpointer or InMemorySaver())
@@ -213,7 +219,7 @@ def _add_act_loop(g: StateGraph, config: DomainConfig, ctx: ToolContext, improve
     g.add_conditional_edges(
         "wait_approval",
         lambda s: route_after_approval(s, config),
-        {"act": "act", "improve": "improve", "halt": "loop_halt"},
+        {"act": "act", "improve": "improve", "investigate": "investigate", "halt": "loop_halt"},
     )
     g.add_edge("act", "measure")
     g.add_conditional_edges(
@@ -235,4 +241,4 @@ def _add_act_loop(g: StateGraph, config: DomainConfig, ctx: ToolContext, improve
         lambda s: route_after_rollback(s, config),
         {"investigate": "investigate", "halt": "loop_halt"},
     )
-    g.add_edge("loop_halt", END)
+    g.add_edge("loop_halt", "wait_halt")

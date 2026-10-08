@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ProposalCard } from "@/components/ProposalCard";
-import { answerRun, ApiError, decideApproval, getRun, retryRun, startRun, type ApiOptions, type RunStatus } from "@/lib/api";
+import { answerRun, ApiError, decideApproval, type Decision, getRun, retryRun, startRun, type ApiOptions, type RunStatus } from "@/lib/api";
 
 /**
  * Start / answer / approval controls. Buttons appear only for the state the backend reports
@@ -51,12 +51,31 @@ export function RunControls({
   }
 
   const pending = status?.pending ?? null;
-  const kind = pending?.kind === "rollback" ? "rollback" : "proposal";
+  const kind: "proposal" | "rollback" | "halt" =
+    pending?.kind === "rollback" ? "rollback" : pending?.kind === "halt" ? "halt" : "proposal";
   const proposalId = typeof pending?.proposal_id === "string" ? pending.proposal_id : "";
   const name = decidedBy.trim().toLowerCase();
   // an empty list means it could not be loaded: then the backend check alone decides
   const onList = (approvers ?? []).length === 0 || (approvers ?? []).some((a) => a.toLowerCase() === name);
   const canDecide = name !== "" && onList && proposalId !== "";
+  const hasReason = reason.trim() !== "";
+  // what each kind of pending approval lets a person do; "revise" needs the feedback text
+  const choices: { decision: Decision["decision"]; label: string; needsReason?: boolean }[] =
+    kind === "halt"
+      ? [
+          { decision: "investigate", label: "Investigate again" },
+          { decision: "finish", label: "Finish run" },
+        ]
+      : kind === "rollback"
+        ? [
+            { decision: "approved", label: "Approve rollback" },
+            { decision: "rejected", label: "Reject rollback" },
+          ]
+        : [
+            { decision: "approved", label: "Approve" },
+            { decision: "rejected", label: "Reject" },
+            { decision: "revise", label: "Dispute / add information", needsReason: true },
+          ];
   return (
     <section aria-label="Run controls">
       {!runId && (
@@ -108,27 +127,31 @@ export function RunControls({
           <label>
             Reason <input value={reason} onChange={(e) => setReason(e.target.value)} />
           </label>{" "}
-          {(["approved", "rejected"] as const).map((d) => (
+          {choices.map((c) => (
             <button
-              key={d}
+              key={c.decision}
               type="button"
-              disabled={busy || !canDecide}
+              disabled={busy || !canDecide || (c.needsReason === true && !hasReason)}
               onClick={() =>
                 void run(
                   () =>
                     decideApproval(
                       runId,
-                      { proposal_id: proposalId, kind, decision: d, decided_by: decidedBy.trim(), reason },
+                      { proposal_id: proposalId, kind, decision: c.decision, decided_by: decidedBy.trim(), reason },
                       api,
                     ),
                   onStatus,
                 )
               }
             >
-              {d === "approved" ? "Approve" : "Reject"}
-              {kind === "rollback" ? " rollback" : ""}
+              {c.label}
             </button>
           ))}
+          {kind === "proposal" && !hasReason && (
+            <p className="muted" data-testid="revise-hint">
+              To dispute the hypothesis or add information, write it in Reason first.
+            </p>
+          )}
           {decidedBy.trim() !== "" && !onList && (
             <p data-testid="approver-hint">&quot;{decidedBy.trim()}&quot; is not on the approvers list.</p>
           )}

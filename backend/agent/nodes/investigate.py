@@ -167,6 +167,16 @@ def run_investigation(
     user_text = f"Anomaly detected: {json.dumps(anomaly, default=str)}. Investigate."
     if prior_answers:
         user_text += " Human answers so far: " + json.dumps(prior_answers, default=str)
+    feedback = [
+        {k: v for k, v in e.items() if k != "source" and v is not None}
+        for e in evidence
+        if e.get("source") == "human_feedback"
+    ]
+    if feedback:
+        user_text += (
+            " A person disputed the earlier hypothesis or added information; take it into account: "
+            + json.dumps(feedback[-3:], default=str)
+        )
     attempts = previous_attempts(evidence)
     if attempts:
         user_text += (

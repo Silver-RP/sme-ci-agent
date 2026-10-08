@@ -90,15 +90,30 @@ def make_wait_answer_node(config: DomainConfig):
     return wait_answer
 
 
+HALT_OPTIONS = ["investigate", "finish"]
+
+
+def halt_payload(reason: str, **extra: Any) -> dict[str, Any]:
+    """Payload of the ``question_asked`` event that stops the run for a person (resumable, not a dead end)."""
+    return {
+        "kind": "halt",
+        "reason": reason,
+        "status": "awaiting_human",
+        "question": f"The agent stopped ({reason}). Investigate again (add information if you have any) or finish?",
+        "options": list(HALT_OPTIONS),
+        **extra,
+    }
+
+
 def make_halt_node(config: DomainConfig):
-    """Question limit reached: stop and wait for a person; never conclude by itself."""
+    """Question limit reached: stop and wait for a person (``wait_halt`` interrupts); never conclude by itself."""
 
     def halt(state: AgentState) -> dict[str, Any]:
         ev = make_event(
             state,
-            "run_finished",
+            "question_asked",
             "system",
-            {"status": "awaiting_human", "reason": "max_questions_reached", "questions": state.get("question_count", 0)},
+            halt_payload("max_questions_reached", questions=state.get("question_count", 0)),
             len(state.get("events", [])) + 1,
             config.domain,
         )

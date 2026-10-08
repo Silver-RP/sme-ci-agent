@@ -27,6 +27,7 @@ import pandas as pd
 from langgraph.types import interrupt
 
 from backend.agent.events import make_event
+from backend.agent.nodes.ask import halt_payload
 from backend.agent.state import AgentState
 from backend.db import repo
 from backend.domain_config import DomainConfig, load_domain_config
@@ -40,6 +41,9 @@ REJECTED = "rejected"
 MEASURED = "measured"
 INSUFFICIENT = "insufficient_evidence"
 NOT_APPLIED = "not_applied"
+REVISE = "revise"
+INVESTIGATE = "investigate"
+FINISH = "finish"
 
 
 class DecisionError(ValueError):
@@ -92,13 +96,29 @@ def check_binding(raw: Any, fp: dict[str, str], kind: str) -> None:
             raise DecisionError(f"decision {key} {raw[key]!r} does not match the pending {want!r}")
 
 
-def parse_decision(value: Any, config: DomainConfig | None = None) -> dict[str, Any]:
-    """Validate a human decision: ``{"decision": "approved"|"rejected", "decided_by": str, "reason"?: str}``."""
+ALLOWED_DECISIONS = {
+    "proposal": (APPROVED, REJECTED, REVISE),  # revise: dispute the hypothesis / add information -> Investigate
+    "rollback": (APPROVED, REJECTED),
+    "halt": (INVESTIGATE, FINISH),  # a stopped run: investigate again or end it
+}
+
+
+def parse_decision(value: Any, config: DomainConfig | None = None, kind: str | None = None) -> dict[str, Any]:
+    """Validate a human decision: ``{"decision": ..., "decided_by": str, "reason"?: str}``.
+
+    The valid decisions depend on the ``kind`` of the pending interrupt (argument, else ``value['kind']``, else
+    "proposal"). ``revise`` needs a reason: it is the feedback Investigate will receive.
+    """
     if not isinstance(value, dict):
         raise DecisionError("decision must be an object with 'decision' and 'decided_by'")
+    kind = kind or value.get("kind") or "proposal"
+    if kind not in ALLOWED_DECISIONS:
+        raise DecisionError(f"unknown decision kind {kind!r}")
     decision = value.get("decision")
-    if decision not in (APPROVED, REJECTED):
-        raise DecisionError(f"decision must be {APPROVED!r} or {REJECTED!r}, got {decision!r}")
+    if decision not in ALLOWED_DECISIONS[kind]:
+        raise DecisionError(f"decision for a {kind} must be one of {list(ALLOWED_DECISIONS[kind])}, got {decision!r}")
+    if decision == REVISE and not str(value.get("reason") or "").strip():
+        raise DecisionError("'revise' needs a reason: the feedback or information for the new investigation")
     config = config or load_domain_config()
     raw_by = value.get("decided_by") or value.get("approved_by")
     by = config.resolve_approver(raw_by)
@@ -176,6 +196,8 @@ def route_after_approval(state: AgentState, config: DomainConfig) -> str:
     approval = state.get("approval") or {}
     if approval.get("decision") == APPROVED:
         return "act"
+    if approval.get("decision") == REVISE:
+        return "investigate"  # the person disputes the hypothesis or adds information: not a rejection, no limit
     if state.get("rejection_count", 0) >= config.loop.max_rejections:
         return "halt"
     return "improve"
@@ -210,7 +232,7 @@ def make_wait_approval_node(config: DomainConfig, ctx: ToolContext):
         fp = proposal_fingerprint(proposal)
         raw = interrupt({"kind": "proposal", "proposal": proposal, "run_id": state.get("run_id", ""), "current_sop": current_sop(ctx, proposal), **fp})
         check_binding(raw, fp, "proposal")
-        d = parse_decision(raw, config)
+        d = parse_decision(raw, config, "proposal")
         repo.append_audit(
             ctx.session, actor=d["decided_by"], action="approval_decided",
             params={"kind": "proposal", **fp, **d}, run_id=ctx.run_id,
@@ -224,6 +246,16 @@ def make_wait_approval_node(config: DomainConfig, ctx: ToolContext):
             update["evidence"] = [
                 *state.get("evidence", []),
                 {"source": "human_rejection", "reason": d["reason"], "rejected_change": proposal.get("change")},
+            ]
+        elif d["decision"] == REVISE:
+            update["revision_count"] = state.get("revision_count", 0) + 1
+            update["proposal"] = {**proposal, "status": REVISE}
+            update["question_count"] = 0  # new information: Investigate may ask again
+            update["evidence_gap"] = False
+            update["evidence"] = [
+                *state.get("evidence", []),
+                {"source": "human_feedback", "feedback": d["reason"], "disputed_proposal": proposal.get("change"),
+                 "disputed_hypothesis": proposal.get("hypothesis")},
             ]
         else:
             update["proposal"] = {**proposal, "status": APPROVED}
@@ -435,13 +467,17 @@ def make_wait_rollback_node(config: DomainConfig, ctx: ToolContext):
         fp = proposal_fingerprint(proposal)
         raw = interrupt({"kind": "rollback", "proposal": proposal, "run_id": state.get("run_id", ""), "current_sop": current_sop(ctx, proposal), **fp})
         check_binding(raw, fp, "rollback")
-        d = parse_decision(raw, config)
+        d = parse_decision(raw, config, "rollback")
+        extra: dict[str, Any] = {}
+        if d["decision"] == REJECTED:  # say plainly that the SOP applied earlier is still the one in force
+            applied = state.get("applied") or {}
+            extra = {"sop_still_in_force": True, "sop_id": applied.get("sop_id"), "sop_version": applied.get("version")}
         repo.append_audit(
             ctx.session, actor=d["decided_by"], action="approval_decided",
-            params={"kind": "rollback", **fp, **d}, run_id=ctx.run_id,
+            params={"kind": "rollback", **fp, **d, **extra}, run_id=ctx.run_id,
         )
         emit = _Emitter(state, config)
-        emit("approval_decided", "system", {"kind": "rollback", **fp, **d, "change": proposal.get("change")})
+        emit("approval_decided", "system", {"kind": "rollback", **fp, **d, **extra, "change": proposal.get("change")})
         return {"approval": d, "events": emit.events}
 
     return wait_rollback
@@ -505,8 +541,68 @@ def make_loop_halt_node(config: DomainConfig):
             reason = "max_rollbacks_reached"
         else:
             reason = "max_rejections_reached"
+        extra: dict[str, Any] = {}
+        applied = state.get("applied")
+        if applied:  # an SOP version is in force (e.g. the rollback was declined): say which
+            extra = {"sop_still_in_force": True, "sop_id": applied.get("sop_id"), "sop_version": applied.get("version")}
         emit = _Emitter(state, config)
-        emit("run_finished", "system", {"status": "awaiting_human", "reason": reason})
+        emit("question_asked", "system", halt_payload(reason, **extra))
         return {"status": "awaiting_human", "events": emit.events}
 
     return halt
+
+
+def _last_halt(state: AgentState) -> dict[str, Any]:
+    return next(
+        (e["payload"] for e in reversed(state.get("events", []))
+         if e["type"] == "question_asked" and e["payload"].get("kind") == "halt"),
+        {},
+    )
+
+
+def make_wait_halt_node(config: DomainConfig, ctx: ToolContext | None = None):
+    """A stopped run waits for a person: ``investigate`` again (with optional information) or ``finish``.
+
+    Shared by the question limit (Ask) and the loop limits (rejections, rollbacks, insufficient evidence). On
+    ``investigate`` the counters that caused the stop restart from zero: the person chose to continue.
+    """
+
+    def wait_halt(state: AgentState) -> dict[str, Any]:
+        halt = _last_halt(state)
+        halt_id = "halt_" + str(sum(1 for e in state.get("events", [])
+                                    if e["type"] == "question_asked" and e["payload"].get("kind") == "halt"))
+        run_id = state.get("run_id", "")
+        raw = interrupt({
+            "kind": "halt", "proposal_id": halt_id, "run_id": run_id, "reason": halt.get("reason"),
+            "question": halt.get("question"), "options": list(halt.get("options") or []),
+            "sop_still_in_force": halt.get("sop_still_in_force", False),
+            "sop_id": halt.get("sop_id"), "sop_version": halt.get("sop_version"),
+        })
+        check_binding(raw, {"proposal_id": halt_id}, "halt")
+        d = parse_decision(raw, config, "halt")
+        info = {k: halt[k] for k in ("sop_still_in_force", "sop_id", "sop_version") if k in halt}
+        if ctx is not None:
+            repo.append_audit(
+                ctx.session, actor=d["decided_by"], action="halt_decided",
+                params={"kind": "halt", "proposal_id": halt_id, "halt_reason": halt.get("reason"), **d, **info},
+                run_id=ctx.run_id,
+            )
+        emit = _Emitter(state, config)
+        emit("approval_decided", "system",
+             {"kind": "halt", "proposal_id": halt_id, "halt_reason": halt.get("reason"), **d, **info})
+        if d["decision"] == FINISH:
+            emit("run_finished", "system", {"status": "closed", "reason": "closed_by_human", "halt_reason": halt.get("reason")})
+            return {"approval": d, "status": "closed", "events": emit.events}
+        evidence = [*state.get("evidence", [])]
+        evidence.append({"source": "human_feedback", "feedback": d["reason"] or None, "after_halt": halt.get("reason"), **info})
+        return {
+            "approval": None, "status": "", "events": emit.events, "evidence": evidence,
+            "question_count": 0, "rejection_count": 0, "rollback_count": 0, "measure_wait_count": 0,
+            "evidence_gap": False, "proposal": None, "applied": None, "measurement": None,
+        }
+
+    return wait_halt
+
+
+def route_after_halt(state: AgentState, config: DomainConfig) -> str:
+    return "end" if state.get("status") == "closed" else "investigate"

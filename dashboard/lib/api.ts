@@ -14,8 +14,10 @@ export interface RunStatus {
 export interface Decision {
   /** what the person was shown: the backend answers 409 when it no longer matches the pending approval */
   proposal_id: string;
-  kind: "proposal" | "rollback";
-  decision: "approved" | "rejected";
+  kind: "proposal" | "rollback" | "halt";
+  /** proposal: approved | rejected | revise (dispute the hypothesis / add information, needs a reason);
+   *  rollback: approved | rejected; halt (run stopped at a limit): investigate | finish */
+  decision: "approved" | "rejected" | "revise" | "investigate" | "finish";
   decided_by: string;
   reason?: string;
 }

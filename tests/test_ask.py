@@ -48,6 +48,11 @@ def types(events):
     return [e["type"] for e in events]
 
 
+def asked(events):
+    """Questions put to a person about the evidence (the halt notice is also a question_asked, kind "halt")."""
+    return [e for e in events if e["type"] == "question_asked" and e["payload"].get("kind") != "halt"]
+
+
 def cfg_with(max_questions=2, threshold=0.6):
     return CFG.model_copy(update={"ask": AskParams(confidence_threshold=threshold, max_questions=max_questions)})
 
@@ -136,18 +141,19 @@ def test_ask_is_bounded_then_awaits_human(ctx):
     start(graph, cfg)
     graph.invoke(Command(resume="a1"), cfg)
     out = graph.invoke(Command(resume="a2"), cfg)
-    assert graph.get_state(cfg).next == ()
-    assert types(out["events"]).count("question_asked") == 2
+    assert graph.get_state(cfg).next == ("wait_halt",)  # R8/dev-05: resumable, not a dead end
+    assert len(asked(out["events"])) == 2
     assert out["status"] == "awaiting_human"
     last = out["events"][-1]
-    assert last["type"] == "run_finished" and last["payload"]["status"] == "awaiting_human"
+    assert last["type"] == "question_asked" and last["payload"]["kind"] == "halt"
+    assert last["payload"]["reason"] == "max_questions_reached"
     assert not out.get("proposal")  # never concludes by itself
 
 
 def test_zero_max_questions_halts_without_asking(ctx):
     graph = build_graph(cfg_with(max_questions=0), llm=ScriptedLLM([final(0.1)]), tool_ctx=ctx)
     out = start(graph, run_cfg())
-    assert "question_asked" not in types(out["events"]) and out["status"] == "awaiting_human"
+    assert asked(out["events"]) == [] and out["status"] == "awaiting_human"
 
 
 def test_repeated_runs_do_not_leak_state(ctx):
@@ -156,7 +162,7 @@ def test_repeated_runs_do_not_leak_state(ctx):
         cfg = run_cfg()
         start(graph, cfg)
         out = graph.invoke(Command(resume="x"), cfg)
-        assert types(out["events"]).count("question_asked") == 1
+        assert len(asked(out["events"])) == 1
 
 
 def test_events_follow_schema_fields(ctx):

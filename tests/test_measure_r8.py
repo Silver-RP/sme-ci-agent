@@ -127,7 +127,7 @@ def test_insufficient_evidence_questions_are_bounded_then_halt(db_session):
         out = graph.invoke(Command(resume="wait for more data"), c)
     assert out["status"] == "awaiting_human"
     assert out["events"][-1]["payload"]["reason"] == "insufficient_evidence"
-    assert graph.get_state(c).next == ()
+    assert graph.get_state(c).next == ("wait_halt",)
 
 
 def test_min_samples_comes_from_config(db_session):
