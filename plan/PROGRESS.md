@@ -183,3 +183,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
 - ✅ **Đã duyệt 2026-10-07, chọn: `effect` trong YAML là nguồn chính cho anomaly được tiêm; hàm setpoint chỉ dùng cho phép thử phản thực tế (khôi phục setpoint → về baseline). Ghi quy ước vào `scenario1.yaml`; các khóa mới vẫn chờ team chốt ở T-004.** **M2-c2 (từ dev-01, dev-02):** leader duyệt các khóa đã thêm vào `scenario1.yaml` khi làm T-004: `baseline.setpoint_sensitivity_per_c`, `plant.shift_start_hours`, `plant.start_date`, FP1 (`start`, `end`, `effect`, `planned`), `injected_anomalies[].trace.*`. Cần quyết định thêm: `effect` của A2 (0.055) không khớp với hàm setpoint (195 °C cho 0.062); giữ hai nguồn độc lập hay buộc khớp.
+
+### R9/dev-01: DONE
+- Vòng: 1. Commit: dc0115d (test đỏ), 802d568. Review: .autodev/reviews/R9-dev-01-r1.json (PASS).
+- H-10 đóng (SOP-RFL-001 reflow); H-22 đóng một phần (tín hiệu, default_period, máy demo ra YAML). 373 pytest.
+- Non-blocking: fake_metrics.py còn "M02" (mock).
