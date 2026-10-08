@@ -11,17 +11,19 @@ Supervisor cập nhật file này ở cuối mỗi mốc và trước khi ngư�
 - **Phiên supervisor đóng vai con người:** lập plan, giao mốc, duyệt, merge, sửa plugin. Không viết code dự án (developer/reviewer trong worker làm). Quyền: thiết kế mục 6.15, `.claude/commands/supervise.md`.
 - **Người dùng:** giao tiếp bằng tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi họ hỏi "tại sao".
 
-## Bước tiếp theo (cập nhật 2026-10-09, sau P5 + audit đầu)
+## Bước tiếp theo (cập nhật 2026-10-09, sau R9)
 Đọc `docs/autodev/PROJECT_STATE.md` ngay sau file này: mục tiêu, % đạt, lỗ hổng H-xx, hướng 3–5 mốc đã duyệt.
 
 Đã xong trong phiên 2026-10-09:
+- **R9 merge (PR #44):** 6 task PASS vòng 1, 412 pytest, verify + smoke sạch; mọi tiêu chí cấp mốc tự kiểm đạt (bảng trong PROGRESS). Measure theo hành động `{parameter, machine_id, value}`, `scripts/eval_rootcause.py`, `scripts/export_fixtures.py` (8 nhánh), giới hạn revise/rollback/retry trong YAML `loop:`.
 - P5 (PR #40): `/audit`, `run.py --audit-every 2` + `--audit-only`, `PROJECT_STATE.md` + `state.json`, `LESSONS.md`, guard chặn sửa file bằng sed tại chỗ / script Python qua stdin.
 - Audit đầu `docs/audits/2026-10-09.md`: H-06..H-26 (7 cao), % đạt 3 điều hạ còn 25/40/10.
 - Gói bàn giao UI (bản đầu): `docs/schema/payloads.md`, `docs/schema/examples/`, `docs/ui-handoff.md`.
 - Người dùng cho supervisor tự merge PR (`.claude/settings.local.json`, không commit).
 
 Làm tiếp theo thứ tự:
-1. **`plan/R9.md`** theo hướng người dùng đã chọn (theo audit): H-10 (SOP khớp scenario reflow) làm đầu tiên; H-06 (Measure theo thay đổi thật, không theo từ khoá); H-12 (script eval nguyên nhân so với ground truth, LLM giả và thật); e2e uvicorn chuỗi sai → rollback → điều tra → đúng → Learn (gộp R8-c2); H-07, H-08, H-09, H-17, H-21; temperature (H-23); script xuất fixture các nhánh cho frontend (`docs/ui-handoff.md` mục "Nhánh cần có fixture"). Mỗi H-xx có test đỏ trước khi sửa. Từ R9 auto-dev không sửa phần trình bày trong `dashboard/`. Rồi chạy R9 bằng chế độ B (tắt demo trước).
+1. **Việc của người dùng sau R9:** (a) duyệt xoá `docs/schema/examples/run-reject-error.json` (file cũ, ngoài 8 nhánh); (b) T-030: chạy LLM thật và `uv run python scripts/eval_rootcause.py --llm real` (chỉ cách này mới chứng minh điều 1, LLM giả là đáp án viết sẵn).
+   Đưa vào R10 (b): chặn `value` NaN/không hữu hạn trong action (hiện ném `DataError` khi ghi audit JSON); `parse_bool("maybe")` → thiếu bằng chứng; bỏ `fix_addresses_cause` không dùng; "M02" trong `fake_metrics.py`. Quyết định có đưa `eval_rootcause.py` vào smoke (supervisor chưa đưa: chạy ~vài giây, nhưng là file plugin `.autodev/config.json`).
 2. **T-030 (người dùng chạy, sau R9):** một vòng LLM thật trên dashboard, ghi lỗi vào `docs/decisions.md` mục "Việc cần sửa sau khi chạy". Người dùng tạo key ở console.anthropic.com (~5 USD; gói Pro/Max không kèm API; khuyên Anthropic theo ADR-006), tự điền `.env` (`ANTHROPIC_API_KEY`, `MODEL_REASONING=claude-sonnet-5-5`, `MODEL_CHEAP=claude-haiku-4-5-20251001`), chạy `SME_LLM=real scripts/demo.sh`. Agent không đọc `.env`. Chạy thêm script eval của R9 với `--llm real`.
 3. **P6:** bảng 3–5 mốc tới v0.1-e2e (13/10) và freeze (20/10), đường găng, thứ tự cắt (PLAN mục 7), pre-mortem mỗi mốc, đối chiếu ước tính với thực tế. Hướng đã duyệt nằm ở PROJECT_STATE mục "Tầm nhìn"; người dùng duyệt việc cắt.
 4. **R10 (v0.1-e2e):** H-11 (MTTD/MTTR trong vòng lặp, nhiều anomaly, đọc `learning_store`, `metrics_report.py`, T-042), T-041, T-044, H-13, H-16, H-26. Runner tự chạy audit 2 sau R9 + R10 (`--audit-every 2`), rồi tag v0.1-e2e (người dùng duyệt).
