@@ -253,6 +253,20 @@ def has_milestone_head(heads: list[str], milestone: str) -> bool:
     return any(h == f"milestone/{milestone}" or h.startswith(f"milestone/{milestone}-r") for h in heads)
 
 
+def unfinished_tasks(worker: Path, milestone: str) -> list[str]:
+    """Tasks of `milestone` in the worker's .autodev/state.json that are neither DONE nor BLOCKED."""
+    try:
+        state = json.loads((worker / ".autodev" / "state.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    if state.get("milestone") != milestone or not isinstance(state.get("tasks"), dict):
+        return []
+    return sorted(k for k, v in state["tasks"].items() if (v or {}).get("status") not in ("DONE", "BLOCKED"))
+
+
+MAX_RESUMES = 1
+
+
 def list_prs(cwd: Path) -> list[dict]:
     out = subprocess.run(
         ["gh", "pr", "list", "--state", "all", "--json", "number,headRefName,createdAt,state", "--limit", "50"],
@@ -370,6 +384,14 @@ def main(argv: list[str] | None = None) -> int:
         started = dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=1)
         w = run_step(f"/run-milestone {m}", worker, WORKER_ALLOWED, f"{m}-worker", role="worker")
         pr = None if args.skip_merge_check else new_milestone_pr(list_prs(worker), m, started)
+        for _ in range(MAX_RESUMES):
+            open_tasks = unfinished_tasks(worker, m)
+            if args.skip_merge_check or pr is not None or not open_tasks:
+                break
+            log(f"worker {m} dừng khi còn task dở {open_tasks}; chạy tiếp bằng phiên mới")
+            total += float(w.get("total_cost_usd") or 0)
+            w = run_step(f"/run-milestone {m}", worker, WORKER_ALLOWED, f"{m}-worker-resume", role="worker")
+            pr = new_milestone_pr(list_prs(worker), m, started)
         if not args.skip_merge_check and pr is None:
             stop(f"Worker {m} kết thúc mà không mở PR mới (có thể không làm gì); không chuyển sang supervisor.\n\n{w.get('result', '')[-1500:]}", 4)
         sup_started = dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=1)

@@ -44,6 +44,10 @@ Task BLOCKED: chạy tiếp các task không phụ thuộc vào nó (`blocked_po
 4. Báo kết quả (link PR, bảng task, BLOCKED, đề xuất (c)) cho supervisor nếu có, nếu không thì cho người dùng. Nhắc xem `/usage` để điền cột "% hạn mức".
 5. DỪNG. Không tự sang mốc tiếp theo, không merge.
 
+## Gọi sub-agent: luôn chạy tiền cảnh (bắt buộc)
+- Mọi lần gọi Agent (`developer`, `reviewer`) phải đặt **`run_in_background: false`** và chờ kết quả trong cùng lượt. Không bao giờ để mặc định (bản Claude Code mới cho sub-agent chạy nền mặc định).
+- Không kết thúc lượt khi còn task TODO / IN_PROGRESS / REWORK mà chưa BLOCKED. Không viết "đang chạy, tôi chờ". Chạy headless (`claude -p`) mà kết thúc lượt là phiên đóng, sub-agent bị cắt giữa chừng. Bài học R9 2026-10-09: dev-02 bị cắt, worktree còn thay đổi chưa commit.
+
 ## Lệnh shell (để không phải hỏi quyền)
 - Tạo/sửa file bằng công cụ Write/Edit, KHÔNG dùng `cat > file`, `echo >`, heredoc ghi file hay `python3 - <<EOF` để sửa file.
 - Commit bằng nhiều cờ `-m` trên một dòng, ví dụ `git commit -m "feat(M1/dev-01): ..." -m "Co-Authored-By: ..."`; không dùng `$(cat <<EOF ...)`.

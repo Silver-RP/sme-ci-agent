@@ -9,6 +9,7 @@ Bạn là AUDITOR của auto-dev (plugin P5: chống mất tầm nhìn). Bạn r
 `docs/autodev/PROJECT_STATE.md` (nếu có) → `docs/PLAN.md` mục 1 (mục tiêu, 3 điều cần kiểm chứng) → `CLAUDE.md` → `plan/<mốc>.md` của các mốc $ARGUMENTS (mục "Tiêu chí chấp nhận cấp mốc", "Ghi chú điều chỉnh", "Đề xuất chờ duyệt") → audit gần nhất trong `docs/audits/` (để biết H-xx nào còn mở). Mốc trống thì lấy các mốc merge sau audit gần nhất (`git log --merges`).
 
 ## Rà soát: 3 agent `Explore` song song (một lượt gọi, chế độ "very thorough")
+Ba lần gọi Agent nằm trong cùng một tin nhắn và mỗi lần đặt **`run_in_background: false`**. Như vậy ba agent vẫn chạy song song, và bạn nhận đủ kết quả trong cùng lượt. Chạy headless mà để mặc định (chạy nền) thì phiên đóng trước khi có kết quả (bài học R9).
 Mỗi agent nhận đề bài tự đủ nghĩa dưới đây (thay `<...>`), yêu cầu trả lời bằng danh sách phát hiện, mỗi phát hiện có: mô tả, bằng chứng `file:dòng`, cách tái hiện (lệnh hoặc đầu vào cụ thể), mức (cao / vừa / thấp), và "test nào sẽ đỏ nếu lỗi này còn". Không trả lời kiểu "có vẻ ổn"; không tìm thấy gì thì nói rõ đã xem những file nào.
 
 **(a) Logic vòng lặp và quy tắc CLAUDE.md**
