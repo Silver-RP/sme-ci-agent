@@ -7,18 +7,16 @@ Supervisor cập nhật file này ở cuối mỗi mốc (và trước khi ngư�
 - Phiên supervisor = **vai con người**: lập plan, giao mốc, duyệt, merge, sửa plugin. Không viết code dự án (developer/reviewer trong worker làm). Quyền: thiết kế mục 6.15.
 - Người dùng giao tiếp bằng tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa và được báo ngắn gọn.
 
-## Bước tiếp theo (người dùng duyệt 2026-10-08)
-1. **R7 = M3 end-to-end** (T-031, chuẩn bị T-030), plan ở `plan/R7.md`: dữ liệu 6 tháng + báo cáo, Detect thật trong graph, người duyệt hợp lệ dùng chung (allow-list trong `context_profile.yaml`, dashboard khoá nút), `scripts/run_scenario.py` + `scripts/demo.sh`, test e2e qua uvicorn thật. R6 (dashboard) đã merge (#27). Node đã nâng lên 22.23.3 (`nvm alias default 22`); shell cũ còn PATH 22.12 thì khởi chạy runner với `PATH=~/.nvm/versions/node/v22.23.3/bin:$PATH`. Sau R7: người dùng chạy một vòng với LLM thật (T-030).
-2. Còn của P4: kiểm chứng nhánh chờ reset khi gặp hạn mức thật (đối chiếu `LIMIT_RE`/`RESET_RE`), rồi đóng P4.
-3. Để sau (ROADMAP "Để sau"): dashboard xem tiến trình `claude -p`, thông báo qua Telegram.
-
-Đã xong 2026-10-08: xoá file `* 2.py`; sửa runner (PR #23: worktree worker về `origin/main`, no-op → exit 4, thông báo macOS mặc định tắt, bật bằng `AUTODEV_NOTIFY=1`); chuyển repo ra khỏi iCloud.
-
-Cách khởi chạy chế độ B (đã chạy thật): từ repo chính `nohup .autodev/autodev-run.sh R6 R7 > .autodev/runs/nohup.out 2>&1 &`; theo dõi bằng `.autodev/watch.sh` trong một terminal. Phiên chat **không** tự được báo khi runner xong (tiến trình tách rời); nếu muốn phiên chat được gọi lại thì khởi chạy bằng Bash chạy nền của chính phiên đó hoặc dùng Monitor theo dõi `run.log`.
+## Bước tiếp theo (2026-10-08)
+1. **R7 đã merge (PR #31).** Người dùng tự chạy T-030 với LLM thật: tự điền khoá API và tên model trong file môi trường (theo README "Chạy demo"), `uv run alembic upgrade head`, rồi `SME_LLM=real scripts/demo.sh` hoặc `uv run python scripts/run_scenario.py --llm real`. Sau đó tick T-030.
+2. Leader quyết R7-c1: để demo ra nhánh Measure đạt → Learn, simulator cần anomaly có điểm kết thúc (seed 42 kéo đến hết dữ liệu nên chỉ tới rollback).
+3. Thêm một dòng README: `run_scenario.py` cần `alembic upgrade head` trước (chỉ `demo.sh` tự migrate).
+4. Còn của P4: kiểm chứng nhánh chờ reset khi gặp hạn mức thật, rồi đóng P4.
+5. Để sau: dashboard xem tiến trình `claude -p`, thông báo Telegram.
 
 ## Trạng thái hiện tại (2026-10-08)
 - Plugin: P1–P3 xong. P4 đã chạy thật: R4 + R5 liền nhau, 40 phút, 5,29 USD ước tính, không chạm hạn mức (nhánh chờ reset chưa kiểm chứng). Runner đã sửa (PR #23).
-- Dự án: R4 (PR #19: T-020, T-021, T-023) và R5 (PR #21: T-022, T-024, T-025) đã merge; 226 test, verify sạch. Còn T-016, T-026 (dashboard) → R6.
+- Dự án: R6 (dashboard) và R7 (M3 end-to-end, PR #31, 262 pytest, 38 vitest) đã merge. R4 (PR #19: T-020, T-021, T-023) và R5 (PR #21: T-022, T-024, T-025) đã merge; 226 test, verify sạch. Còn T-016, T-026 (dashboard) → R6.
 - **Vị trí repo (từ 2026-10-08):** `~/dev/sme-ci-agent/` chứa 3 worktree cạnh nhau: `sme-ci-agent` (chính), `sme-ci-agent-autodev` (worker), `sme-ci-agent-supervisor` (supervisor). Đã chuyển khỏi Desktop vì iCloud sinh file "tên 2". Tài liệu hackathon vẫn ở Desktop, cạnh alias "sme-ci-agent (code)". Docker DB `sme-ci-agent-autodev-db-1` cổng 5432 (volume có tên, không phụ thuộc đường dẫn).
 - Máy này: đã dừng Homebrew `postgresql@14` (bật lại: `brew services start postgresql@14`).
 
