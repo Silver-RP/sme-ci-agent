@@ -139,6 +139,11 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Graph có `tool_ctx` gọi `detect()` thật (observe/detect), phát `anomaly_detected` từ output Detect; không anomaly → `run_finished` status `no_anomaly`, không gọi LLM; `POST /runs` `change_time` tuỳ chọn (mặc định `anomaly['end']`). Không có `tool_ctx` giữ mock cũ. 231 test pass.
 - Hai test cũ (change_time bắt buộc) được đổi theo tiêu chí mới. Non-blocking: style thừa `and kpi` trong một assert.
 
+### R7/dev-03: DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: 9e76f78. Review: .autodev/reviews/dev-03-r1.json (PASS).
+- `approvers` trong `data/context_profile.yaml` + `DomainConfig.resolve_approver` (allow-list, không phân biệt hoa thường) dùng chung cho `parse_decision` và `_check_approval`; `POST /runs/{id}/approval` 422 khi tên sai; `GET /config/approvers`; dashboard khoá nút khi ô trống. 257 pytest, 37 vitest pass.
+- Non-blocking: `LiveRun` chưa gọi `GET /config/approvers` để đổ datalist (nhập tay vẫn được, API báo 422).
+
 ## Đề xuất chờ duyệt (c)
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
