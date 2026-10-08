@@ -31,7 +31,7 @@ Mỗi agent nhận đề bài tự đủ nghĩa dưới đây (thay `<...>`), y�
    - Lỗ hổng cũ: cập nhật trạng thái; chỉ đóng khi có test chứng minh đã sửa (ghi tên test và đã tự chạy).
    - Độ khớp mục tiêu: bảng 3 điều cần kiểm chứng → % đạt → bằng chứng → việc còn thiếu.
    - Đề xuất cho mốc kế tiếp: H-xx nào thành task nào (gợi ý, supervisor quyết khi lập plan).
-2. Cập nhật `docs/autodev/PROJECT_STATE.md` và `docs/autodev/state.json` (mục "Lỗ hổng mở", "% đạt", "Quyết định gần đây"); giữ PROJECT_STATE dưới 150 dòng; `python3 -m unittest .autodev/tests/test_project_state.py` phải xanh.
+2. Cập nhật `docs/autodev/PROJECT_STATE.md` và `docs/autodev/state.json` (mục "Lỗ hổng mở", "% đạt", "Quyết định gần đây"); giữ PROJECT_STATE dưới 150 dòng; `python3 -m unittest discover .autodev/tests -p "test_project_state.py"` phải xanh.
 3. Nhánh `chore/autodev-audit-<ngày>` từ `origin/main`, chỉ commit `docs/audits/**` và `docs/autodev/**`, mở PR. Chạy headless (từ `.autodev/run.py`) thì runner tự merge PR này; chạy tương tác thì supervisor merge.
 
 ## Không được
