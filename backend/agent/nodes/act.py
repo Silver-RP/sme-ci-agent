@@ -27,7 +27,7 @@ import pandas as pd
 from langgraph.types import interrupt
 
 from backend.agent.events import make_event
-from backend.agent.nodes.ask import halt_payload
+from backend.agent.nodes.ask import halt_options, halt_payload
 from backend.agent.state import AgentState
 from backend.db import repo
 from backend.domain_config import DomainConfig, load_domain_config
@@ -197,7 +197,8 @@ def route_after_approval(state: AgentState, config: DomainConfig) -> str:
     if approval.get("decision") == APPROVED:
         return "act"
     if approval.get("decision") == REVISE:
-        return "investigate"  # the person disputes the hypothesis or adds information: not a rejection, no limit
+        # the person disputes the hypothesis or adds information: not a rejection; bounded by loop.max_revisions
+        return "halt" if state.get("revision_count", 0) > config.loop.max_revisions else "investigate"
     if state.get("rejection_count", 0) >= config.loop.max_rejections:
         return "halt"
     return "improve"
@@ -221,6 +222,8 @@ def route_after_rollback_confirm(state: AgentState, config: DomainConfig) -> str
 
 
 def route_after_rollback(state: AgentState, config: DomainConfig) -> str:
+    if state.get("rollback_total", 0) >= config.loop.max_total_rollbacks:
+        return "halt"
     return "halt" if state.get("rollback_count", 0) >= config.loop.max_rollbacks else "investigate"
 
 
@@ -237,6 +240,7 @@ def make_wait_approval_node(config: DomainConfig, ctx: ToolContext):
             ctx.session, actor=d["decided_by"], action="approval_decided",
             params={"kind": "proposal", **fp, **d}, run_id=ctx.run_id,
         )
+        ctx.session.commit()  # the decision is durable even if a later step fails and the API rolls back (H-07)
         emit = _Emitter(state, config)
         emit("approval_decided", "system", {"kind": "proposal", **fp, **d, "change": proposal.get("change")})
         update: dict[str, Any] = {"approval": d, "events": emit.events}
@@ -484,6 +488,7 @@ def make_wait_rollback_node(config: DomainConfig, ctx: ToolContext):
             ctx.session, actor=d["decided_by"], action="approval_decided",
             params={"kind": "rollback", **fp, **d, **extra}, run_id=ctx.run_id,
         )
+        ctx.session.commit()  # durable even if a later step fails (H-07)
         emit = _Emitter(state, config)
         emit("approval_decided", "system", {"kind": "rollback", **fp, **d, **extra, "change": proposal.get("change")})
         return {"approval": d, "events": emit.events}
@@ -524,6 +529,7 @@ def make_rollback_apply_node(config: DomainConfig, ctx: ToolContext):
         return {
             "events": emit.events,
             "rollback_count": count,
+            "rollback_total": state.get("rollback_total", 0) + 1,
             "evidence": evidence,
             "proposal": None,
             "approval": None,
@@ -545,8 +551,12 @@ def make_loop_halt_node(config: DomainConfig):
             reason = "insufficient_evidence"
         elif decided.get("decision") == REJECTED and (state.get("proposal") or {}).get("kind") == "rollback":
             reason = "rollback_declined"
+        elif state.get("rollback_total", 0) >= config.loop.max_total_rollbacks:
+            reason = "max_total_rollbacks_reached"
         elif state.get("rollback_count", 0) >= config.loop.max_rollbacks:
             reason = "max_rollbacks_reached"
+        elif decided.get("decision") == REVISE:
+            reason = "max_revisions_reached"
         else:
             reason = "max_rejections_reached"
         extra: dict[str, Any] = {}
@@ -554,7 +564,7 @@ def make_loop_halt_node(config: DomainConfig):
         if applied:  # an SOP version is in force (e.g. the rollback was declined): say which
             extra = {"sop_still_in_force": True, "sop_id": applied.get("sop_id"), "sop_version": applied.get("version")}
         emit = _Emitter(state, config)
-        emit("question_asked", "system", halt_payload(reason, **extra))
+        emit("question_asked", "system", halt_payload(reason, options=halt_options(state, config), **extra))
         return {"status": "awaiting_human", "events": emit.events}
 
     return halt
@@ -588,6 +598,9 @@ def make_wait_halt_node(config: DomainConfig, ctx: ToolContext | None = None):
         })
         check_binding(raw, {"proposal_id": halt_id}, "halt")
         d = parse_decision(raw, config, "halt")
+        offered = list(halt.get("options") or [])
+        if offered and d["decision"] not in offered:
+            raise DecisionError(f"decision for this halt must be one of {offered}, got {d['decision']!r}")
         info = {k: halt[k] for k in ("sop_still_in_force", "sop_id", "sop_version") if k in halt}
         if ctx is not None:
             repo.append_audit(
@@ -595,6 +608,7 @@ def make_wait_halt_node(config: DomainConfig, ctx: ToolContext | None = None):
                 params={"kind": "halt", "proposal_id": halt_id, "halt_reason": halt.get("reason"), **d, **info},
                 run_id=ctx.run_id,
             )
+            ctx.session.commit()  # durable even if a later step fails (H-07)
         emit = _Emitter(state, config)
         emit("approval_decided", "system",
              {"kind": "halt", "proposal_id": halt_id, "halt_reason": halt.get("reason"), **d, **info})

@@ -93,14 +93,26 @@ def make_wait_answer_node(config: DomainConfig):
 HALT_OPTIONS = ["investigate", "finish"]
 
 
-def halt_payload(reason: str, **extra: Any) -> dict[str, Any]:
+def halt_options(state: AgentState, config: DomainConfig) -> list[str]:
+    """What a person may choose at a halt: once the run's total rollbacks are used up, only to finish."""
+    if state.get("rollback_total", 0) >= config.loop.max_total_rollbacks:
+        return ["finish"]
+    return list(HALT_OPTIONS)
+
+
+def halt_payload(reason: str, options: list[str] | None = None, **extra: Any) -> dict[str, Any]:
     """Payload of the ``question_asked`` event that stops the run for a person (resumable, not a dead end)."""
+    options = list(options if options is not None else HALT_OPTIONS)
+    if options == ["finish"]:
+        question = f"The agent stopped ({reason}). Finish the run?"
+    else:
+        question = f"The agent stopped ({reason}). Investigate again (add information if you have any) or finish?"
     return {
         "kind": "halt",
         "reason": reason,
         "status": "awaiting_human",
-        "question": f"The agent stopped ({reason}). Investigate again (add information if you have any) or finish?",
-        "options": list(HALT_OPTIONS),
+        "question": question,
+        "options": options,
         **extra,
     }
 
@@ -113,7 +125,7 @@ def make_halt_node(config: DomainConfig):
             state,
             "question_asked",
             "system",
-            halt_payload("max_questions_reached", questions=state.get("question_count", 0)),
+            halt_payload("max_questions_reached", options=halt_options(state, config), questions=state.get("question_count", 0)),
             len(state.get("events", [])) + 1,
             config.domain,
         )

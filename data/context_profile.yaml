@@ -37,7 +37,10 @@ measure:
   tolerance: 0.25          # đạt khi KPI trong 25% so với target (đúng phía tốt); không đạt -> đề xuất rollback
 loop:
   max_rejections: 3         # số đề xuất bị từ chối tối đa trước khi dừng chờ người
-  max_rollbacks: 2          # số lần rollback tối đa mỗi run
+  max_rollbacks: 2          # số lần rollback tối đa giữa hai lần dừng (người chọn "điều tra lại" thì đếm lại)
+  max_total_rollbacks: 4    # tổng rollback của cả run (không đặt lại); vượt thì chỉ còn lựa chọn kết thúc
+  max_revisions: 3          # số lần người chọn revise tối đa; thêm một lần nữa thì dừng chờ người
+  max_retries: 3            # số lần /retry liên tiếp thất bại tối đa mỗi run; vượt thì 409, retryable=false
 approvers:                  # người được duyệt/từ chối (allow-list, tên synthetic)
   - alice                   # trưởng ca
   - bob                     # QA

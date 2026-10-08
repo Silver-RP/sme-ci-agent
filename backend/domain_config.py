@@ -94,7 +94,10 @@ class LoopParams(_Strict):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     max_rejections: int = Field(default=3, ge=1)  # proposals a person may reject before the run halts
-    max_rollbacks: int = Field(default=2, ge=1)  # rollbacks per run before the run halts
+    max_rollbacks: int = Field(default=2, ge=1)  # rollbacks since the last halt before the run halts
+    max_total_rollbacks: int = Field(default=4, ge=1)  # rollbacks in the whole run (halts do not reset it); then only "finish"
+    max_revisions: int = Field(default=3, ge=0)  # "revise" decisions allowed in a run; one more halts
+    max_retries: int = Field(default=3, ge=0)  # consecutive failed /retry calls allowed per run
 
 
 class SignalNames(_Strict):
