@@ -11,7 +11,7 @@ Cập nhật: 2026-10-09 · Nguồn: audit `docs/audits/2026-10-09.md`.
 | Dự án | M0–M2 | ✅ 19/19 task | |
 | Dự án | M3 | 🔄 1/2 | T-030 chờ người dùng chạy LLM thật |
 | Dự án | M4 | 🔄 1/6 | T-040 xong; T-041..T-045 mở; tag v0.1-e2e 13/10 |
-| Chạy | R4–R8 | ✅ merge #19, #21, #27, #31, #37 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 USD |
+| Chạy | R4–R9 | ✅ merge #19, #21, #27, #31, #37, #44 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 USD / R9 chưa đo |
 | Plugin | P1–P3 | ✅ | |
 | Plugin | P4 | 🔄 | chưa gặp hạn mức thật |
 | Plugin | P5 | 🔄 | audit + trạng thái (file này) |
@@ -57,6 +57,8 @@ Audit 2026-10-09 hạ % (trước: 60/70/15) vì chạy theo kịch bản viết
 
 Từ `docs/audits/2026-10-09.md` (chi tiết, bằng chứng, test cần có để đóng). Đóng khi có test chứng minh.
 
+R9 (PR #44, 2026-10-09) đã có test tái hiện xanh cho H-06, H-07, H-08, H-09, H-10, H-12, H-17, H-21, H-23 (tên test trong `.autodev/reports/R9.md`); audit 2 xác nhận rồi mới đánh dấu đóng và chỉnh % đạt.
+
 | Mã | Mức | Tóm tắt |
 |---|---|---|
 | H-06 | cao | Measure đạt theo từ khoá ground truth; câu phủ định tính là sửa đúng |
@@ -83,6 +85,7 @@ Từ `docs/audits/2026-10-09.md` (chi tiết, bằng chứng, test cần có đ�
 
 ## Quyết định gần đây
 
+- 2026-10-09: R9 merge (PR #44): Measure theo hành động có cấu trúc, eval nguyên nhân (LLM giả), e2e uvicorn chuỗi rollback, 8 fixture. Supervisor chưa đưa eval vào smoke.
 - 2026-10-09: **người dùng chọn hướng R9 theo audit**. R9 làm điều 1–2 thật: H-10 trước tiên, rồi H-06, eval, e2e rollback, H-07/08/09/17/21, temperature. R10 làm điều 3 và luồng demo. Hoãn đến sau v0.1-e2e: checkpointer Postgres, invariants, API danh sách run, khoá SOP.
 - 2026-10-09: audit đầu: 21 lỗ hổng (7 cao), % đạt hạ còn 25/40/10. Đề xuất R9 làm điều 1–2 thật, R10 làm điều 3 (chờ người dùng duyệt ở P6).
 - 2026-10-09: thứ tự sau R8: P5 → audit đầu → gói bàn giao UI → T-030 → P6 → R9 → R10 (người dùng duyệt).
