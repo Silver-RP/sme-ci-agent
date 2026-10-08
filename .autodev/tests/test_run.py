@@ -259,6 +259,36 @@ class Hardening(unittest.TestCase):
         self.assertFalse(run.docs_only(["docs/audits/2026-10-09.md", "backend/x.py"]))
 
 
+class ResumeUnfinished(unittest.TestCase):
+    """R9 2026-10-09: worker -p session ended while a background sub-agent was still working."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.worker = Path(self.tmp.name)
+        (self.worker / ".autodev").mkdir()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def state(self, milestone, statuses):
+        tasks = {f"dev-0{i + 1}": {"status": s} for i, s in enumerate(statuses)}
+        (self.worker / ".autodev" / "state.json").write_text(json.dumps({"milestone": milestone, "tasks": tasks}))
+
+    def test_open_tasks_count(self):
+        self.state("R9", ["DONE", "IN_PROGRESS", "TODO"])
+        self.assertEqual(run.unfinished_tasks(self.worker, "R9"), ["dev-02", "dev-03"])
+
+    def test_done_or_blocked_is_finished(self):
+        self.state("R9", ["DONE", "BLOCKED"])
+        self.assertEqual(run.unfinished_tasks(self.worker, "R9"), [])
+
+    def test_other_milestone_or_missing_state(self):
+        self.state("R8", ["TODO"])
+        self.assertEqual(run.unfinished_tasks(self.worker, "R9"), [])
+        (self.worker / ".autodev" / "state.json").write_text("{bad")
+        self.assertEqual(run.unfinished_tasks(self.worker, "R9"), [])
+
+
 class AuditEvery(unittest.TestCase):
     """P5: a headless /audit runs after every N merged R milestones (counter survives across runs)."""
 

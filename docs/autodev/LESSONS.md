@@ -44,8 +44,18 @@ Nguyên tắc rút ra khi xây plugin và chạy thử trên SME CI Agent. Mỗi
 
 ### 9. Môi trường cũng là code
 - **Nguyên tắc:** cổng, PATH, phiên bản Node, thư mục đồng bộ là một phần của hệ thống; ghi lại và kiểm tra như code.
-- **Ngộ ra từ:** iCloud sinh file "tên 2" làm verify báo lỗi; Postgres Homebrew chiếm 5432; Node 22.12 không đủ cho Next.
-- **Đã thành:** repo chuyển sang `~/dev/`; `.autodev/env.local.json` và `DB_PORT`; HANDOFF mục "Môi trường"; `demo.sh` dùng lại DB đang chạy.
+- **Ngộ ra từ:**
+  - iCloud sinh file "tên 2" làm verify báo lỗi;
+  - Postgres Homebrew chiếm cổng 5432;
+  - Node 22.12 không đủ cho Next;
+  - R9: bản Claude Code mới cho sub-agent chạy nền mặc định, nên worker headless kết thúc khi dev-02 còn đang làm.
+- **Đã thành:**
+  - repo chuyển sang `~/dev/`;
+  - `.autodev/env.local.json` và `DB_PORT`;
+  - HANDOFF mục "Môi trường";
+  - `demo.sh` dùng lại DB đang chạy;
+  - `run_in_background: false` bắt buộc trong `run-milestone.md`/`audit.md` (`.autodev/tests/test_prompts.py`);
+  - runner tự chạy tiếp một lần khi còn task dở (`unfinished_tasks`).
 
 ### 10. Guard so khớp theo chữ chặn nhầm cả lời nói
 - **Nguyên tắc:** guard theo regex chặn cả câu chữ nhắc tới lệnh cấm (commit message, tài liệu); viết lại câu hoặc dùng Edit/Write thay vì lách guard.
