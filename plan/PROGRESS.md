@@ -129,6 +129,11 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - `dashboard/lib/api.ts`, `components/{RunControls,LiveRun}.tsx`, `?source=live`: start → answer → approval, chỉ gửi khi người bấm; lỗi 404/409/422 hiển thị rõ; README chạy fixture và backend thật; tick T-016, T-026. 34 test vitest pass.
 - Non-blocking: nút Approve/Reject chưa chặn khi `decided_by` trống (backend trả 422); chưa chạy tay với backend thật.
 
+### R7/dev-01 (T-031): DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: 28e647f. Review: .autodev/reviews/dev-01-r1.json (PASS).
+- `scripts/data_report.py` (một lệnh, ~20 dòng): khoảng ngày 2026-01-01..06-30, số dòng mỗi bảng, anomaly Detect vs ground truth (A1, A2_recurrence khớp; FP1 bảo trì không bị báo). 3 test; README có mục mới.
+- Non-blocking: khớp ground truth dung sai ±1 ngày ở start, không kiểm end; test chỉ seed 42.
+
 ## Đề xuất chờ duyệt (c)
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
