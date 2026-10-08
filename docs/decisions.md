@@ -36,7 +36,13 @@ Không dữ liệu thật hay dữ liệu cá nhân trong MVP. API key chỉ ở
 ## ADR-008: Lịch dời (chờ team xác nhận)
 
 M1 dời từ 3/10 sang 8/10, M2 từ 8/10 sang 10/10; giữ nguyên 13/10 và 20/10.
-Trạng thái: đề xuất. Ghi "đã chốt" sau buổi họp M0.
+Trạng thái: đã chốt (leader xác nhận 2026-10-08, xem ADR-009).
+
+## ADR-009: Chốt contract M0 (T-002)
+
+- Bối cảnh: contract M0 (events.json v0.1, interface 4 tool, phân vai, lịch) được hiện thực trước qua auto-dev (R4–R6) thay vì họp trước khi code.
+- Quyết định (leader xác nhận 2026-10-08): giữ nguyên `docs/schema/events.json` hiện tại làm v0.1, và interface 4 tool chỉ đọc trong `backend/tools/readonly.py` (`query_logs`, `correlate`, `get_shift_schedule`, `read_sop`, nhận `ToolContext` và tham số tường minh). Lịch dời theo ADR-008.
+- Hệ quả: đổi events.json hay chữ ký 4 tool từ nay phải qua PR riêng và báo trong sync. Phân vai trong docs/PLAN.md mục 4 điền khi có đủ người.
 
 ## Việc cần sửa sau khi chạy (log lỗi M3)
 

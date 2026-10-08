@@ -4,10 +4,10 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 
 ## M0: Contract (5/10)
 
-- [ ] T-001 [Demo] Nộp proposal PDF trước 21:59 JST (mục tiêu trước 19:59). Điền câu phỏng vấn SME, kiểm tra link Siemens, chính ≤ 3 trang, phụ lục ≤ 2, tên file Idea-Proposal_SME-Continuous-Improvement-Agent.pdf. Mở lại file sau khi upload. Owner: TBD
-- [ ] T-002 [Core] Họp 30': chốt events.json v0.1 và interface 4 tool (Pydantic); xác nhận phân vai và lịch dời; ghi vào docs/decisions.md. Owner: TBD
-- [ ] T-003 [Tools] Repo chạy được: docker compose up -d db, uv run pytest xanh, .env.example, ruff. DoD: clone mới chạy 3 lệnh trong README là xong. Owner: TBD
-- [ ] T-004 [Data] Duyệt data/scenarios/scenario1.yaml: chốt nguyên nhân gốc, ground truth, nhiễu. Owner: TBD
+- [x] T-001 [Demo] Nộp proposal PDF trước 21:59 JST (mục tiêu trước 19:59). Điền câu phỏng vấn SME, kiểm tra link Siemens, chính ≤ 3 trang, phụ lục ≤ 2, tên file Idea-Proposal_SME-Continuous-Improvement-Agent.pdf. Mở lại file sau khi upload. Owner: TBD
+- [x] T-002 [Core] Họp 30': chốt events.json v0.1 và interface 4 tool (Pydantic); xác nhận phân vai và lịch dời; ghi vào docs/decisions.md. Owner: TBD
+- [x] T-003 [Tools] Repo chạy được: docker compose up -d db, uv run pytest xanh, .env.example, ruff. DoD: clone mới chạy 3 lệnh trong README là xong. Owner: TBD
+- [x] T-004 [Data] Duyệt data/scenarios/scenario1.yaml: chốt nguyên nhân gốc, ground truth, nhiễu. Owner: TBD
 
 ## M1: Sandbox + Detect + Tools v1 (8/10)
 
