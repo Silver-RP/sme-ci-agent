@@ -13,6 +13,13 @@ uv sync                       # cài thư viện Python
 uv run pytest                 # chạy test
 ```
 
+## Dữ liệu sandbox và báo cáo kiểm tra
+
+```bash
+uv run python scripts/gen_data.py --seed 42     # sinh CSV 6 tháng vào data/generated/
+uv run python scripts/data_report.py --seed 42  # khoảng ngày, số dòng, anomaly Detect so với ground truth
+```
+
 ## Đọc theo thứ tự
 
 - CLAUDE.md: mục tiêu, quy ước, giới hạn của agent
