@@ -64,8 +64,8 @@ def _check_approval(approval: dict | None, sop_id: str, config) -> str:
             f"approved_by {str(approval.get('approved_by') or '').strip()!r} is not a valid approver; "
             f"allowed: {', '.join(config.approvers)}"
         )
-    if approval.get("sop_id") not in (None, sop_id):
-        raise PermissionError("approval is for a different SOP")
+    if approval.get("sop_id") != sop_id:  # a missing sop_id is not accepted: the approval must name this SOP
+        raise PermissionError("approval is for a different SOP (or names none)")
     return approver
 
 
@@ -118,11 +118,16 @@ def measure(
     started_at: str | None = None,
     detected_at: str | None = None,
     resolved_at: str | None = None,
+    min_samples_after: int | None = None,
 ) -> dict:
     """Mean KPI in ``[change - window, change)`` vs ``[change, change + window)``, plus MTTD/MTTR.
 
     MTTD = detected_at - started_at; MTTR = resolved_at - detected_at (hours, None if the needed
     times are missing). Times out of order raise ``ValueError``.
+
+    With ``min_samples_after`` set, too few points in either window is not an error: the result has
+    ``sufficient: False`` and ``before``/``after``/``delta`` None (the caller decides what to ask).
+    Without it, an empty window raises ``ValueError``.
     """
     _check_kpi(ctx, kpi)
     if window_days <= 0:
@@ -147,9 +152,13 @@ def measure(
         k = k[k["machine_id"] == machine_id]
     before = _slice(k, "timestamp", str(t0 - w), str(t0))["value"]
     after = _slice(k, "timestamp", str(t0), str(t0 + w))["value"]
-    if before.empty or after.empty:
+    sufficient = True
+    if min_samples_after is not None:
+        sufficient = len(before) > 0 and len(after) >= max(1, min_samples_after)
+    elif before.empty or after.empty:
         raise ValueError("no KPI data in the before or after window")
-    b, a = float(before.mean()), float(after.mean())
+    b = float(before.mean()) if sufficient else None
+    a = float(after.mean()) if sufficient else None
 
     def hours(x: pd.Timestamp | None, y: pd.Timestamp | None) -> float | None:
         return None if x is None or y is None else (y - x) / pd.Timedelta(hours=1)
@@ -161,7 +170,8 @@ def measure(
         "window_days": window_days,
         "before": b,
         "after": a,
-        "delta": a - b,
+        "delta": a - b if sufficient else None,
+        "sufficient": sufficient,
         "n_before": len(before),
         "n_after": len(after),
         "mttd_hours": hours(s, d),

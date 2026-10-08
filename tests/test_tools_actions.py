@@ -53,6 +53,8 @@ def versions(s, sop_id=SOP_ID):
         {"decision": "approved", "approved_by": "  "},
         {"decision": "approved", "approved_by": "mallory"},
         {"decision": "approved", "approved_by": "alice", "sop_id": "OTHER"},
+        {"decision": "approved", "approved_by": "alice"},  # no sop_id: not accepted
+        {"decision": "approved", "approved_by": "alice", "sop_id": None},
     ],
 )
 def test_apply_without_valid_approval_refused(ctx, approval):
@@ -63,7 +65,7 @@ def test_apply_without_valid_approval_refused(ctx, approval):
 
 
 def test_apply_accepts_listed_name_case_insensitive(ctx):
-    r = apply_sop(ctx, sop_id=SOP_ID, new_content="x", approval={"decision": "approved", "approved_by": " Bob "})
+    r = apply_sop(ctx, sop_id=SOP_ID, new_content="x", approval={"decision": "approved", "approved_by": " Bob ", "sop_id": SOP_ID})
     assert r["approved_by"] == "bob"
 
 
@@ -74,21 +76,21 @@ def test_apply_without_approval_argument_refused(ctx):
 
 
 def test_apply_with_approval_bumps_version_and_keeps_old(ctx):
-    r1 = apply_sop(ctx, sop_id=SOP_ID, new_content="step A", approval=APPROVAL)
+    r1 = apply_sop(ctx, sop_id=SOP_ID, new_content="step A", approval={**APPROVAL, "sop_id": SOP_ID})
     assert r1["version"] == 2 and r1["approved_by"] == "alice"  # config has v1
     v = versions(ctx.session)
     assert set(v) == {1, 2} and v[2] == "step A"
     assert v[1] == "\n".join(CFG.sop[0].steps)  # old version intact
-    r2 = apply_sop(ctx, sop_id=SOP_ID, new_content="step B", approval=APPROVAL)
+    r2 = apply_sop(ctx, sop_id=SOP_ID, new_content="step B", approval={**APPROVAL, "sop_id": SOP_ID})
     assert r2["version"] == 3
     v = versions(ctx.session)
     assert v[2] == "step A" and v[3] == "step B"
 
 
 def test_apply_new_sop_id_starts_at_one_and_empty_content_rejected(ctx):
-    assert apply_sop(ctx, sop_id="NEW", new_content="a", approval=APPROVAL)["version"] == 1
+    assert apply_sop(ctx, sop_id="NEW", new_content="a", approval={**APPROVAL, "sop_id": "NEW"})["version"] == 1
     with pytest.raises(ValueError):
-        apply_sop(ctx, sop_id="NEW", new_content="  ", approval=APPROVAL)
+        apply_sop(ctx, sop_id="NEW", new_content="  ", approval={**APPROVAL, "sop_id": "NEW"})
 
 
 # 2. propose_sop does not change sop_versions
@@ -168,7 +170,7 @@ def test_save_learning_uses_config_domain(ctx):
 def test_one_audit_row_per_call(ctx):
     calls = [
         lambda: propose_sop(ctx, sop_id=SOP_ID, new_content="n", rationale="r"),
-        lambda: apply_sop(ctx, sop_id=SOP_ID, new_content="n", approval=APPROVAL),
+        lambda: apply_sop(ctx, sop_id=SOP_ID, new_content="n", approval={**APPROVAL, "sop_id": SOP_ID}),
         lambda: apply_sop(ctx, sop_id=SOP_ID, new_content="n"),  # refused
         lambda: measure(ctx, kpi=KPI, change_time=A1_START),
         lambda: measure(ctx, kpi=KPI, change_time=A1_START, window_days=-1),  # error

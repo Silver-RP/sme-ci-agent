@@ -16,6 +16,7 @@ from tests.test_act import (
     SCHEMA,
     _fixed_tables,
     _tables,
+    approve,
     improve_answer,
     investigate_script,
     valid_event,
@@ -89,7 +90,7 @@ def test_sse_resume_from_last_event_id(db_session):
 def test_approval_moves_graph_to_completion(db_session):
     client = make_client(db_session, [[*investigate_script(), improve_answer()]])
     run = start(client)
-    r = client.post(f"/runs/{run['run_id']}/approval", json=HUMAN)
+    r = approve(client, run['run_id'], HUMAN)
     assert r.status_code == 200
     body = r.json()
     assert body["state"] == "finished" and body["status"] == "completed" and body["pending"] is None
@@ -103,21 +104,20 @@ def test_approval_moves_graph_to_completion(db_session):
 def test_rejection_goes_back_to_improve_and_waits_again(db_session):
     client = make_client(db_session, [[*investigate_script(), improve_answer(), improve_answer()]])
     run = start(client)
-    r = client.post(
-        f"/runs/{run['run_id']}/approval", json={"decision": "rejected", "decided_by": "alice", "reason": "risky"}
-    )
+    r = approve(client, run['run_id'], {"decision": "rejected", "decided_by": "alice", "reason": "risky"})
     assert r.status_code == 200 and r.json()["state"] == "waiting"
     types = [m["event"] for m in sse_events(client, run["run_id"])]
     assert types.count("proposal_created") == 2 and "sop_applied" not in types
 
 
 def test_rollback_confirmation_goes_through_approval_endpoint(db_session):
-    script = [*investigate_script(), improve_answer(), *investigate_script(), improve_answer()]
+    wrong = investigate_script("sensor calibration drift")  # a cause the simulator does not fix: KPI stays high
+    script = [*wrong, improve_answer(), *wrong, improve_answer()]
     client = make_client(db_session, [script], tables=_tables())
     run = start(client)
-    r = client.post(f"/runs/{run['run_id']}/approval", json=HUMAN).json()
+    r = approve(client, run['run_id'], HUMAN).json()
     assert r["pending"]["type"] == "approval" and r["pending"]["kind"] == "rollback"
-    r = client.post(f"/runs/{run['run_id']}/approval", json={"decision": "approved", "decided_by": "bob"}).json()
+    r = approve(client, run['run_id'], {"decision": "approved", "decided_by": "bob"}).json()
     types = [m["event"] for m in sse_events(client, run["run_id"])]
     assert "rollback_done" in types and r["pending"]["kind"] == "proposal"
 
@@ -145,7 +145,7 @@ def test_unknown_run_is_404(db_session):
         ("get", "/runs/nope", None),
         ("get", "/runs/nope/events", None),
         ("post", "/runs/nope/answer", {"answer": "x"}),
-        ("post", "/runs/nope/approval", HUMAN),
+        ("post", "/runs/nope/approval", {**HUMAN, "proposal_id": "x", "kind": "proposal"}),
     ]:
         r = client.request(method, path, json=body)
         assert r.status_code == 404 and "nope" in r.json()["detail"]
@@ -154,11 +154,11 @@ def test_unknown_run_is_404(db_session):
 def test_approval_when_not_waiting_for_it_is_409(db_session):
     client = make_client(db_session, [[final(0.1, gap=True)], [*investigate_script(), improve_answer()]])
     asking = start(client)
-    r = client.post(f"/runs/{asking['run_id']}/approval", json=HUMAN)
+    r = approve(client, asking['run_id'], HUMAN)
     assert r.status_code == 409 and "approval" in r.json()["detail"]
     done = start(client)
-    client.post(f"/runs/{done['run_id']}/approval", json=HUMAN)
-    r = client.post(f"/runs/{done['run_id']}/approval", json=HUMAN)  # already finished: no second approval
+    approve(client, done['run_id'], HUMAN)
+    r = approve(client, done['run_id'], HUMAN)  # already finished: no second approval
     assert r.status_code == 409
     r = client.post(f"/runs/{done['run_id']}/answer", json={"answer": "x"})
     assert r.status_code == 409 and "answer" in r.json()["detail"]
@@ -183,7 +183,7 @@ def test_answer_when_waiting_for_approval_is_409(db_session):
 def test_invalid_approval_body_is_422_and_applies_nothing(db_session, bad):
     client = make_client(db_session, [[*investigate_script(), improve_answer()]])
     run = start(client)
-    assert client.post(f"/runs/{run['run_id']}/approval", json=bad).status_code == 422
+    assert approve(client, run['run_id'], bad).status_code == 422
     assert client.get(f"/runs/{run['run_id']}").json()["state"] == "waiting"
     assert "sop_applied" not in [m["event"] for m in sse_events(client, run["run_id"])]
 
@@ -192,7 +192,7 @@ def test_invalid_approval_body_is_422_and_applies_nothing(db_session, bad):
 def test_approval_by_non_listed_name_is_422_with_message(db_session, who):
     client = make_client(db_session, [[*investigate_script(), improve_answer()]])
     run = start(client)
-    r = client.post(f"/runs/{run['run_id']}/approval", json={"decision": "approved", "decided_by": who})
+    r = approve(client, run['run_id'], {"decision": "approved", "decided_by": who})
     assert r.status_code == 422 and "not a valid approver" in r.json()["detail"]
     assert client.get(f"/runs/{run['run_id']}").json()["state"] == "waiting"
     assert "sop_applied" not in [m["event"] for m in sse_events(client, run["run_id"])]
@@ -206,7 +206,7 @@ def test_config_approvers_endpoint(db_session):
 def test_approval_by_agent_or_llm_is_rejected(db_session):
     client = make_client(db_session, [[*investigate_script(), improve_answer()]])
     run = start(client)
-    r = client.post(f"/runs/{run['run_id']}/approval", json={"decision": "approved", "decided_by": "agent"})
+    r = approve(client, run['run_id'], {"decision": "approved", "decided_by": "agent"})
     assert r.status_code == 422
     assert client.get(f"/runs/{run['run_id']}").json()["state"] == "waiting"
 
@@ -233,7 +233,7 @@ def test_start_without_change_time_runs_to_measure(db_session):
         assert r.status_code == 201, r.text
         run = r.json()
         assert run["pending"]["type"] == "approval"
-        done = client.post(f"/runs/{run['run_id']}/approval", json={"decision": "approved", "decided_by": "alice"})
+        done = approve(client, run['run_id'], {"decision": "approved", "decided_by": "alice"})
         assert done.status_code == 200, done.text
         assert done.json()["state"] == "finished"
         types = [m["event"] for m in sse_events(client, run["run_id"])]
@@ -264,7 +264,7 @@ def test_two_runs_are_isolated_and_repeatable(db_session):
     client = make_client(db_session, [s, s])
     a, b = start(client), start(client)
     assert a["run_id"] != b["run_id"]
-    client.post(f"/runs/{a['run_id']}/approval", json=HUMAN)
+    approve(client, a['run_id'], HUMAN)
     assert client.get(f"/runs/{b['run_id']}").json()["state"] == "waiting"
     ids_a = [m["data"]["event_id"] for m in sse_events(client, a["run_id"])]
     ids_b = [m["data"]["event_id"] for m in sse_events(client, b["run_id"])]
@@ -276,3 +276,84 @@ def test_default_factories_do_not_need_a_key_until_a_run_starts(monkeypatch):
     monkeypatch.delenv("MODEL_REASONING", raising=False)
     app = create_app(load_domain_config())  # building the app touches neither LLM nor DB
     assert app.title
+
+
+# ---- R8/dev-02: failures stop cleanly, retry continues ----
+
+
+class FlakyLLM:
+    """Scripted LLM that raises (e.g. a 429) on call number `fail_at`, once."""
+
+    def __init__(self, script, fail_at):
+        self.inner = ScriptedLLM(script)
+        self.fail_at = fail_at
+        self.n = 0
+
+    def complete(self, system, messages, tools):
+        self.n += 1
+        if self.n == self.fail_at:
+            raise RuntimeError("429 overloaded")
+        return self.inner.complete(system, messages, tools)
+
+
+def make_flaky_client(db_session, script, fail_at):
+    def ctx_factory(run_id):
+        return ToolContext(tables=_fixed_tables(), session=db_session, run_id=run_id)
+
+    return TestClient(create_app(CFG, llm_factory=lambda rid: FlakyLLM(script, fail_at), ctx_factory=ctx_factory))
+
+
+def _audit_actions(db_session, run_id):
+    from sqlalchemy import select
+
+    from backend.db.models import AuditLog
+
+    return [r.action for r in db_session.scalars(select(AuditLog).where(AuditLog.run_id == run_id))]
+
+
+def test_llm_error_midway_marks_run_failed_and_keeps_audit(db_session):
+    client = make_flaky_client(db_session, [*investigate_script(), improve_answer()], fail_at=2)
+    run = start(client)
+    rid = run["run_id"]
+    assert run["state"] == "error" and run["status"] == "error" and "429" in run["error"]
+    got = client.get(f"/runs/{rid}").json()
+    assert got["state"] == "error" and "429" in got["error"]
+    msgs = sse_events(client, rid, follow=True)  # must terminate
+    last = msgs[-1]
+    assert last["event"] == "run_finished" and last["data"]["payload"]["status"] == "error"
+    valid_event(last["data"])
+    assert "correlate" in _audit_actions(db_session, rid)  # the step before the failure is still logged
+    # nothing else can be done on a failed run except retry
+    assert client.post(f"/runs/{rid}/answer", json={"answer": "x"}).status_code == 409
+
+
+def test_retry_after_transient_error_continues(db_session):
+    inv = investigate_script()
+    # the failed Investigate step is replayed from its start, so the script has a second tool call
+    client = make_flaky_client(db_session, [inv[0], inv[0], inv[1], improve_answer()], fail_at=2)
+    rid = start(client)["run_id"]
+    r = client.post(f"/runs/{rid}/retry")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["state"] == "waiting" and body["pending"]["type"] == "approval" and "error" not in body
+    types = [m["event"] for m in sse_events(client, rid)]
+    assert types[-1] == "proposal_created" and "run_finished" not in types  # error event removed
+    done = approve(client, rid, HUMAN).json()
+    assert done["state"] == "finished" and done["status"] == "completed"
+
+
+def test_retry_on_healthy_run_is_409_and_unknown_is_404(db_session):
+    client = make_client(db_session, [[*investigate_script(), improve_answer()]])
+    rid = start(client)["run_id"]
+    assert client.post(f"/runs/{rid}/retry").status_code == 409
+    assert client.post("/runs/nope/retry").status_code == 404
+
+
+def test_error_during_approval_step_then_retry(db_session):
+    # fail at the 3rd call (Improve after approval is not called; use the Improve call = 3rd)
+    client = make_flaky_client(db_session, [*investigate_script(), improve_answer()], fail_at=3)
+    run = start(client)
+    assert run["state"] == "error"
+    r = client.post(f"/runs/{run['run_id']}/retry").json()
+    assert r["state"] == "waiting" and r["pending"]["type"] == "approval"
+    assert client.post(f"/runs/{run['run_id']}/retry").status_code == 409  # repeat call: no stale error

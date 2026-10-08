@@ -6,10 +6,12 @@ kpis:
     unit: ratio
     target: 0.02
     alert_threshold_sd: 3   # theo control limits
+    direction: decrease     # chiều tốt của KPI (do config quyết định, không do LLM)
   - name: rework_rate
     unit: ratio
     target: 0.03
     alert_threshold_sd: 3
+    direction: decrease
 detect:                     # tham số detect (mặc định = giá trị cũ trong code)
   reference_days: 28        # số ngày đầu dùng làm kỳ tham chiếu
   rule_window: 3            # luật k trên n: n điểm
@@ -17,12 +19,18 @@ detect:                     # tham số detect (mặc định = giá trị cũ t
   max_gap: 3                # khoảng gộp tối đa (điểm) giữa hai điểm xác nhận
 investigate:
   max_tool_steps: 6         # số vòng gọi LLM tối đa khi điều tra
+  max_log_rows: 50          # số dòng tối đa một tool đọc log trả về; nhiều hơn thì cắt và báo truncated
+  max_format_retries: 1     # số lần yêu cầu LLM sửa câu trả lời không parse được, quá thì báo lỗi
+improve:
+  max_evidence_item_chars: 800  # cỡ tối đa (ký tự) mỗi mục evidence đưa vào prompt Improve
+  max_format_retries: 1     # số lần yêu cầu LLM sửa đề xuất không parse được, quá thì báo lỗi
 ask:
   confidence_threshold: 0.6 # độ tin cậy giả thuyết đứng đầu dưới ngưỡng này thì hỏi người
   max_questions: 2          # số lần hỏi tối đa mỗi run; vượt thì dừng chờ người
 measure:
   window_days: 7            # cửa sổ before/after khi đo KPI sau khi áp dụng
-  tolerance: 0.25           # đạt khi KPI trong 25% so với target (đúng phía tốt); không đạt -> đề xuất rollback
+  min_samples_after: 6      # ít hơn số điểm KPI này sau thay đổi -> "chưa đủ bằng chứng" (hỏi người, không rollback)
+  tolerance: 0.25          # đạt khi KPI trong 25% so với target (đúng phía tốt); không đạt -> đề xuất rollback
 loop:
   max_rejections: 3         # số đề xuất bị từ chối tối đa trước khi dừng chờ người
   max_rollbacks: 2          # số lần rollback tối đa mỗi run

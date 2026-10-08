@@ -37,7 +37,7 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 
 ## M4: v0.1-e2e (13/10)
 
-- [ ] T-040 [Core] 3 cạnh quay lại: bác bỏ/bổ sung thông tin, từ chối đề xuất, rollback. Due 12/10
+- [x] T-040 [Core] 3 cạnh quay lại: bác bỏ/bổ sung thông tin, từ chối đề xuất, rollback. Due 12/10
 - [ ] T-041 [Core] Temperature thấp + record/replay một lần chạy tốt. Due 12/10
 - [ ] T-042 [Data] Lấy số liệu 3 chỉ số (defect %, MTTD/MTTR, tỷ lệ tái diễn). Due 12/10
 - [ ] T-043 [Demo] Số liệu lên dashboard; kịch bản 4 phút v1 (docs/demoscript.md). Due 12/10

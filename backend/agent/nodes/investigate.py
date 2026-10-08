@@ -8,12 +8,12 @@ runs out; in that case the result is flagged ``evidence_gap`` so the Ask node ca
 from __future__ import annotations
 
 import json
-import re
 from typing import Any
 
 from pydantic import ValidationError
 
 from backend.agent.events import make_event
+from backend.agent.jsonutil import extract_json_object, parse_bool
 from backend.agent.llm import LLM, LLMResponse, ToolCall, ToolSpec
 from backend.agent.prompts import build_system_prompt
 from backend.agent.state import AgentState, Hypothesis, validate_hypothesis_groups
@@ -88,19 +88,55 @@ def tool_specs() -> list[ToolSpec]:
     return list(_TOOL_SPECS)
 
 
+class FinalAnswerFormatError(ValueError):
+    """The final answer is not a parsable JSON object (as opposed to a valid one with a bad group)."""
+
+
+class InvestigationFormatError(RuntimeError):
+    """The LLM kept answering in an unusable format after being asked to fix it (bounded retries)."""
+
+
 def _parse_final(text: str, config: DomainConfig) -> tuple[list[Hypothesis], bool]:
-    """Parse the final answer. Raises ValueError with a message the LLM can act on."""
-    m = re.search(r"\{.*\}", text, re.DOTALL)
-    if not m:
-        raise ValueError("final answer must be a JSON object; " + FINAL_FORMAT)
+    """Parse the final answer. Raises ValueError with a message the LLM can act on.
+
+    Free text and braces around the object are ignored, extra keys are ignored, and
+    ``insufficient_evidence`` accepts ``"false"`` as False.
+    """
+    data = extract_json_object(text, "hypotheses")
+    if data is None:
+        raise FinalAnswerFormatError("final answer must be a JSON object with a hypotheses list; " + FINAL_FORMAT)
     try:
-        data = json.loads(m.group(0))
         raw = data["hypotheses"]
-        hyps = [Hypothesis.model_validate(h) for h in raw]
-    except (json.JSONDecodeError, KeyError, TypeError, ValidationError) as e:
-        raise ValueError(f"invalid final answer ({type(e).__name__}): {e}. {FINAL_FORMAT}") from e
+        if not isinstance(raw, list):
+            raise TypeError("hypotheses must be a list")
+        hyps = [Hypothesis.model_validate(_known_fields(h)) for h in raw]
+        gap = parse_bool(data.get("insufficient_evidence"), default=False)
+    except (KeyError, TypeError, ValueError, ValidationError) as e:
+        raise FinalAnswerFormatError(f"invalid final answer ({type(e).__name__}): {e}. {FINAL_FORMAT}") from e
     validate_hypothesis_groups(hyps, config)  # ValueError for groups not in the YAML
-    return sorted(hyps, key=lambda h: -h.confidence), bool(data.get("insufficient_evidence", False))
+    return sorted(hyps, key=lambda h: -h.confidence), gap
+
+
+def _known_fields(h: Any) -> Any:
+    if isinstance(h, dict):
+        return {k: v for k, v in h.items() if k in Hypothesis.model_fields}
+    return h
+
+
+def previous_attempts(evidence: list[dict[str, Any]], max_chars: int = 1500) -> list[dict[str, Any]]:
+    """Rejections and rollbacks already in the evidence, so a repeated investigation does not repeat them."""
+    out: list[dict[str, Any]] = []
+    for e in evidence:
+        if e.get("source") == "human_rejection":
+            out.append({"outcome": "proposal rejected by a person", "reason": e.get("reason"),
+                        "rejected_change": e.get("rejected_change")})
+        elif e.get("source") == "rollback":
+            out.append({k: v for k, v in e.items() if k != "source"} | {"outcome": "change rolled back"})
+    text = json.dumps(out, default=str)
+    while len(text) > max_chars and len(out) > 1:
+        out.pop(0)  # keep the most recent attempts
+        text = json.dumps(out, default=str)
+    return out
 
 
 def _run_tool(call: ToolCall, ctx: ToolContext) -> tuple[bool, Any]:
@@ -131,10 +167,27 @@ def run_investigation(
     user_text = f"Anomaly detected: {json.dumps(anomaly, default=str)}. Investigate."
     if prior_answers:
         user_text += " Human answers so far: " + json.dumps(prior_answers, default=str)
+    feedback = [
+        {k: v for k, v in e.items() if k != "source" and v is not None}
+        for e in evidence
+        if e.get("source") == "human_feedback"
+    ]
+    if feedback:
+        user_text += (
+            " A person disputed the earlier hypothesis or added information; take it into account: "
+            + json.dumps(feedback[-3:], default=str)
+        )
+    attempts = previous_attempts(evidence)
+    if attempts:
+        user_text += (
+            " Previous attempts that did NOT work (do not repeat them; find another cause or fix): "
+            + json.dumps(attempts, default=str)
+        )
     messages: list[dict[str, Any]] = [{"role": "user", "content": user_text}]
 
     hypotheses: list[Hypothesis] = list(state.get("hypotheses", []))
     gap = True
+    format_failures = 0
     for _ in range(max_steps):
         resp: LLMResponse = llm.complete(system, messages, tool_specs())
         content: list[dict[str, Any]] = []
@@ -145,6 +198,12 @@ def run_investigation(
                 hypotheses, gap = _parse_final(resp.text, config)
                 break
             except ValueError as e:
+                if isinstance(e, FinalAnswerFormatError):
+                    format_failures += 1
+                    if format_failures > config.investigate.max_format_retries:
+                        raise InvestigationFormatError(
+                            f"the LLM final answer could not be parsed after {format_failures} attempts: {e}"
+                        ) from e
                 evidence.append({"source": "investigation", "error": str(e)})
                 messages.append({"role": "assistant", "content": resp.text or "(empty)"})
                 messages.append({"role": "user", "content": f"Rejected: {e}"})

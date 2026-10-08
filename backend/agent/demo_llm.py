@@ -16,7 +16,7 @@ from backend.domain_config import DomainConfig
 LLM_ENV = "SME_LLM"
 
 
-def scripted_demo_llm(config: DomainConfig, *, ask_first: bool = True) -> ScriptedLLM:
+def scripted_demo_llm(config: DomainConfig, *, ask_first: bool = True, then: tuple[str, ...] = ()) -> ScriptedLLM:
     """A fresh script per run (a ScriptedLLM keeps a cursor, so never share one between runs)."""
     kpi = config.kpis[0]
     group = "machine" if "machine" in config.hypothesis_groups else next(iter(config.hypothesis_groups))
@@ -48,7 +48,11 @@ def scripted_demo_llm(config: DomainConfig, *, ask_first: bool = True) -> Script
             },
         }
     )
-    return ScriptedLLM([*([low] if ask_first else []), *investigate, improve])
+    # `then` lists what a person sending a proposal back needs next: "investigate" (revise / halt -> investigate:
+    # Investigate + Improve again) or "improve" (reject: Improve again)
+    more = {"investigate": [*investigate, improve], "improve": [improve]}
+    extra = [r for step in then for r in more[step]]
+    return ScriptedLLM([*([low] if ask_first else []), *investigate, improve, *extra])
 
 
 def llm_from_env(config: DomainConfig) -> LLM | None:

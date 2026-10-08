@@ -24,7 +24,16 @@ def needs_question(state: AgentState, config: DomainConfig) -> bool:
     hyps = state.get("hypotheses") or []
     if state.get("evidence_gap") or not hyps:  # empty hypotheses count as missing evidence
         return True
-    return max(h.confidence for h in hyps) < config.ask.confidence_threshold
+    if max(h.confidence for h in hyps) < config.ask.confidence_threshold:
+        return True
+    return not has_tool_evidence(state)  # a confident conclusion with no tool result behind it is not enough
+
+
+def has_tool_evidence(state: AgentState) -> bool:
+    """True when at least one tool call in this run returned a result (errors do not count)."""
+    return any(
+        e.get("source") == "tool" and "error" not in e and "result" in e for e in state.get("evidence", [])
+    )
 
 
 def route_after_investigate(state: AgentState, config: DomainConfig) -> str:
@@ -40,6 +49,11 @@ def _question_text(state: AgentState, config: DomainConfig) -> str:
     if not hyps:
         return "Evidence is insufficient to form a hypothesis. What else do you know about this anomaly?"
     top = max(hyps, key=lambda h: h.confidence)
+    if top.confidence >= config.ask.confidence_threshold:  # asked only because no tool result supports it
+        return (
+            f"Top hypothesis ({top.group}: {top.description}) has confidence {top.confidence:.2f} but no tool "
+            "result supports it. Can you confirm it or give the evidence you have?"
+        )
     return (
         f"Top hypothesis ({top.group}: {top.description}) has confidence {top.confidence:.2f}, below "
         f"{config.ask.confidence_threshold:.2f}. Can you confirm or add information?"
@@ -76,15 +90,30 @@ def make_wait_answer_node(config: DomainConfig):
     return wait_answer
 
 
+HALT_OPTIONS = ["investigate", "finish"]
+
+
+def halt_payload(reason: str, **extra: Any) -> dict[str, Any]:
+    """Payload of the ``question_asked`` event that stops the run for a person (resumable, not a dead end)."""
+    return {
+        "kind": "halt",
+        "reason": reason,
+        "status": "awaiting_human",
+        "question": f"The agent stopped ({reason}). Investigate again (add information if you have any) or finish?",
+        "options": list(HALT_OPTIONS),
+        **extra,
+    }
+
+
 def make_halt_node(config: DomainConfig):
-    """Question limit reached: stop and wait for a person; never conclude by itself."""
+    """Question limit reached: stop and wait for a person (``wait_halt`` interrupts); never conclude by itself."""
 
     def halt(state: AgentState) -> dict[str, Any]:
         ev = make_event(
             state,
-            "run_finished",
+            "question_asked",
             "system",
-            {"status": "awaiting_human", "reason": "max_questions_reached", "questions": state.get("question_count", 0)},
+            halt_payload("max_questions_reached", questions=state.get("question_count", 0)),
             len(state.get("events", [])) + 1,
             config.domain,
         )

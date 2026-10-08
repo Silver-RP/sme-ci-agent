@@ -49,6 +49,8 @@ def _audited(fn: Callable[..., dict]) -> Callable[..., dict]:
             params={k: _jsonable(v) for k, v in params.items()},
             run_id=ctx.run_id,
         )
+        # commit the audit row at once: a later failure (rollback of the step) must not lose it
+        ctx.session.commit()
         return fn(ctx, **params)
 
     return wrapper
@@ -112,15 +114,21 @@ def query_logs(
     if machine_id is not None:
         df = df[df["machine_id"] == machine_id]
     df = _slice(df, "timestamp", start, end)
-    return {
+    limit = ctx.config.investigate.max_log_rows
+    out: dict = {
         "source": source,
         "kpi": kpi,
         "machine_id": machine_id,
         "start": start,
         "end": end,
         "count": len(df),
-        "rows": _records(df),
+        "returned": min(len(df), limit),
+        "truncated": len(df) > limit,
+        "rows": _records(df.head(limit)),
     }
+    if source == "kpi_log" and len(df):  # a summary over ALL matching rows, so a cut loses no signal
+        out["mean_by_machine"] = {str(m): float(v) for m, v in df.groupby("machine_id")["value"].mean().items()}
+    return out
 
 
 @_audited
@@ -140,14 +148,18 @@ def get_shift_schedule(
         df = df[df["shift"] == shift]
     df = _slice(df, "date", start, end)
     subs = df[df["is_substitute"]]
+    limit = ctx.config.investigate.max_log_rows
     return {
         "machine_id": machine_id,
         "shift": shift,
         "start": start,
         "end": end,
         "count": len(df),
-        "rows": _records(df),
-        "substitutes": _records(subs),
+        "returned": min(len(df), limit),
+        "truncated": len(df) > limit,
+        "substitute_count": len(subs),
+        "rows": _records(df.head(limit)),
+        "substitutes": _records(subs.head(limit)),
     }
 
 

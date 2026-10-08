@@ -19,6 +19,7 @@ class KPI(_Strict):
     unit: str
     target: float
     alert_threshold_sd: float = Field(gt=0)
+    direction: str = Field(default="decrease", pattern="^(decrease|increase)$")  # which way is good
 
 
 class SOP(_Strict):
@@ -45,6 +46,17 @@ class InvestigateParams(_Strict):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     max_tool_steps: int = Field(default=6, ge=1)  # max LLM rounds in one investigation
+    max_log_rows: int = Field(default=50, ge=1)  # rows a log/schedule tool returns; more -> cut and flagged
+    max_format_retries: int = Field(default=1, ge=0)  # times the LLM may be asked to fix an unparsable answer
+
+
+class ImproveParams(_Strict):
+    """Improve parameters (YAML key ``improve:``)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    max_evidence_item_chars: int = Field(default=800, ge=100)  # size cap per evidence item in the prompt
+    max_format_retries: int = Field(default=1, ge=0)  # times the LLM may be asked to fix an unparsable proposal
 
 
 class AskParams(_Strict):
@@ -65,6 +77,7 @@ class MeasureParams(_Strict):
     # KPI passes when it is within ``tolerance`` (relative) of the KPI target on the good side:
     # decrease: after <= target * (1 + tolerance); increase: after >= target * (1 - tolerance)
     tolerance: float = Field(default=0.25, ge=0.0)
+    min_samples_after: int = Field(default=6, ge=1)  # fewer KPI points after the change -> "not enough evidence"
 
 
 class LoopParams(_Strict):
@@ -83,6 +96,7 @@ class DomainConfig(_Strict):
     loop: LoopParams = Field(default_factory=LoopParams)
     detect: DetectParams = Field(default_factory=DetectParams)
     investigate: InvestigateParams = Field(default_factory=InvestigateParams)
+    improve: ImproveParams = Field(default_factory=ImproveParams)
     kpis: list[KPI] = Field(min_length=1)
     hypothesis_groups: dict[str, list[str]] = Field(min_length=1)
     sop: list[SOP]

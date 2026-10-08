@@ -9,7 +9,7 @@ from langgraph.types import Command
 
 from backend.agent.checkpoint import postgres_checkpointer
 from backend.agent.graph import build_graph
-from backend.agent.llm import ScriptedLLM
+from backend.agent.llm import LLMResponse, ScriptedLLM, ToolCall
 from backend.agent.nodes.ask import needs_question
 from backend.agent.state import Hypothesis, new_state
 from backend.domain_config import AskParams, load_domain_config
@@ -38,8 +38,19 @@ def final(conf, gap=False, group="machine"):
     )
 
 
+def tool_step():
+    """One real tool call, so a confident answer after it has tool evidence behind it (R8/dev-03)."""
+    kpi = CFG.kpis[0].name
+    return LLMResponse(tool_calls=[ToolCall(id="t1", name="correlate", arguments={"kpi": kpi, "machine_id": "M02"})])
+
+
 def types(events):
     return [e["type"] for e in events]
+
+
+def asked(events):
+    """Questions put to a person about the evidence (the halt notice is also a question_asked, kind "halt")."""
+    return [e for e in events if e["type"] == "question_asked" and e["payload"].get("kind") != "halt"]
 
 
 def cfg_with(max_questions=2, threshold=0.6):
@@ -70,7 +81,7 @@ def test_low_confidence_pauses_at_ask(ctx):
 
 
 def test_high_confidence_does_not_ask(ctx):
-    graph = build_graph(CFG, llm=ScriptedLLM([final(0.9)]), tool_ctx=ctx)
+    graph = build_graph(CFG, llm=ScriptedLLM([tool_step(), final(0.9)]), tool_ctx=ctx)
     cfg = run_cfg()
     out = start(graph, cfg)
     assert graph.get_state(cfg).next == ()
@@ -81,6 +92,7 @@ def test_threshold_boundary_equal_is_not_asked():
     s = new_state("r", CFG.domain)
     s["hypotheses"] = [Hypothesis(group="machine", description="d", confidence=0.6)]
     s["evidence_gap"] = False
+    s["evidence"] = [{"source": "tool", "tool": "correlate", "arguments": {}, "result": {"correlations": []}}]
     assert needs_question(s, CFG) is False
 
 
@@ -109,7 +121,7 @@ def test_empty_hypotheses_ask_a_person(ctx):
 
 
 def test_resume_with_answer_goes_back_to_investigate(ctx):
-    llm = ScriptedLLM([final(0.3), final(0.9)])
+    llm = ScriptedLLM([final(0.3), tool_step(), final(0.9)])
     graph = build_graph(CFG, llm=llm, tool_ctx=ctx)
     cfg = run_cfg()
     start(graph, cfg)
@@ -129,18 +141,19 @@ def test_ask_is_bounded_then_awaits_human(ctx):
     start(graph, cfg)
     graph.invoke(Command(resume="a1"), cfg)
     out = graph.invoke(Command(resume="a2"), cfg)
-    assert graph.get_state(cfg).next == ()
-    assert types(out["events"]).count("question_asked") == 2
+    assert graph.get_state(cfg).next == ("wait_halt",)  # R8/dev-05: resumable, not a dead end
+    assert len(asked(out["events"])) == 2
     assert out["status"] == "awaiting_human"
     last = out["events"][-1]
-    assert last["type"] == "run_finished" and last["payload"]["status"] == "awaiting_human"
+    assert last["type"] == "question_asked" and last["payload"]["kind"] == "halt"
+    assert last["payload"]["reason"] == "max_questions_reached"
     assert not out.get("proposal")  # never concludes by itself
 
 
 def test_zero_max_questions_halts_without_asking(ctx):
     graph = build_graph(cfg_with(max_questions=0), llm=ScriptedLLM([final(0.1)]), tool_ctx=ctx)
     out = start(graph, run_cfg())
-    assert "question_asked" not in types(out["events"]) and out["status"] == "awaiting_human"
+    assert asked(out["events"]) == [] and out["status"] == "awaiting_human"
 
 
 def test_repeated_runs_do_not_leak_state(ctx):
@@ -149,7 +162,7 @@ def test_repeated_runs_do_not_leak_state(ctx):
         cfg = run_cfg()
         start(graph, cfg)
         out = graph.invoke(Command(resume="x"), cfg)
-        assert types(out["events"]).count("question_asked") == 1
+        assert len(asked(out["events"])) == 1
 
 
 def test_events_follow_schema_fields(ctx):
@@ -167,7 +180,7 @@ def test_resume_from_new_graph_over_postgres(ctx, shared_db_url):
         assert g1.get_state(cfg).next == ("wait_answer",)
     # brand-new saver (new connection) and brand-new graph, same thread_id
     with postgres_checkpointer(shared_db_url) as saver2:
-        g2 = build_graph(CFG, checkpointer=saver2, llm=ScriptedLLM([final(0.9)]), tool_ctx=ctx)
+        g2 = build_graph(CFG, checkpointer=saver2, llm=ScriptedLLM([tool_step(), final(0.9)]), tool_ctx=ctx)
         assert g2.get_state(cfg).next == ("wait_answer",)
         out = g2.invoke(Command(resume="human says wear"), cfg)
         assert "answer_received" in types(out["events"])

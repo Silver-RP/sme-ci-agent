@@ -3,6 +3,10 @@
     uv run python scripts/run_scenario.py              # scripted (fake) LLM, no key needed
     uv run python scripts/run_scenario.py --llm real   # AnthropicLLM; you set the key and MODEL_REASONING in .env
 
+Branches (the demo person takes them on request; every one is a human decision, never the agent's):
+    --on-proposal revise|reject   send the FIRST proposal back (revise -> Investigate with feedback, reject -> Improve)
+    --on-halt investigate|finish  what to do when the run stops at a limit (default: finish)
+
 The graph pauses for people (a question, an approval). This script plays that person only because you
 ask for a demo run: it answers with --answer and approves as --approver (a name from the config
 allow-list, default: the first one). Needs Postgres (DATABASE_URL) with migrations applied.
@@ -33,6 +37,7 @@ from backend.domain_config import DomainConfig, load_domain_config
 from backend.sandbox import generate_dataset
 from backend.tools.readonly import ToolContext
 
+SEND_BACK_SCRIPT = {"approve": (), "revise": ("investigate",), "reject": ("improve",)}
 MAX_STEPS = 20  # safety bound on pause/resume rounds
 
 
@@ -45,6 +50,8 @@ def run_scenario(
     answer: str = "The setpoint on M02 was changed by the night shift",
     approver: str | None = None,
     change_time: str | None = None,
+    on_proposal: str = "approve",
+    on_halt: str = "finish",
 ) -> list[dict]:
     """Drive the graph to the end; returns all events. Raises RuntimeError if it does not finish."""
     run_id = f"run_{uuid.uuid4().hex[:8]}"
@@ -56,6 +63,7 @@ def run_scenario(
         state["change_time"] = change_time
     payload: object = state
     who = approver or config.approvers[0]
+    first_proposal = True
     for _ in range(MAX_STEPS):
         graph.invoke(payload, cfg)
         session.commit()
@@ -64,8 +72,14 @@ def run_scenario(
             return list(snap.values.get("events", []))
         if snap.next[0] == "wait_answer":
             payload = Command(resume=answer)
+        elif snap.next[0] == "wait_halt":
+            payload = Command(resume={"decision": on_halt, "decided_by": who, "reason": "demo run"})
+        elif snap.next[0] == "wait_approval" and first_proposal and on_proposal != "approve":
+            first_proposal = False
+            decision = {"revise": "revise", "reject": "rejected"}[on_proposal]
+            payload = Command(resume={"decision": decision, "decided_by": who, "reason": "demo run: please look again"})
         elif snap.next[0] == "wait_rollback":
-            # the sandbox anomaly never ends, so KPI does not recover; the demo person declines the rollback
+            # the fix did not bring the KPI back: the demo person declines the rollback
             payload = Command(resume={"decision": "rejected", "decided_by": who, "reason": "demo run: keep"})
         else:
             payload = Command(resume={"decision": "approved", "decided_by": who, "reason": "demo run"})
@@ -78,13 +92,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--approver", default=None, help="name from the config allow-list (default: first)")
     p.add_argument("--answer", default="The setpoint on M02 was changed by the night shift")
+    p.add_argument("--on-proposal", choices=["approve", "revise", "reject"], default="approve")
+    p.add_argument("--on-halt", choices=["investigate", "finish"], default="finish")
     args = p.parse_args(argv)
 
     config = load_domain_config()
-    llm: LLM = scripted_demo_llm(config) if args.llm == "scripted" else AnthropicLLM()
+    llm: LLM = scripted_demo_llm(config, then=SEND_BACK_SCRIPT[args.on_proposal]) if args.llm == "scripted" else AnthropicLLM()
     with Session(make_engine()) as session:
         try:
-            events = run_scenario(llm, config, session, seed=args.seed, answer=args.answer, approver=args.approver)
+            events = run_scenario(llm, config, session, seed=args.seed, answer=args.answer, approver=args.approver,
+                                 on_proposal=args.on_proposal, on_halt=args.on_halt)
         except Exception:
             session.rollback()
             raise

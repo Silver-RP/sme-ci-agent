@@ -149,7 +149,35 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - `SME_LLM=scripted` (backend/agent/demo_llm.py), `scripts/run_scenario.py`, `scripts/demo.sh`, `tests/test_e2e.py` (uvicorn thật, cổng ngẫu nhiên, SSE httpx), bỏ `dashboard/.yarnrc`, README "Chạy demo". 262 pytest, 38 vitest, build đạt.
 - Non-blocking: demo seed 42 luôn kết thúc bằng rollback bị từ chối (anomaly kéo đến hết horizon); chưa test nhánh Measure đạt.
 
+### R8/dev-01: DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: 0ddef74. Review: .autodev/reviews/R8-dev-01-r1.json (PASS).
+- Measure đo trên bảng sau thay đổi do `backend/sandbox/post_change.py` sinh (copy, không sửa `tool_ctx.tables`); KPI từ `anomaly.kpi`, chiều tốt từ config; thiếu mẫu → "chưa đủ bằng chứng" (Ask, giới hạn); `change_time` được kiểm (422/ValueError); không đổi SOP → Learn `no_change`.
+- Non-blocking: "sửa đúng nguyên nhân" khớp theo từ khoá mô tả giả thuyết; `change_time` mặc định tự lùi khi thiếu dữ liệu sau anomaly (nên ghi docs).
+
+### R8/dev-02: DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: 7ca155d, 6da4ff0. Review: .autodev/reviews/R8-dev-02-r1.json (PASS).
+- `advance()` bắt lỗi → run state/status "error", `run_finished` error, SSE kết thúc; audit commit theo lần gọi; `POST /runs/{id}/retry`; `demo.sh` (CORS theo DASH_PORT, DATABASE_URL từ DB_PORT, chờ DB, `--check`).
+- Non-blocking: retry không giới hạn số lần; lỗi ở bước resume Act chưa có test.
+
+### R8/dev-03: DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: 2a5a4af. Review: .autodev/reviews/R8-dev-03-r1.json (PASS).
+- `query_logs` cắt theo `investigate.max_log_rows` + cờ truncated; evidence gọn cho Improve; parse JSON cân bằng ngoặc, khoá thừa, bool đúng, sửa lại có giới hạn; kết luận không có tool → Ask; Investigate lại nhận lý do rollback/từ chối; `LLM_MAX_TOKENS`.
+- Non-blocking: test từ chối kiểm mọi prompt LLM sau đó, chưa riêng Investigate.
+
+### R8/dev-04: DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: 9122da3. Review: .autodev/reviews/R8-dev-04-r1.json (PASS).
+- Interrupt duyệt mang `proposal_id`/`kind`/hash; `POST /approval` bắt buộc hai trường (422 thiếu, 409 lệch); audit có id + hash; `apply_sop` kiểm `sop_id`; dashboard: thẻ đề xuất, màn rollback, khoá nút theo danh sách người duyệt, refetch khi 409, Retry. 347 pytest, 48 vitest.
+- Non-blocking: danh sách approvers rỗng → để backend quyết; `check_binding` bỏ qua khi thiếu trường (API luôn gửi).
+
+### R8/dev-05 (T-040): DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: edd2f38. Review: .autodev/reviews/R8-dev-05-r1.json (PASS).
+- Quyết định "revise" → Investigate (kèm phản hồi); `wait_halt` cho halt/loop_halt (điều tra lại hoặc kết thúc, run_finished "closed"); từ chối rollback ghi `sop_still_in_force`; dashboard nút mới; `run_scenario.py --on-proposal/--on-halt`. 371 pytest, 56 vitest. Tick T-040.
+- Non-blocking: halt giờ là event `question_asked` kind "halt"; chọn investigate reset mọi bộ đếm.
+
 ## Đề xuất chờ duyệt (c)
+
+- **R8-c1 (từ dev-04/dev-05):** `docs/schema/payloads.md` (và xác nhận `events.json`) cần ghi các trường payload mới: `proposal_created.proposal_id`; `approval_decided.{kind,proposal_id,proposal_hash,sop_still_in_force,sop_id,sop_version,halt_reason}`; `question_asked` với `kind="halt"`; `run_finished` status "error" (`retryable`) và "closed" (`reason`, `halt_reason`). Đổi hợp đồng phải qua PR riêng và báo trong sync.
+- **R8-c2 (từ báo cáo mốc):** tiêu chí cấp mốc 2 đòi e2e qua uvicorn thật cho cả nhánh (a) và (b). `tests/test_e2e.py` chỉ phủ (a) tới `finished` (không assert `learning_saved`); nhánh (b) (đề xuất sai → rollback → `rollback_done`) có test qua TestClient/graph nhưng chưa qua uvicorn. Cần leader quyết có bổ sung một task nhỏ không.
 
 - **R7-c1 (từ dev-04):** để demo ra nhánh Measure đạt → Learn, scenario cần anomaly có điểm kết thúc (hoặc kịch bản sau-thay-đổi KPI phục hồi) trong dữ liệu simulator. Thuộc phạm vi dữ liệu/scenario, cần leader quyết (T-030 sẽ gặp).
 

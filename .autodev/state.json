@@ -1,40 +1,74 @@
 {
-  "milestone": "R7",
+  "milestone": "R8",
   "current_task": null,
   "tasks": {
     "dev-01": {
       "status": "DONE",
       "round": 1,
-      "base": "a2ae7b00abb475d25d768effdea3dd9cc6a0559c",
-      "commit": "28e647f"
+      "base": "b9b7a1cd5869f91aeac50af13c0565e4b728d5fa",
+      "commit": "0ddef74"
     },
     "dev-02": {
       "status": "DONE",
       "round": 1,
-      "base": "a74e69a87faaf57c89979a662791be399e53ca9c",
-      "commit": "e4076ba"
+      "base": "0ddef74",
+      "commit": "6da4ff0"
     },
     "dev-03": {
       "status": "DONE",
       "round": 1,
-      "base": "12e3428646b8f5843a2f4fac67ac0671374ad153",
-      "commit": "9e76f78"
+      "base": "6da4ff0",
+      "commit": "2a5a4af"
     },
     "dev-04": {
       "status": "DONE",
       "round": 1,
-      "base": "fc9db93893dca2c8d6c9b7b55baa5ad111c9c750",
-      "commit": "a279826"
+      "base": "2a5a4af",
+      "commit": "9122da3"
+    },
+    "dev-05": {
+      "status": "DONE",
+      "round": 1,
+      "base": "9122da3",
+      "commit": "edd2f38"
     }
   },
   "verify": {
     "consecutive_blocks": 0,
     "last_status": "PASS",
-    "hook_runs": 22,
-    "last_hook_at": "2026-10-08T13:51:43Z",
+    "hook_runs": 27,
+    "last_hook_at": "2026-10-08T15:42:26Z",
     "last_hook_agent": "developer"
   },
   "history": {
+    "R7": {
+      "tasks": {
+        "dev-01": {
+          "status": "DONE",
+          "round": 1,
+          "base": "a2ae7b00abb475d25d768effdea3dd9cc6a0559c",
+          "commit": "28e647f"
+        },
+        "dev-02": {
+          "status": "DONE",
+          "round": 1,
+          "base": "a74e69a87faaf57c89979a662791be399e53ca9c",
+          "commit": "e4076ba"
+        },
+        "dev-03": {
+          "status": "DONE",
+          "round": 1,
+          "base": "12e3428646b8f5843a2f4fac67ac0671374ad153",
+          "commit": "9e76f78"
+        },
+        "dev-04": {
+          "status": "DONE",
+          "round": 1,
+          "base": "fc9db93893dca2c8d6c9b7b55baa5ad111c9c750",
+          "commit": "a279826"
+        }
+      }
+    },
     "R6": {
       "tasks": {
         "dev-01": {
