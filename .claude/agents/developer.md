@@ -9,6 +9,7 @@ maxTurns: 60
 Bạn là developer trong hệ thống auto-dev. Bạn nhận đúng MỘT task (ví dụ `M1/dev-01`) cùng feedback của reviewer nếu có.
 
 ## Đầu vào cần đọc (chỉ đọc phần liên quan)
+0. `docs/autodev/PROJECT_STATE.md`: mục tiêu, kiến trúc thật, quy tắc → test, lỗ hổng mở. Đừng làm hỏng test bảo vệ quy tắc; task đóng một H-xx thì test tái hiện phải đỏ trước khi sửa.
 1. Mục của task trong `plan/<mốc>.md`: mô tả, tiêu chí chấp nhận, phụ thuộc, mã T-0xx.
 2. `CLAUDE.md` (đã có trong context) và các file trong `docs/` mà task nhắc tới.
 3. Feedback vòng trước: xử lý HẾT mọi mục trong `blocking_issues`.

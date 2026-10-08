@@ -254,6 +254,60 @@ class Hardening(unittest.TestCase):
         self.assertFalse(run.docs_only(["docs/autodev/PROGRESS.md", "plan/R8.md"]))
         self.assertFalse(run.docs_only([]))
 
+    def test_docs_only_accepts_audit_reports(self):
+        self.assertTrue(run.docs_only(["docs/audits/2026-10-09.md", "docs/autodev/PROJECT_STATE.md"]))
+        self.assertFalse(run.docs_only(["docs/audits/2026-10-09.md", "backend/x.py"]))
+
+
+class AuditEvery(unittest.TestCase):
+    """P5: a headless /audit runs after every N merged R milestones (counter survives across runs)."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        base = Path(self.tmp.name)
+        self.old = (run.RUNS, run.run_step, run.prepare_worker, run.merge_docs_chore_prs)
+        run.RUNS = base / "runs"
+        self.prompts = []
+        run.run_step = lambda prompt, cwd, allowed, label, **kw: self.prompts.append(prompt) or {"total_cost_usd": 0.1}
+        run.prepare_worker = lambda m, w: None
+        run.merge_docs_chore_prs = lambda cwd, since: None
+        self.dirs = [f"--worker-dir={base}", f"--supervisor-dir={base}", "--skip-merge-check"]
+        os.environ.pop("AUTODEV_AUDIT_EVERY", None)
+
+    def tearDown(self):
+        run.RUNS, run.run_step, run.prepare_worker, run.merge_docs_chore_prs = self.old
+        os.environ.pop("AUTODEV_AUDIT_EVERY", None)
+        self.tmp.cleanup()
+
+    def audits(self):
+        return [p for p in self.prompts if p.startswith("/audit")]
+
+    def test_default_every_two(self):
+        run.main(["R9", "R10", "R11", *self.dirs])
+        self.assertEqual(self.audits(), ["/audit R9 R10"])
+        self.assertEqual(self.prompts.index("/audit R9 R10"), 4)  # after R10's supervisor step
+        self.assertEqual(run.audit_pending(), ["R11"])
+
+    def test_counter_survives_runs(self):
+        run.main(["R9", *self.dirs])
+        self.assertEqual(self.audits(), [])
+        run.main(["R10", *self.dirs])
+        self.assertEqual(self.audits(), ["/audit R9 R10"])
+        self.assertEqual(run.audit_pending(), [])
+
+    def test_disabled_with_zero(self):
+        run.main(["R9", "R10", "--audit-every", "0", *self.dirs])
+        self.assertEqual(self.audits(), [])
+
+    def test_env_default(self):
+        os.environ["AUTODEV_AUDIT_EVERY"] = "1"
+        run.main(["R9", "R10", *self.dirs])
+        self.assertEqual(self.audits(), ["/audit R9", "/audit R10"])
+
+    def test_audit_only(self):
+        run.main(["--audit-only", *self.dirs])
+        self.assertEqual(self.prompts, ["/audit"])
+
 
 if __name__ == "__main__":
     unittest.main()

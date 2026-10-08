@@ -3,7 +3,9 @@
 
 For each milestone: move the worker worktree to origin/main -> worker headless (/run-milestone)
 -> check the worker opened a PR -> supervisor headless review (/supervise <M> --review-only,
-which merges) -> check the PR is merged -> next milestone. With AUTODEV_NOTIFY=1 a macOS notification is sent
+which merges) -> check the PR is merged -> next milestone. After every N merged milestones (--audit-every,
+default 2, counted across runs in .autodev/runs/audit.json) a read-only /audit runs headless in the supervisor
+worktree and its docs-only PR is merged (plugin milestone P5). With AUTODEV_NOTIFY=1 a macOS notification is sent
 when the run stops or finishes (off by default).
 
 Usage-limit handling (ROADMAP P4, approved 2026-10-08):
@@ -281,7 +283,36 @@ def pr_state(cwd: Path, number: int) -> str:
 
 
 def docs_only(files: list[str]) -> bool:
-    return bool(files) and all(f.startswith("docs/autodev/") for f in files)
+    return bool(files) and all(f.startswith(("docs/autodev/", "docs/audits/")) for f in files)
+
+
+# ---------------------------------------------------------------- periodic audit (P5)
+
+
+def _audit_file() -> Path:
+    return RUNS / "audit.json"
+
+
+def audit_pending() -> list[str]:
+    """Milestones merged since the last audit (kept in .autodev/runs/audit.json across runs)."""
+    try:
+        return list(json.loads(_audit_file().read_text(encoding="utf-8")).get("pending", []))
+    except (OSError, json.JSONDecodeError):
+        return []
+
+
+def _set_pending(pending: list[str]) -> None:
+    save(_audit_file(), {"pending": pending, "updated": dt.datetime.now().isoformat(timespec="seconds")})
+
+
+def run_audit(supervisor: Path) -> float:
+    """Headless read-only /audit over the pending milestones; the runner merges its docs-only PR."""
+    pending = audit_pending()
+    started = dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=1)
+    res = run_step(" ".join(["/audit", *pending]), supervisor, SUPERVISOR_ALLOWED, "audit", role="supervisor")
+    merge_docs_chore_prs(supervisor, started)
+    _set_pending([])
+    return float(res.get("total_cost_usd") or 0)
 
 
 def merge_docs_chore_prs(cwd: Path, since: dt.datetime) -> None:
@@ -310,11 +341,18 @@ def merge_docs_chore_prs(cwd: Path, since: dt.datetime) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("milestones", nargs="+", help="ví dụ: R4 R5")
+    ap.add_argument("milestones", nargs="*", help="ví dụ: R4 R5")
     ap.add_argument("--worker-dir", default=str(ROOT.parent / f"{ROOT.name}-autodev"))
     ap.add_argument("--supervisor-dir", default=str(ROOT.parent / f"{ROOT.name}-supervisor"))
     ap.add_argument("--skip-merge-check", action="store_true", help="chỉ dùng khi thử nghiệm")
+    ap.add_argument(
+        "--audit-every", type=int, default=int(os.environ.get("AUTODEV_AUDIT_EVERY", "2")),
+        help="chạy /audit headless sau mỗi N mốc đã merge (0 = tắt; mặc định 2, đếm qua nhiều lần chạy)",
+    )
+    ap.add_argument("--audit-only", action="store_true", help="chỉ chạy /audit rồi dừng")
     args = ap.parse_args(argv)
+    if not args.milestones and not args.audit_only:
+        ap.error("cần ít nhất một mốc, hoặc --audit-only")
 
     worker, supervisor = Path(args.worker_dir), Path(args.supervisor_dir)
     for d in (worker, supervisor):
@@ -323,6 +361,10 @@ def main(argv: list[str] | None = None) -> int:
 
     archive_stopped()
     total = 0.0
+    if args.audit_only:
+        total = run_audit(supervisor)
+        log(f"Hoàn tất audit; chi phí ước tính {total:.2f} USD")
+        return 0
     for m in args.milestones:
         prepare_worker(m, worker)
         started = dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=1)
@@ -339,6 +381,9 @@ def main(argv: list[str] | None = None) -> int:
             if pr_state(supervisor, pr["number"]) != "MERGED":
                 stop(f"PR #{pr['number']} của {m} chưa merge sau bước supervisor; cần xem báo cáo.\n\n{s.get('result', '')[-1500:]}", 4)
             merge_docs_chore_prs(supervisor, sup_started)
+        _set_pending([*audit_pending(), m])
+        if args.audit_every > 0 and len(audit_pending()) >= args.audit_every:
+            total += run_audit(supervisor)
         log(f"{m} xong; tổng chi phí ước tính đến giờ {total:.2f} USD")
     log(f"Hoàn tất {' '.join(args.milestones)}; tổng chi phí ước tính {total:.2f} USD")
     notify("auto-dev xong", f"{' '.join(args.milestones)} đã merge; ~{total:.2f} USD")
