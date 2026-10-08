@@ -204,3 +204,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: c72b698 (test đỏ), 04de8e1. Review: .autodev/reviews/R9-dev-04-r1.json (PASS).
 - H-07/H-08/H-09/H-17 đóng. YAML `loop:` thêm max_revisions (3), max_total_rollbacks (4), max_retries (3); `retryable` và reason mới `max_revisions_reached`, `max_total_rollbacks_reached` (dev-06 ghi vào payloads.md). 403 pytest.
 - Non-blocking: retries chỉ trong bộ nhớ; chưa test giới hạn = 0.
+
+### R9/dev-05: DONE
+- Vòng: 1. Commit: 52a48b9 (test đỏ), b67bfc9. Review: .autodev/reviews/R9-dev-05-r1.json (PASS).
+- H-21/H-23 đóng: extract_json_object lấy object cuối có khoá; parse_bool("") = True (hỏi người); `LLM_TEMPERATURE` (mặc định 0,2). 406 pytest.
+- Non-blocking: giá trị lạ như "maybe" vẫn ValueError (investigate coi là lỗi định dạng, hỏi lại LLM). Record/replay để R10.
