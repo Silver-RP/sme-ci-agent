@@ -35,6 +35,8 @@ uv run python scripts/run_scenario.py   # hoặc chạy một vòng từ dòng l
 
 Backend chọn LLM giả bằng biến môi trường `SME_LLM=scripted` (demo.sh đặt sẵn). Cổng đổi qua `API_PORT`, `DASH_PORT`, `DB_PORT`.
 
+`run_scenario.py` không tự migrate: chạy `uv run alembic upgrade head` một lần trước (demo.sh đã tự làm). Nếu cổng 5432 đã bị Postgres khác chiếm (ví dụ container của worktree auto-dev), chạy với `DB_PORT=5433` và đặt cùng cổng trong `DATABASE_URL`.
+
 **Với LLM thật**: tự điền `ANTHROPIC_API_KEY` và `MODEL_REASONING` trong `.env` (agent/CI không đọc file này), rồi:
 
 ```bash
