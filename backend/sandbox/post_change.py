@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 from backend.sandbox.injector import load_scenario
-from backend.sandbox.simulator import DEFAULT_SCENARIO_PATH
+from backend.sandbox.simulator import DEFAULT_SCENARIO_PATH, expected_kpi_value
 
 _GENERIC_WORDS = {"wrong", "incorrect", "bad", "unexpected"}
 
@@ -57,6 +57,37 @@ def fix_addresses_cause(hypothesis: Mapping[str, Any] | None, scenario: Mapping[
     return False
 
 
+def action_level(
+    action: Mapping[str, Any] | None,
+    machine_id: str | None,
+    baseline: float,
+    scenario: Mapping[str, Any] | None = None,
+) -> float | None:
+    """KPI level after a structured action, from the simulator's setpoint model; ``None`` = nothing changes.
+
+    The action must set the modelled setpoint parameter on the affected machine. The new level is
+    ``expected_kpi_value(value, SOP setpoint, baseline, sensitivity)`` (the SetpointChange mechanism of
+    ``simulator.py``): the SOP value gives the baseline, a value still off the SOP keeps part of the excess.
+    Any other parameter or machine leaves the anomaly where it is.
+    """
+    if not action or machine_id is None:
+        return None
+    scenario = scenario if scenario is not None else load_scenario(DEFAULT_SCENARIO_PATH)
+    base = scenario.get("baseline", {})
+    params = {
+        a.get("trace", {}).get("parameter") for a in scenario.get("injected_anomalies", []) if a.get("trace")
+    } - {None}
+    param = action.get("parameter")
+    if param not in params or param not in base or action.get("machine_id") != machine_id:
+        return None
+    try:
+        value = float(action["value"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    sensitivity = float(base["setpoint_sensitivity_per_c"])
+    return float(expected_kpi_value(value, float(base[param]), baseline, sensitivity))
+
+
 def _seed(run_id: str, base_seed: int) -> list[int]:
     return [base_seed, 2, zlib.crc32(str(run_id).encode())]
 
@@ -74,19 +105,23 @@ def build_post_change_tables(
     anomaly_start: str | pd.Timestamp | None = None,
     run_id: str = "",
     seed: int = 42,
+    level: float | None = None,
 ) -> dict[str, pd.DataFrame]:
     """Return new tables where ``kpi_log`` rows of ``kpi`` (for ``machine_id``) from ``change_time`` on are redrawn.
 
     ``fixed=True``: level = ``baseline``. ``fixed=False``: level = mean of the machine's KPI between
     ``anomaly_start`` (or ``window_days`` before the change) and the change, i.e. the problem continues.
+    ``level`` (when given) overrides both: the KPI level the structured action leads to (see ``action_level``).
     The input tables are not modified (the returned dict holds a copy of ``kpi_log``).
     """
     t0 = pd.Timestamp(change_time)
     k = tables["kpi_log"].copy()
     on_kpi = k["kpi"] == kpi
     on_machine = on_kpi if machine_id is None else on_kpi & (k["machine_id"] == machine_id)
-    if fixed:
-        level: float | None = float(baseline)
+    if level is not None:
+        level = float(level)
+    elif fixed:
+        level = float(baseline)
     elif machine_id is None:
         level = None
     else:

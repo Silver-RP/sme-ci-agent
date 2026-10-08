@@ -13,6 +13,7 @@ from backend.agent.graph import build_graph
 from backend.agent.jsonutil import extract_json_object, parse_bool
 from backend.agent.llm import (
     DEFAULT_MAX_TOKENS,
+    DEFAULT_TEMPERATURE,
     AnthropicLLM,
     LLMConfigError,
     LLMResponse,
@@ -128,6 +129,11 @@ def test_improve_prompt_stays_small_in_e2e(db_session):
 def test_extract_json_object_balanced_and_skips_prose_braces():
     text = 'Sure {not json} here is it: {"a": {"b": "}"}, "hypotheses": []} thanks {x}'
     assert extract_json_object(text, "hypotheses") == {"a": {"b": "}"}, "hypotheses": []}
+    # H-21: a draft object with the key earlier in the text must not win over the final answer
+    draft_then_final = 'Draft: {"hypotheses": [], "n": 1} Final: {"hypotheses": ["x"], "n": 2} ok'
+    assert extract_json_object(draft_then_final, "hypotheses")["n"] == 2
+    assert extract_json_object('{"a": 1} then {"a": 2}', "a") == {"a": 2}
+    assert extract_json_object('{"a": 1} then {"b": 2}', "a") == {"a": 1}
     assert extract_json_object("no braces") is None
     assert extract_json_object("{broken", None) is None
     assert extract_json_object("") is None and extract_json_object(None) is None
@@ -137,6 +143,39 @@ def test_extract_json_object_balanced_and_skips_prose_braces():
                                          (False, False), (None, False), (0, False), (1, True), ("no", False)])
 def test_parse_bool(v, expected):
     assert parse_bool(v) is expected
+
+
+@pytest.mark.parametrize("v", ["", "  "])
+def test_parse_bool_empty_string_is_unsure_so_true(v):
+    # H-21: empty means "no evidence stated" -> safe direction (ask the human)
+    assert parse_bool(v) is True
+
+
+def test_temperature_sent_from_config_env_and_arg(monkeypatch):
+    sent = {}
+
+    class Msgs:
+        def create(self, **kw):
+            sent.update(kw)
+            return type("R", (), {"content": []})()
+
+    class Client:
+        messages = Msgs()
+
+    monkeypatch.delenv("LLM_TEMPERATURE", raising=False)
+    AnthropicLLM(model="m", client=Client()).complete("s", [], [])
+    assert sent["temperature"] == DEFAULT_TEMPERATURE <= 0.3
+    monkeypatch.setenv("LLM_TEMPERATURE", "0.7")
+    AnthropicLLM(model="m", client=Client()).complete("s", [], [])
+    assert sent["temperature"] == 0.7
+    AnthropicLLM(model="m", client=Client(), temperature=0.0).complete("s", [], [])
+    assert sent["temperature"] == 0.0
+    monkeypatch.setenv("LLM_TEMPERATURE", "hot")
+    with pytest.raises(LLMConfigError, match="LLM_TEMPERATURE"):
+        AnthropicLLM(model="m", client=Client())
+    monkeypatch.setenv("LLM_TEMPERATURE", "3")
+    with pytest.raises(LLMConfigError, match="LLM_TEMPERATURE"):
+        AnthropicLLM(model="m", client=Client())
 
 
 def test_parse_bool_unclear_raises():

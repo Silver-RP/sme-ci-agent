@@ -1,46 +1,86 @@
 {
-  "milestone": "R8",
+  "milestone": "R9",
   "current_task": null,
   "tasks": {
     "dev-01": {
       "status": "DONE",
       "round": 1,
-      "base": "b9b7a1cd5869f91aeac50af13c0565e4b728d5fa",
-      "commit": "0ddef74"
+      "base": "e79288e054fbb0cf695088bb5bf6520efafbc99d",
+      "commit": "802d568"
     },
     "dev-02": {
       "status": "DONE",
       "round": 1,
-      "base": "0ddef74",
-      "commit": "6da4ff0"
+      "base": "ef9604e",
+      "commit": "d3b6f5f"
     },
     "dev-03": {
       "status": "DONE",
       "round": 1,
-      "base": "6da4ff0",
-      "commit": "2a5a4af"
+      "base": "d3b6f5f",
+      "commit": "34fc609"
     },
     "dev-04": {
       "status": "DONE",
       "round": 1,
-      "base": "2a5a4af",
-      "commit": "9122da3"
+      "base": "34fc609",
+      "commit": "04de8e1"
     },
     "dev-05": {
       "status": "DONE",
       "round": 1,
-      "base": "9122da3",
-      "commit": "edd2f38"
+      "base": "04de8e1",
+      "commit": "b67bfc9"
+    },
+    "dev-06": {
+      "status": "DONE",
+      "round": 1,
+      "base": "b67bfc9",
+      "commit": "264e894"
     }
   },
   "verify": {
     "consecutive_blocks": 0,
     "last_status": "PASS",
-    "hook_runs": 27,
-    "last_hook_at": "2026-10-08T15:42:26Z",
+    "hook_runs": 33,
+    "last_hook_at": "2026-10-08T18:49:46Z",
     "last_hook_agent": "developer"
   },
   "history": {
+    "R8": {
+      "tasks": {
+        "dev-01": {
+          "status": "DONE",
+          "round": 1,
+          "base": "b9b7a1cd5869f91aeac50af13c0565e4b728d5fa",
+          "commit": "0ddef74"
+        },
+        "dev-02": {
+          "status": "DONE",
+          "round": 1,
+          "base": "0ddef74",
+          "commit": "6da4ff0"
+        },
+        "dev-03": {
+          "status": "DONE",
+          "round": 1,
+          "base": "6da4ff0",
+          "commit": "2a5a4af"
+        },
+        "dev-04": {
+          "status": "DONE",
+          "round": 1,
+          "base": "2a5a4af",
+          "commit": "9122da3"
+        },
+        "dev-05": {
+          "status": "DONE",
+          "round": 1,
+          "base": "9122da3",
+          "commit": "edd2f38"
+        }
+      }
+    },
     "R7": {
       "tasks": {
         "dev-01": {

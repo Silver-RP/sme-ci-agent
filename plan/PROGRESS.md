@@ -183,3 +183,34 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
 - ✅ **Đã duyệt 2026-10-07, chọn: `effect` trong YAML là nguồn chính cho anomaly được tiêm; hàm setpoint chỉ dùng cho phép thử phản thực tế (khôi phục setpoint → về baseline). Ghi quy ước vào `scenario1.yaml`; các khóa mới vẫn chờ team chốt ở T-004.** **M2-c2 (từ dev-01, dev-02):** leader duyệt các khóa đã thêm vào `scenario1.yaml` khi làm T-004: `baseline.setpoint_sensitivity_per_c`, `plant.shift_start_hours`, `plant.start_date`, FP1 (`start`, `end`, `effect`, `planned`), `injected_anomalies[].trace.*`. Cần quyết định thêm: `effect` của A2 (0.055) không khớp với hàm setpoint (195 °C cho 0.062); giữ hai nguồn độc lập hay buộc khớp.
+
+### R9/dev-01: DONE
+- Vòng: 1. Commit: dc0115d (test đỏ), 802d568. Review: .autodev/reviews/R9-dev-01-r1.json (PASS).
+- H-10 đóng (SOP-RFL-001 reflow); H-22 đóng một phần (tín hiệu, default_period, máy demo ra YAML). 373 pytest.
+- Non-blocking: fake_metrics.py còn "M02" (mock).
+
+### R9/dev-02: DONE
+- Vòng: 1. Commit: 8fe79b9 (test đỏ), d3b6f5f. Review: .autodev/reviews/R9-dev-02-r1.json (PASS).
+- H-06 đóng: Improve trả `action {parameter, machine_id, value}` (tham số hợp lệ ở YAML `actions.parameters`, sai thì sửa lại có giới hạn); Act đưa action vào simulator; Measure theo `action_level`, không action → `not_applied`; `sop_applied` không lộ `sim`; `ProposalError` sau resume → run `error`. 384 pytest.
+- Non-blocking: value NaN chưa chặn (allow_inf_nan=False); `fix_addresses_cause` còn nhưng không dùng.
+
+### R9/dev-03: DONE
+- Vòng: 1. Commit: 34fc609. Review: .autodev/reviews/R9-dev-03-r1.json (PASS).
+- H-12 đóng: `scripts/eval_rootcause.py` (scripted right/wrong/unsure, `--llm real` chưa chạy được vì cần key), người giả trung tính. 391 pytest.
+- Lệnh cho supervisor quyết có đưa vào smoke: `uv run python scripts/eval_rootcause.py`.
+- Non-blocking: kịch bản "right" viết sẵn đáp án; token chỉ ước lượng.
+
+### R9/dev-04: DONE
+- Vòng: 1. Commit: c72b698 (test đỏ), 04de8e1. Review: .autodev/reviews/R9-dev-04-r1.json (PASS).
+- H-07/H-08/H-09/H-17 đóng. YAML `loop:` thêm max_revisions (3), max_total_rollbacks (4), max_retries (3); `retryable` và reason mới `max_revisions_reached`, `max_total_rollbacks_reached` (dev-06 ghi vào payloads.md). 403 pytest.
+- Non-blocking: retries chỉ trong bộ nhớ; chưa test giới hạn = 0.
+
+### R9/dev-05: DONE
+- Vòng: 1. Commit: 52a48b9 (test đỏ), b67bfc9. Review: .autodev/reviews/R9-dev-05-r1.json (PASS).
+- H-21/H-23 đóng: extract_json_object lấy object cuối có khoá; parse_bool("") = True (hỏi người); `LLM_TEMPERATURE` (mặc định 0,2). 406 pytest.
+- Non-blocking: giá trị lạ như "maybe" vẫn ValueError (investigate coi là lỗi định dạng, hỏi lại LLM). Record/replay để R10.
+
+### R9/dev-06: DONE
+- Vòng: 1. Commit: 264e894. Review: .autodev/reviews/R9-dev-06-r1.json (PASS).
+- E2E uvicorn chuỗi rollback (`tests/test_e2e_rollback_r9.py`), `scripts/export_fixtures.py` (8 nhánh), payloads.md cập nhật. 412 pytest, smoke sạch.
+- Non-blocking: `run-reject-error.json` cũ ngoài 8 nhánh, xoá cần người duyệt.

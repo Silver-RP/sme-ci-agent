@@ -77,3 +77,39 @@ def test_approvers_must_be_non_empty_names(tmp_path, val):
     data["approvers"] = val
     with pytest.raises(ValidationError):
         load_domain_config(_write(tmp_path, data))
+
+
+SCENARIO1 = ROOT / "data" / "scenarios" / "scenario1.yaml"
+
+
+def test_sop_for_scenario1_names_the_scenario_setpoint_parameter():
+    """H-10: the SOP used by scenario 1 must talk about the scenario's own setpoint parameter."""
+    scenario = yaml.safe_load(SCENARIO1.read_text(encoding="utf-8"))
+    parameter = scenario["injected_anomalies"][0]["trace"]["parameter"]
+    reference = scenario["baseline"][parameter]
+    sop = load_domain_config().sop[0]
+    text = "\n".join(sop.steps)
+    assert parameter in text
+    assert str(reference) in text
+    assert "barrel" not in text.lower()
+
+
+def test_domain_values_come_from_yaml_not_code():
+    """H-22: signal names, setpoint event, default period and demo machine live in the YAML."""
+    cfg = load_domain_config()
+    scenario = yaml.safe_load(SCENARIO1.read_text(encoding="utf-8"))
+    names = {cfg.signals.setpoint_deviation, cfg.signals.batch_change, cfg.signals.setpoint_event}
+    names |= {cfg.demo.machine_id, *cfg.default_period}
+    names |= {s for s in scenario["plant"]["machines"] if s == cfg.demo.machine_id}
+    assert all(names)
+    files = [
+        ROOT / "backend" / "tools" / "readonly.py",
+        ROOT / "backend" / "agent" / "graph.py",
+        ROOT / "backend" / "agent" / "demo_llm.py",
+        ROOT / "backend" / "domain_config.py",
+    ]
+    for f in files:
+        src = f.read_text(encoding="utf-8")
+        code = "\n".join(line for line in src.splitlines() if not line.lstrip().startswith(("#", '"""')))
+        for n in names | {"wrong_setpoint", "material_batch", "setpoint_change", "M02", "2026-10-01", "2026-10-07"}:
+            assert not re.search(rf"[\"']{re.escape(n)}[\"']", code), (f.name, n)

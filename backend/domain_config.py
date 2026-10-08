@@ -59,6 +59,14 @@ class ImproveParams(_Strict):
     max_format_retries: int = Field(default=1, ge=0)  # times the LLM may be asked to fix an unparsable proposal
 
 
+class ActionParams(_Strict):
+    """Actions a proposal may take (YAML key ``actions:``)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    parameters: list[str] = Field(default_factory=list)  # equipment parameter names a structured action may set
+
+
 class AskParams(_Strict):
     """Ask parameters (YAML key ``ask:``)."""
 
@@ -86,11 +94,36 @@ class LoopParams(_Strict):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     max_rejections: int = Field(default=3, ge=1)  # proposals a person may reject before the run halts
-    max_rollbacks: int = Field(default=2, ge=1)  # rollbacks per run before the run halts
+    max_rollbacks: int = Field(default=2, ge=1)  # rollbacks since the last halt before the run halts
+    max_total_rollbacks: int = Field(default=4, ge=1)  # rollbacks in the whole run (halts do not reset it); then only "finish"
+    max_revisions: int = Field(default=3, ge=0)  # "revise" decisions allowed in a run; one more halts
+    max_retries: int = Field(default=3, ge=0)  # consecutive failed /retry calls allowed per run
+
+
+class SignalNames(_Strict):
+    """Domain names used by tools (YAML key ``signals:``); no defaults, they belong to the YAML."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    setpoint_event: str = Field(min_length=1)
+    setpoint_deviation: str = Field(min_length=1)
+    batch_change: str = Field(min_length=1)
+
+
+class DemoParams(_Strict):
+    """What the scripted demo LLM investigates (YAML key ``demo:``)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    machine_id: str = Field(min_length=1)
 
 
 class DomainConfig(_Strict):
     domain: str = Field(min_length=1)
+    signals: SignalNames
+    demo: DemoParams
+    default_period: tuple[str, str]
+    actions: ActionParams = Field(default_factory=ActionParams)
     ask: AskParams = Field(default_factory=AskParams)
     measure: MeasureParams = Field(default_factory=MeasureParams)
     loop: LoopParams = Field(default_factory=LoopParams)

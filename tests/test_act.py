@@ -79,9 +79,17 @@ def improve_answer(sop=True):
         "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
         "evidence_refs": [0],
         "expected_kpi": {"kpi": KPI, "direction": "decrease", "target": 0.02},
+        "action": {"parameter": "zone3_setpoint_c", "machine_id": "M02", "value": 180},  # R9: Measure follows this
     }
     if sop:
         d["sop_change"] = {"sop_id": SOP_ID, "new_content": "Verify setpoint 180.\nCheck the setpoint again after the shift change."}
+    return json.dumps(d)
+
+
+def wrong_improve_answer():
+    """Same proposal, but the action sets a parameter the simulator does not link to the anomaly: KPI stays high."""
+    d = json.loads(improve_answer())
+    d["action"]["parameter"] = "other_parameter_c"
     return json.dumps(d)
 
 
@@ -188,7 +196,7 @@ def rollback_script():
     # investigate + improve, then (after rollback) investigate + improve again
     # the fix targets a cause the simulator does not model, so KPI stays high and Measure fails
     wrong = investigate_script("sensor calibration drift")
-    return [*wrong, improve_answer(), *wrong, improve_answer()]
+    return [*wrong, wrong_improve_answer(), *wrong, wrong_improve_answer()]
 
 
 def to_rollback_prompt(db_session):

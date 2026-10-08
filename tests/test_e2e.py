@@ -95,7 +95,7 @@ def test_full_loop_over_http_with_real_detect(server):
     det = next(e for e in ev if e["type"] == "anomaly_detected")
     assert det["payload"]  # produced from data, not a canned value
 
-    run = c.post(f"/runs/{rid}/answer", json={"answer": "Setpoint was changed on M02"}).json()
+    run = c.post(f"/runs/{rid}/answer", json={"answer": "I have no further information about this."}).json()
     assert run["pending"]["type"] == "approval"
 
     # a name outside the allow-list is refused over HTTP

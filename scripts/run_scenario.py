@@ -8,7 +8,8 @@ Branches (the demo person takes them on request; every one is a human decision, 
     --on-halt investigate|finish  what to do when the run stops at a limit (default: finish)
 
 The graph pauses for people (a question, an approval). This script plays that person only because you
-ask for a demo run: it answers with --answer and approves as --approver (a name from the config
+ask for a demo run. This is a DEMO scenario, not proof of accuracy (see scripts/eval_rootcause.py); the default
+answer is neutral and does not name the cause. It answers with --answer and approves as --approver (a name from the config
 allow-list, default: the first one). Needs Postgres (DATABASE_URL) with migrations applied.
 """
 
@@ -47,7 +48,7 @@ def run_scenario(
     session: Session,
     *,
     seed: int = 42,
-    answer: str = "The setpoint on M02 was changed by the night shift",
+    answer: str = "I have no further information about this.",
     approver: str | None = None,
     change_time: str | None = None,
     on_proposal: str = "approve",
@@ -91,7 +92,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--llm", choices=["scripted", "real"], default="scripted")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--approver", default=None, help="name from the config allow-list (default: first)")
-    p.add_argument("--answer", default="The setpoint on M02 was changed by the night shift")
+    p.add_argument("--answer", default="I have no further information about this.")
     p.add_argument("--on-proposal", choices=["approve", "revise", "reject"], default="approve")
     p.add_argument("--on-halt", choices=["investigate", "finish"], default="finish")
     args = p.parse_args(argv)

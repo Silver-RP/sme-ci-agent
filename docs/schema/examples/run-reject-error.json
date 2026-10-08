@@ -45,7 +45,7 @@
             "status": "pending_approval",
             "sop_proposal": {
               "proposal_id": "0ca1ef042e82",
-              "sop_id": "SOP-INJ-001",
+              "sop_id": "SOP-RFL-001",
               "base_version": 18,
               "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
               "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
@@ -55,7 +55,7 @@
           },
           "run_id": "run_a8206903",
           "current_sop": {
-            "sop_id": "SOP-INJ-001",
+            "sop_id": "SOP-RFL-001",
             "version": 18,
             "content": "Verify the setpoint.\nCheck the setpoint again after the shift change."
           },
@@ -219,7 +219,7 @@
           "status": "pending_approval",
           "sop_proposal": {
             "proposal_id": "0ca1ef042e82",
-            "sop_id": "SOP-INJ-001",
+            "sop_id": "SOP-RFL-001",
             "base_version": 18,
             "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
             "rationale": "Evidence 0 shows the defect rate follows the setpoint change",

@@ -27,7 +27,9 @@ AGENT = "improvement"
 FINAL_FORMAT = (
     'Reply with one JSON object: {"change": "...", "rationale": "...", "evidence_refs": [indexes into the '
     'evidence list], "expected_kpi": {"kpi": ..., "direction": "decrease"|"increase", "target": number}, '
-    '"sop_change": {"sop_id": ..., "new_content": ...} (optional, only when a SOP must change)}.'
+    '"sop_change": {"sop_id": ..., "new_content": ...} (optional, only when a SOP must change), '
+    '"action": {"parameter": ..., "machine_id": ..., "value": number} (the machine parameter change to apply; '
+    "parameter must be one of the valid action parameters listed below)}."
 )
 
 
@@ -50,6 +52,16 @@ class SopChange(BaseModel):
     new_content: str = Field(min_length=1)
 
 
+class ActionDraft(BaseModel):
+    """The structured machine change the proposal asks for; Measure follows this, not the words of the hypothesis."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    parameter: str = Field(min_length=1)
+    machine_id: str = Field(min_length=1)
+    value: float
+
+
 class ProposalDraft(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -58,6 +70,7 @@ class ProposalDraft(BaseModel):
     evidence_refs: list[int] = Field(min_length=1)
     expected_kpi: ExpectedKpi
     sop_change: SopChange | None = None
+    action: ActionDraft | None = None
 
 
 def parse_proposal(text: str, evidence: list[dict[str, Any]], config: DomainConfig) -> ProposalDraft:
@@ -77,6 +90,11 @@ def parse_proposal(text: str, evidence: list[dict[str, Any]], config: DomainConf
         raise ProposalError(f"expected_kpi.kpi {draft.expected_kpi.kpi!r} is not a KPI in the domain config")
     if draft.sop_change and draft.sop_change.sop_id not in {s.id for s in config.sop}:
         raise ProposalError(f"sop_change.sop_id {draft.sop_change.sop_id!r} is not a known SOP")
+    if draft.action and draft.action.parameter not in config.actions.parameters:
+        raise ProposalError(
+            f"action.parameter {draft.action.parameter!r} is not a valid action parameter; "
+            f"valid: {config.actions.parameters}"
+        )
     return draft
 
 
@@ -106,7 +124,10 @@ def run_improvement(
         raise ProposalError("cannot improve without a hypothesis")
     top = max(hyps, key=lambda h: h.confidence)
     evidence = list(state.get("evidence", []))
-    system = build_system_prompt(config) + "\n" + FINAL_FORMAT
+    system = (
+        build_system_prompt(config) + "\n" + FINAL_FORMAT
+        + f" Valid action parameters: {config.actions.parameters}."
+    )
     user = (
         f"Anomaly: {json.dumps(state.get('anomaly'), default=str)}. "
         f"Top hypothesis: {json.dumps(top.model_dump())}. "
@@ -136,6 +157,7 @@ def run_improvement(
         "expected_kpi": draft.expected_kpi.model_dump(),
         "status": "pending_approval",
         "sop_proposal": None,
+        "action": draft.action.model_dump() if draft.action else None,
     }
     if draft.sop_change:
         proposal["sop_proposal"] = propose_sop(

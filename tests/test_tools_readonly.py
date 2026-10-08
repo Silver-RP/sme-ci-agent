@@ -84,22 +84,22 @@ def test_shift_schedule_substitutes_around_a1(ctx):
 
 # 1c. SOP by id and version
 def test_read_sop_by_id_and_version(ctx):
-    r = read_sop(ctx, sop_id="SOP-INJ-001", version=1)
+    r = read_sop(ctx, sop_id="SOP-RFL-001", version=1)
     assert r["found"] and r["version"] == 1 and "setpoint" in r["content"].lower()
     assert r["steps"] == CFG.sop[0].steps
-    assert read_sop(ctx, sop_id="SOP-INJ-001")["version"] == 1  # default = latest
-    assert read_sop(ctx, sop_id="SOP-INJ-001", version=9)["found"] is False
+    assert read_sop(ctx, sop_id="SOP-RFL-001")["version"] == 1  # default = latest
+    assert read_sop(ctx, sop_id="SOP-RFL-001", version=9)["found"] is False
     assert read_sop(ctx, sop_id="NOPE")["found"] is False
 
 
 def test_read_sop_picks_up_db_versions(ctx, db_session):
-    repo.add_sop_version(db_session, "SOP-INJ-001", "step A\nstep B")  # version 1 in DB (overrides)
-    repo.add_sop_version(db_session, "SOP-INJ-001", "step A\nstep B\nstep C")
-    latest = read_sop(ctx, sop_id="SOP-INJ-001")
+    repo.add_sop_version(db_session, "SOP-RFL-001", "step A\nstep B")  # version 1 in DB (overrides)
+    repo.add_sop_version(db_session, "SOP-RFL-001", "step A\nstep B\nstep C")
+    latest = read_sop(ctx, sop_id="SOP-RFL-001")
     assert latest["version"] == 2 and latest["steps"][-1] == "step C" and latest["source"] == "db"
-    v1 = read_sop(ctx, sop_id="SOP-INJ-001", version=1)
+    v1 = read_sop(ctx, sop_id="SOP-RFL-001", version=1)
     assert v1["steps"] == ["step A", "step B"]
-    assert read_sop(ctx, sop_id="SOP-INJ-001", version=1)["available_versions"] == [1, 2]
+    assert read_sop(ctx, sop_id="SOP-RFL-001", version=1)["available_versions"] == [1, 2]
 
 
 # 1d. correlate: setpoint beats the distractors
@@ -135,7 +135,7 @@ def test_tools_do_not_modify_source_tables(ctx):
     query_logs(ctx, kpi=KPI, machine_id="M02")
     query_logs(ctx, kpi=KPI, source="machine_log")
     get_shift_schedule(ctx, machine_id="M02")
-    read_sop(ctx, sop_id="SOP-INJ-001")
+    read_sop(ctx, sop_id="SOP-RFL-001")
     correlate(ctx, kpi=KPI, machine_id="M02", start="2026-03-03", end="2026-03-17")
     assert before.keys() == ctx.tables.keys()
     for k, frame in before.items():
@@ -157,7 +157,7 @@ def test_one_audit_row_per_call(ctx, db_session):
     calls = [
         ("query_logs", lambda: query_logs(ctx, kpi=KPI, machine_id="M02", start="2026-03-10")),
         ("get_shift_schedule", lambda: get_shift_schedule(ctx, machine_id="M02")),
-        ("read_sop", lambda: read_sop(ctx, sop_id="SOP-INJ-001", version=1)),
+        ("read_sop", lambda: read_sop(ctx, sop_id="SOP-RFL-001", version=1)),
         ("correlate", lambda: correlate(ctx, kpi=KPI, machine_id="M02", start="2026-03-03", end="2026-03-17")),
     ]
     for name, call in calls:

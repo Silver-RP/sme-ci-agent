@@ -45,8 +45,6 @@ from backend.domain_config import DomainConfig
 from backend.tools.fake_metrics import fetch_kpi_breakdown
 from backend.tools.readonly import ToolContext
 
-DEFAULT_PERIOD = ("2026-10-01", "2026-10-07")
-
 
 def build_graph(
     config: DomainConfig,
@@ -71,7 +69,7 @@ def build_graph(
     def observe(state: AgentState) -> dict[str, Any]:
         if tool_ctx is not None:
             return observe_real(state)
-        start, end = DEFAULT_PERIOD
+        start, end = config.default_period
         data = fetch_kpi_breakdown(kpi.name, start, end)
         ev = make_event(
             state,
@@ -129,7 +127,7 @@ def build_graph(
                 raise ValueError("tool_ctx is required when llm is given")
             return run_investigation(state, config, llm, tool_ctx)
         anomaly = state["anomaly"] or {}
-        start, end = DEFAULT_PERIOD
+        start, end = config.default_period
         data = fetch_kpi_breakdown(anomaly["kpi"], start, end)
         group = next(iter(config.hypothesis_groups))
         cause = config.hypothesis_groups[group][0]
