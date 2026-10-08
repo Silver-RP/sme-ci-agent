@@ -11,7 +11,7 @@ Cập nhật: 2026-10-09 · Nguồn: audit `docs/audits/2026-10-09.md`.
 | Dự án | M0–M2 | ✅ 19/19 task | |
 | Dự án | M3 | 🔄 1/2 | T-030 chờ người dùng chạy LLM thật |
 | Dự án | M4 | 🔄 1/6 | T-040 xong; T-041..T-045 mở; tag v0.1-e2e 13/10 |
-| Chạy | R4–R9 | ✅ merge #19, #21, #27, #31, #37, #44 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 USD / R9 chưa đo |
+| Chạy | R4–R9 | ✅ merge #19, #21, #27, #31, #37, #44 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 USD |
 | Plugin | P1–P3 | ✅ | |
 | Plugin | P4 | 🔄 | chưa gặp hạn mức thật |
 | Plugin | P5 | 🔄 | audit + trạng thái (file này) |
@@ -23,11 +23,11 @@ MVP: scenario 1 chạy đủ vòng Detect → Learn từ dashboard trên dữ li
 
 | # | Điều cần kiểm chứng | % đạt | Bằng chứng | Còn thiếu |
 |---|---|---|---|---|
-| 1 | Tìm đúng nguyên nhân gốc, biết hỏi người khi thiếu bằng chứng | 25 | Detect khớp ground truth (test_data_report); luật hỏi theo ngưỡng (test_ask). LLM giả viết sẵn đáp án nên chưa chứng minh | H-12 eval + T-030 LLM thật; H-10; anomaly quá rõ (~10σ) |
-| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 40 | Cơ chế đúng ở mức graph (test_measure_r8, test_act, test_return_edges_r8); uvicorn chỉ nhánh thuận (test_e2e) | H-06 (kết quả dựng sẵn theo từ khoá); e2e chuỗi sai → rollback → đúng → Learn; H-07..H-09 |
+| 1 | Tìm đúng nguyên nhân gốc, biết hỏi người khi thiếu bằng chứng | 45 | eval_rootcause (LLM giả): đúng 100%, sai 0%, không chắc → hỏi người 100%; SOP khớp scenario | T-030 + `eval_rootcause.py --llm real`; anomaly quá rõ (~10σ); correlate thiếu nhóm people |
+| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 70 | Measure theo tham số thật trong simulator (test_measure_h06); e2e uvicorn sai → rollback → đúng → Learn (test_e2e_rollback_r9) | Chạy với LLM thật (T-030); H-19 |
 | 3 | 3 chỉ số trước/sau trên 6 tháng mô phỏng | 10 | `measure()` 1 máy, 7 ngày; MTTD/MTTR chỉ test nạp tay | H-11; T-042, T-043 |
 
-Audit 2026-10-09 hạ % (trước: 60/70/15) vì chạy theo kịch bản viết sẵn không phải bằng chứng.
+Audit 2026-10-09 hạ % (60/70/15 → 25/40/10) vì kịch bản viết sẵn không phải bằng chứng; sau R9 lên 45/70/10 (supervisor tự chạy lại test và eval).
 
 ## Kiến trúc hiện nay
 
@@ -61,29 +61,22 @@ R9 (PR #44, 2026-10-09) đã có test tái hiện xanh cho H-06, H-07, H-08, H-0
 
 | Mã | Mức | Tóm tắt |
 |---|---|---|
-| H-06 | cao | Measure đạt theo từ khoá ground truth; câu phủ định tính là sửa đúng |
-| H-07 | cao | Audit quyết định của người mất khi bước sau lỗi |
-| H-08 | cao | ValueError sau resume → 422, run kẹt |
-| H-09 | cao | `wait_evidence` không thành pending answer ở API |
-| H-10 | cao | SOP trong YAML (ép phun) lệch scenario (reflow) |
 | H-11 | cao | Chỉ số 3 chưa có đường code |
-| H-12 | cao | Không có eval nguyên nhân so với ground truth |
 | H-13 | vừa | Sau retry SSE không mở lại, `event_id` trùng |
 | H-14 | vừa | Hai run song song ghi đè SOP |
 | H-15 | vừa | Run/event/checkpointer chỉ ở bộ nhớ |
 | H-16 | vừa | Demo LLM giả: reject/revise/halt-investigate lỗi |
-| H-17 | vừa | revise, halt-investigate, retry không giới hạn |
 | H-18 | vừa | `has_tool_evidence` tính tool của cả run |
 | H-19 | vừa | Halt → điều tra lại quên SOP đang hiệu lực |
 | H-20 | vừa | Trả lời không kèm id câu hỏi |
-| H-21 | thấp | Parser JSON lấy object đầu |
 | H-22 | thấp | Giá trị miền hard-code ngoài YAML |
-| H-23 | thấp | Không đặt temperature; chưa record/replay |
 | H-24 | thấp | UI không phân biệt kết quả run (team frontend) |
 | H-25 | thấp | Payload event chưa có tài liệu |
 | H-26 | thấp | `demo.sh --check` chỉ kiểm khởi động |
 
 ## Quyết định gần đây
+
+- 2026-10-09: R9 merge #44. Đóng 9 lỗ hổng; % đạt 45/70/10. Lần đầu chạm hạn mức thật: runner chờ reset rồi chạy tiếp đúng (P4).
 
 - 2026-10-09: R9 merge (PR #44): Measure theo hành động có cấu trúc, eval nguyên nhân (LLM giả), e2e uvicorn chuỗi rollback, 8 fixture. Supervisor chưa đưa eval vào smoke.
 - 2026-10-09: **người dùng chọn hướng R9 theo audit**. R9 làm điều 1–2 thật: H-10 trước tiên, rồi H-06, eval, e2e rollback, H-07/08/09/17/21, temperature. R10 làm điều 3 và luồng demo. Hoãn đến sau v0.1-e2e: checkpointer Postgres, invariants, API danh sách run, khoá SOP.
@@ -99,7 +92,7 @@ P6 điền chi tiết (đường găng, thứ tự cắt, pre-mortem). Hướng 
 
 | Mốc | Mục tiêu | Lỗ hổng / task |
 |---|---|---|
-| R9 | Điều 1–2 thành thật | H-10, H-06, H-12, H-07, H-08, H-09, H-17, H-21, H-23 |
+| R9 | ✅ merge #44 | đóng H-06, H-07, H-08, H-09, H-10, H-12, H-17, H-21, H-23 |
 | T-030 | Người dùng chạy LLM thật (sau H-10) | ghi lỗi vào `docs/decisions.md` |
 | R10 | Điều 3 thành thật + luồng demo | H-11, H-13, H-16, H-26; T-041, T-042, T-044 |
 | Audit 2 | Rà sau R9 + R10 | rồi tag v0.1-e2e (người dùng duyệt) |
