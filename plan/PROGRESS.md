@@ -144,7 +144,14 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - `approvers` trong `data/context_profile.yaml` + `DomainConfig.resolve_approver` (allow-list, không phân biệt hoa thường) dùng chung cho `parse_decision` và `_check_approval`; `POST /runs/{id}/approval` 422 khi tên sai; `GET /config/approvers`; dashboard khoá nút khi ô trống. 257 pytest, 37 vitest pass.
 - Non-blocking: `LiveRun` chưa gọi `GET /config/approvers` để đổ datalist (nhập tay vẫn được, API báo 422).
 
+### R7/dev-04 (chuẩn bị T-030): DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: a279826. Review: .autodev/reviews/dev-04-r1.json (PASS).
+- `SME_LLM=scripted` (backend/agent/demo_llm.py), `scripts/run_scenario.py`, `scripts/demo.sh`, `tests/test_e2e.py` (uvicorn thật, cổng ngẫu nhiên, SSE httpx), bỏ `dashboard/.yarnrc`, README "Chạy demo". 262 pytest, 38 vitest, build đạt.
+- Non-blocking: demo seed 42 luôn kết thúc bằng rollback bị từ chối (anomaly kéo đến hết horizon); chưa test nhánh Measure đạt.
+
 ## Đề xuất chờ duyệt (c)
+
+- **R7-c1 (từ dev-04):** để demo ra nhánh Measure đạt → Learn, scenario cần anomaly có điểm kết thúc (hoặc kịch bản sau-thay-đổi KPI phục hồi) trong dữ liệu simulator. Thuộc phạm vi dữ liệu/scenario, cần leader quyết (T-030 sẽ gặp).
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
 - ✅ **Đã duyệt 2026-10-07, chọn: `effect` trong YAML là nguồn chính cho anomaly được tiêm; hàm setpoint chỉ dùng cho phép thử phản thực tế (khôi phục setpoint → về baseline). Ghi quy ước vào `scenario1.yaml`; các khóa mới vẫn chờ team chốt ở T-004.** **M2-c2 (từ dev-01, dev-02):** leader duyệt các khóa đã thêm vào `scenario1.yaml` khi làm T-004: `baseline.setpoint_sensitivity_per_c`, `plant.shift_start_hours`, `plant.start_date`, FP1 (`start`, `end`, `effect`, `planned`), `injected_anomalies[].trace.*`. Cần quyết định thêm: `effect` của A2 (0.055) không khớp với hàm setpoint (195 °C cho 0.062); giữ hai nguồn độc lập hay buộc khớp.
