@@ -209,3 +209,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 52a48b9 (test đỏ), b67bfc9. Review: .autodev/reviews/R9-dev-05-r1.json (PASS).
 - H-21/H-23 đóng: extract_json_object lấy object cuối có khoá; parse_bool("") = True (hỏi người); `LLM_TEMPERATURE` (mặc định 0,2). 406 pytest.
 - Non-blocking: giá trị lạ như "maybe" vẫn ValueError (investigate coi là lỗi định dạng, hỏi lại LLM). Record/replay để R10.
+
+### R9/dev-06: DONE
+- Vòng: 1. Commit: 264e894. Review: .autodev/reviews/R9-dev-06-r1.json (PASS).
+- E2E uvicorn chuỗi rollback (`tests/test_e2e_rollback_r9.py`), `scripts/export_fixtures.py` (8 nhánh), payloads.md cập nhật. 412 pytest, smoke sạch.
+- Non-blocking: `run-reject-error.json` cũ ngoài 8 nhánh, xoá cần người duyệt.
