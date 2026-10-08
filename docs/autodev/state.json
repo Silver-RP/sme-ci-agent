@@ -1,39 +1,132 @@
 {
   "updated": "2026-10-09",
-  "source": "bản đầu P5 (supervisor); audit 2026-10-09 cập nhật",
+  "source": "audit 2026-10-09 (docs/audits/2026-10-09.md)",
   "milestones": {
     "project": [
-      {"id": "M0", "status": "done", "tasks": "4/4"},
-      {"id": "M1", "status": "done", "tasks": "8/8"},
-      {"id": "M2", "status": "done", "tasks": "7/7"},
-      {"id": "M3", "status": "in_progress", "tasks": "1/2", "note": "T-030 chờ người dùng chạy với LLM thật"},
-      {"id": "M4", "status": "in_progress", "tasks": "1/6", "note": "T-040 xong; T-041..T-045 mở"}
+      {
+        "id": "M0",
+        "status": "done",
+        "tasks": "4/4"
+      },
+      {
+        "id": "M1",
+        "status": "done",
+        "tasks": "8/8"
+      },
+      {
+        "id": "M2",
+        "status": "done",
+        "tasks": "7/7"
+      },
+      {
+        "id": "M3",
+        "status": "in_progress",
+        "tasks": "1/2",
+        "note": "T-030 chờ người dùng chạy với LLM thật"
+      },
+      {
+        "id": "M4",
+        "status": "in_progress",
+        "tasks": "1/6",
+        "note": "T-040 xong; T-041..T-045 mở"
+      }
     ],
     "runs": [
-      {"id": "R4", "status": "merged", "pr": 19, "cost_usd": 2.29, "minutes": 19},
-      {"id": "R5", "status": "merged", "pr": 21, "cost_usd": 3.01, "minutes": 21},
-      {"id": "R6", "status": "merged", "pr": 27, "cost_usd": 1.81, "minutes": 20},
-      {"id": "R7", "status": "merged", "pr": 31, "cost_usd": 2.58, "minutes": 36},
-      {"id": "R8", "status": "merged", "pr": 37, "cost_usd": 6.40, "minutes": 67}
+      {
+        "id": "R4",
+        "status": "merged",
+        "pr": 19,
+        "cost_usd": 2.29,
+        "minutes": 19
+      },
+      {
+        "id": "R5",
+        "status": "merged",
+        "pr": 21,
+        "cost_usd": 3.01,
+        "minutes": 21
+      },
+      {
+        "id": "R6",
+        "status": "merged",
+        "pr": 27,
+        "cost_usd": 1.81,
+        "minutes": 20
+      },
+      {
+        "id": "R7",
+        "status": "merged",
+        "pr": 31,
+        "cost_usd": 2.58,
+        "minutes": 36
+      },
+      {
+        "id": "R8",
+        "status": "merged",
+        "pr": 37,
+        "cost_usd": 6.4,
+        "minutes": 67
+      }
     ],
     "plugin": [
-      {"id": "P1", "status": "done"},
-      {"id": "P2", "status": "done"},
-      {"id": "P3", "status": "done"},
-      {"id": "P4", "status": "in_progress", "note": "chưa gặp hạn mức thật"},
-      {"id": "P5", "status": "in_progress", "note": "audit + trạng thái"},
-      {"id": "P6", "status": "todo"},
-      {"id": "P7", "status": "todo"},
-      {"id": "P8", "status": "todo"}
+      {
+        "id": "P1",
+        "status": "done"
+      },
+      {
+        "id": "P2",
+        "status": "done"
+      },
+      {
+        "id": "P3",
+        "status": "done"
+      },
+      {
+        "id": "P4",
+        "status": "in_progress",
+        "note": "chưa gặp hạn mức thật"
+      },
+      {
+        "id": "P5",
+        "status": "in_progress",
+        "note": "audit + trạng thái"
+      },
+      {
+        "id": "P6",
+        "status": "todo"
+      },
+      {
+        "id": "P7",
+        "status": "todo"
+      },
+      {
+        "id": "P8",
+        "status": "todo"
+      }
     ]
   },
   "goals": [
-    {"id": 1, "text": "Tìm đúng nguyên nhân gốc so với ground truth và biết hỏi người khi chưa đủ bằng chứng", "percent": 60,
-     "evidence": "tests/test_investigate.py, tests/test_ask.py, scripts/data_report.py; chỉ với LLM giả", "missing": "T-030 với LLM thật; correlate chưa có tín hiệu nhóm people và ambient_temperature"},
-    {"id": 2, "text": "Đề xuất được duyệt làm KPI cải thiện; nếu không thì rollback và điều tra lại", "percent": 70,
-     "evidence": "tests/test_measure_r8.py, tests/test_act.py, tests/test_return_edges_r8.py", "missing": "e2e uvicorn nhánh rollback (R8-c2); fix_addresses_cause khớp từ khoá"},
-    {"id": 3, "text": "Đo 3 chỉ số trước/sau trên 6 tháng dữ liệu mô phỏng: defect %, MTTD/MTTR, tỷ lệ tái diễn", "percent": 15,
-     "evidence": "scripts/data_report.py (phát hiện A1, A2, 0 báo động giả)", "missing": "T-042, T-043"}
+    {
+      "id": 1,
+      "text": "Tìm đúng nguyên nhân gốc so với ground truth và biết hỏi người khi chưa đủ bằng chứng",
+      "percent": 25,
+      "evidence": "Detect khớp ground truth (test_data_report); luật hỏi theo ngưỡng (test_ask); LLM giả viết sẵn đáp án",
+      "missing": "H-12 eval + T-030 LLM thật; H-10 SOP lệch scenario; anomaly quá rõ"
+    },
+    {
+      "id": 2,
+      "text": "Đề xuất được duyệt làm KPI cải thiện; nếu không thì rollback và điều tra lại",
+      "percent": 40,
+      "evidence": "Cơ chế đúng mức graph (test_measure_r8, test_act, test_return_edges_r8); uvicorn chỉ nhánh thuận (test_e2e)",
+      "missing": "H-06 kết quả dựng sẵn; e2e chuỗi sai→rollback→đúng→Learn; H-07..H-09"
+    },
+    {
+      "id": 3,
+      "text": "Đo 3 chỉ số trước/sau trên 6 tháng dữ liệu mô phỏng: defect %, MTTD/MTTR, tỷ lệ tái diễn",
+      "percent": 10,
+      "evidence": "measure() 1 máy 7 ngày; MTTD/MTTR chỉ test nạp tay",
+      "missing": "H-11; T-042, T-043"
+    }
   ],
   "architecture": [
     "Một agent LangGraph (backend/agent/graph.py): Detect (thống kê) → Investigate → Ask (interrupt) → Improve → duyệt (interrupt) → Act → Measure → Learn; cạnh quay lại T-040",
@@ -43,24 +136,272 @@
     "API FastAPI + SSE; dashboard Next.js (một trang); LLM giả mặc định, SME_LLM=real dùng Anthropic"
   ],
   "rules": [
-    {"rule": "Rollback/áp dụng SOP cần người duyệt, LLM không duyệt", "tests": ["tests/test_api.py::test_approval_by_agent_or_llm_is_rejected", "tests/test_tools_actions.py::test_apply_without_valid_approval_refused"]},
-    {"rule": "Rollback do ngưỡng KPI, không do LLM", "tests": ["tests/test_act.py::test_measure_node_uses_threshold_from_config_and_no_llm", "tests/test_measure_r8.py::test_llm_direction_and_kpi_do_not_change_the_verdict"]},
-    {"rule": "Mọi hành động vào audit_log, append-only", "tests": ["tests/test_db.py::test_audit_log_append_only_api_and_db", "tests/test_tools_readonly.py::test_one_audit_row_per_call"]},
-    {"rule": "SOP có phiên bản", "tests": ["tests/test_db.py::test_sop_versions_increment_without_overwrite"]},
-    {"rule": "Thiếu bằng chứng thì hỏi người", "tests": ["tests/test_ask.py::test_low_confidence_pauses_at_ask", "tests/test_measure_r8.py::test_too_few_samples_is_not_enough_evidence_not_a_failure"]},
-    {"rule": "Tool chỉ đọc dữ liệu nguồn", "tests": ["tests/test_tools_readonly.py::test_tools_do_not_modify_source_tables", "tests/test_measure_r8.py::test_source_tables_are_not_modified_by_a_run"]},
-    {"rule": "Tên trung tính, không đặt theo defect", "tests": ["tests/test_state.py::test_no_defect_names", "tests/test_tools_readonly.py::test_no_defect_naming_in_tools"]},
-    {"rule": "KPI/giả thuyết/SOP trong YAML, không hard-code", "tests": ["tests/test_domain_config.py::test_no_hardcoded_names_in_code"]},
-    {"rule": "Event có agent và domain", "tests": ["tests/test_db.py::test_event_rejects_bad_type_and_agent_and_shape", "tests/test_detect.py::test_domain_comes_from_config"]},
-    {"rule": "Tên model không hard-code", "tests": []},
-    {"rule": "Số lần retry/hỏi/rollback có giới hạn", "tests": ["tests/test_ask.py::test_ask_is_bounded_then_awaits_human", "tests/test_act.py::test_max_rollbacks_halts"]}
+    {
+      "rule": "Rollback/áp dụng SOP cần người duyệt, LLM không duyệt",
+      "tests": [
+        "tests/test_api.py::test_approval_by_agent_or_llm_is_rejected",
+        "tests/test_tools_actions.py::test_apply_without_valid_approval_refused"
+      ]
+    },
+    {
+      "rule": "Rollback do ngưỡng KPI, không do LLM",
+      "tests": [
+        "tests/test_act.py::test_measure_node_uses_threshold_from_config_and_no_llm",
+        "tests/test_measure_r8.py::test_llm_direction_and_kpi_do_not_change_the_verdict"
+      ]
+    },
+    {
+      "rule": "Mọi hành động vào audit_log, append-only",
+      "tests": [
+        "tests/test_db.py::test_audit_log_append_only_api_and_db",
+        "tests/test_tools_readonly.py::test_one_audit_row_per_call"
+      ]
+    },
+    {
+      "rule": "SOP có phiên bản",
+      "tests": [
+        "tests/test_db.py::test_sop_versions_increment_without_overwrite"
+      ]
+    },
+    {
+      "rule": "Thiếu bằng chứng thì hỏi người",
+      "tests": [
+        "tests/test_ask.py::test_low_confidence_pauses_at_ask",
+        "tests/test_measure_r8.py::test_too_few_samples_is_not_enough_evidence_not_a_failure"
+      ]
+    },
+    {
+      "rule": "Tool chỉ đọc dữ liệu nguồn",
+      "tests": [
+        "tests/test_tools_readonly.py::test_tools_do_not_modify_source_tables",
+        "tests/test_measure_r8.py::test_source_tables_are_not_modified_by_a_run"
+      ]
+    },
+    {
+      "rule": "Tên trung tính, không đặt theo defect",
+      "tests": [
+        "tests/test_state.py::test_no_defect_names",
+        "tests/test_tools_readonly.py::test_no_defect_naming_in_tools"
+      ]
+    },
+    {
+      "rule": "KPI/giả thuyết/SOP trong YAML, không hard-code",
+      "tests": [
+        "tests/test_domain_config.py::test_no_hardcoded_names_in_code"
+      ]
+    },
+    {
+      "rule": "Event có agent và domain",
+      "tests": [
+        "tests/test_db.py::test_event_rejects_bad_type_and_agent_and_shape",
+        "tests/test_detect.py::test_domain_comes_from_config"
+      ]
+    },
+    {
+      "rule": "Tên model không hard-code",
+      "tests": []
+    },
+    {
+      "rule": "Số lần retry/hỏi/rollback có giới hạn",
+      "tests": [
+        "tests/test_ask.py::test_ask_is_bounded_then_awaits_human",
+        "tests/test_act.py::test_max_rollbacks_halts"
+      ],
+      "note": "revise/retry chưa có giới hạn (H-17)"
+    }
   ],
-  "open_gaps": [],
+  "open_gaps": [
+    {
+      "id": "H-06",
+      "severity": "cao",
+      "summary": "Measure đạt theo từ khoá ground truth; câu phủ định tính là sửa đúng",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-07",
+      "severity": "cao",
+      "summary": "Audit quyết định của người mất khi bước sau lỗi",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-08",
+      "severity": "cao",
+      "summary": "ValueError sau resume → 422, run kẹt, retry 409",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-09",
+      "severity": "cao",
+      "summary": "wait_evidence không thành pending answer ở API",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-10",
+      "severity": "cao",
+      "summary": "SOP trong YAML (ép phun) lệch scenario (reflow)",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-11",
+      "severity": "cao",
+      "summary": "Chỉ số 3 chưa có đường code (MTTD/MTTR None, không tái diễn, chỉ anomaly đầu)",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-12",
+      "severity": "cao",
+      "summary": "Không có eval nguyên nhân so với ground truth; LLM giả viết sẵn đáp án",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-13",
+      "severity": "vừa",
+      "summary": "Sau retry SSE không mở lại, event_id trùng",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-14",
+      "severity": "vừa",
+      "summary": "Hai run song song ghi đè SOP",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-15",
+      "severity": "vừa",
+      "summary": "Run/event/checkpointer chỉ ở bộ nhớ",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-16",
+      "severity": "vừa",
+      "summary": "Demo LLM giả: reject/revise/halt-investigate lỗi ScriptExhausted",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-17",
+      "severity": "vừa",
+      "summary": "revise, halt-investigate, retry không giới hạn",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-18",
+      "severity": "vừa",
+      "summary": "has_tool_evidence tính tool của cả run",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-19",
+      "severity": "vừa",
+      "summary": "Halt → điều tra lại quên SOP đang hiệu lực; rollback sai bản",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-20",
+      "severity": "vừa",
+      "summary": "Trả lời không kèm id câu hỏi, gửi lặp trả lời nhầm",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-21",
+      "severity": "thấp",
+      "summary": "Parser JSON lấy object đầu; parse_bool('') = False",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-22",
+      "severity": "thấp",
+      "summary": "Giá trị miền hard-code ngoài YAML",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-23",
+      "severity": "thấp",
+      "summary": "Không đặt temperature; chưa record/replay",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-24",
+      "severity": "thấp",
+      "summary": "UI không phân biệt kết quả run, passed=null",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-25",
+      "severity": "thấp",
+      "summary": "Payload event chưa có tài liệu; nội bộ simulator lọt ra client",
+      "audit": "2026-10-09"
+    },
+    {
+      "id": "H-26",
+      "severity": "thấp",
+      "summary": "demo.sh --check chỉ kiểm khởi động",
+      "audit": "2026-10-09"
+    }
+  ],
   "decisions": [
-    {"date": "2026-10-09", "text": "Thứ tự sau R8: P5 → audit đầu → gói bàn giao UI → T-030 → P6 → R9 → R10 (người dùng duyệt)"},
-    {"date": "2026-10-09", "text": "UI sản phẩm do bạn frontend trong team làm; từ R9 auto-dev không sửa phần trình bày trong dashboard/"},
-    {"date": "2026-10-08", "text": "R8-c2: e2e uvicorn nhánh rollback chuyển sang R9 (supervisor tự quyết)"},
-    {"date": "2026-10-08", "text": "Supervisor Opus effort medium, worker Sonnet; smoke bắt buộc trước merge"}
+    {
+      "date": "2026-10-09",
+      "text": "Người dùng chọn hướng R9 theo audit: R9 làm điều 1-2 thật (H-10 đầu tiên, H-06, eval, e2e rollback, H-07/08/09/17/21, temperature); R10 điều 3 + demo; hoãn checkpointer Postgres, invariants, API danh sách run, khoá SOP sau v0.1-e2e"
+    },
+    {
+      "date": "2026-10-09",
+      "text": "Audit đầu: 21 lỗ hổng H-06..H-26 (7 cao); % đạt hạ còn 25/40/10; đề xuất R9 làm điều 1-2 thật, R10 điều 3 (chờ người dùng duyệt ở P6)"
+    },
+    {
+      "date": "2026-10-09",
+      "text": "Thứ tự sau R8: P5 → audit đầu → gói bàn giao UI → T-030 → P6 → R9 → R10 (người dùng duyệt)"
+    },
+    {
+      "date": "2026-10-09",
+      "text": "UI sản phẩm do bạn frontend trong team làm; từ R9 auto-dev không sửa phần trình bày trong dashboard/"
+    },
+    {
+      "date": "2026-10-08",
+      "text": "R8-c2: e2e uvicorn nhánh rollback chuyển sang R9 (supervisor tự quyết)"
+    },
+    {
+      "date": "2026-10-08",
+      "text": "Supervisor Opus effort medium, worker Sonnet; smoke bắt buộc trước merge"
+    }
   ],
-  "outlook": []
+  "outlook": [
+    {
+      "id": "R9",
+      "goal": "Điều 1-2 thật",
+      "gaps": [
+        "H-10",
+        "H-06",
+        "H-12",
+        "H-07",
+        "H-08",
+        "H-09",
+        "H-17",
+        "H-21",
+        "H-23"
+      ]
+    },
+    {
+      "id": "T-030",
+      "goal": "Người dùng chạy LLM thật sau R9 (cần H-10)"
+    },
+    {
+      "id": "R10",
+      "goal": "Điều 3 thật + luồng demo",
+      "gaps": [
+        "H-11",
+        "H-13",
+        "H-16",
+        "H-26"
+      ],
+      "tasks": [
+        "T-041",
+        "T-042",
+        "T-044"
+      ]
+    },
+    {
+      "id": "audit-2",
+      "goal": "Audit sau R9+R10 rồi tag v0.1-e2e (người dùng duyệt)"
+    }
+  ]
 }

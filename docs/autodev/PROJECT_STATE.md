@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-09 · Nguồn: bản đầu P5; audit 2026-10-09 cập nhật.
+Cập nhật: 2026-10-09 · Nguồn: audit `docs/audits/2026-10-09.md`.
 
 ## Mốc
 
@@ -23,9 +23,11 @@ MVP: scenario 1 chạy đủ vòng Detect → Learn từ dashboard trên dữ li
 
 | # | Điều cần kiểm chứng | % đạt | Bằng chứng | Còn thiếu |
 |---|---|---|---|---|
-| 1 | Tìm đúng nguyên nhân gốc, biết hỏi người khi thiếu bằng chứng | 60 | test_investigate, test_ask, data_report (LLM giả) | T-030 LLM thật; correlate thiếu tín hiệu people, ambient_temperature |
-| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 70 | test_measure_r8, test_act, test_return_edges_r8 | e2e uvicorn nhánh rollback; `fix_addresses_cause` khớp từ khoá |
-| 3 | 3 chỉ số trước/sau trên 6 tháng mô phỏng | 15 | data_report (phát hiện, báo động giả) | T-042, T-043 |
+| 1 | Tìm đúng nguyên nhân gốc, biết hỏi người khi thiếu bằng chứng | 25 | Detect khớp ground truth (test_data_report); luật hỏi theo ngưỡng (test_ask). LLM giả viết sẵn đáp án nên chưa chứng minh | H-12 eval + T-030 LLM thật; H-10; anomaly quá rõ (~10σ) |
+| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 40 | Cơ chế đúng ở mức graph (test_measure_r8, test_act, test_return_edges_r8); uvicorn chỉ nhánh thuận (test_e2e) | H-06 (kết quả dựng sẵn theo từ khoá); e2e chuỗi sai → rollback → đúng → Learn; H-07..H-09 |
+| 3 | 3 chỉ số trước/sau trên 6 tháng mô phỏng | 10 | `measure()` 1 máy, 7 ngày; MTTD/MTTR chỉ test nạp tay | H-11; T-042, T-043 |
+
+Audit 2026-10-09 hạ % (trước: 60/70/15) vì chạy theo kịch bản viết sẵn không phải bằng chứng.
 
 ## Kiến trúc hiện nay
 
@@ -53,14 +55,36 @@ MVP: scenario 1 chạy đủ vòng Detect → Learn từ dashboard trên dữ li
 
 ## Lỗ hổng mở
 
-Chưa có audit theo mã H-xx. Việc mở từ R8 (audit 2026-10-09 sẽ đánh mã):
-- `fix_addresses_cause` khớp từ khoá: câu phủ định vẫn tính là sửa đúng.
-- `POST /runs/{id}/retry` không giới hạn số lần.
-- e2e uvicorn nhánh rollback chưa có (R8-c2); `docs/schema/payloads.md` chưa có (R8-c1).
-- Run/event và checkpointer chỉ ở bộ nhớ.
+Từ `docs/audits/2026-10-09.md` (chi tiết, bằng chứng, test cần có để đóng). Đóng khi có test chứng minh.
+
+| Mã | Mức | Tóm tắt |
+|---|---|---|
+| H-06 | cao | Measure đạt theo từ khoá ground truth; câu phủ định tính là sửa đúng |
+| H-07 | cao | Audit quyết định của người mất khi bước sau lỗi |
+| H-08 | cao | ValueError sau resume → 422, run kẹt |
+| H-09 | cao | `wait_evidence` không thành pending answer ở API |
+| H-10 | cao | SOP trong YAML (ép phun) lệch scenario (reflow) |
+| H-11 | cao | Chỉ số 3 chưa có đường code |
+| H-12 | cao | Không có eval nguyên nhân so với ground truth |
+| H-13 | vừa | Sau retry SSE không mở lại, `event_id` trùng |
+| H-14 | vừa | Hai run song song ghi đè SOP |
+| H-15 | vừa | Run/event/checkpointer chỉ ở bộ nhớ |
+| H-16 | vừa | Demo LLM giả: reject/revise/halt-investigate lỗi |
+| H-17 | vừa | revise, halt-investigate, retry không giới hạn |
+| H-18 | vừa | `has_tool_evidence` tính tool của cả run |
+| H-19 | vừa | Halt → điều tra lại quên SOP đang hiệu lực |
+| H-20 | vừa | Trả lời không kèm id câu hỏi |
+| H-21 | thấp | Parser JSON lấy object đầu |
+| H-22 | thấp | Giá trị miền hard-code ngoài YAML |
+| H-23 | thấp | Không đặt temperature; chưa record/replay |
+| H-24 | thấp | UI không phân biệt kết quả run (team frontend) |
+| H-25 | thấp | Payload event chưa có tài liệu |
+| H-26 | thấp | `demo.sh --check` chỉ kiểm khởi động |
 
 ## Quyết định gần đây
 
+- 2026-10-09: **người dùng chọn hướng R9 theo audit**. R9 làm điều 1–2 thật: H-10 trước tiên, rồi H-06, eval, e2e rollback, H-07/08/09/17/21, temperature. R10 làm điều 3 và luồng demo. Hoãn đến sau v0.1-e2e: checkpointer Postgres, invariants, API danh sách run, khoá SOP.
+- 2026-10-09: audit đầu: 21 lỗ hổng (7 cao), % đạt hạ còn 25/40/10. Đề xuất R9 làm điều 1–2 thật, R10 làm điều 3 (chờ người dùng duyệt ở P6).
 - 2026-10-09: thứ tự sau R8: P5 → audit đầu → gói bàn giao UI → T-030 → P6 → R9 → R10 (người dùng duyệt).
 - 2026-10-09: UI sản phẩm do bạn frontend làm; từ R9 auto-dev không sửa phần trình bày trong `dashboard/`.
 - 2026-10-08: R8-c2 (e2e uvicorn rollback) chuyển sang R9.
@@ -68,4 +92,11 @@ Chưa có audit theo mã H-xx. Việc mở từ R8 (audit 2026-10-09 sẽ đánh
 
 ## Tầm nhìn 3–5 mốc tới
 
-P6 điền (đường găng, thứ tự cắt, pre-mortem). Tạm thời theo HANDOFF: R9 (invariants, R8-c2, checkpointer Postgres, API danh sách run) → R10 (T-041, T-042, T-044) → audit 2 → tag v0.1-e2e.
+P6 điền chi tiết (đường găng, thứ tự cắt, pre-mortem). Hướng đã duyệt:
+
+| Mốc | Mục tiêu | Lỗ hổng / task |
+|---|---|---|
+| R9 | Điều 1–2 thành thật | H-10, H-06, H-12, H-07, H-08, H-09, H-17, H-21, H-23 |
+| T-030 | Người dùng chạy LLM thật (sau H-10) | ghi lỗi vào `docs/decisions.md` |
+| R10 | Điều 3 thành thật + luồng demo | H-11, H-13, H-16, H-26; T-041, T-042, T-044 |
+| Audit 2 | Rà sau R9 + R10 | rồi tag v0.1-e2e (người dùng duyệt) |
