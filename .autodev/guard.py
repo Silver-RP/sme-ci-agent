@@ -29,6 +29,8 @@ RULES = [
     (r"\bgit\s+worktree\s+(remove|prune)\b", "Không xoá worktree khi chưa được người dùng duyệt."),
     (r"\bgit\s+branch\s+(-[a-zA-Z]*[dD]\b|--delete\b)", "Không xoá nhánh khi chưa được người dùng duyệt."),
     (r"\bgit\s+push\b.*(\s--delete\b|\s-d\b|\s:[\w/-]+)", "Không xoá nhánh remote khi chưa được người dùng duyệt."),
+    (r"\bsed\s+(-\w+\s+)*-i", "Sửa file bằng công cụ Edit/Write, không dùng sed -i."),
+    (r"\bpython[\d.]*\s+-\s*<<", "Sửa file bằng Edit/Write và chạy thử bằng python -c, không dùng script qua stdin."),
 ]
 
 

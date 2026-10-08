@@ -11,7 +11,7 @@ Bạn là SUPERVISOR của hệ thống auto-dev cho mốc $ARGUMENTS (thiết k
 - Tên mốc là từ đầu tiên của `$ARGUMENTS` (ví dụ `R4`).
 
 ## Đọc trước
-`docs/autodev/HANDOFF.md` → `docs/autodev/ROADMAP.md` → `docs/autodev/PROGRESS.md`. Nguyên tắc ưu tiên trong ROADMAP: ưu tiên auto-dev nhưng không làm sai mục tiêu của dự án thử (mốc dự án vẫn phải đúng TASKS.md, PLAN.md, DoD).
+`docs/autodev/HANDOFF.md` → `docs/autodev/PROJECT_STATE.md` → `docs/autodev/ROADMAP.md` → `docs/autodev/PROGRESS.md`. Khi duyệt mốc: H-xx mà mốc nhận đóng phải có test tái hiện (tự chạy); cập nhật PROJECT_STATE + `state.json` trong PR hồ sơ (mốc, % đạt, lỗ hổng, quyết định). Nguyên tắc ưu tiên trong ROADMAP: ưu tiên auto-dev nhưng không làm sai mục tiêu của dự án thử (mốc dự án vẫn phải đúng TASKS.md, PLAN.md, DoD).
 
 ## Quyền (người dùng đã duyệt 2026-10-07)
 | Việc | Quyền |

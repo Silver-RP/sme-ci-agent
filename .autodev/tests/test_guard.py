@@ -79,6 +79,12 @@ class GuardRulesTest(unittest.TestCase):
             "uv run python .autodev/verify.py --snapshot",
             "echo '{}' > .autodev/baseline.json",
             "sed -i '' 's/x/y/' .autodev/baseline.json",
+            # P5: files are edited with Edit/Write, not stdin scripts or in-place sed (R8 dev-03..05)
+            "sed -i '' 's/a/b/' backend/agent/graph.py",
+            "sed -i.bak -e 's/a/b/' x.py",
+            "python3 - <<'EOF'",
+            "uv run python - <<EOF",
+            "python3.12 -<<EOF",
         ]:
             with self.subTest(cmd=cmd):
                 self.assertEqual(run_guard(cmd, self.repo), 2)
@@ -91,6 +97,9 @@ class GuardRulesTest(unittest.TestCase):
             "find . -name '*.pyc'",
             "python3 .autodev/verify.py --smoke",
             "cat .autodev/baseline.json",
+            "sed -n 1,40p backend/agent/graph.py",
+            "uv run python -c 'print(1)'",
+            "python3 -m unittest discover .autodev/tests",
         ]:
             with self.subTest(cmd=cmd):
                 self.assertEqual(run_guard(cmd, self.repo), 0)
