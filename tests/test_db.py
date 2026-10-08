@@ -196,3 +196,19 @@ def test_no_leftover_data_between_tests(migrated_url):
         for table in TABLES:
             assert c.execute(text(f"SELECT count(*) FROM {table}")).scalar() == 0, table
     engine.dispose()
+
+
+def test_alembic_cli_finds_backend_package(shared_db_url):
+    """`uv run alembic upgrade head` (used by scripts/demo.sh) must import `backend` from the repo root."""
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent
+    alembic_bin = Path(sys.executable).parent / "alembic"  # console script: does not put cwd on sys.path
+    env = {**os.environ, "DATABASE_URL": shared_db_url, "PYTHONPATH": ""}
+    proc = subprocess.run(
+        [str(alembic_bin), "upgrade", "head"], cwd=root, env=env, capture_output=True, text=True, check=False
+    )
+    assert proc.returncode == 0, proc.stderr[-800:]
