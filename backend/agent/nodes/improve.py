@@ -8,6 +8,7 @@ applied here) and emits ``proposal_created`` (agent = improvement). KPI names co
 from __future__ import annotations
 
 import json
+import uuid
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -127,6 +128,7 @@ def run_improvement(
             messages.append({"role": "user", "content": f"Rejected: {e} Reply again with the corrected JSON object."})
 
     proposal: dict[str, Any] = {
+        "proposal_id": uuid.uuid4().hex[:12],
         "hypothesis": top.model_dump(),
         "change": draft.change,
         "rationale": draft.rationale,

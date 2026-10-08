@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { answerRun, ApiError, decideApproval, startRun, type ApiOptions, type RunStatus } from "@/lib/api";
+import { ProposalCard } from "@/components/ProposalCard";
+import { answerRun, ApiError, decideApproval, getRun, retryRun, startRun, type ApiOptions, type RunStatus } from "@/lib/api";
 
 /**
  * Start / answer / approval controls. Buttons appear only for the state the backend reports
@@ -36,12 +37,26 @@ export function RunControls({
       done(await fn());
     } catch (e) {
       setError(e instanceof ApiError ? `${e.status || "error"}: ${e.message}` : String(e));
+      if (e instanceof ApiError && e.status === 409 && runId) {
+        // the run moved on (another tab, a double click): show what it is waiting for now
+        try {
+          onStatus(await getRun(runId, api));
+        } catch {
+          /* keep the message above; the next action will show the real state */
+        }
+      }
     } finally {
       setBusy(false);
     }
   }
 
   const pending = status?.pending ?? null;
+  const kind = pending?.kind === "rollback" ? "rollback" : "proposal";
+  const proposalId = typeof pending?.proposal_id === "string" ? pending.proposal_id : "";
+  const name = decidedBy.trim().toLowerCase();
+  // an empty list means it could not be loaded: then the backend check alone decides
+  const onList = (approvers ?? []).length === 0 || (approvers ?? []).some((a) => a.toLowerCase() === name);
+  const canDecide = name !== "" && onList && proposalId !== "";
   return (
     <section aria-label="Run controls">
       {!runId && (
@@ -79,6 +94,7 @@ export function RunControls({
       )}
       {runId && pending?.type === "approval" && (
         <div data-testid="pending-approval">
+          <ProposalCard pending={pending} />
           <p>Waiting for your decision{pending.kind ? ` (${String(pending.kind)})` : ""}.</p>
           <label>
             Decided by{" "}
@@ -96,14 +112,34 @@ export function RunControls({
             <button
               key={d}
               type="button"
-              disabled={busy || decidedBy.trim() === ""}
+              disabled={busy || !canDecide}
               onClick={() =>
-                void run(() => decideApproval(runId, { decision: d, decided_by: decidedBy.trim(), reason }, api), onStatus)
+                void run(
+                  () =>
+                    decideApproval(
+                      runId,
+                      { proposal_id: proposalId, kind, decision: d, decided_by: decidedBy.trim(), reason },
+                      api,
+                    ),
+                  onStatus,
+                )
               }
             >
               {d === "approved" ? "Approve" : "Reject"}
+              {kind === "rollback" ? " rollback" : ""}
             </button>
           ))}
+          {decidedBy.trim() !== "" && !onList && (
+            <p data-testid="approver-hint">&quot;{decidedBy.trim()}&quot; is not on the approvers list.</p>
+          )}
+        </div>
+      )}
+      {runId && status?.state === "error" && (
+        <div data-testid="run-error">
+          <p role="alert">The run stopped with an error: {status.error ?? "unknown error"}</p>
+          <button type="button" disabled={busy} onClick={() => void run(() => retryRun(runId, api), onStatus)}>
+            Retry
+          </button>
         </div>
       )}
       {status && <p className="muted" data-testid="run-state">State: {status.state}</p>}

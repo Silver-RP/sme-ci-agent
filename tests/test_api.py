@@ -16,6 +16,7 @@ from tests.test_act import (
     SCHEMA,
     _fixed_tables,
     _tables,
+    approve,
     improve_answer,
     investigate_script,
     valid_event,
@@ -89,7 +90,7 @@ def test_sse_resume_from_last_event_id(db_session):
 def test_approval_moves_graph_to_completion(db_session):
     client = make_client(db_session, [[*investigate_script(), improve_answer()]])
     run = start(client)
-    r = client.post(f"/runs/{run['run_id']}/approval", json=HUMAN)
+    r = approve(client, run['run_id'], HUMAN)
     assert r.status_code == 200
     body = r.json()
     assert body["state"] == "finished" and body["status"] == "completed" and body["pending"] is None
@@ -103,9 +104,7 @@ def test_approval_moves_graph_to_completion(db_session):
 def test_rejection_goes_back_to_improve_and_waits_again(db_session):
     client = make_client(db_session, [[*investigate_script(), improve_answer(), improve_answer()]])
     run = start(client)
-    r = client.post(
-        f"/runs/{run['run_id']}/approval", json={"decision": "rejected", "decided_by": "alice", "reason": "risky"}
-    )
+    r = approve(client, run['run_id'], {"decision": "rejected", "decided_by": "alice", "reason": "risky"})
     assert r.status_code == 200 and r.json()["state"] == "waiting"
     types = [m["event"] for m in sse_events(client, run["run_id"])]
     assert types.count("proposal_created") == 2 and "sop_applied" not in types
@@ -116,9 +115,9 @@ def test_rollback_confirmation_goes_through_approval_endpoint(db_session):
     script = [*wrong, improve_answer(), *wrong, improve_answer()]
     client = make_client(db_session, [script], tables=_tables())
     run = start(client)
-    r = client.post(f"/runs/{run['run_id']}/approval", json=HUMAN).json()
+    r = approve(client, run['run_id'], HUMAN).json()
     assert r["pending"]["type"] == "approval" and r["pending"]["kind"] == "rollback"
-    r = client.post(f"/runs/{run['run_id']}/approval", json={"decision": "approved", "decided_by": "bob"}).json()
+    r = approve(client, run['run_id'], {"decision": "approved", "decided_by": "bob"}).json()
     types = [m["event"] for m in sse_events(client, run["run_id"])]
     assert "rollback_done" in types and r["pending"]["kind"] == "proposal"
 
@@ -146,7 +145,7 @@ def test_unknown_run_is_404(db_session):
         ("get", "/runs/nope", None),
         ("get", "/runs/nope/events", None),
         ("post", "/runs/nope/answer", {"answer": "x"}),
-        ("post", "/runs/nope/approval", HUMAN),
+        ("post", "/runs/nope/approval", {**HUMAN, "proposal_id": "x", "kind": "proposal"}),
     ]:
         r = client.request(method, path, json=body)
         assert r.status_code == 404 and "nope" in r.json()["detail"]
@@ -155,11 +154,11 @@ def test_unknown_run_is_404(db_session):
 def test_approval_when_not_waiting_for_it_is_409(db_session):
     client = make_client(db_session, [[final(0.1, gap=True)], [*investigate_script(), improve_answer()]])
     asking = start(client)
-    r = client.post(f"/runs/{asking['run_id']}/approval", json=HUMAN)
+    r = approve(client, asking['run_id'], HUMAN)
     assert r.status_code == 409 and "approval" in r.json()["detail"]
     done = start(client)
-    client.post(f"/runs/{done['run_id']}/approval", json=HUMAN)
-    r = client.post(f"/runs/{done['run_id']}/approval", json=HUMAN)  # already finished: no second approval
+    approve(client, done['run_id'], HUMAN)
+    r = approve(client, done['run_id'], HUMAN)  # already finished: no second approval
     assert r.status_code == 409
     r = client.post(f"/runs/{done['run_id']}/answer", json={"answer": "x"})
     assert r.status_code == 409 and "answer" in r.json()["detail"]
@@ -184,7 +183,7 @@ def test_answer_when_waiting_for_approval_is_409(db_session):
 def test_invalid_approval_body_is_422_and_applies_nothing(db_session, bad):
     client = make_client(db_session, [[*investigate_script(), improve_answer()]])
     run = start(client)
-    assert client.post(f"/runs/{run['run_id']}/approval", json=bad).status_code == 422
+    assert approve(client, run['run_id'], bad).status_code == 422
     assert client.get(f"/runs/{run['run_id']}").json()["state"] == "waiting"
     assert "sop_applied" not in [m["event"] for m in sse_events(client, run["run_id"])]
 
@@ -193,7 +192,7 @@ def test_invalid_approval_body_is_422_and_applies_nothing(db_session, bad):
 def test_approval_by_non_listed_name_is_422_with_message(db_session, who):
     client = make_client(db_session, [[*investigate_script(), improve_answer()]])
     run = start(client)
-    r = client.post(f"/runs/{run['run_id']}/approval", json={"decision": "approved", "decided_by": who})
+    r = approve(client, run['run_id'], {"decision": "approved", "decided_by": who})
     assert r.status_code == 422 and "not a valid approver" in r.json()["detail"]
     assert client.get(f"/runs/{run['run_id']}").json()["state"] == "waiting"
     assert "sop_applied" not in [m["event"] for m in sse_events(client, run["run_id"])]
@@ -207,7 +206,7 @@ def test_config_approvers_endpoint(db_session):
 def test_approval_by_agent_or_llm_is_rejected(db_session):
     client = make_client(db_session, [[*investigate_script(), improve_answer()]])
     run = start(client)
-    r = client.post(f"/runs/{run['run_id']}/approval", json={"decision": "approved", "decided_by": "agent"})
+    r = approve(client, run['run_id'], {"decision": "approved", "decided_by": "agent"})
     assert r.status_code == 422
     assert client.get(f"/runs/{run['run_id']}").json()["state"] == "waiting"
 
@@ -234,7 +233,7 @@ def test_start_without_change_time_runs_to_measure(db_session):
         assert r.status_code == 201, r.text
         run = r.json()
         assert run["pending"]["type"] == "approval"
-        done = client.post(f"/runs/{run['run_id']}/approval", json={"decision": "approved", "decided_by": "alice"})
+        done = approve(client, run['run_id'], {"decision": "approved", "decided_by": "alice"})
         assert done.status_code == 200, done.text
         assert done.json()["state"] == "finished"
         types = [m["event"] for m in sse_events(client, run["run_id"])]
@@ -265,7 +264,7 @@ def test_two_runs_are_isolated_and_repeatable(db_session):
     client = make_client(db_session, [s, s])
     a, b = start(client), start(client)
     assert a["run_id"] != b["run_id"]
-    client.post(f"/runs/{a['run_id']}/approval", json=HUMAN)
+    approve(client, a['run_id'], HUMAN)
     assert client.get(f"/runs/{b['run_id']}").json()["state"] == "waiting"
     ids_a = [m["data"]["event_id"] for m in sse_events(client, a["run_id"])]
     ids_b = [m["data"]["event_id"] for m in sse_events(client, b["run_id"])]
@@ -339,7 +338,7 @@ def test_retry_after_transient_error_continues(db_session):
     assert body["state"] == "waiting" and body["pending"]["type"] == "approval" and "error" not in body
     types = [m["event"] for m in sse_events(client, rid)]
     assert types[-1] == "proposal_created" and "run_finished" not in types  # error event removed
-    done = client.post(f"/runs/{rid}/approval", json=HUMAN).json()
+    done = approve(client, rid, HUMAN).json()
     assert done["state"] == "finished" and done["status"] == "completed"
 
 

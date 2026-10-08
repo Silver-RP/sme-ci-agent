@@ -64,8 +64,8 @@ def _check_approval(approval: dict | None, sop_id: str, config) -> str:
             f"approved_by {str(approval.get('approved_by') or '').strip()!r} is not a valid approver; "
             f"allowed: {', '.join(config.approvers)}"
         )
-    if approval.get("sop_id") not in (None, sop_id):
-        raise PermissionError("approval is for a different SOP")
+    if approval.get("sop_id") != sop_id:  # a missing sop_id is not accepted: the approval must name this SOP
+        raise PermissionError("approval is for a different SOP (or names none)")
     return approver
 
 

@@ -18,6 +18,9 @@ config (``evaluate_kpi``), then a person confirms. Nodes that call ``interrupt``
 from __future__ import annotations
 
 import dataclasses
+import hashlib
+import json
+import uuid
 from typing import Any
 
 import pandas as pd
@@ -52,6 +55,41 @@ class _Emitter:
     def __call__(self, type_: str, agent: str, payload: dict[str, Any]) -> None:
         seq = len(self.state.get("events", [])) + len(self.events) + 1
         self.events.append(make_event(self.state, type_, agent, payload, seq, self.config.domain))
+
+
+def proposal_fingerprint(proposal: dict[str, Any]) -> dict[str, str]:
+    """Identity of what a person is asked to decide on: ``proposal_id`` and a hash of the content shown.
+
+    The id is the proposal's own ``proposal_id`` (else its SOP proposal's, else derived from the hash); the hash
+    covers the whole proposal, so an approval cannot be reused for a different (or edited) proposal.
+    """
+    digest = hashlib.sha256(json.dumps(proposal, sort_keys=True, default=str).encode()).hexdigest()
+    pid = proposal.get("proposal_id") or (proposal.get("sop_proposal") or {}).get("proposal_id") or digest[:12]
+    return {"proposal_id": str(pid), "proposal_hash": digest}
+
+
+def current_sop(ctx: ToolContext, proposal: dict[str, Any]) -> dict[str, Any] | None:
+    """The SOP text now in force for the SOP this proposal changes (read-only), so the person sees old -> new."""
+    sop_id = (proposal.get("sop_proposal") or {}).get("sop_id")
+    if not sop_id:
+        return None
+    row = repo.get_sop_version(ctx.session, sop_id)
+    if row is not None:
+        return {"sop_id": sop_id, "version": row.version, "content": row.content}
+    base = [x for x in ctx.config.sop if x.id == sop_id]
+    if not base:
+        return None
+    top = max(base, key=lambda x: x.version)
+    return {"sop_id": sop_id, "version": top.version, "content": "\n".join(top.steps)}
+
+
+def check_binding(raw: Any, fp: dict[str, str], kind: str) -> None:
+    """If the decision names a proposal/kind (the API always does), it must match the one waiting."""
+    if not isinstance(raw, dict):
+        return
+    for key, want in (("proposal_id", fp["proposal_id"]), ("kind", kind)):
+        if raw.get(key) is not None and raw[key] != want:
+            raise DecisionError(f"decision {key} {raw[key]!r} does not match the pending {want!r}")
 
 
 def parse_decision(value: Any, config: DomainConfig | None = None) -> dict[str, Any]:
@@ -169,14 +207,16 @@ def make_wait_approval_node(config: DomainConfig, ctx: ToolContext):
         proposal = state.get("proposal") or {}
         if proposal.get("sop_proposal"):
             resolve_change_time(state, ctx)  # fail now, not after a person approved something that cannot be measured
-        raw = interrupt({"kind": "proposal", "proposal": proposal, "run_id": state.get("run_id", "")})
+        fp = proposal_fingerprint(proposal)
+        raw = interrupt({"kind": "proposal", "proposal": proposal, "run_id": state.get("run_id", ""), "current_sop": current_sop(ctx, proposal), **fp})
+        check_binding(raw, fp, "proposal")
         d = parse_decision(raw, config)
         repo.append_audit(
             ctx.session, actor=d["decided_by"], action="approval_decided",
-            params={"kind": "proposal", **d}, run_id=ctx.run_id,
+            params={"kind": "proposal", **fp, **d}, run_id=ctx.run_id,
         )
         emit = _Emitter(state, config)
-        emit("approval_decided", "system", {"kind": "proposal", **d, "change": proposal.get("change")})
+        emit("approval_decided", "system", {"kind": "proposal", **fp, **d, "change": proposal.get("change")})
         update: dict[str, Any] = {"approval": d, "events": emit.events}
         if d["decision"] == REJECTED:
             update["rejection_count"] = state.get("rejection_count", 0) + 1
@@ -374,6 +414,7 @@ def make_rollback_propose_node(config: DomainConfig, ctx: ToolContext):
             )
         proposal = {
             "kind": "rollback",
+            "proposal_id": uuid.uuid4().hex[:12],
             "change": f"Roll back SOP {applied['sop_id']} to version {applied['previous_version']}"
             if sop_prop else "Roll back the change (no SOP version to restore)",
             "rationale": rationale,
@@ -391,14 +432,16 @@ def make_rollback_propose_node(config: DomainConfig, ctx: ToolContext):
 def make_wait_rollback_node(config: DomainConfig, ctx: ToolContext):
     def wait_rollback(state: AgentState) -> dict[str, Any]:
         proposal = state.get("proposal") or {}
-        raw = interrupt({"kind": "rollback", "proposal": proposal, "run_id": state.get("run_id", "")})
+        fp = proposal_fingerprint(proposal)
+        raw = interrupt({"kind": "rollback", "proposal": proposal, "run_id": state.get("run_id", ""), "current_sop": current_sop(ctx, proposal), **fp})
+        check_binding(raw, fp, "rollback")
         d = parse_decision(raw, config)
         repo.append_audit(
             ctx.session, actor=d["decided_by"], action="approval_decided",
-            params={"kind": "rollback", **d}, run_id=ctx.run_id,
+            params={"kind": "rollback", **fp, **d}, run_id=ctx.run_id,
         )
         emit = _Emitter(state, config)
-        emit("approval_decided", "system", {"kind": "rollback", **d, "change": proposal.get("change")})
+        emit("approval_decided", "system", {"kind": "rollback", **fp, **d, "change": proposal.get("change")})
         return {"approval": d, "events": emit.events}
 
     return wait_rollback

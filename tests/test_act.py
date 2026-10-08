@@ -32,6 +32,15 @@ SCHEMA = json.loads((Path(__file__).resolve().parents[1] / "docs" / "schema" / "
 HUMAN = {"decision": "approved", "decided_by": "alice"}
 
 
+def approve(client, run_id, body, **override):
+    """POST /approval, filling proposal_id and kind from the interrupt now waiting (as the dashboard does)."""
+    pending = client.get(f"/runs/{run_id}").json().get("pending") or {}
+    fill = {"proposal_id": pending.get("proposal_id", "none"), "kind": pending.get("kind", "proposal")}
+    if isinstance(body, dict) and not any(k in body for k in ("proposal_id", "kind")):
+        body = {**fill, **body}
+    return client.post(f"/runs/{run_id}/approval", json={**body, **override} if isinstance(body, dict) else body)
+
+
 @cache
 def _tables():
     return generate_dataset(seed=42).tables

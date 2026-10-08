@@ -62,6 +62,9 @@ class AnswerBody(BaseModel):
 class ApprovalBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    # what the person was shown: must match the interrupt now waiting, else 409 (a stale or double click)
+    proposal_id: str = Field(min_length=1)
+    kind: Literal["proposal", "rollback"]
     decision: Literal["approved", "rejected"]
     decided_by: str = Field(min_length=1)
     reason: str = ""
@@ -220,11 +223,20 @@ def create_app(
         run = get_run(run_id)
         with run.lock:
             require_waiting(run, "approval")
+            pending = _status(run)["pending"]
+            if body.kind != pending.get("kind") or body.proposal_id != pending.get("proposal_id"):
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        f"run {run_id!r} is now waiting for {pending.get('kind')!r} "
+                        f"{pending.get('proposal_id')!r}, not {body.kind!r} {body.proposal_id!r}; reload the run"
+                    ),
+                )
             try:
                 decision = parse_decision(body.model_dump(), cfg_domain)  # reject before resuming: a bad resume would break the run
             except DecisionError as e:
                 raise HTTPException(status_code=422, detail=str(e)) from e
-            advance(run, Command(resume=decision))
+            advance(run, Command(resume={**decision, "proposal_id": body.proposal_id, "kind": body.kind}))
             return _status(run)
 
     @app.post("/runs/{run_id}/retry")

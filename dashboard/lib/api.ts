@@ -4,12 +4,17 @@ export type FetchFn = typeof fetch;
 
 export interface RunStatus {
   run_id: string;
-  state: "running" | "waiting" | "finished";
+  state: "running" | "waiting" | "finished" | "error";
   status: string;
   pending: ({ type: "answer" | "approval" } & Record<string, unknown>) | null;
+  /** set when state is "error" (the step failed; POST /runs/{id}/retry runs it again) */
+  error?: string;
 }
 
 export interface Decision {
+  /** what the person was shown: the backend answers 409 when it no longer matches the pending approval */
+  proposal_id: string;
+  kind: "proposal" | "rollback";
   decision: "approved" | "rejected";
   decided_by: string;
   reason?: string;
@@ -36,15 +41,14 @@ function detailText(d: unknown): string {
   return d === undefined ? "" : JSON.stringify(d);
 }
 
-async function post(path: string, body: unknown, o: ApiOptions): Promise<RunStatus> {
+async function call(method: "GET" | "POST", path: string, body: unknown, o: ApiOptions): Promise<RunStatus> {
   const base = (o.baseUrl ?? apiBase()).replace(/\/$/, "");
   const f = o.fetchFn ?? fetch;
   let res: Response;
   try {
     res = await f(`${base}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      method,
+      ...(method === "POST" ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {}),
     });
   } catch (e) {
     throw new ApiError(0, `Network error: ${e instanceof Error ? e.message : String(e)}`);
@@ -61,6 +65,14 @@ async function post(path: string, body: unknown, o: ApiOptions): Promise<RunStat
   }
   return data as RunStatus;
 }
+
+const post = (path: string, body: unknown, o: ApiOptions) => call("POST", path, body, o);
+
+/** Current status of a run (used to refresh after a 409). */
+export const getRun = (runId: string, o: ApiOptions = {}) => call("GET", `/runs/${encodeURIComponent(runId)}`, null, o);
+
+/** Run the failed step again (only when the run is in state "error"). */
+export const retryRun = (runId: string, o: ApiOptions = {}) => post(`/runs/${encodeURIComponent(runId)}/retry`, {}, o);
 
 /** A blank change time is omitted: the backend then uses the end of the anomaly Detect finds. */
 export const startRun = (changeTime: string, o: ApiOptions = {}) =>

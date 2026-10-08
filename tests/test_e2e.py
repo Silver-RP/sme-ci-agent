@@ -22,7 +22,7 @@ from sqlalchemy.engine import make_url
 from backend.agent.demo_llm import llm_from_env, scripted_demo_llm
 from backend.api.app import create_app
 from backend.domain_config import load_domain_config
-from tests.test_act import SCHEMA, valid_event
+from tests.test_act import SCHEMA, approve, valid_event
 
 ROOT = Path(__file__).resolve().parents[1]
 CFG = load_domain_config()
@@ -99,10 +99,10 @@ def test_full_loop_over_http_with_real_detect(server):
     assert run["pending"]["type"] == "approval"
 
     # a name outside the allow-list is refused over HTTP
-    bad = c.post(f"/runs/{rid}/approval", json={"decision": "approved", "decided_by": "mallory"})
+    bad = approve(c, rid, {"decision": "approved", "decided_by": "mallory"})
     assert bad.status_code == 422
 
-    run = c.post(f"/runs/{rid}/approval", json={"decision": "approved", "decided_by": approvers[0]}).json()
+    run = approve(c, rid, {"decision": "approved", "decided_by": approvers[0]}).json()
     # the demo fix targets the modelled cause (setpoint): the simulator brings the KPI back, Measure passes
     assert run["state"] == "finished"
 
