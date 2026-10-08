@@ -4,6 +4,7 @@ Usage:
   python3 .autodev/verify.py              # run, print summary; exit 0 clean, 2 new errors
   python3 .autodev/verify.py --snapshot   # write .autodev/baseline.json
   python3 .autodev/verify.py --hook       # SubagentStop hook of the developer agent
+  python3 .autodev/verify.py --smoke      # run the user-facing commands in config "smoke" (no baseline)
 
 Stdlib only. Errors are compared as keys (ruff: "file:CODE", pytest: test id),
 so a pre-existing error in the baseline never blocks; only new ones do.
@@ -81,6 +82,35 @@ def run_all(config):
     return results
 
 
+def baseline_from(results):
+    """Keys to store as baseline. `exit:N` (unparsed failure) is never baselined: it would hide every later failure."""
+    return {name: [k for k in res["keys"] if not k.startswith("exit:")] for name, res in results.items()}
+
+
+def run_smoke(steps, cwd=ROOT):
+    """Run each user-facing command as a person would; any non-zero exit or timeout is a failure.
+
+    A step with "if_exists" is skipped until that path exists (e.g. a script a later task adds).
+    """
+    out = []
+    for step in steps:
+        cond = step.get("if_exists")
+        if cond and not (Path(cwd) / cond).exists():
+            out.append({"name": step["name"], "status": "skipped", "tail": ""})
+            continue
+        try:
+            proc = subprocess.run(
+                step["cmd"], shell=True, cwd=cwd, capture_output=True, text=True, check=False,
+                env=gate_env(), timeout=step.get("timeout", 300),
+            )
+            status = "ok" if proc.returncode == 0 else "fail"
+            tail = "" if status == "ok" else "\n".join((proc.stdout + proc.stderr).strip().splitlines()[-8:])
+        except subprocess.TimeoutExpired:
+            status, tail = "timeout", f"quá {step.get('timeout', 300)}s"
+        out.append({"name": step["name"], "status": status, "tail": tail})
+    return out
+
+
 def new_errors(results, baseline):
     found = {}
     for name, res in results.items():
@@ -117,10 +147,20 @@ def main():
         except json.JSONDecodeError:
             hook_input = {}
 
+    if "--smoke" in args:
+        res = run_smoke(config.get("smoke", []))
+        for r in res:
+            print(f"[smoke] {r['status']:8} {r['name']}")
+            if r["tail"]:
+                print("\n".join(f"    {t}" for t in r["tail"].splitlines()))
+        bad = [r for r in res if r["status"] in ("fail", "timeout")]
+        print(f"smoke: {'sạch' if not bad else str(len(bad)) + ' lệnh lỗi'}")
+        return 2 if bad else 0
+
     results = run_all(config)
 
     if "--snapshot" in args:
-        save(BASELINE, {name: res["keys"] for name, res in results.items()})
+        save(BASELINE, baseline_from(results))
         print(f"Đã ghi baseline: { {n: len(r['keys']) for n, r in results.items()} }")
         return 0
 

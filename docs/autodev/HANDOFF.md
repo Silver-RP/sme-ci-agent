@@ -7,16 +7,17 @@ Supervisor cập nhật file này ở cuối mỗi mốc (và trước khi ngư�
 - Phiên supervisor = **vai con người**: lập plan, giao mốc, duyệt, merge, sửa plugin. Không viết code dự án (developer/reviewer trong worker làm). Quyền: thiết kế mục 6.15.
 - Người dùng giao tiếp bằng tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa và được báo ngắn gọn.
 
-## Bước tiếp theo (2026-10-08)
-1. **R7 đã merge (PR #31).** Người dùng tự chạy T-030 với LLM thật: tự điền khoá API và tên model trong file môi trường (theo README "Chạy demo"), `uv run alembic upgrade head`, rồi `SME_LLM=real scripts/demo.sh` hoặc `uv run python scripts/run_scenario.py --llm real`. Sau đó tick T-030.
-2. Leader quyết R7-c1: để demo ra nhánh Measure đạt → Learn, simulator cần anomaly có điểm kết thúc (seed 42 kéo đến hết dữ liệu nên chỉ tới rollback).
-3. Thêm một dòng README: `run_scenario.py` cần `alembic upgrade head` trước (chỉ `demo.sh` tự migrate).
+## Bước tiếp theo (2026-10-08, người dùng duyệt)
+1. **R8 = "mạch chặt"** (`plan/R8.md`): sửa lỗ hổng vòng lặp do rà soát chỉ đọc tìm ra: Measure luôn trượt (cửa sổ sau rỗng, sandbox tĩnh) và chiều tốt do LLM khai; run lỗi kẹt "running" và mất audit; LLM thật làm tràn context (`query_logs` không giới hạn); duyệt không gắn với đề xuất cụ thể, UI không cho thấy nội dung đề xuất và không khoá tên ngoài danh sách; thiếu cạnh quay lại T-040. R7-c1 đã quyết: hướng (1), simulator sinh dữ liệu sau thay đổi.
+   Chạy: `AUTODEV_SUPERVISOR_MODEL=opus AUTODEV_SUPERVISOR_EFFORT=medium PATH=~/.nvm/versions/node/v22.23.3/bin:$PATH nohup .autodev/autodev-run.sh R8 > .autodev/runs/nohup.out 2>&1 &`.
+2. Sau R8: người dùng chạy T-030 với LLM thật (Anthropic API trả theo lượng dùng; gói Pro/Max không kèm API). Cổng 5432 bị container auto-dev chiếm: chạy demo ở repo chính với `DB_PORT=5433` và `DATABASE_URL` cùng cổng.
+3. R9: checkpointer Postgres + dùng bảng `runs`/`events` (đang trống), run id trên URL, trang danh sách run và trang Dữ liệu (audit_log, sop_versions, learning_store), Detect không chọn lại anomaly đã xử lý, đọc `learning_store`, khoá phiên bản SOP khi chạy song song.
 4. Còn của P4: kiểm chứng nhánh chờ reset khi gặp hạn mức thật, rồi đóng P4.
-5. Để sau: dashboard xem tiến trình `claude -p`, thông báo Telegram.
+5. Để sau: dashboard xem tiến trình `claude -p` (log stream-json), thông báo Telegram.
 
 ## Trạng thái hiện tại (2026-10-08)
 - Plugin: P1–P3 xong. P4 đã chạy thật: R4 + R5 liền nhau, 40 phút, 5,29 USD ước tính, không chạm hạn mức (nhánh chờ reset chưa kiểm chứng). Runner đã sửa (PR #23).
-- Dự án: R6 (dashboard) và R7 (M3 end-to-end, PR #31, 262 pytest, 38 vitest) đã merge. R4 (PR #19: T-020, T-021, T-023) và R5 (PR #21: T-022, T-024, T-025) đã merge; 226 test, verify sạch. Còn T-016, T-026 (dashboard) → R6.
+- Dự án: R6 (dashboard) và R7 (M3 end-to-end, PR #31, 262 pytest, 38 vitest) đã merge. R4 (PR #19: T-020, T-021, T-023) và R5 (PR #21: T-022, T-024, T-025) đã merge; 226 test, verify sạch. 
 - **Vị trí repo (từ 2026-10-08):** `~/dev/sme-ci-agent/` chứa 3 worktree cạnh nhau: `sme-ci-agent` (chính), `sme-ci-agent-autodev` (worker), `sme-ci-agent-supervisor` (supervisor). Đã chuyển khỏi Desktop vì iCloud sinh file "tên 2". Tài liệu hackathon vẫn ở Desktop, cạnh alias "sme-ci-agent (code)". Docker DB `sme-ci-agent-autodev-db-1` cổng 5432 (volume có tên, không phụ thuộc đường dẫn).
 - Máy này: đã dừng Homebrew `postgresql@14` (bật lại: `brew services start postgresql@14`).
 

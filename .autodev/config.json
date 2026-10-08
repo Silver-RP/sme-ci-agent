@@ -1,8 +1,19 @@
 {
   "verify": [
-    {"name": "lint", "cmd": "uv run ruff check . --output-format=concise", "parser": "ruff"},
-    {"name": "test", "cmd": "uv run pytest -q -rfE -p no:cacheprovider", "parser": "pytest"},
-    {"name": "dashboard", "cmd": "[ ! -f dashboard/package.json ] || (cd dashboard && ([ -d node_modules ] || yarn install) && yarn lint && yarn test && yarn build)"}
+    {
+      "name": "lint",
+      "cmd": "uv run ruff check . --output-format=concise",
+      "parser": "ruff"
+    },
+    {
+      "name": "test",
+      "cmd": "uv run pytest -q -rfE -p no:cacheprovider",
+      "parser": "pytest"
+    },
+    {
+      "name": "dashboard",
+      "cmd": "[ ! -f dashboard/package.json ] || (cd dashboard && yarn install --frozen-lockfile --silent && yarn lint && yarn test && yarn build)"
+    }
   ],
   "max_rounds": 3,
   "max_verify_blocks": 3,
@@ -12,6 +23,30 @@
   "app": {
     "run": null,
     "url": null,
-    "note": "M1 chưa có app web; bàn giao bằng kết quả verify và output test."
-  }
+    "note": "Lệnh người dùng chạy thử bằng `python3 .autodev/verify.py --smoke` (danh sách `smoke`)."
+  },
+  "smoke": [
+    {
+      "name": "alembic upgrade (CLI)",
+      "cmd": "uv run alembic upgrade head",
+      "timeout": 120
+    },
+    {
+      "name": "run_scenario (LLM giả)",
+      "cmd": "uv run python scripts/run_scenario.py",
+      "timeout": 300
+    },
+    {
+      "name": "data_report",
+      "cmd": "uv run python scripts/data_report.py",
+      "timeout": 300,
+      "if_exists": "scripts/data_report.py"
+    },
+    {
+      "name": "demo.sh --check",
+      "cmd": "if ! grep -q -- '--check' scripts/demo.sh; then echo 'demo.sh chưa có --check'; exit 0; fi; bash scripts/demo.sh --check",
+      "timeout": 300,
+      "if_exists": "scripts/demo.sh"
+    }
+  ]
 }

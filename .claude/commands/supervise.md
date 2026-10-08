@@ -19,6 +19,7 @@ Bạn là SUPERVISOR của hệ thống auto-dev cho mốc $ARGUMENTS (thiết k
 | Duyệt task/mốc, merge PR mốc vào main (merge commit, KHÔNG `--delete-branch`) | Tự làm |
 | Điều chỉnh plan (a)/(b) | Tự làm |
 | Đề xuất (c): đổi tiêu chí chấp nhận hoặc phạm vi mốc | Tự quyết, ghi rõ trong báo cáo cho người dùng |
+| Merge PR hồ sơ `chore/autodev-*` chỉ sửa `docs/autodev/**` | Tự làm (chế độ B: runner tự merge sau bước này) |
 | Mọi thao tác xoá (file, thư mục, nhánh, worktree) | LUÔN hỏi người dùng |
 | Đổi mục tiêu hoặc lộ trình của plugin | Hỏi người dùng |
 
@@ -41,8 +42,9 @@ Bạn là SUPERVISOR của hệ thống auto-dev cho mốc $ARGUMENTS (thiết k
 
 ## Duyệt mốc
 6. Đọc PR (`gh pr view`, `gh pr diff --name-only`) và `.autodev/reports/$ARGUMENTS.md`.
-7. Kiểm tra cứng: checkout nhánh mốc trong worktree hoặc dùng `git -C`, chạy `python3 .autodev/verify.py` và `uv run pytest -q`.
-8. Kiểm tra độc lập có chọn lọc: thử 1–3 trường hợp biên mà reviewer có thể bỏ sót (dữ liệu khác seed, đầu vào mặc định, gọi lặp lại). Ghi lệnh và kết quả.
+7. Kiểm tra cứng: checkout nhánh mốc trong worktree (`gh pr checkout <số>` hoặc `git checkout`), chạy `python3 .autodev/verify.py`, `uv run pytest -q` và **`python3 .autodev/verify.py --smoke`** (các lệnh người dùng sẽ gõ: alembic CLI, `scripts/*`, `demo.sh --check`). Smoke lỗi hoặc timeout thì KHÔNG merge.
+8. **Bảng tiêu chí cấp mốc (bắt buộc):** với từng mục trong "Tiêu chí chấp nhận cấp mốc" của `plan/$ARGUMENTS.md`, ghi một dòng: tiêu chí → lệnh hoặc tên test bạn tự chạy → kết quả thấy được. Không dựa vào báo cáo của worker; mục nào thiếu bằng chứng tự kiểm thì coi là chưa đạt. Đưa bảng vào báo cáo cuối và PR hồ sơ. Bài học R7: tiêu chí cấp mốc 3 (khoá nút duyệt khi tên không hợp lệ) chưa đạt ở UI mà vẫn merge.
+8b. Kiểm tra độc lập có chọn lọc: thử 1–3 trường hợp biên mà reviewer có thể bỏ sót (dữ liệu khác seed, đầu vào mặc định, gọi lặp lại, đầu ra bất thường của LLM). Ghi lệnh và kết quả.
 9. Quyết định:
    - Đạt: merge (`gh pr merge <số> --merge`, không xoá nhánh). Chuyển số đo của báo cáo mốc vào `docs/autodev/PROGRESS.md`, cập nhật trạng thái mốc plugin trong `ROADMAP.md`, qua một PR `chore/autodev-*`.
    - Chưa đạt: ghi vấn đề thành task mới (b) trong `plan/$ARGUMENTS.md` hoặc gửi worker yêu cầu sửa, rồi lặp lại từ bước 3.

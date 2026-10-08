@@ -54,5 +54,47 @@ class GuardTargetDirTest(unittest.TestCase):
         self.assertEqual(run_guard(cmd, self.main), 0)
 
 
+class GuardRulesTest(unittest.TestCase):
+    """2026-10-08 hardening: destructive variants that slipped through, and baseline tampering."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.repo = os.path.join(self.tmp.name, "r")
+        os.makedirs(self.repo)
+        git(self.repo, "init", "-q", "-b", "chore/x")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_blocked(self):
+        for cmd in [
+            "gh pr merge 12 --merge -d",
+            "rm -r -f build",
+            "rm --recursive --force build",
+            "rm -fr build",
+            "git restore .",
+            "git checkout -- .",
+            "find . -name '*.pyc' -delete",
+            "python3 .autodev/verify.py --snapshot",
+            "uv run python .autodev/verify.py --snapshot",
+            "echo '{}' > .autodev/baseline.json",
+            "sed -i '' 's/x/y/' .autodev/baseline.json",
+        ]:
+            with self.subTest(cmd=cmd):
+                self.assertEqual(run_guard(cmd, self.repo), 2)
+
+    def test_allowed(self):
+        for cmd in [
+            "gh pr merge 12 --merge",
+            "rm build/out.txt",
+            "git restore src/a.py",
+            "find . -name '*.pyc'",
+            "python3 .autodev/verify.py --smoke",
+            "cat .autodev/baseline.json",
+        ]:
+            with self.subTest(cmd=cmd):
+                self.assertEqual(run_guard(cmd, self.repo), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
