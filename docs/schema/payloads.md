@@ -55,6 +55,7 @@ Có hai dạng; phân biệt bằng `kind`.
   "evidence_refs": [0],
   "expected_kpi": {"kpi": "defect_rate", "direction": "decrease", "target": 0.02},
   "status": "pending_approval",
+  "action": {"parameter": "zone3_setpoint_c", "machine_id": "M02", "value": 180},
   "sop_proposal": {"proposal_id": "48af347b1856", "sop_id": "SOP-RFL-001", "base_version": 17,
     "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
     "rationale": "...", "kpi": "defect_rate", "status": "pending_approval"}}}
@@ -72,8 +73,9 @@ Có hai dạng; phân biệt bằng `kind`.
 
 ### sop_applied (improvement)
 - Không áp dụng: `{applied: false, reason}`.
-- Đã áp dụng: `{applied: true, sop_id, version, previous_version, approved_by, change_time, sim: {fixed, machine_id, anomaly_start}}`.
-  - `sim` là nội bộ simulator. **Không hiển thị**, vì nó lộ kết quả dựng sẵn (H-06, H-25).
+- Đã áp dụng: `{applied: true, sop_id, version, previous_version, approved_by, change_time, action}`.
+  - `action` là hành động có cấu trúc người đã duyệt: `{parameter, machine_id, value}` hoặc `null` (đề xuất không có hành động; Measure trả `not_applied`). Tên `parameter` hợp lệ lấy từ YAML (`actions.parameters`).
+  - Không còn trường `sim` (nội bộ simulator, từng lộ `fixed`, H-06, H-25).
 
 ### kpi_measured (quality)
 `{kpi, direction, target, tolerance, status, passed, before, after, machine_id, change_time, window_days, delta, sufficient, n_before, n_after, mttd_hours, mttr_hours}`

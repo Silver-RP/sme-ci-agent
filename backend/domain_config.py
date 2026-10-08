@@ -59,6 +59,14 @@ class ImproveParams(_Strict):
     max_format_retries: int = Field(default=1, ge=0)  # times the LLM may be asked to fix an unparsable proposal
 
 
+class ActionParams(_Strict):
+    """Actions a proposal may take (YAML key ``actions:``)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    parameters: list[str] = Field(default_factory=list)  # equipment parameter names a structured action may set
+
+
 class AskParams(_Strict):
     """Ask parameters (YAML key ``ask:``)."""
 
@@ -112,6 +120,7 @@ class DomainConfig(_Strict):
     signals: SignalNames
     demo: DemoParams
     default_period: tuple[str, str]
+    actions: ActionParams = Field(default_factory=ActionParams)
     ask: AskParams = Field(default_factory=AskParams)
     measure: MeasureParams = Field(default_factory=MeasureParams)
     loop: LoopParams = Field(default_factory=LoopParams)

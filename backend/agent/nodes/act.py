@@ -32,7 +32,7 @@ from backend.agent.state import AgentState
 from backend.db import repo
 from backend.domain_config import DomainConfig, load_domain_config
 from backend.sandbox.injector import load_scenario
-from backend.sandbox.post_change import build_post_change_tables, fix_addresses_cause
+from backend.sandbox.post_change import action_level, build_post_change_tables
 from backend.tools.actions import apply_sop, measure, propose_sop, save_learning
 from backend.tools.readonly import ToolContext
 
@@ -290,13 +290,13 @@ def make_act_node(config: DomainConfig, ctx: ToolContext):
             "approved_by": res["approved_by"],
             "change_time": change_time,
             "change": proposal.get("change"),  # kept for the memory of a later rollback; not sent in the event
+            "action": proposal.get("action"),  # the structured change a person approved; Measure follows this only
             "sim": {  # what the sandbox needs to produce the data after the change (rebuilt by Measure)
-                "fixed": fix_addresses_cause(proposal.get("hypothesis")),
                 "machine_id": anomaly.get("machine_id") or anomaly.get("machine"),
                 "anomaly_start": anomaly.get("start"),
             },
         }
-        emit("sop_applied", "improvement", {"applied": True, **{k: v for k, v in applied.items() if k not in ("previous_content", "change")}})
+        emit("sop_applied", "improvement", {"applied": True, **{k: v for k, v in applied.items() if k not in ("previous_content", "change", "sim")}})
         return {"applied": applied, "events": emit.events, "proposal": {**proposal, "status": "applied"}}
 
     return act
@@ -329,11 +329,19 @@ def make_measure_node(config: DomainConfig, ctx: ToolContext):
         machine = anomaly.get("machine_id") or anomaly.get("machine")
         sim = applied.get("sim")
         measure_ctx = ctx
+        if sim is not None and not applied.get("action"):
+            measurement = {
+                **base, "status": NOT_APPLIED, "passed": None, "before": None, "after": None,
+                "reason": "the proposal has no structured action, so no machine parameter was changed",
+            }
+            emit("kpi_measured", "quality", measurement)
+            return {"measurement": measurement, "events": emit.events}
         if sim is not None:  # data after the change comes from the simulator, in a copy owned by this run
             baseline, noise_sd = _sim_levels(kpi, config)
             post = build_post_change_tables(
                 ctx.tables, kpi=kpi, change_time=change_time, machine_id=sim.get("machine_id"),
-                fixed=bool(sim.get("fixed")), baseline=baseline, noise_sd=noise_sd,
+                fixed=False, level=action_level(applied["action"], sim.get("machine_id"), baseline),
+                baseline=baseline, noise_sd=noise_sd,
                 window_days=config.measure.window_days, anomaly_start=sim.get("anomaly_start"),
                 run_id=str(state.get("run_id", "")),
             )

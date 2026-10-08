@@ -259,10 +259,10 @@
         "previous_version": 17,
         "approved_by": "alice",
         "change_time": "2026-06-23T22:00:00",
-        "sim": {
-          "fixed": true,
+        "action": {
+          "parameter": "zone3_setpoint_c",
           "machine_id": "M02",
-          "anomaly_start": "2026-03-10T22:00:00"
+          "value": 180
         }
       }
     },

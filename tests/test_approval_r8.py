@@ -5,13 +5,20 @@ from sqlalchemy import select
 
 from backend.agent.nodes.act import proposal_fingerprint
 from backend.db.models import AuditLog
-from tests.test_act import HUMAN, _tables, approve, improve_answer, investigate_script
+from tests.test_act import (
+    HUMAN,
+    _tables,
+    approve,
+    improve_answer,
+    investigate_script,
+    wrong_improve_answer,
+)
 from tests.test_api import make_client, sse_events, start
 
 
 def rollback_run(db_session):
     wrong = investigate_script("sensor calibration drift")  # the simulator does not fix this: KPI stays high
-    client = make_client(db_session, [[*wrong, improve_answer(), *wrong, improve_answer()]], tables=_tables())
+    client = make_client(db_session, [[*wrong, wrong_improve_answer(), *wrong, wrong_improve_answer()]], tables=_tables())
     return client, start(client)
 
 

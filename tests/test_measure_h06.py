@@ -38,7 +38,9 @@ def answer(action="default", **action_fields):
     d = json.loads(improve_answer())
     if action == "default":
         action = {"parameter": PARAM, "machine_id": MACHINE, "value": SOP_VALUE, **action_fields}
-    if action is not None:
+    if action is None:
+        d.pop("action", None)
+    else:
         d["action"] = action
     return json.dumps(d)
 

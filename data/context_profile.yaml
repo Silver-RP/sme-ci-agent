@@ -24,6 +24,10 @@ investigate:
 improve:
   max_evidence_item_chars: 800  # cỡ tối đa (ký tự) mỗi mục evidence đưa vào prompt Improve
   max_format_retries: 1     # số lần yêu cầu LLM sửa đề xuất không parse được, quá thì báo lỗi
+actions:
+  # tên tham số máy mà đề xuất được phép đổi (action.parameter); tên lạ thì yêu cầu LLM sửa.
+  # Simulator chỉ mô hình hoá zone3_setpoint_c; đổi tham số khác hợp lệ nhưng không làm KPI giảm.
+  parameters: [zone3_setpoint_c, zone2_setpoint_c, other_parameter_c]
 ask:
   confidence_threshold: 0.6 # độ tin cậy giả thuyết đứng đầu dưới ngưỡng này thì hỏi người
   max_questions: 2          # số lần hỏi tối đa mỗi run; vượt thì dừng chờ người

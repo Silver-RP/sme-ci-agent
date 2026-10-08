@@ -12,6 +12,7 @@ import os
 
 from backend.agent.llm import LLM, LLMResponse, ScriptedLLM, ToolCall
 from backend.domain_config import DomainConfig
+from backend.sandbox.injector import load_scenario
 
 LLM_ENV = "SME_LLM"
 
@@ -45,6 +46,11 @@ def scripted_demo_llm(config: DomainConfig, *, ask_first: bool = True, then: tup
             "sop_change": {
                 "sop_id": sop.id,
                 "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
+            },
+            "action": {
+                "parameter": config.actions.parameters[0],
+                "machine_id": config.demo.machine_id,
+                "value": load_scenario()["baseline"][config.actions.parameters[0]],  # back to the SOP value
             },
         }
     )

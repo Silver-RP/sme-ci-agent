@@ -33,6 +33,7 @@ from backend.agent.events import make_event
 from backend.agent.graph import build_graph
 from backend.agent.llm import LLM, AnthropicLLM
 from backend.agent.nodes.act import DecisionError, parse_decision
+from backend.agent.nodes.improve import ProposalError
 from backend.agent.state import new_state
 from backend.db.session import make_engine
 from backend.domain_config import DomainConfig, load_domain_config
@@ -168,6 +169,9 @@ def create_app(
         try:
             run.graph.invoke(payload, run.cfg)
             run.ctx.session.commit()
+        except ProposalError as e:  # the LLM's answer was unusable (not the caller's input): run in error, retryable
+            run.ctx.session.rollback()
+            run.error = f"{type(e).__name__}: {e}"
         except (ValueError, DecisionError) as e:  # e.g. missing change_time, invalid decision
             run.ctx.session.rollback()
             raise HTTPException(status_code=422, detail=str(e)) from e

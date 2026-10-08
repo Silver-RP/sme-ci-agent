@@ -20,6 +20,7 @@ from tests.test_act import (
     improve_answer,
     investigate_script,
     valid_event,
+    wrong_improve_answer,
 )
 from tests.test_ask import final
 
@@ -112,7 +113,7 @@ def test_rejection_goes_back_to_improve_and_waits_again(db_session):
 
 def test_rollback_confirmation_goes_through_approval_endpoint(db_session):
     wrong = investigate_script("sensor calibration drift")  # a cause the simulator does not fix: KPI stays high
-    script = [*wrong, improve_answer(), *wrong, improve_answer()]
+    script = [*wrong, wrong_improve_answer(), *wrong, wrong_improve_answer()]
     client = make_client(db_session, [script], tables=_tables())
     run = start(client)
     r = approve(client, run['run_id'], HUMAN).json()

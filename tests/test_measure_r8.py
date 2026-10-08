@@ -29,15 +29,19 @@ from tests.test_act import (
     start,
     types,
     versions,
+    wrong_improve_answer,
 )
 from tests.test_api import make_client
 
 
 def script_with(description="wrong_setpoint", improve=None):
+    """R9: the verdict follows the action, not the words. A hypothesis other than the modelled cause gets a
+    proposal whose action sets a parameter the simulator does not link to the anomaly."""
     s = investigate_script()
     d = json.loads(s[1])
     d["hypotheses"][0]["description"] = description
-    return [s[0], json.dumps(d), improve or improve_answer()]
+    fallback = improve_answer() if description == "wrong_setpoint" else wrong_improve_answer()
+    return [s[0], json.dumps(d), improve or fallback]
 
 
 def run_to_measure(db_session, script, tables=None, change_time=CHANGE, cfg=CFG):
@@ -89,7 +93,7 @@ def test_same_inputs_give_same_post_change_data():
 
 @pytest.mark.parametrize("hyp,expected", [("wrong_setpoint", True), ("sensor calibration drift", False)])
 def test_llm_direction_and_kpi_do_not_change_the_verdict(db_session, hyp, expected):
-    d = json.loads(improve_answer())
+    d = json.loads(improve_answer() if expected else wrong_improve_answer())
     d["expected_kpi"] = {"kpi": "rework_rate", "direction": "increase", "target": 0.9}
     _, _, out = run_to_measure(db_session, script_with(hyp, json.dumps(d)))
     m = out["measurement"]
@@ -142,7 +146,8 @@ def test_measure_node_with_empty_after_window_does_not_raise(db_session):
     s = new_state("run_m", CFG.domain)
     s["anomaly"] = {"machine": "M02", "kpi": KPI}
     s["change_time"] = "2026-07-30T00:00:00"  # beyond the data: only the Act/approval validation rejects this
-    s["applied"] = {"change_time": s["change_time"], "sim": {"fixed": True, "machine_id": "M02"}}
+    s["applied"] = {"change_time": s["change_time"], "sim": {"machine_id": "M02"},
+                    "action": json.loads(improve_answer())["action"]}
     s["proposal"] = {"expected_kpi": {"kpi": KPI, "direction": "decrease", "target": 0.02}}
     m = node(s)["measurement"]
     assert m["status"] == "insufficient_evidence" and m["passed"] is None
@@ -232,5 +237,6 @@ def test_act_records_what_the_simulator_needs(db_session):
         "sop_proposal": {"sop_id": SOP_ID, "new_content": "Verify setpoint 180 again."},
     }
     s["approval"] = {"decision": "approved", "decided_by": "alice"}
-    sim = make_act_node(CFG, ctx)(s)["applied"]["sim"]
-    assert sim["fixed"] is True and sim["machine_id"] == "M02"
+    applied = make_act_node(CFG, ctx)(s)["applied"]
+    assert "fixed" not in applied["sim"] and applied["sim"]["machine_id"] == "M02"
+    assert applied["action"] == json.loads(improve_answer())["action"]  # Measure follows the approved action
