@@ -25,7 +25,6 @@ from backend.db.models import SopVersion
 from backend.domain_config import DomainConfig, load_domain_config
 
 LOG_SOURCES = ("kpi_log", "machine_log")
-SETPOINT_EVENT = "setpoint_change"
 
 
 @dataclass
@@ -212,7 +211,7 @@ def _pearson(a: np.ndarray, b: np.ndarray) -> float | None:
 def _setpoint_deviation(ctx: ToolContext, machine_id: str, times: pd.Series) -> np.ndarray | None:
     """|setpoint - reference| at each time; reference = value before the first logged change."""
     ml = ctx.tables["machine_log"]
-    ch = ml[(ml["machine_id"] == machine_id) & (ml["event_type"] == SETPOINT_EVENT)].sort_values(
+    ch = ml[(ml["machine_id"] == machine_id) & (ml["event_type"] == ctx.config.signals.setpoint_event)].sort_values(
         "timestamp", kind="stable"
     )
     if ch.empty:
@@ -263,8 +262,8 @@ def correlate(
     times = k["timestamp"]
 
     signals: dict[str, Callable[[], np.ndarray | None]] = {
-        "wrong_setpoint": lambda: _setpoint_deviation(ctx, machine_id, times),
-        "material_batch": lambda: _batch_change(ctx, times),
+        ctx.config.signals.setpoint_deviation: lambda: _setpoint_deviation(ctx, machine_id, times),
+        ctx.config.signals.batch_change: lambda: _batch_change(ctx, times),
     }
     results = []
     for h in hypotheses:

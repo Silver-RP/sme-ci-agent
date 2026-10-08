@@ -55,7 +55,7 @@ Có hai dạng; phân biệt bằng `kind`.
   "evidence_refs": [0],
   "expected_kpi": {"kpi": "defect_rate", "direction": "decrease", "target": 0.02},
   "status": "pending_approval",
-  "sop_proposal": {"proposal_id": "48af347b1856", "sop_id": "SOP-INJ-001", "base_version": 17,
+  "sop_proposal": {"proposal_id": "48af347b1856", "sop_id": "SOP-RFL-001", "base_version": 17,
     "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
     "rationale": "...", "kpi": "defect_rate", "status": "pending_approval"}}}
 ```

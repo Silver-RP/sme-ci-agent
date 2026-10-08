@@ -27,13 +27,13 @@ def test_full_state_works_in_stategraph():
         anomaly={"kpi": "error_rate", "z": 3.2},
         hypotheses=[Hypothesis(group="machine", description="wear", confidence=0.6)],
         evidence=[{"source": "log", "value": 1}],
-        proposal={"sop_id": "SOP-INJ-001"},
+        proposal={"sop_id": "SOP-RFL-001"},
         events=[],
     )
     out = g.compile().invoke(full)
     assert out["hypotheses"][0].group == "machine"
     assert out["events"] == [{"type": "x"}]
-    assert out["proposal"] == {"sop_id": "SOP-INJ-001"}
+    assert out["proposal"] == {"sop_id": "SOP-RFL-001"}
 
 
 def test_no_defect_names():

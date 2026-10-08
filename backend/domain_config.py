@@ -89,8 +89,29 @@ class LoopParams(_Strict):
     max_rollbacks: int = Field(default=2, ge=1)  # rollbacks per run before the run halts
 
 
+class SignalNames(_Strict):
+    """Domain names used by tools (YAML key ``signals:``); no defaults, they belong to the YAML."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    setpoint_event: str = Field(min_length=1)
+    setpoint_deviation: str = Field(min_length=1)
+    batch_change: str = Field(min_length=1)
+
+
+class DemoParams(_Strict):
+    """What the scripted demo LLM investigates (YAML key ``demo:``)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    machine_id: str = Field(min_length=1)
+
+
 class DomainConfig(_Strict):
     domain: str = Field(min_length=1)
+    signals: SignalNames
+    demo: DemoParams
+    default_period: tuple[str, str]
     ask: AskParams = Field(default_factory=AskParams)
     measure: MeasureParams = Field(default_factory=MeasureParams)
     loop: LoopParams = Field(default_factory=LoopParams)

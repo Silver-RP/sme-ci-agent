@@ -38,6 +38,13 @@ approvers:                  # người được duyệt/từ chối (allow-list,
   - alice                   # trưởng ca
   - bob                     # QA
   - qa_lead                 # trưởng QA
+signals:                    # tên miền mà tool correlate và nhật ký máy dùng
+  setpoint_event: setpoint_change     # event_type trong machine_log khi đổi setpoint
+  setpoint_deviation: wrong_setpoint  # giả thuyết đo bằng độ lệch setpoint so với SOP
+  batch_change: material_batch        # giả thuyết đo bằng đổi lô nguyên liệu
+default_period: ["2026-10-01", "2026-10-07"]  # khoảng ngày của bản mock (không có tool thật)
+demo:
+  machine_id: M02           # máy mà kịch bản LLM giả (demo) điều tra
 hypothesis_groups:          # Ishikawa
   machine: [wrong_setpoint, wear, calibration]
   method: [outdated_sop, missing_check]
@@ -45,12 +52,12 @@ hypothesis_groups:          # Ishikawa
   environment: [ambient_temperature]
   people: [new_operator, training_gap]
 sop:                        # SOP mẫu synthetic, có phiên bản
-  - id: SOP-INJ-001
+  - id: SOP-RFL-001
     version: 1
-    title: Injection molding setpoint check (synthetic)
+    title: Reflow oven setpoint check (synthetic)
     steps:
-      - Verify barrel temperature against the setpoint table at shift start.
-      - Record the setpoint on the shift sheet.
+      - Verify zone3_setpoint_c (180 C) against the setpoint table at shift start.
+      - Record the zone3_setpoint_c value on the shift sheet.
       - Run a first-article inspection before releasing the lot.
   - id: SOP-CAL-002
     version: 1

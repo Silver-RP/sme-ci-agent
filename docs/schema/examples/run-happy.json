@@ -45,7 +45,7 @@
             "status": "pending_approval",
             "sop_proposal": {
               "proposal_id": "48af347b1856",
-              "sop_id": "SOP-INJ-001",
+              "sop_id": "SOP-RFL-001",
               "base_version": 17,
               "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
               "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
@@ -55,7 +55,7 @@
           },
           "run_id": "run_ff5de085",
           "current_sop": {
-            "sop_id": "SOP-INJ-001",
+            "sop_id": "SOP-RFL-001",
             "version": 17,
             "content": "Verify the setpoint.\nCheck the setpoint again after the shift change."
           },
@@ -218,7 +218,7 @@
           "status": "pending_approval",
           "sop_proposal": {
             "proposal_id": "48af347b1856",
-            "sop_id": "SOP-INJ-001",
+            "sop_id": "SOP-RFL-001",
             "base_version": 17,
             "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
             "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
@@ -254,7 +254,7 @@
       "domain": "manufacturing",
       "payload": {
         "applied": true,
-        "sop_id": "SOP-INJ-001",
+        "sop_id": "SOP-RFL-001",
         "version": 18,
         "previous_version": 17,
         "approved_by": "alice",
@@ -325,7 +325,7 @@
           },
           "change": "Restore the setpoint and add a setpoint check step to the SOP",
           "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
-          "sop_id": "SOP-INJ-001",
+          "sop_id": "SOP-RFL-001",
           "sop_version": 18,
           "kpi": "defect_rate",
           "kpi_before": 0.06286363476851778,

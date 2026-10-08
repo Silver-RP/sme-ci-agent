@@ -121,7 +121,7 @@ def test_unknown_tool_and_bad_params_recorded_and_retry(ctx):
 
 def test_step_limit_marks_evidence_gap(ctx):
     n = CFG.investigate.max_tool_steps
-    llm = ScriptedLLM([call(i, "read_sop", sop_id="SOP-INJ-001") for i in range(n)] + [final(("machine", "x", 0.9))])
+    llm = ScriptedLLM([call(i, "read_sop", sop_id="SOP-RFL-001") for i in range(n)] + [final(("machine", "x", 0.9))])
     out = run_investigation(state(), CFG, llm, ctx)
     assert len(llm.calls) == n  # stopped at the limit, last scripted answer never requested
     assert out["evidence_gap"] is True and out["hypotheses"] == []
@@ -131,7 +131,7 @@ def test_step_limit_marks_evidence_gap(ctx):
 
 def test_step_limit_comes_from_config(ctx):
     cfg = CFG.model_copy(update={"investigate": CFG.investigate.model_copy(update={"max_tool_steps": 2})})
-    llm = ScriptedLLM([call(i, "read_sop", sop_id="SOP-INJ-001") for i in range(5)])
+    llm = ScriptedLLM([call(i, "read_sop", sop_id="SOP-RFL-001") for i in range(5)])
     out = run_investigation(state(), cfg, llm, ctx)
     assert len(llm.calls) == 2 and out["evidence_gap"] is True
 

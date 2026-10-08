@@ -27,10 +27,10 @@ def scripted_demo_llm(config: DomainConfig, *, ask_first: bool = True, then: tup
         }
     )
     investigate = [
-        LLMResponse(tool_calls=[ToolCall(id="t1", name="correlate", arguments={"kpi": kpi.name, "machine_id": "M02"})]),
+        LLMResponse(tool_calls=[ToolCall(id="t1", name="correlate", arguments={"kpi": kpi.name, "machine_id": config.demo.machine_id})]),
         json.dumps(
             {
-                "hypotheses": [{"group": group, "description": "wrong_setpoint", "confidence": 0.8}],
+                "hypotheses": [{"group": group, "description": config.signals.setpoint_deviation, "confidence": 0.8}],
                 "insufficient_evidence": False,
             }
         ),
