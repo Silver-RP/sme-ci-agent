@@ -36,6 +36,7 @@ from backend.agent.nodes.ask import (
 from backend.agent.nodes.improve import run_improvement
 from backend.agent.nodes.investigate import run_investigation
 from backend.agent.state import AgentState, Hypothesis, validate_hypothesis_groups
+from backend.detect.statistical import detect as run_detect
 from backend.domain_config import DomainConfig
 from backend.tools.fake_metrics import fetch_kpi_breakdown
 from backend.tools.readonly import ToolContext
@@ -64,6 +65,8 @@ def build_graph(
         return len(state.get("events", [])) + offset + 1
 
     def observe(state: AgentState) -> dict[str, Any]:
+        if tool_ctx is not None:
+            return observe_real(state)
         start, end = DEFAULT_PERIOD
         data = fetch_kpi_breakdown(kpi.name, start, end)
         ev = make_event(
@@ -76,8 +79,37 @@ def build_graph(
         )
         return {"evidence": [*state.get("evidence", []), data], "events": [ev]}
 
+    def observe_real(state: AgentState) -> dict[str, Any]:
+        """Real Detect (statistical code, no LLM) over the sandbox tables in ``tool_ctx``."""
+        found = run_detect(tool_ctx.tables, config, run_id=state.get("run_id", "run_detect"))
+        first = found[0]["payload"] if found else None
+        ev = make_event(
+            state,
+            "tool_called",
+            "quality",
+            {"tool": "detect", "kpis": [k.name for k in config.kpis], "anomalies_found": len(found)},
+            seq_of(state),
+            config.domain,
+        )
+        evidence = {"source": "detect", "anomalies_found": len(found), "first": first}
+        return {"evidence": [*state.get("evidence", []), evidence], "events": [ev]}
+
     def detect(state: AgentState) -> dict[str, Any]:
         obs = state["evidence"][-1]
+        if tool_ctx is not None:
+            first = obs.get("first")
+            if first is None:  # nothing abnormal: finish cleanly, no LLM
+                ev = make_event(
+                    state,
+                    "run_finished",
+                    "system",
+                    {"status": "no_anomaly", "reason": "detect found no anomaly"},
+                    seq_of(state),
+                    config.domain,
+                )
+                return {"anomaly": None, "status": "no_anomaly", "events": [ev]}
+            ev = make_event(state, "anomaly_detected", "quality", dict(first), seq_of(state), config.domain)
+            return {"anomaly": dict(first), "events": [ev]}
         anomaly = {
             "kpi": obs["kpi"],
             "value": obs["value"],
@@ -135,7 +167,14 @@ def build_graph(
     g.add_node("investigate", investigate)
     g.add_edge(START, "observe")
     g.add_edge("observe", "detect")
-    g.add_edge("detect", "investigate")
+    if tool_ctx is None:
+        g.add_edge("detect", "investigate")
+    else:
+        g.add_conditional_edges(
+            "detect",
+            lambda s: "investigate" if s.get("anomaly") else "end",
+            {"investigate": "investigate", "end": END},
+        )
     if llm is None:
         g.add_edge("investigate", END)  # legacy mock skeleton: no Ask
     else:

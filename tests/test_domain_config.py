@@ -29,7 +29,7 @@ def test_load_real_file():
     assert cfg.kpis[0].target > 0
 
 
-@pytest.mark.parametrize("field", ["domain", "kpis", "hypothesis_groups", "sop"])
+@pytest.mark.parametrize("field", ["domain", "kpis", "hypothesis_groups", "sop", "approvers"])
 def test_missing_required_field(tmp_path, field):
     data = _valid()
     del data[field]
@@ -61,3 +61,19 @@ def test_no_hardcoded_names_in_code():
     src = (ROOT / "backend" / "domain_config.py").read_text(encoding="utf-8")
     for n in names:
         assert not re.search(rf"\b{re.escape(n)}\b", src), n
+
+
+def test_approvers_loaded_and_resolved():
+    cfg = load_domain_config()
+    assert cfg.approvers
+    assert cfg.resolve_approver(f"  {cfg.approvers[0].upper()} ") == cfg.approvers[0]
+    for bad in ["", "   ", None, "llm", "nobody"]:
+        assert cfg.resolve_approver(bad) is None
+
+
+@pytest.mark.parametrize("val", [[], ["alice", " "]])
+def test_approvers_must_be_non_empty_names(tmp_path, val):
+    data = _valid()
+    data["approvers"] = val
+    with pytest.raises(ValidationError):
+        load_domain_config(_write(tmp_path, data))

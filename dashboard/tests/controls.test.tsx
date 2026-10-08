@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest";
 import { LiveRun } from "@/components/LiveRun";
 import { RunControls } from "@/components/RunControls";
-import { answerRun, ApiError, decideApproval, startRun, type RunStatus } from "@/lib/api";
+import { answerRun, ApiError, decideApproval, fetchApprovers, startRun, type RunStatus } from "@/lib/api";
 import type { EventSourceLike } from "@/lib/sources";
 
 const BASE = "http://api.test";
@@ -38,6 +38,16 @@ describe("api calls", () => {
       [`${BASE}/runs/run_1/answer`, "POST", { answer: "yes" }],
       [`${BASE}/runs/run_1/approval`, "POST", { reason: "", decision: "approved", decided_by: "qa" }],
     ]);
+  });
+
+  it("omits a blank change time and reads the approvers list", async () => {
+    const f = vi.fn().mockResolvedValue(resp(200, finished));
+    await startRun("  ", { baseUrl: BASE, fetchFn: f });
+    expect(JSON.parse(f.mock.calls[0][1].body)).toEqual({});
+    const g = vi.fn().mockResolvedValue(resp(200, { approvers: ["alice", "bob"] }));
+    expect(await fetchApprovers({ baseUrl: BASE, fetchFn: g })).toEqual(["alice", "bob"]);
+    expect(await fetchApprovers({ fetchFn: vi.fn().mockRejectedValue(new Error("down")) })).toEqual([]);
+    expect(await fetchApprovers({ fetchFn: vi.fn().mockResolvedValue(resp(500, {})) })).toEqual([]);
   });
 
   it.each([404, 409, 422])("surfaces %i with the backend detail", async (code) => {
@@ -119,8 +129,41 @@ describe("live flow", () => {
   it("shows API errors and keeps the buttons", async () => {
     const f = vi.fn().mockResolvedValue(resp(409, { detail: "not waiting" }));
     render(<RunControls runId="run_1" status={waitingApproval} onStarted={vi.fn()} onStatus={vi.fn()} api={{ baseUrl: BASE, fetchFn: f }} />);
+    fireEvent.change(screen.getByLabelText(/Decided by/), { target: { value: "alice" } });
     fireEvent.click(screen.getByText("Approve"));
     expect(await screen.findByTestId("api-error")).toHaveTextContent("409: not waiting");
     expect(screen.getByText("Approve")).toBeInTheDocument();
+  });
+});
+
+describe("approver field", () => {
+  it("disables Approve/Reject while the approver is empty or blank, enables once filled", () => {
+    const f = vi.fn();
+    render(<RunControls runId="run_1" status={waitingApproval} onStarted={vi.fn()} onStatus={vi.fn()} api={{ baseUrl: BASE, fetchFn: f }} />);
+    expect(screen.getByText("Approve")).toBeDisabled();
+    expect(screen.getByText("Reject")).toBeDisabled();
+    fireEvent.change(screen.getByLabelText(/Decided by/), { target: { value: "   " } });
+    expect(screen.getByText("Approve")).toBeDisabled();
+    fireEvent.click(screen.getByText("Approve"));
+    expect(f).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText(/Decided by/), { target: { value: "alice" } });
+    expect(screen.getByText("Approve")).toBeEnabled();
+    expect(screen.getByText("Reject")).toBeEnabled();
+  });
+
+  it("shows the 422 message for an invalid approver and keeps the buttons", async () => {
+    const f = vi.fn().mockResolvedValue(resp(422, { detail: "decided_by 'llm' is not a valid approver; allowed: alice" }));
+    render(<RunControls runId="run_1" status={waitingApproval} onStarted={vi.fn()} onStatus={vi.fn()} api={{ baseUrl: BASE, fetchFn: f }} />);
+    fireEvent.change(screen.getByLabelText(/Decided by/), { target: { value: "llm" } });
+    fireEvent.click(screen.getByText("Approve"));
+    expect(await screen.findByTestId("api-error")).toHaveTextContent("422: decided_by 'llm' is not a valid approver");
+    expect(screen.getByText("Approve")).toBeEnabled();
+  });
+
+  it("offers names from the approvers list", () => {
+    const { container } = render(
+      <RunControls runId="run_1" status={waitingApproval} onStarted={vi.fn()} onStatus={vi.fn()} approvers={["alice", "bob"]} api={{ baseUrl: BASE, fetchFn: vi.fn() }} />,
+    );
+    expect([...container.querySelectorAll("datalist option")].map((o) => o.getAttribute("value"))).toEqual(["alice", "bob"]);
   });
 });

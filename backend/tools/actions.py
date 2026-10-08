@@ -53,14 +53,17 @@ def propose_sop(
     }
 
 
-def _check_approval(approval: dict | None, sop_id: str) -> str:
+def _check_approval(approval: dict | None, sop_id: str, config) -> str:
     if not isinstance(approval, dict):
         raise PermissionError("apply_sop requires a human approval record")
     if approval.get("decision") != APPROVED:
         raise PermissionError("approval decision is not 'approved'")
-    approver = str(approval.get("approved_by") or "").strip()
-    if not approver or approver.lower() in {"agent", "system"}:
-        raise PermissionError("approval must come from a human (approved_by)")
+    approver = config.resolve_approver(approval.get("approved_by"))
+    if approver is None:
+        raise PermissionError(
+            f"approved_by {str(approval.get('approved_by') or '').strip()!r} is not a valid approver; "
+            f"allowed: {', '.join(config.approvers)}"
+        )
     if approval.get("sop_id") not in (None, sop_id):
         raise PermissionError("approval is for a different SOP")
     return approver
@@ -75,7 +78,7 @@ def apply_sop(
     approval: dict | None = None,
 ) -> dict:
     """Create a new SOP version (previous + 1). Refused without a human approval record."""
-    approver = _check_approval(approval, sop_id)
+    approver = _check_approval(approval, sop_id, ctx.config)
     if not new_content.strip():
         raise ValueError("new_content must be non-empty")
     if repo.get_sop_version(ctx.session, sop_id) is None:

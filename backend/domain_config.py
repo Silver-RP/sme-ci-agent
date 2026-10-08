@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 DEFAULT_PROFILE_PATH = Path(__file__).resolve().parents[1] / "data" / "context_profile.yaml"
 
@@ -86,6 +86,23 @@ class DomainConfig(_Strict):
     kpis: list[KPI] = Field(min_length=1)
     hypothesis_groups: dict[str, list[str]] = Field(min_length=1)
     sop: list[SOP]
+    approvers: list[str] = Field(min_length=1)  # allow-list of names allowed to approve or reject (synthetic)
+
+    @field_validator("approvers")
+    @classmethod
+    def _approvers_clean(cls, v: list[str]) -> list[str]:
+        cleaned = [a.strip() for a in v]
+        if any(not a for a in cleaned):
+            raise ValueError("approvers must not contain empty names")
+        return cleaned
+
+    def resolve_approver(self, name: object) -> str | None:
+        """The one shared approver check: the configured spelling of ``name`` (trimmed, case-insensitive),
+        or None when it is empty or not on the allow-list."""
+        key = str(name or "").strip().lower()
+        if not key:
+            return None
+        return next((a for a in self.approvers if a.lower() == key), None)
 
 
 def load_domain_config(path: str | Path = DEFAULT_PROFILE_PATH) -> DomainConfig:

@@ -1,34 +1,62 @@
 {
-  "milestone": "R6",
+  "milestone": "R7",
   "current_task": null,
   "tasks": {
     "dev-01": {
       "status": "DONE",
       "round": 1,
-      "base": "3673628cc0f495bdba0774ae0566866e35549f96",
-      "commit": "196aab1"
+      "base": "a2ae7b00abb475d25d768effdea3dd9cc6a0559c",
+      "commit": "28e647f"
     },
     "dev-02": {
       "status": "DONE",
       "round": 1,
-      "base": "903d1385e3c5b358c87c2e69a1758c08649e65ca",
-      "commit": "e450d22"
+      "base": "a74e69a87faaf57c89979a662791be399e53ca9c",
+      "commit": "e4076ba"
     },
     "dev-03": {
       "status": "DONE",
       "round": 1,
-      "base": "e03d7c8e834dcea27dc1c9b566577458c6505759",
-      "commit": "595facf"
+      "base": "12e3428646b8f5843a2f4fac67ac0671374ad153",
+      "commit": "9e76f78"
+    },
+    "dev-04": {
+      "status": "DONE",
+      "round": 1,
+      "base": "fc9db93893dca2c8d6c9b7b55baa5ad111c9c750",
+      "commit": "a279826"
     }
   },
   "verify": {
     "consecutive_blocks": 0,
     "last_status": "PASS",
-    "hook_runs": 18,
-    "last_hook_at": "2026-10-07T18:39:14Z",
+    "hook_runs": 22,
+    "last_hook_at": "2026-10-08T13:51:43Z",
     "last_hook_agent": "developer"
   },
   "history": {
+    "R6": {
+      "tasks": {
+        "dev-01": {
+          "status": "DONE",
+          "round": 1,
+          "base": "3673628cc0f495bdba0774ae0566866e35549f96",
+          "commit": "196aab1"
+        },
+        "dev-02": {
+          "status": "DONE",
+          "round": 1,
+          "base": "903d1385e3c5b358c87c2e69a1758c08649e65ca",
+          "commit": "e450d22"
+        },
+        "dev-03": {
+          "status": "DONE",
+          "round": 1,
+          "base": "e03d7c8e834dcea27dc1c9b566577458c6505759",
+          "commit": "595facf"
+        }
+      }
+    },
     "R5": {
       "tasks": {
         "dev-01": {

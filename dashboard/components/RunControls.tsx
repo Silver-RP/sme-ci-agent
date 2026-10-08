@@ -13,12 +13,14 @@ export function RunControls({
   onStarted,
   onStatus,
   api,
+  approvers,
 }: {
   runId: string | null;
   status: RunStatus | null;
   onStarted: (s: RunStatus) => void;
   onStatus: (s: RunStatus) => void;
   api?: ApiOptions;
+  approvers?: string[];
 }) {
   const [changeTime, setChangeTime] = useState("");
   const [answer, setAnswer] = useState("");
@@ -79,7 +81,13 @@ export function RunControls({
         <div data-testid="pending-approval">
           <p>Waiting for your decision{pending.kind ? ` (${String(pending.kind)})` : ""}.</p>
           <label>
-            Decided by <input value={decidedBy} onChange={(e) => setDecidedBy(e.target.value)} />
+            Decided by{" "}
+            <input list="approvers-list" value={decidedBy} onChange={(e) => setDecidedBy(e.target.value)} />
+            <datalist id="approvers-list">
+              {(approvers ?? []).map((a) => (
+                <option key={a} value={a} />
+              ))}
+            </datalist>
           </label>{" "}
           <label>
             Reason <input value={reason} onChange={(e) => setReason(e.target.value)} />
@@ -88,7 +96,7 @@ export function RunControls({
             <button
               key={d}
               type="button"
-              disabled={busy}
+              disabled={busy || decidedBy.trim() === ""}
               onClick={() =>
                 void run(() => decideApproval(runId, { decision: d, decided_by: decidedBy.trim(), reason }, api), onStatus)
               }

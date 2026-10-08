@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import threading
 import uuid
 from collections.abc import Callable
@@ -21,11 +22,13 @@ from functools import cache
 from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from langgraph.types import Command
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
+from backend.agent.demo_llm import llm_from_env
 from backend.agent.graph import build_graph
 from backend.agent.llm import LLM, AnthropicLLM
 from backend.agent.nodes.act import DecisionError, parse_decision
@@ -45,7 +48,8 @@ WAIT_APPROVAL = ("wait_approval", "wait_rollback")
 class StartRun(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    change_time: str = Field(min_length=1)  # when the fix takes effect; Measure compares windows around it
+    # when the fix takes effect; Measure compares windows around it. Optional: default = end of the anomaly
+    change_time: str | None = Field(default=None, min_length=1)
 
 
 class AnswerBody(BaseModel):
@@ -118,7 +122,11 @@ def create_app(
 ) -> FastAPI:
     """Build the app. Every dependency is injectable; the defaults need the real LLM and Postgres."""
     cfg_domain = config or load_domain_config()
-    make_llm = llm_factory or _default_llm_factory
+    def env_llm_factory(run_id: str) -> LLM:
+        # SME_LLM=scripted -> fake LLM (demo/e2e, no key); otherwise the real one
+        return llm_from_env(cfg_domain) or _default_llm_factory(run_id)
+
+    make_llm = llm_factory or env_llm_factory
     make_ctx = ctx_factory or _default_ctx_factory
     if checkpointer is None:
         from langgraph.checkpoint.memory import InMemorySaver
@@ -127,6 +135,13 @@ def create_app(
     runs: dict[str, Run] = {}
     app = FastAPI(title="SME CI Agent")
     app.state.runs = runs
+    # the dashboard (yarn dev, port 3000) calls this API from the browser
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[o for o in os.environ.get("SME_CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",") if o],
+        allow_methods=["GET", "POST"],
+        allow_headers=["*"],
+    )
 
     def get_run(run_id: str) -> Run:
         run = runs.get(run_id)
@@ -161,7 +176,8 @@ def create_app(
         graph = build_graph(cfg_domain, checkpointer=checkpointer, llm=make_llm(run_id), tool_ctx=ctx, full_loop=True)
         run = Run(run_id=run_id, graph=graph, cfg={"configurable": {"thread_id": run_id}}, ctx=ctx)
         state = new_state(run_id, cfg_domain.domain)
-        state["change_time"] = body.change_time
+        if body.change_time is not None:
+            state["change_time"] = body.change_time
         with run.lock:
             advance(run, state)  # on failure the run is not registered
             runs[run_id] = run
@@ -181,11 +197,15 @@ def create_app(
         with run.lock:
             require_waiting(run, "approval")
             try:
-                decision = parse_decision(body.model_dump())  # reject before resuming: a bad resume would break the run
+                decision = parse_decision(body.model_dump(), cfg_domain)  # reject before resuming: a bad resume would break the run
             except DecisionError as e:
                 raise HTTPException(status_code=422, detail=str(e)) from e
             advance(run, Command(resume=decision))
             return _status(run)
+
+    @app.get("/config/approvers")
+    def approvers() -> dict[str, Any]:
+        return {"approvers": list(cfg_domain.approvers)}
 
     @app.get("/runs/{run_id}")
     def run_status(run_id: str) -> dict[str, Any]:
