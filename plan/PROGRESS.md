@@ -199,3 +199,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - H-12 đóng: `scripts/eval_rootcause.py` (scripted right/wrong/unsure, `--llm real` chưa chạy được vì cần key), người giả trung tính. 391 pytest.
 - Lệnh cho supervisor quyết có đưa vào smoke: `uv run python scripts/eval_rootcause.py`.
 - Non-blocking: kịch bản "right" viết sẵn đáp án; token chỉ ước lượng.
+
+### R9/dev-04: DONE
+- Vòng: 1. Commit: c72b698 (test đỏ), 04de8e1. Review: .autodev/reviews/R9-dev-04-r1.json (PASS).
+- H-07/H-08/H-09/H-17 đóng. YAML `loop:` thêm max_revisions (3), max_total_rollbacks (4), max_retries (3); `retryable` và reason mới `max_revisions_reached`, `max_total_rollbacks_reached` (dev-06 ghi vào payloads.md). 403 pytest.
+- Non-blocking: retries chỉ trong bộ nhớ; chưa test giới hạn = 0.
