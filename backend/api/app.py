@@ -45,7 +45,8 @@ WAIT_APPROVAL = ("wait_approval", "wait_rollback")
 class StartRun(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    change_time: str = Field(min_length=1)  # when the fix takes effect; Measure compares windows around it
+    # when the fix takes effect; Measure compares windows around it. Optional: default = end of the anomaly
+    change_time: str | None = Field(default=None, min_length=1)
 
 
 class AnswerBody(BaseModel):
@@ -161,7 +162,8 @@ def create_app(
         graph = build_graph(cfg_domain, checkpointer=checkpointer, llm=make_llm(run_id), tool_ctx=ctx, full_loop=True)
         run = Run(run_id=run_id, graph=graph, cfg={"configurable": {"thread_id": run_id}}, ctx=ctx)
         state = new_state(run_id, cfg_domain.domain)
-        state["change_time"] = body.change_time
+        if body.change_time is not None:
+            state["change_time"] = body.change_time
         with run.lock:
             advance(run, state)  # on failure the run is not registered
             runs[run_id] = run

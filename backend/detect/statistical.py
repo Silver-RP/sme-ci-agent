@@ -23,7 +23,7 @@ from typing import Any
 
 import pandas as pd
 
-from backend.agent.graph import make_event
+from backend.agent.events import make_event
 from backend.domain_config import DetectParams, DomainConfig
 
 MAINTENANCE_EVENT = "maintenance"

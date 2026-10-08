@@ -97,3 +97,54 @@ def test_event_ids_restart_per_run_on_same_graph():
         assert seqs == list(range(1, len(seqs) + 1))
         assert len({e["event_id"] for e in out["events"]}) == len(out["events"])
         assert all(e["event_id"].startswith(f"evt_run_{i}_") for e in out["events"])
+
+
+# ---- dev-02 (R7): real Detect inside the graph when tool_ctx is given ----
+
+
+def _detect_ctx(tables):
+    from backend.tools.readonly import ToolContext
+
+    return ToolContext(tables=tables, session=None, run_id="run_det")
+
+
+def test_graph_with_tool_ctx_emits_anomaly_from_real_detect():
+    from backend.detect.statistical import detect
+    from backend.sandbox import generate_dataset
+
+    cfg = load_domain_config()
+    tables = generate_dataset(seed=42).tables
+    expected = detect(tables, cfg, run_id="run_det")[0]["payload"]
+    graph = build_graph(cfg, tool_ctx=_detect_ctx(tables))
+    for _ in range(2):  # repeated calls: no state leaks between runs
+        out = graph.invoke(new_state("run_det", cfg.domain), {"configurable": {"thread_id": f"t{_}"}})
+        evs = [e for e in out["events"] if e["type"] == "anomaly_detected"]
+        assert len(evs) == 1
+        _validate_event(evs[0])
+        p = evs[0]["payload"]
+        assert p == expected and p["kpi"] in {k.name for k in cfg.kpis}
+        assert p["start"] and p["end"] and out["anomaly"] == expected
+        assert [e["event_id"] for e in out["events"]] == sorted({e["event_id"] for e in out["events"]})
+
+
+def test_graph_without_anomaly_finishes_cleanly_without_llm():
+    from backend.agent.llm import ScriptedLLM
+    from backend.sandbox import generate_dataset
+
+    cfg = load_domain_config()
+    tables = dict(generate_dataset(seed=42).tables)
+    kpi = cfg.kpis[0].name
+    k = tables["kpi_log"].copy()
+    k["value"] = k.groupby(["machine_id", "kpi"])["value"].transform("mean")  # flat series: nothing above the limit
+    tables["kpi_log"] = k
+    llm = ScriptedLLM([])
+    graph = build_graph(cfg, llm=llm, tool_ctx=_detect_ctx(tables), full_loop=True)
+    cfgrun = {"configurable": {"thread_id": "t_none"}}
+    out = graph.invoke(new_state("run_none", cfg.domain), cfgrun)
+    assert graph.get_state(cfgrun).next == ()
+    assert out["status"] == "no_anomaly" and out["anomaly"] is None and kpi
+    last = out["events"][-1]
+    assert last["type"] == "run_finished" and last["payload"]["status"] == "no_anomaly"
+    assert "anomaly_detected" not in [e["type"] for e in out["events"]]
+    _validate_event(last)
+    assert llm.calls == []

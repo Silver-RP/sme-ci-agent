@@ -202,10 +202,27 @@ def test_empty_answer_is_422(db_session):
     assert client.post(f"/runs/{run['run_id']}/answer", json={"answer": ""}).status_code == 422
 
 
-@pytest.mark.parametrize("body", [{}, {"change_time": ""}])
-def test_start_without_change_time_is_422(db_session, body):
+def test_start_with_empty_change_time_is_422(db_session):
     client = make_client(db_session, [])
-    assert client.post("/runs", json=body).status_code == 422
+    assert client.post("/runs", json={"change_time": ""}).status_code == 422
+
+
+def test_start_without_change_time_runs_to_measure(db_session):
+    """change_time is optional: it defaults to the end of the detected anomaly; repeated runs stay isolated."""
+    client = make_client(
+        db_session,
+        [[*investigate_script(), improve_answer()], [*investigate_script(), improve_answer()]],
+    )
+    for _ in range(2):
+        r = client.post("/runs", json={})
+        assert r.status_code == 201, r.text
+        run = r.json()
+        assert run["pending"]["type"] == "approval"
+        done = client.post(f"/runs/{run['run_id']}/approval", json={"decision": "approved", "decided_by": "alice"})
+        assert done.status_code == 200, done.text
+        assert done.json()["state"] == "finished"
+        types = [m["event"] for m in sse_events(client, run["run_id"])]
+        assert "kpi_measured" in types and types[-1] == "run_finished"
 
 
 def test_graph_valueerror_is_422(db_session):

@@ -348,17 +348,17 @@ def test_act_records_change_time_from_anomaly_end_and_measure_uses_it(db_session
     assert m["change_time"].startswith(CHANGE) and m["passed"] is True
 
 
-def test_default_state_without_change_time_stops_before_approval_and_apply(db_session):
-    """new_state() with no change_time and no anomaly end (how a bare API run starts): the run fails
-    BEFORE asking a person to approve, and nothing is applied (no half-applied SOP)."""
+def test_default_state_without_change_time_uses_detected_anomaly_end(db_session):
+    """No change_time in the state: the real Detect anomaly supplies its 'end' (resolve_change_time)."""
     graph, _ = make(db_session, [*investigate_script(), improve_answer()])
     cfg = cfg_run()
     s = new_state("run_act", CFG.domain)
     assert "change_time" not in s
-    with pytest.raises(ValueError, match="change_time"):
-        graph.invoke(s, cfg)
-    assert versions(db_session) == {}
-    assert "apply_sop" not in audit_actions(db_session)
+    graph.invoke(s, cfg)
+    anomaly = graph.get_state(cfg).values["anomaly"]
+    out = graph.invoke(Command(resume=HUMAN), cfg)
+    assert out["applied"]["change_time"] == anomaly["end"]
+    assert "kpi_measured" in types(out) and types(out)[-1] == "run_finished"
 
 
 def test_act_node_validates_change_time_before_apply_sop(db_session):
