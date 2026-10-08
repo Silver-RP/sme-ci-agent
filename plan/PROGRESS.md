@@ -188,3 +188,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: dc0115d (test đỏ), 802d568. Review: .autodev/reviews/R9-dev-01-r1.json (PASS).
 - H-10 đóng (SOP-RFL-001 reflow); H-22 đóng một phần (tín hiệu, default_period, máy demo ra YAML). 373 pytest.
 - Non-blocking: fake_metrics.py còn "M02" (mock).
+
+### R9/dev-02: DONE
+- Vòng: 1. Commit: 8fe79b9 (test đỏ), d3b6f5f. Review: .autodev/reviews/R9-dev-02-r1.json (PASS).
+- H-06 đóng: Improve trả `action {parameter, machine_id, value}` (tham số hợp lệ ở YAML `actions.parameters`, sai thì sửa lại có giới hạn); Act đưa action vào simulator; Measure theo `action_level`, không action → `not_applied`; `sop_applied` không lộ `sim`; `ProposalError` sau resume → run `error`. 384 pytest.
+- Non-blocking: value NaN chưa chặn (allow_inf_nan=False); `fix_addresses_cause` còn nhưng không dùng.
