@@ -8,7 +8,7 @@ Supervisor cập nhật file này ở cuối mỗi mốc (và trước khi ngư�
 - Người dùng giao tiếp bằng tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa và được báo ngắn gọn.
 
 ## Bước tiếp theo (người dùng duyệt 2026-10-08)
-1. **R6 = dashboard** (T-016, T-026), plan ở `plan/R6.md`: Next.js + yarn trong `dashboard/`, fixture → SSE → API thật. Cổng verify có bước `dashboard` (lint + test + build, chỉ chạy khi có `dashboard/package.json`). Trước khi chạy: kiểm tra `node`/`yarn` có trên máy (thiếu thì người dùng cài; worker không tự cài). Chạy bằng chế độ B: `nohup .autodev/autodev-run.sh R6 > .autodev/runs/nohup.out 2>&1 &`.
+1. **R7 = M3 end-to-end** (T-031, chuẩn bị T-030), plan ở `plan/R7.md`: dữ liệu 6 tháng + báo cáo, Detect thật trong graph, người duyệt hợp lệ dùng chung (allow-list trong `context_profile.yaml`, dashboard khoá nút), `scripts/run_scenario.py` + `scripts/demo.sh`, test e2e qua uvicorn thật. R6 (dashboard) đã merge (#27). Node đã nâng lên 22.23.3 (`nvm alias default 22`); shell cũ còn PATH 22.12 thì khởi chạy runner với `PATH=~/.nvm/versions/node/v22.23.3/bin:$PATH`. Sau R7: người dùng chạy một vòng với LLM thật (T-030).
 2. Còn của P4: kiểm chứng nhánh chờ reset khi gặp hạn mức thật (đối chiếu `LIMIT_RE`/`RESET_RE`), rồi đóng P4.
 3. Để sau (ROADMAP "Để sau"): dashboard xem tiến trình `claude -p`, thông báo qua Telegram.
 
