@@ -40,7 +40,13 @@ while true; do
       a=$(age "$f")
       tools=$(grep -c '"type":"tool_use"' "$f")
       last=$(grep -o '"type":"tool_use","id":"[^"]*","name":"[^"]*"' "$f" | tail -1 | sed 's/.*"name":"//; s/"$//')
-      echo "  transcript: cập nhật ${a}s trước · ${tools} lệnh tool · lệnh cuối: ${last:-?}"
+      echo "  phiên điều phối: cập nhật ${a}s trước · ${tools} lệnh tool · lệnh cuối: ${last:-?}"
+      # developer/reviewer run as sub-agents with their own transcripts under <session>/subagents/
+      s=$(ls -t "${f%.jsonl}"/subagents/*.jsonl 2>/dev/null | head -1)
+      if [ -n "$s" ]; then
+        slast=$(grep -o '"type":"tool_use","id":"[^"]*","name":"[^"]*"' "$s" | tail -1 | sed 's/.*"name":"//; s/"$//')
+        echo "  sub-agent (developer/reviewer) mới nhất: cập nhật $(age "$s")s trước · lệnh cuối: ${slast:-?}"
+      fi
     fi
     echo
   done
