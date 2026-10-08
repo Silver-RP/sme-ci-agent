@@ -1,6 +1,6 @@
 {
   "milestone": "R8",
-  "current_task": "dev-05",
+  "current_task": null,
   "tasks": {
     "dev-01": {
       "status": "DONE",
@@ -27,16 +27,17 @@
       "commit": "9122da3"
     },
     "dev-05": {
-      "status": "IN_PROGRESS",
-      "round": 0,
-      "base": "9122da3"
+      "status": "DONE",
+      "round": 1,
+      "base": "9122da3",
+      "commit": "edd2f38"
     }
   },
   "verify": {
     "consecutive_blocks": 0,
     "last_status": "PASS",
-    "hook_runs": 26,
-    "last_hook_at": "2026-10-08T15:25:43Z",
+    "hook_runs": 27,
+    "last_hook_at": "2026-10-08T15:42:26Z",
     "last_hook_agent": "developer"
   },
   "history": {
