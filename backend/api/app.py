@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import threading
 import uuid
 from collections.abc import Callable
@@ -21,11 +22,13 @@ from functools import cache
 from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from langgraph.types import Command
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
+from backend.agent.demo_llm import llm_from_env
 from backend.agent.graph import build_graph
 from backend.agent.llm import LLM, AnthropicLLM
 from backend.agent.nodes.act import DecisionError, parse_decision
@@ -119,7 +122,11 @@ def create_app(
 ) -> FastAPI:
     """Build the app. Every dependency is injectable; the defaults need the real LLM and Postgres."""
     cfg_domain = config or load_domain_config()
-    make_llm = llm_factory or _default_llm_factory
+    def env_llm_factory(run_id: str) -> LLM:
+        # SME_LLM=scripted -> fake LLM (demo/e2e, no key); otherwise the real one
+        return llm_from_env(cfg_domain) or _default_llm_factory(run_id)
+
+    make_llm = llm_factory or env_llm_factory
     make_ctx = ctx_factory or _default_ctx_factory
     if checkpointer is None:
         from langgraph.checkpoint.memory import InMemorySaver
@@ -128,6 +135,13 @@ def create_app(
     runs: dict[str, Run] = {}
     app = FastAPI(title="SME CI Agent")
     app.state.runs = runs
+    # the dashboard (yarn dev, port 3000) calls this API from the browser
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[o for o in os.environ.get("SME_CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",") if o],
+        allow_methods=["GET", "POST"],
+        allow_headers=["*"],
+    )
 
     def get_run(run_id: str) -> Run:
         run = runs.get(run_id)

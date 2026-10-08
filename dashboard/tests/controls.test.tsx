@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest";
 import { LiveRun } from "@/components/LiveRun";
 import { RunControls } from "@/components/RunControls";
-import { answerRun, ApiError, decideApproval, startRun, type RunStatus } from "@/lib/api";
+import { answerRun, ApiError, decideApproval, fetchApprovers, startRun, type RunStatus } from "@/lib/api";
 import type { EventSourceLike } from "@/lib/sources";
 
 const BASE = "http://api.test";
@@ -38,6 +38,16 @@ describe("api calls", () => {
       [`${BASE}/runs/run_1/answer`, "POST", { answer: "yes" }],
       [`${BASE}/runs/run_1/approval`, "POST", { reason: "", decision: "approved", decided_by: "qa" }],
     ]);
+  });
+
+  it("omits a blank change time and reads the approvers list", async () => {
+    const f = vi.fn().mockResolvedValue(resp(200, finished));
+    await startRun("  ", { baseUrl: BASE, fetchFn: f });
+    expect(JSON.parse(f.mock.calls[0][1].body)).toEqual({});
+    const g = vi.fn().mockResolvedValue(resp(200, { approvers: ["alice", "bob"] }));
+    expect(await fetchApprovers({ baseUrl: BASE, fetchFn: g })).toEqual(["alice", "bob"]);
+    expect(await fetchApprovers({ fetchFn: vi.fn().mockRejectedValue(new Error("down")) })).toEqual([]);
+    expect(await fetchApprovers({ fetchFn: vi.fn().mockResolvedValue(resp(500, {})) })).toEqual([]);
   });
 
   it.each([404, 409, 422])("surfaces %i with the backend detail", async (code) => {

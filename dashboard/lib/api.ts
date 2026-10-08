@@ -62,7 +62,22 @@ async function post(path: string, body: unknown, o: ApiOptions): Promise<RunStat
   return data as RunStatus;
 }
 
-export const startRun = (changeTime: string, o: ApiOptions = {}) => post("/runs", { change_time: changeTime }, o);
+/** A blank change time is omitted: the backend then uses the end of the anomaly Detect finds. */
+export const startRun = (changeTime: string, o: ApiOptions = {}) =>
+  post("/runs", changeTime.trim() === "" ? {} : { change_time: changeTime }, o);
+
+/** Names allowed to approve or reject (GET /config/approvers). Returns [] if the call fails. */
+export async function fetchApprovers(o: ApiOptions = {}): Promise<string[]> {
+  const base = (o.baseUrl ?? apiBase()).replace(/\/$/, "");
+  try {
+    const res = await (o.fetchFn ?? fetch)(`${base}/config/approvers`);
+    if (!res.ok) return [];
+    const data = (await res.json()) as { approvers?: unknown };
+    return Array.isArray(data.approvers) ? data.approvers.map(String) : [];
+  } catch {
+    return [];
+  }
+}
 
 export const answerRun = (runId: string, answer: string, o: ApiOptions = {}) =>
   post(`/runs/${encodeURIComponent(runId)}/answer`, { answer }, o);
