@@ -11,71 +11,23 @@ Supervisor cập nhật file này ở cuối mỗi mốc và trước khi ngư�
 - **Phiên supervisor đóng vai con người:** lập plan, giao mốc, duyệt, merge, sửa plugin. Không viết code dự án (developer/reviewer trong worker làm). Quyền: thiết kế mục 6.15, `.claude/commands/supervise.md`.
 - **Người dùng:** giao tiếp bằng tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi họ hỏi "tại sao".
 
-## Bước tiếp theo (người dùng đã duyệt thứ tự, 2026-10-09)
-Phiên trước (rất dài) đã kết thúc sau R8. Làm lần lượt:
+## Bước tiếp theo (cập nhật 2026-10-09, sau P5 + audit đầu)
+Đọc `docs/autodev/PROJECT_STATE.md` ngay sau file này: mục tiêu, % đạt, lỗ hổng H-xx, hướng 3–5 mốc đã duyệt.
 
-1. **P5: chống mất tầm nhìn** (sửa plugin, PR `chore/autodev-p5`, có test trong `.autodev/tests`):
-   - Lệnh `/audit` (`.claude/commands/audit.md`): rà chỉ đọc bằng 2–3 agent `Explore` song song, theo 3 góc:
-     - (a) logic vòng lặp và quy tắc CLAUDE.md;
-     - (b) API ↔ dashboard và hợp đồng `events.json`;
-     - (c) độ khớp với mục tiêu: mỗi mốc đẩy "3 điều cần kiểm chứng" trong PLAN đi bao xa, có lệch hướng không.
+Đã xong trong phiên 2026-10-09:
+- P5 (PR #40): `/audit`, `run.py --audit-every 2` + `--audit-only`, `PROJECT_STATE.md` + `state.json`, `LESSONS.md`, guard chặn sửa file bằng sed tại chỗ / script Python qua stdin.
+- Audit đầu `docs/audits/2026-10-09.md`: H-06..H-26 (7 cao), % đạt 3 điều hạ còn 25/40/10.
+- Gói bàn giao UI (bản đầu): `docs/schema/payloads.md`, `docs/schema/examples/`, `docs/ui-handoff.md`.
+- Người dùng cho supervisor tự merge PR (`.claude/settings.local.json`, không commit).
 
-     Kết quả ghi `docs/audits/<ngày>.md`; lỗ hổng đánh mã H-xx, thành task mốc kế tiếp, mở cho đến khi có test chứng minh đã sửa. Mẫu đề bài: xem 2 audit ngày 2026-10-08 (tóm tắt trong `PROGRESS.md` và `plan/R8.md`).
-   - Runner `--audit-every 2`: mặc định cứ 2 mốc R thì chạy audit headless.
-   - `docs/autodev/PROJECT_STATE.md` (dưới 150 dòng) cùng bản máy đọc `docs/autodev/state.json`, gồm:
-     - bảng M/R/P ở đầu;
-     - mục tiêu và 3 điều cần kiểm chứng kèm % đạt;
-     - kiến trúc thật hiện nay;
-     - bảng "quy tắc → test bảo vệ";
-     - lỗ hổng mở;
-     - quyết định gần đây;
-     - bảng tầm nhìn 3–5 mốc tới (P6 điền).
-
-     developer, reviewer và supervisor đọc file này trước plan mốc.
-   - `docs/autodev/LESSONS.md`: nguyên tắc rút ra, mỗi mục 3–4 dòng (nguyên tắc / ngộ ra từ / đã biến thành quy tắc-test-công cụ nào). 4 mục người dùng đánh giá cao nhất đặt đầu, rồi đến các mục khác:
-     1. Đừng tin báo cáo, kể cả của chính mình.
-     2. Người kiểm tra phải khác người làm và nhìn từ góc khác.
-     3. Tự động hoá phải có điểm dừng rõ ràng và quyền hạn có giới hạn.
-     4. Ngữ cảnh dài làm mất tầm nhìn tổng thể.
-     - Quy tắc trong tài liệu sẽ bị quên; quy tắc thành test thì không.
-     - Test xanh khác với dùng được (smoke).
-     - Im lặng không có nghĩa là chạy tốt (đo "còn sống" đúng tầng sub-agent).
-     - Chạy tách rời phải có kênh báo về.
-     - Môi trường cũng là code (iCloud, Node, cổng, PATH).
-     - Guard so khớp theo chữ chặn nhầm cả lời nói.
-   - ROADMAP: thêm P5 (audit + trạng thái), P6 (lập kế hoạch dài hạn), P7 (Telegram hai chiều + API trạng thái + dashboard theo dõi plugin), P8 (đóng gói, UI deploy được; P5 cũ "đóng gói" chuyển thành P8).
-   - Sau P5: xuất một **trang trạng thái dạng Artifact** (riêng tư, xem được trên điện thoại) từ `state.json`; cập nhật sau mỗi mốc.
-2. **Chạy `/audit` lần đầu** trên kết quả R7 + R8, rồi viết `PROJECT_STATE.md` lần đầu từ audit đó. Đưa vào audit các điểm R8 còn mở (mục "Việc mở").
-3. **Gói bàn giao UI cho team frontend:** UI sản phẩm do bạn frontend trong team làm; auto-dev chỉ giữ logic và dữ liệu. Gói gồm:
-   - `docs/schema/payloads.md`: payload từng loại event kèm ví dụ thật; gộp luôn R8-c1, tức các trường mới `kpi_measured.status`, `run_finished` status `error`/`closed`, `question_asked` kind `halt`, `approval_decided.sop_still_in_force`, `proposal_id`/`proposal_hash`.
-   - Danh sách màn hình và trạng thái cho demo: danh sách run, timeline, khung duyệt đề xuất (SOP cũ → mới), duyệt rollback, câu hỏi, lỗi / chưa đủ bằng chứng / đã Learn, số liệu 3 chỉ số.
-   - Fixture đủ các nhánh.
-   - Ranh giới: từ R9, auto-dev không sửa phần trình bày trong `dashboard/`.
-   - Hỏi người dùng tên/GitHub của bạn frontend để ghi vào `docs/PLAN.md` mục 4.
-4. **T-030 (người dùng chạy):** một vòng với LLM thật trên dashboard, ghi lỗi vào `docs/decisions.md` mục "Việc cần sửa sau khi chạy". Hướng dẫn từng bước.
-   - Người dùng tạo key ở console.anthropic.com, nạp khoảng 5 USD. Gói Pro/Max **không** kèm API; người dùng đã hỏi về việc dùng LLM khác, khuyên Anthropic theo ADR-006.
-   - Người dùng tự điền `.env` (`ANTHROPIC_API_KEY`, `MODEL_REASONING=claude-sonnet-5-5`, `MODEL_CHEAP=claude-haiku-4-5-20251001`), rồi `SME_LLM=real scripts/demo.sh`.
-   - Agent không đọc `.env`.
-5. **P6: lập kế hoạch dài hạn ("cuốn chiếu có tầm nhìn"):**
-   - Bảng 3–5 mốc tới v0.1-e2e (13/10) và freeze (20/10): đường găng, thứ tự cắt (PLAN mục 7).
-   - Pre-mortem mỗi mốc: "đạt trên giấy mà hỏng thực tế thế nào?".
-   - Đối chiếu ước tính với thực tế (thời gian, chi phí, số vòng, lỗ hổng audit).
-   - **Người dùng duyệt** thứ tự và việc cắt; agent không tự cắt vì hạn chót.
-6. **R9:**
-   - `tests/test_invariants.py`: quy tắc CLAUDE.md thành test.
-   - R8-c2: e2e uvicorn nhánh rollback (thêm kịch bản LLM giả có giả thuyết sai) và assert `learning_saved` nhánh đạt.
-   - Checkpointer Postgres; dùng bảng `runs`/`events` (đang trống); run id trên URL.
-   - API cho trang danh sách run và trang Dữ liệu (audit_log, sop_versions, learning_store); phần trình bày để team frontend làm.
-   - Detect không chọn lại anomaly đã xử lý; đọc `learning_store`.
-   - Khoá phiên bản SOP khi chạy song song.
-   - Giới hạn số lần `retry`.
-   - `fix_addresses_cause` không khớp theo từ khoá (câu phủ định đang bị tính là sửa đúng).
-7. **R10 (v0.1-e2e):** T-041 (temperature thấp, record/replay), T-042 (số liệu 3 chỉ số), T-044 (sổ token). Audit lần 2 sau R9 + R10, rồi tag v0.1-e2e (người dùng duyệt).
-8. **Để sau v0.1-e2e:**
-   - P7: Telegram hai chiều với 4 mức xem / nhận / trả lời / điều khiển có xác nhận; không bao giờ xoá, merge tay, chạy lệnh tự do. Bot long-polling trên Mac, chỉ nhận `chat_id` của người dùng. Dùng chung API trạng thái với dashboard plugin.
-   - Kiểm chứng nhánh chờ reset khi chạm hạn mức thật (đóng P4).
-   - Log stream-json.
-   - P8.
+Làm tiếp theo thứ tự:
+1. **`plan/R9.md`** theo hướng người dùng đã chọn (theo audit): H-10 (SOP khớp scenario reflow) làm đầu tiên; H-06 (Measure theo thay đổi thật, không theo từ khoá); H-12 (script eval nguyên nhân so với ground truth, LLM giả và thật); e2e uvicorn chuỗi sai → rollback → điều tra → đúng → Learn (gộp R8-c2); H-07, H-08, H-09, H-17, H-21; temperature (H-23); script xuất fixture các nhánh cho frontend (`docs/ui-handoff.md` mục "Nhánh cần có fixture"). Mỗi H-xx có test đỏ trước khi sửa. Từ R9 auto-dev không sửa phần trình bày trong `dashboard/`. Rồi chạy R9 bằng chế độ B (tắt demo trước).
+2. **T-030 (người dùng chạy, sau R9):** một vòng LLM thật trên dashboard, ghi lỗi vào `docs/decisions.md` mục "Việc cần sửa sau khi chạy". Người dùng tạo key ở console.anthropic.com (~5 USD; gói Pro/Max không kèm API; khuyên Anthropic theo ADR-006), tự điền `.env` (`ANTHROPIC_API_KEY`, `MODEL_REASONING=claude-sonnet-5-5`, `MODEL_CHEAP=claude-haiku-4-5-20251001`), chạy `SME_LLM=real scripts/demo.sh`. Agent không đọc `.env`. Chạy thêm script eval của R9 với `--llm real`.
+3. **P6:** bảng 3–5 mốc tới v0.1-e2e (13/10) và freeze (20/10), đường găng, thứ tự cắt (PLAN mục 7), pre-mortem mỗi mốc, đối chiếu ước tính với thực tế. Hướng đã duyệt nằm ở PROJECT_STATE mục "Tầm nhìn"; người dùng duyệt việc cắt.
+4. **R10 (v0.1-e2e):** H-11 (MTTD/MTTR trong vòng lặp, nhiều anomaly, đọc `learning_store`, `metrics_report.py`, T-042), T-041, T-044, H-13, H-16, H-26. Runner tự chạy audit 2 sau R9 + R10 (`--audit-every 2`), rồi tag v0.1-e2e (người dùng duyệt).
+5. **Trang trạng thái Artifact** (P5 còn lại): xuất từ `docs/autodev/state.json`, riêng tư, xem trên điện thoại; cập nhật sau mỗi mốc.
+6. **Gói UI gửi bạn frontend:** người dùng sẽ cho tên/GitHub khi gửi tài liệu; lúc đó ghi vào `docs/PLAN.md` mục 4. Chưa cần hỏi lại.
+7. **Để sau v0.1-e2e:** H-14, H-15 (checkpointer Postgres), H-19, H-20, `tests/test_invariants.py`, API danh sách run và trang Dữ liệu; P7 (Telegram hai chiều + API trạng thái); kiểm chứng nhánh chờ reset hạn mức (đóng P4); log stream-json; P8.
 
 ## Trạng thái hiện tại (2026-10-09 01:00)
 - **Dự án** (TASKS.md 21/32; đến v0.1-e2e 21/27):
@@ -117,20 +69,15 @@ Phiên trước (rất dài) đã kết thúc sau R8. Làm lần lượt:
 - **Chế độ Auto** đôi khi lỗi "classifier no verdict" ở phía máy chủ. Khi đó người dùng tạm chuyển chế độ quyền; thử `claude -p` nhỏ trước khi khởi chạy runner.
 
 ## Quyền và quy tắc đang áp dụng
-- Supervisor tự merge PR mốc sau khi tự chạy verify + smoke + bảng tiêu chí; worker không merge. PR hồ sơ chỉ sửa `docs/autodev/**` thì runner tự merge.
+- Supervisor tự merge PR mốc sau khi tự chạy verify + smoke + bảng tiêu chí; worker không merge. PR hồ sơ chỉ sửa `docs/autodev/**` (và `docs/audits/**`) thì runner tự merge. Phiên supervisor tương tác được tự merge PR của mình (người dùng cho phép 2026-10-09; quy tắc trong `.claude/settings.local.json`, không commit, nên máy khác phải thêm lại).
 - Không xoá file, thư mục, nhánh, worktree, container nếu người dùng chưa duyệt (guard chặn các lệnh xoá phổ biến; merge không kèm xoá nhánh). Chuyển file sang thư mục tạm thay vì xoá khi cần dọn.
 - Không đọc hay in `.env`. Guard so khớp theo chữ: câu chữ trong commit/tài liệu nhắc tới lệnh cấm cũng bị chặn, nên viết lại câu hoặc dùng Edit tool.
 - Tầng tầm nhìn (thứ tự mốc, cắt việc) luôn do người dùng duyệt.
 
 ## Việc mở / cần để ý
-- **R8 còn mở (đưa vào audit/R9):**
-  - `fix_addresses_cause` khớp từ khoá (câu phủ định vẫn tính là sửa đúng).
-  - `retry` không giới hạn.
-  - e2e uvicorn nhánh rollback chưa có (R8-c2).
-  - `payloads.md` chưa có (R8-c1).
-- **Quy trình:** developer vẫn sửa file bằng heredoc `python3 -` / `sed -i` dù quy ước cấm. Xét chặn bằng quyền hoặc guard ở P5.
-- **Dữ liệu và lưu trữ:** event/run chỉ ở bộ nhớ (bảng `runs`/`events` trống); checkpointer InMemorySaver. Mất khi backend tắt.
-- **Dự án:** `correlate` chưa có tín hiệu cho nhóm people và `ambient_temperature`.
+- **Lỗ hổng dự án:** xem PROJECT_STATE mục "Lỗ hổng mở" (H-06..H-26; nguồn `docs/audits/2026-10-09.md`). Việc mở của R8 đã gộp vào đó (R8-c1 → `payloads.md` đã có; R8-c2 → R9).
+- **Quy trình:** guard (P5) đã chặn sửa file bằng sed tại chỗ / script Python qua stdin; xem R9 developer còn vướng không.
+- **Gói UI:** `payloads.md` còn thiếu ví dụ thật cho rollback, halt, chưa đủ bằng chứng, revise, retry (R9 làm script xuất fixture).
 - **Hạn mức:** chưa biết `claude -p` báo hết hạn mức dạng nào; `run.py` đoán theo "limit" + "resets <giờ>". Gặp lần đầu thì đối chiếu `LIMIT_RE`/`RESET_RE`.
 - **Dọn dẹp chờ:** thư mục lịch sử Claude cũ `~/.claude/projects/-Users-ishopjapan-Desktop-…` (người dùng muốn giữ vài ngày rồi xoá, hỏi lại trước khi xoá).
 - **Để sau** (người dùng chốt): đo độ dài phiên và chất lượng theo thời gian; hook trước khi nén ngữ cảnh.
