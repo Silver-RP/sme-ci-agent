@@ -1,4 +1,4 @@
-# ruff: noqa: DTZ005, DTZ006, FLY002  (usage-limit reset times are local wall-clock times, so naive local datetimes are intended)
+# ruff: noqa: DTZ005, DTZ006, FLY002, UP017, FURB162  (local wall-clock reset times are naive on purpose; stdlib only and must run on python3.9: no dt.UTC, no "Z" in fromisoformat)
 """Mode B runner (plugin milestone P4): run several milestones unattended.
 
 For each milestone: move the worker worktree to origin/main -> worker headless (/run-milestone)
@@ -55,6 +55,10 @@ SUPERVISOR_ALLOWED = ",".join(
         "Bash(git push origin chore/*)",
         "Bash(uv run *)",
         "Bash(python3 *)",
+        "Bash(bash scripts/*)",
+        "Bash(yarn *)",
+        "Bash(git checkout *)",
+        "Bash(gh pr checkout *)",
     ]
 )
 
@@ -65,11 +69,11 @@ SUPERVISOR_ALLOWED = ",".join(
 def classify(result: dict, stderr: str = "") -> tuple[str, str]:
     """Return (kind, text). kind: ok | usage_limit | weekly_limit | error."""
     text = f"{result.get('result', '')}\n{stderr}"
+    if not (result.get("is_error") or result.get("_exit", 0) != 0):
+        return "ok", text  # a successful report may mention "rate limit"; never wait on it
     if LIMIT_RE.search(text):
         return ("weekly_limit" if WEEKLY_RE.search(text) else "usage_limit"), text
-    if result.get("is_error") or result.get("_exit", 0) != 0:
-        return "error", text
-    return "ok", text
+    return "error", text
 
 
 def reset_time(text: str, now: dt.datetime) -> dt.datetime | None:
@@ -103,17 +107,35 @@ def claude_cmd() -> list[str]:
     return shlex.split(os.environ.get("AUTODEV_CLAUDE", "claude"))
 
 
-def run_claude(prompt: str, cwd: Path, allowed: str, label: str) -> dict:
+def role_model(role: str) -> tuple[str, str]:
+    """(model, effort) for a role. Worker: sonnet; supervisor: opus at medium effort (user choice 2026-10-08)."""
+    if role == "supervisor":
+        return (
+            os.environ.get("AUTODEV_SUPERVISOR_MODEL", "opus"),
+            os.environ.get("AUTODEV_SUPERVISOR_EFFORT", "medium"),
+        )
+    return os.environ.get("AUTODEV_WORKER_MODEL") or os.environ.get("AUTODEV_MODEL", "sonnet"), ""
+
+
+def build_cmd(prompt: str, allowed: str, model: str, effort: str) -> list[str]:
     cmd = claude_cmd() + [
         "-p", prompt,
-        "--model", os.environ.get("AUTODEV_MODEL", "sonnet"),
+        "--model", model,
         "--permission-mode", "auto",
         "--permission-prompts", "none",
         "--output-format", "json",
     ]
+    if effort:
+        cmd += ["--effort", effort]
     if allowed:
         cmd += ["--allowedTools", allowed]
-    log(f"start {label}: {prompt} (cwd={cwd})")
+    return cmd
+
+
+def run_claude(prompt: str, cwd: Path, allowed: str, label: str, role: str = "worker") -> dict:
+    model, effort = role_model(role)
+    cmd = build_cmd(prompt, allowed, model, effort)
+    log(f"start {label}: {prompt} (model={model}{' effort=' + effort if effort else ''}, cwd={cwd})")
     proc = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=False)
     try:
         result = json.loads(proc.stdout or "{}")
@@ -127,12 +149,14 @@ def run_claude(prompt: str, cwd: Path, allowed: str, label: str) -> dict:
     return result
 
 
-def run_step(prompt: str, cwd: Path, allowed: str, label: str, sleeper=time.sleep, clock=None) -> dict:
+def run_step(
+    prompt: str, cwd: Path, allowed: str, label: str, sleeper=time.sleep, clock=None, role: str = "worker"
+) -> dict:
     """Run one step; handle usage limits and one retry on error."""
     clock = clock or dt.datetime.now
     waits = errors = 0
     while True:
-        result = run_claude(prompt, cwd, allowed, label)
+        result = run_claude(prompt, cwd, allowed, label, role)
         kind, text = classify(result, result.get("_stderr", ""))
         if kind == "ok":
             return result
@@ -227,19 +251,58 @@ def has_milestone_head(heads: list[str], milestone: str) -> bool:
     return any(h == f"milestone/{milestone}" or h.startswith(f"milestone/{milestone}-r") for h in heads)
 
 
-def pr_heads(cwd: Path, state: str) -> list[str]:
+def list_prs(cwd: Path) -> list[dict]:
     out = subprocess.run(
-        ["gh", "pr", "list", "--state", state, "--json", "headRefName", "--limit", "50"],
+        ["gh", "pr", "list", "--state", "all", "--json", "number,headRefName,createdAt,state", "--limit", "50"],
         cwd=cwd, capture_output=True, text=True, check=False,
     ).stdout
     try:
-        return [p["headRefName"] for p in json.loads(out or "[]")]
+        return json.loads(out or "[]")
     except json.JSONDecodeError:
         return []
 
 
-def pr_merged(milestone: str, cwd: Path) -> bool:
-    return has_milestone_head(pr_heads(cwd, "merged"), milestone)
+def new_milestone_pr(prs: list[dict], milestone: str, since: dt.datetime) -> dict | None:
+    """The milestone PR opened in this run (created after `since`); older PRs of the same name never count."""
+    fresh = [
+        p for p in prs
+        if has_milestone_head([p.get("headRefName", "")], milestone)
+        and dt.datetime.fromisoformat(p["createdAt"].replace("Z", "+00:00")) >= since
+    ]
+    return max(fresh, key=lambda p: p["number"]) if fresh else None
+
+
+def pr_state(cwd: Path, number: int) -> str:
+    out = subprocess.run(
+        ["gh", "pr", "view", str(number), "--json", "state", "-q", ".state"],
+        cwd=cwd, capture_output=True, text=True, check=False,
+    ).stdout
+    return out.strip()
+
+
+def docs_only(files: list[str]) -> bool:
+    return bool(files) and all(f.startswith("docs/autodev/") for f in files)
+
+
+def merge_docs_chore_prs(cwd: Path, since: dt.datetime) -> None:
+    """Merge the supervisor's record PR (chore/autodev-*) when it only touches docs/autodev/**.
+
+    The supervisor itself is often blocked from merging it ("merge without review"); runner merges instead.
+    """
+    for p in list_prs(cwd):
+        created = dt.datetime.fromisoformat(p["createdAt"].replace("Z", "+00:00"))
+        if p.get("state") != "OPEN" or not p.get("headRefName", "").startswith("chore/autodev-") or created < since:
+            continue
+        files = subprocess.run(
+            ["gh", "pr", "diff", str(p["number"]), "--name-only"], cwd=cwd, capture_output=True, text=True, check=False
+        ).stdout.split()
+        if not docs_only(files):
+            log(f"PR #{p['number']} không chỉ sửa docs/autodev; để người xem")
+            continue
+        proc = subprocess.run(
+            ["gh", "pr", "merge", str(p["number"]), "--merge"], cwd=cwd, capture_output=True, text=True, check=False
+        )
+        log(f"merge PR hồ sơ #{p['number']}: {'ok' if proc.returncode == 0 else proc.stderr.strip()[:200]}")
 
 
 # ---------------------------------------------------------------- main
@@ -262,13 +325,20 @@ def main(argv: list[str] | None = None) -> int:
     total = 0.0
     for m in args.milestones:
         prepare_worker(m, worker)
-        w = run_step(f"/run-milestone {m}", worker, WORKER_ALLOWED, f"{m}-worker")
-        if not args.skip_merge_check and not has_milestone_head(pr_heads(worker, "all"), m):
-            stop(f"Worker {m} kết thúc mà không mở PR (có thể không làm gì); không chuyển sang supervisor.\n\n{w.get('result', '')[-1500:]}", 4)
-        s = run_step(f"/supervise {m} --review-only", supervisor, SUPERVISOR_ALLOWED, f"{m}-supervisor")
+        started = dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=1)
+        w = run_step(f"/run-milestone {m}", worker, WORKER_ALLOWED, f"{m}-worker", role="worker")
+        pr = None if args.skip_merge_check else new_milestone_pr(list_prs(worker), m, started)
+        if not args.skip_merge_check and pr is None:
+            stop(f"Worker {m} kết thúc mà không mở PR mới (có thể không làm gì); không chuyển sang supervisor.\n\n{w.get('result', '')[-1500:]}", 4)
+        sup_started = dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=1)
+        s = run_step(
+            f"/supervise {m} --review-only", supervisor, SUPERVISOR_ALLOWED, f"{m}-supervisor", role="supervisor"
+        )
         total += float(w.get("total_cost_usd") or 0) + float(s.get("total_cost_usd") or 0)
-        if not args.skip_merge_check and not pr_merged(m, supervisor):
-            stop(f"PR của {m} chưa merge sau bước supervisor; cần xem báo cáo.\n\n{s.get('result', '')[-1500:]}", 4)
+        if not args.skip_merge_check:
+            if pr_state(supervisor, pr["number"]) != "MERGED":
+                stop(f"PR #{pr['number']} của {m} chưa merge sau bước supervisor; cần xem báo cáo.\n\n{s.get('result', '')[-1500:]}", 4)
+            merge_docs_chore_prs(supervisor, sup_started)
         log(f"{m} xong; tổng chi phí ước tính đến giờ {total:.2f} USD")
     log(f"Hoàn tất {' '.join(args.milestones)}; tổng chi phí ước tính {total:.2f} USD")
     notify("auto-dev xong", f"{' '.join(args.milestones)} đã merge; ~{total:.2f} USD")

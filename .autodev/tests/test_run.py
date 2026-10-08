@@ -1,4 +1,4 @@
-# ruff: noqa: DTZ001  (usage-limit reset times are local wall-clock times, so naive local datetimes are intended)
+# ruff: noqa: DTZ001, UP017  (usage-limit reset times are local wall-clock times, so naive local datetimes are intended)
 """Tests for .autodev/run.py (mode B runner). Run: python3 -m unittest discover .autodev/tests
 
 Uses a fake `claude` (AUTODEV_CLAUDE) so no quota is used and no network is needed.
@@ -56,8 +56,11 @@ class Parsing(unittest.TestCase):
 
     def test_classify(self):
         self.assertEqual(run.classify({"result": "done"})[0], "ok")
-        self.assertEqual(run.classify({"result": "You've hit your session limit · resets 4pm"})[0], "usage_limit")
-        self.assertEqual(run.classify({"result": "You've hit your weekly limit"})[0], "weekly_limit")
+        limit = "You've hit your session limit · resets 4pm"
+        self.assertEqual(run.classify({"result": limit, "is_error": True})[0], "usage_limit")
+        self.assertEqual(run.classify({"result": "You've hit your weekly limit", "_exit": 1})[0], "weekly_limit")
+        # a successful report that mentions limits must not make the runner wait (2026-10-08 hardening)
+        self.assertEqual(run.classify({"result": "Tăng retry khi gặp rate limit; weekly report xong."})[0], "ok")
         self.assertEqual(run.classify({"result": "boom", "is_error": True})[0], "error")
         self.assertEqual(run.classify({"result": "x", "_exit": 1})[0], "error")
         # a milestone report that merely mentions limits in passing must not count
@@ -212,6 +215,44 @@ class Helpers(unittest.TestCase):
         self.assertTrue(run.has_milestone_head(heads, "R4"))
         self.assertFalse(run.has_milestone_head(heads, "R5"))
         self.assertFalse(run.has_milestone_head(["milestone/R40"], "R4"))
+
+
+class Hardening(unittest.TestCase):
+    """2026-10-08: per-role model/effort, PR of this run only, auto-merge of docs-only chore PRs."""
+
+    def test_cmd_has_model_and_effort(self):
+        cmd = run.build_cmd("/supervise R8 --review-only", "", model="opus", effort="medium")
+        self.assertEqual(cmd[cmd.index("--model") + 1], "opus")
+        self.assertEqual(cmd[cmd.index("--effort") + 1], "medium")
+        self.assertNotIn("--effort", run.build_cmd("/run-milestone R8", "", model="sonnet", effort=""))
+
+    def test_role_defaults(self):
+        for k in ("AUTODEV_WORKER_MODEL", "AUTODEV_SUPERVISOR_MODEL", "AUTODEV_SUPERVISOR_EFFORT", "AUTODEV_MODEL"):
+            os.environ.pop(k, None)
+        self.assertEqual(run.role_model("worker"), ("sonnet", ""))
+        self.assertEqual(run.role_model("supervisor"), ("opus", "medium"))
+        os.environ["AUTODEV_SUPERVISOR_MODEL"] = "sonnet"
+        os.environ["AUTODEV_SUPERVISOR_EFFORT"] = "high"
+        try:
+            self.assertEqual(run.role_model("supervisor"), ("sonnet", "high"))
+        finally:
+            os.environ.pop("AUTODEV_SUPERVISOR_MODEL")
+            os.environ.pop("AUTODEV_SUPERVISOR_EFFORT")
+
+    def test_only_prs_created_after_step_start_count(self):
+        since = dt.datetime(2026, 10, 8, 22, 0, tzinfo=dt.timezone.utc)
+        prs = [
+            {"number": 19, "headRefName": "milestone/R4", "createdAt": "2026-10-07T16:00:00Z", "state": "MERGED"},
+            {"number": 40, "headRefName": "milestone/R4-r2", "createdAt": "2026-10-08T22:30:00Z", "state": "OPEN"},
+            {"number": 41, "headRefName": "milestone/R40", "createdAt": "2026-10-08T22:31:00Z", "state": "OPEN"},
+        ]
+        self.assertEqual(run.new_milestone_pr(prs, "R4", since)["number"], 40)
+        self.assertIsNone(run.new_milestone_pr(prs[:1], "R4", since))
+
+    def test_docs_only(self):
+        self.assertTrue(run.docs_only(["docs/autodev/PROGRESS.md", "docs/autodev/HANDOFF.md"]))
+        self.assertFalse(run.docs_only(["docs/autodev/PROGRESS.md", "plan/R8.md"]))
+        self.assertFalse(run.docs_only([]))
 
 
 if __name__ == "__main__":
