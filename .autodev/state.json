@@ -3,13 +3,15 @@
   "current_task": "dev-02",
   "tasks": {
     "dev-01": {
-      "status": "IN_PROGRESS",
-      "round": 0,
-      "base": "e79288e054fbb0cf695088bb5bf6520efafbc99d"
+      "status": "DONE",
+      "round": 1,
+      "base": "e79288e054fbb0cf695088bb5bf6520efafbc99d",
+      "commit": "802d568"
     },
     "dev-02": {
-      "status": "TODO",
-      "round": 0
+      "status": "IN_PROGRESS",
+      "round": 0,
+      "base": "ef9604e"
     },
     "dev-03": {
       "status": "TODO",
