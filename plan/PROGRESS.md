@@ -193,3 +193,9 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 8fe79b9 (test đỏ), d3b6f5f. Review: .autodev/reviews/R9-dev-02-r1.json (PASS).
 - H-06 đóng: Improve trả `action {parameter, machine_id, value}` (tham số hợp lệ ở YAML `actions.parameters`, sai thì sửa lại có giới hạn); Act đưa action vào simulator; Measure theo `action_level`, không action → `not_applied`; `sop_applied` không lộ `sim`; `ProposalError` sau resume → run `error`. 384 pytest.
 - Non-blocking: value NaN chưa chặn (allow_inf_nan=False); `fix_addresses_cause` còn nhưng không dùng.
+
+### R9/dev-03: DONE
+- Vòng: 1. Commit: 34fc609. Review: .autodev/reviews/R9-dev-03-r1.json (PASS).
+- H-12 đóng: `scripts/eval_rootcause.py` (scripted right/wrong/unsure, `--llm real` chưa chạy được vì cần key), người giả trung tính. 391 pytest.
+- Lệnh cho supervisor quyết có đưa vào smoke: `uv run python scripts/eval_rootcause.py`.
+- Non-blocking: kịch bản "right" viết sẵn đáp án; token chỉ ước lượng.
