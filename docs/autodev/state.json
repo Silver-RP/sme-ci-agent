@@ -71,6 +71,14 @@
         "id": "R9",
         "status": "merged",
         "pr": 44
+      },
+      {
+        "id": "R9",
+        "status": "merged",
+        "pr": 44,
+        "cost_usd": 7.18,
+        "minutes": 145,
+        "note": "1 lần dừng (sub-agent chạy nền) + 1 lần chạm hạn mức thật, chờ 59 phút"
       }
     ],
     "plugin": [
@@ -114,16 +122,16 @@
     {
       "id": 1,
       "text": "Tìm đúng nguyên nhân gốc so với ground truth và biết hỏi người khi chưa đủ bằng chứng",
-      "percent": 25,
-      "evidence": "Detect khớp ground truth (test_data_report); luật hỏi theo ngưỡng (test_ask); LLM giả viết sẵn đáp án",
-      "missing": "H-12 eval + T-030 LLM thật; H-10 SOP lệch scenario; anomaly quá rõ"
+      "percent": 45,
+      "evidence": "eval_rootcause: kịch bản đúng 100%, sai 0%, không chắc hỏi người 100% (LLM giả); SOP khớp scenario (H-10)",
+      "missing": "T-030 + eval --llm real; anomaly quá rõ; correlate thiếu nhóm people"
     },
     {
       "id": 2,
       "text": "Đề xuất được duyệt làm KPI cải thiện; nếu không thì rollback và điều tra lại",
-      "percent": 40,
-      "evidence": "Cơ chế đúng mức graph (test_measure_r8, test_act, test_return_edges_r8); uvicorn chỉ nhánh thuận (test_e2e)",
-      "missing": "H-06 kết quả dựng sẵn; e2e chuỗi sai→rollback→đúng→Learn; H-07..H-09"
+      "percent": 70,
+      "evidence": "Measure theo tham số thật trong simulator (test_measure_h06); e2e uvicorn sai→rollback→đúng→Learn (test_e2e_rollback_r9)",
+      "missing": "Chạy với LLM thật (T-030); H-19 rollback sai bản sau halt"
     },
     {
       "id": 3,
@@ -217,45 +225,9 @@
   ],
   "open_gaps": [
     {
-      "id": "H-06",
-      "severity": "cao",
-      "summary": "Measure đạt theo từ khoá ground truth; câu phủ định tính là sửa đúng",
-      "audit": "2026-10-09"
-    },
-    {
-      "id": "H-07",
-      "severity": "cao",
-      "summary": "Audit quyết định của người mất khi bước sau lỗi",
-      "audit": "2026-10-09"
-    },
-    {
-      "id": "H-08",
-      "severity": "cao",
-      "summary": "ValueError sau resume → 422, run kẹt, retry 409",
-      "audit": "2026-10-09"
-    },
-    {
-      "id": "H-09",
-      "severity": "cao",
-      "summary": "wait_evidence không thành pending answer ở API",
-      "audit": "2026-10-09"
-    },
-    {
-      "id": "H-10",
-      "severity": "cao",
-      "summary": "SOP trong YAML (ép phun) lệch scenario (reflow)",
-      "audit": "2026-10-09"
-    },
-    {
       "id": "H-11",
       "severity": "cao",
       "summary": "Chỉ số 3 chưa có đường code (MTTD/MTTR None, không tái diễn, chỉ anomaly đầu)",
-      "audit": "2026-10-09"
-    },
-    {
-      "id": "H-12",
-      "severity": "cao",
-      "summary": "Không có eval nguyên nhân so với ground truth; LLM giả viết sẵn đáp án",
       "audit": "2026-10-09"
     },
     {
@@ -283,12 +255,6 @@
       "audit": "2026-10-09"
     },
     {
-      "id": "H-17",
-      "severity": "vừa",
-      "summary": "revise, halt-investigate, retry không giới hạn",
-      "audit": "2026-10-09"
-    },
-    {
       "id": "H-18",
       "severity": "vừa",
       "summary": "has_tool_evidence tính tool của cả run",
@@ -307,21 +273,9 @@
       "audit": "2026-10-09"
     },
     {
-      "id": "H-21",
-      "severity": "thấp",
-      "summary": "Parser JSON lấy object đầu; parse_bool('') = False",
-      "audit": "2026-10-09"
-    },
-    {
       "id": "H-22",
       "severity": "thấp",
       "summary": "Giá trị miền hard-code ngoài YAML",
-      "audit": "2026-10-09"
-    },
-    {
-      "id": "H-23",
-      "severity": "thấp",
-      "summary": "Không đặt temperature; chưa record/replay",
       "audit": "2026-10-09"
     },
     {
@@ -344,6 +298,10 @@
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-09",
+      "text": "R9 merge #44: đóng H-06,07,08,09,10,12,17,21,23; % đạt 45/70/10. Lần đầu chạm hạn mức thật: runner chờ reset và chạy tiếp đúng (P4)"
+    },
     {
       "date": "2026-10-09",
       "text": "R9 merge (PR #44): test tái hiện xanh cho H-06/07/08/09/10/12/17/21/23; chờ audit 2 xác nhận đóng"
@@ -374,21 +332,6 @@
     }
   ],
   "outlook": [
-    {
-      "id": "R9",
-      "goal": "Điều 1-2 thật",
-      "gaps": [
-        "H-10",
-        "H-06",
-        "H-12",
-        "H-07",
-        "H-08",
-        "H-09",
-        "H-17",
-        "H-21",
-        "H-23"
-      ]
-    },
     {
       "id": "T-030",
       "goal": "Người dùng chạy LLM thật sau R9 (cần H-10)"

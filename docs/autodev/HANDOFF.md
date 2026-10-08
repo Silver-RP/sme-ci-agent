@@ -80,7 +80,11 @@ Làm tiếp theo thứ tự:
 - **Lỗ hổng dự án:** xem PROJECT_STATE mục "Lỗ hổng mở" (H-06..H-26; nguồn `docs/audits/2026-10-09.md`). Việc mở của R8 đã gộp vào đó (R8-c1 → `payloads.md` đã có; R8-c2 → R9).
 - **Quy trình:** guard (P5) đã chặn sửa file bằng sed tại chỗ / script Python qua stdin; xem R9 developer còn vướng không.
 - **Gói UI:** `payloads.md` còn thiếu ví dụ thật cho rollback, halt, chưa đủ bằng chứng, revise, retry (R9 làm script xuất fixture).
-- **Hạn mức:** chưa biết `claude -p` báo hết hạn mức dạng nào; `run.py` đoán theo "limit" + "resets <giờ>". Gặp lần đầu thì đối chiếu `LIMIT_RE`/`RESET_RE`.
+- **Hạn mức:** lần đầu gặp thật ở R9, lúc 02:15. `claude -p` trả `is_error: true`, exit 1, result `You've hit your session limit · resets 3:10am (Asia/Tokyo)`. `LIMIT_RE`/`RESET_RE` khớp; runner chờ 59 phút rồi chạy tiếp đúng. Chưa gặp hạn mức tuần.
+- **Theo dõi sau R9 (supervisor tương tác):**
+  - pytest đỏ 1/4 lần trên main, không bắt được tên test; 3 lần chạy lại xanh (412). Nếu gặp lại thì ghi tên test.
+  - LangGraph cảnh báo "Deserializing unregistered type backend.agent.state.Hypothesis" khi chạy `eval_rootcause.py`; bản sau sẽ chặn. Thêm vào R10 (b): đăng ký `allowed_msgpack_modules` hoặc lưu dict.
+  - Worktree worker còn `stash@{0}` (dev-02 dở dang từ lần R9 bị cắt). Chờ người dùng duyệt bỏ.
 - **Dọn dẹp chờ:** thư mục lịch sử Claude cũ `~/.claude/projects/-Users-ishopjapan-Desktop-…` (người dùng muốn giữ vài ngày rồi xoá, hỏi lại trước khi xoá).
 - **Để sau** (người dùng chốt): đo độ dài phiên và chất lượng theo thời gian; hook trước khi nén ngữ cảnh.
 
