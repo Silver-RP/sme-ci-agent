@@ -17,16 +17,19 @@ def extract_json_object(text: str, required_key: str | None = None) -> dict[str,
     that key are skipped (so a ``{...}`` in the prose before the real answer does not win).
     """
     text = text or ""
+    found: dict[str, Any] | None = None
     pos = text.find("{")
     while pos != -1:
         try:
-            obj, _ = _DECODER.raw_decode(text, pos)
+            obj, end = _DECODER.raw_decode(text, pos)
         except json.JSONDecodeError:
-            obj = None
+            obj, end = None, pos + 1
         if isinstance(obj, dict) and (required_key is None or required_key in obj):
-            return obj
-        pos = text.find("{", pos + 1)
-    return None
+            found = obj  # keep going: the LAST matching object is the final answer
+            pos = text.find("{", end)  # skip nested objects inside this one
+        else:
+            pos = text.find("{", pos + 1)
+    return found
 
 
 def parse_bool(value: Any, default: bool = False) -> bool:
@@ -39,6 +42,8 @@ def parse_bool(value: Any, default: bool = False) -> bool:
         return bool(value)
     if isinstance(value, str):
         v = value.strip().lower()
+        if v == "":
+            return True  # nothing stated = unsure: safe direction (ask the human)
         if v in _TRUE:
             return True
         if v in _FALSE:
