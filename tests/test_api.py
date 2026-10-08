@@ -329,7 +329,9 @@ def test_llm_error_midway_marks_run_failed_and_keeps_audit(db_session):
 
 
 def test_retry_after_transient_error_continues(db_session):
-    client = make_flaky_client(db_session, [*investigate_script(), improve_answer()], fail_at=2)
+    inv = investigate_script()
+    # the failed Investigate step is replayed from its start, so the script has a second tool call
+    client = make_flaky_client(db_session, [inv[0], inv[0], inv[1], improve_answer()], fail_at=2)
     rid = start(client)["run_id"]
     r = client.post(f"/runs/{rid}/retry")
     assert r.status_code == 200, r.text

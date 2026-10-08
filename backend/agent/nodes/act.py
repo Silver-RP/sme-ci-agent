@@ -217,13 +217,14 @@ def make_act_node(config: DomainConfig, ctx: ToolContext):
             "previous_content": previous.content if previous else None,
             "approved_by": res["approved_by"],
             "change_time": change_time,
+            "change": proposal.get("change"),  # kept for the memory of a later rollback; not sent in the event
             "sim": {  # what the sandbox needs to produce the data after the change (rebuilt by Measure)
                 "fixed": fix_addresses_cause(proposal.get("hypothesis")),
                 "machine_id": anomaly.get("machine_id") or anomaly.get("machine"),
                 "anomaly_start": anomaly.get("start"),
             },
         }
-        emit("sop_applied", "improvement", {"applied": True, **{k: v for k, v in applied.items() if k != "previous_content"}})
+        emit("sop_applied", "improvement", {"applied": True, **{k: v for k, v in applied.items() if k not in ("previous_content", "change")}})
         return {"applied": applied, "events": emit.events, "proposal": {**proposal, "status": "applied"}}
 
     return act
@@ -424,7 +425,14 @@ def make_rollback_apply_node(config: DomainConfig, ctx: ToolContext):
         count = state.get("rollback_count", 0) + 1
         evidence = [
             *state.get("evidence", []),
-            {"source": "rollback", "reason": (state.get("measurement") or {}).get("after"), **payload},
+            {
+                "source": "rollback",
+                "reason": (state.get("measurement") or {}).get("after"),
+                "measurement": state.get("measurement"),
+                "human_reason": approval.get("reason") or None,
+                "rolled_back_change": (applied or {}).get("change"),
+                **payload,
+            },
         ]
         return {
             "events": emit.events,

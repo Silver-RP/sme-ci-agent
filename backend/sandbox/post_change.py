@@ -47,11 +47,12 @@ def fix_addresses_cause(hypothesis: Mapping[str, Any] | None, scenario: Mapping[
     text = _norm((hypothesis or {}).get("description", ""))
     if not text:
         return False
+    compact = text.replace(" ", "")  # "set point" / "set-point" / "setpoints" still contain "setpoint"
     for cause in mechanism_causes(scenario):
         if _norm(cause) in text:
             return True
         words = [w for w in _norm(cause).split() if w not in _GENERIC_WORDS]
-        if words and all(w in text.split() for w in words):
+        if words and all(w in compact for w in words):
             return True
     return False
 

@@ -81,7 +81,7 @@ def test_no_sop_change_means_no_propose_call(ctx, db_session):
 @pytest.mark.parametrize("key", ["change", "rationale", "evidence_refs", "expected_kpi"])
 def test_missing_field_clear_error(ctx, key):
     with pytest.raises(ProposalError, match=key):
-        run_improvement(state(), CFG, ScriptedLLM([drop(key)]), ctx)
+        run_improvement(state(), CFG, ScriptedLLM([drop(key)] * 2), ctx)
 
 
 @pytest.mark.parametrize(
@@ -97,7 +97,7 @@ def test_missing_field_clear_error(ctx, key):
 )
 def test_invalid_answers_raise(ctx, bad):
     with pytest.raises(ProposalError):
-        run_improvement(state(), CFG, ScriptedLLM([bad]), ctx)
+        run_improvement(state(), CFG, ScriptedLLM([bad, bad]), ctx)
 
 
 def test_no_hypothesis_raises(ctx):

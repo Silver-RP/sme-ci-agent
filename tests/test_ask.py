@@ -9,7 +9,7 @@ from langgraph.types import Command
 
 from backend.agent.checkpoint import postgres_checkpointer
 from backend.agent.graph import build_graph
-from backend.agent.llm import ScriptedLLM
+from backend.agent.llm import LLMResponse, ScriptedLLM, ToolCall
 from backend.agent.nodes.ask import needs_question
 from backend.agent.state import Hypothesis, new_state
 from backend.domain_config import AskParams, load_domain_config
@@ -36,6 +36,12 @@ def final(conf, gap=False, group="machine"):
             "insufficient_evidence": gap,
         }
     )
+
+
+def tool_step():
+    """One real tool call, so a confident answer after it has tool evidence behind it (R8/dev-03)."""
+    kpi = CFG.kpis[0].name
+    return LLMResponse(tool_calls=[ToolCall(id="t1", name="correlate", arguments={"kpi": kpi, "machine_id": "M02"})])
 
 
 def types(events):
@@ -70,7 +76,7 @@ def test_low_confidence_pauses_at_ask(ctx):
 
 
 def test_high_confidence_does_not_ask(ctx):
-    graph = build_graph(CFG, llm=ScriptedLLM([final(0.9)]), tool_ctx=ctx)
+    graph = build_graph(CFG, llm=ScriptedLLM([tool_step(), final(0.9)]), tool_ctx=ctx)
     cfg = run_cfg()
     out = start(graph, cfg)
     assert graph.get_state(cfg).next == ()
@@ -81,6 +87,7 @@ def test_threshold_boundary_equal_is_not_asked():
     s = new_state("r", CFG.domain)
     s["hypotheses"] = [Hypothesis(group="machine", description="d", confidence=0.6)]
     s["evidence_gap"] = False
+    s["evidence"] = [{"source": "tool", "tool": "correlate", "arguments": {}, "result": {"correlations": []}}]
     assert needs_question(s, CFG) is False
 
 
@@ -109,7 +116,7 @@ def test_empty_hypotheses_ask_a_person(ctx):
 
 
 def test_resume_with_answer_goes_back_to_investigate(ctx):
-    llm = ScriptedLLM([final(0.3), final(0.9)])
+    llm = ScriptedLLM([final(0.3), tool_step(), final(0.9)])
     graph = build_graph(CFG, llm=llm, tool_ctx=ctx)
     cfg = run_cfg()
     start(graph, cfg)
@@ -167,7 +174,7 @@ def test_resume_from_new_graph_over_postgres(ctx, shared_db_url):
         assert g1.get_state(cfg).next == ("wait_answer",)
     # brand-new saver (new connection) and brand-new graph, same thread_id
     with postgres_checkpointer(shared_db_url) as saver2:
-        g2 = build_graph(CFG, checkpointer=saver2, llm=ScriptedLLM([final(0.9)]), tool_ctx=ctx)
+        g2 = build_graph(CFG, checkpointer=saver2, llm=ScriptedLLM([tool_step(), final(0.9)]), tool_ctx=ctx)
         assert g2.get_state(cfg).next == ("wait_answer",)
         out = g2.invoke(Command(resume="human says wear"), cfg)
         assert "answer_received" in types(out["events"])

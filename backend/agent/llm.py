@@ -9,6 +9,23 @@ import os
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+MAX_TOKENS_ENV = "LLM_MAX_TOKENS"
+DEFAULT_MAX_TOKENS = 4096
+
+
+def max_tokens_from_env() -> int:
+    """Output token limit: ``LLM_MAX_TOKENS`` if set to a positive integer, else the default."""
+    raw = (os.environ.get(MAX_TOKENS_ENV) or "").strip()
+    if not raw:
+        return DEFAULT_MAX_TOKENS
+    try:
+        value = int(raw)
+    except ValueError as e:
+        raise LLMConfigError(f"{MAX_TOKENS_ENV} must be a positive integer, got {raw!r}") from e
+    if value < 1:
+        raise LLMConfigError(f"{MAX_TOKENS_ENV} must be a positive integer, got {raw!r}")
+    return value
+
 
 class LLMConfigError(RuntimeError):
     """Raised when the real LLM is not configured (e.g. missing model env var)."""
@@ -53,14 +70,14 @@ class AnthropicLLM:
         *,
         model_env: str = "MODEL_REASONING",
         client: Any = None,
-        max_tokens: int = 2048,
+        max_tokens: int | None = None,
     ) -> None:
         if model is None:
             model = (os.environ.get(model_env) or "").strip()
             if not model:
                 raise LLMConfigError(f"Environment variable {model_env} is not set; cannot create the real LLM.")
         self.model = model
-        self.max_tokens = max_tokens
+        self.max_tokens = max_tokens if max_tokens is not None else max_tokens_from_env()
         if client is None:
             import anthropic
 

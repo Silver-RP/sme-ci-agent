@@ -19,6 +19,11 @@ detect:                     # tham số detect (mặc định = giá trị cũ t
   max_gap: 3                # khoảng gộp tối đa (điểm) giữa hai điểm xác nhận
 investigate:
   max_tool_steps: 6         # số vòng gọi LLM tối đa khi điều tra
+  max_log_rows: 50          # số dòng tối đa một tool đọc log trả về; nhiều hơn thì cắt và báo truncated
+  max_format_retries: 1     # số lần yêu cầu LLM sửa câu trả lời không parse được, quá thì báo lỗi
+improve:
+  max_evidence_item_chars: 800  # cỡ tối đa (ký tự) mỗi mục evidence đưa vào prompt Improve
+  max_format_retries: 1     # số lần yêu cầu LLM sửa đề xuất không parse được, quá thì báo lỗi
 ask:
   confidence_threshold: 0.6 # độ tin cậy giả thuyết đứng đầu dưới ngưỡng này thì hỏi người
   max_questions: 2          # số lần hỏi tối đa mỗi run; vượt thì dừng chờ người

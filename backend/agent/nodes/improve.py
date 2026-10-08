@@ -8,12 +8,12 @@ applied here) and emits ``proposal_created`` (agent = improvement). KPI names co
 from __future__ import annotations
 
 import json
-import re
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from backend.agent.events import make_event
+from backend.agent.jsonutil import extract_json_object
 from backend.agent.llm import LLM
 from backend.agent.prompts import build_system_prompt
 from backend.agent.state import AgentState
@@ -35,7 +35,7 @@ class ProposalError(ValueError):
 
 
 class ExpectedKpi(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     kpi: str = Field(min_length=1)
     direction: str = Field(pattern="^(decrease|increase)$")
@@ -43,14 +43,14 @@ class ExpectedKpi(BaseModel):
 
 
 class SopChange(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     sop_id: str = Field(min_length=1)
     new_content: str = Field(min_length=1)
 
 
 class ProposalDraft(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     change: str = Field(min_length=1)
     rationale: str = Field(min_length=1)
@@ -61,13 +61,11 @@ class ProposalDraft(BaseModel):
 
 def parse_proposal(text: str, evidence: list[dict[str, Any]], config: DomainConfig) -> ProposalDraft:
     """Parse and validate the LLM answer. Raises ProposalError with a clear message."""
-    m = re.search(r"\{.*\}", text or "", re.DOTALL)
-    if not m:
+    data = extract_json_object(text, "change")
+    if data is None:
         raise ProposalError("proposal must be a JSON object. " + FINAL_FORMAT)
     try:
-        draft = ProposalDraft.model_validate(json.loads(m.group(0)))
-    except json.JSONDecodeError as e:
-        raise ProposalError(f"proposal is not valid JSON: {e}. {FINAL_FORMAT}") from e
+        draft = ProposalDraft.model_validate(data)
     except ValidationError as e:
         fields = sorted({".".join(str(p) for p in err["loc"]) for err in e.errors()})
         raise ProposalError(f"proposal missing or invalid field(s): {fields}. {FINAL_FORMAT}") from e
@@ -79,6 +77,23 @@ def parse_proposal(text: str, evidence: list[dict[str, Any]], config: DomainConf
     if draft.sop_change and draft.sop_change.sop_id not in {s.id for s in config.sop}:
         raise ProposalError(f"sop_change.sop_id {draft.sop_change.sop_id!r} is not a known SOP")
     return draft
+
+
+def compact_evidence(evidence: list[dict[str, Any]], max_chars: int) -> dict[int, Any]:
+    """Evidence for the Improve prompt: same indexes, each item at most about ``max_chars`` characters.
+
+    Big tool results lose their raw rows first (counts, flags and summaries stay); anything still too long
+    is cut with a marker. The full evidence stays in the state.
+    """
+    out: dict[int, Any] = {}
+    for i, item in enumerate(evidence):
+        text = json.dumps(item, default=str)
+        if len(text) > max_chars and isinstance(item.get("result"), dict):
+            slim = {k: v for k, v in item["result"].items() if k not in ("rows", "substitutes")}
+            item = {**item, "result": slim, "note": "raw rows omitted"}
+            text = json.dumps(item, default=str)
+        out[i] = item if len(text) <= max_chars else text[: max_chars - 15] + "...(truncated)"
+    return out
 
 
 def run_improvement(
@@ -94,11 +109,22 @@ def run_improvement(
     user = (
         f"Anomaly: {json.dumps(state.get('anomaly'), default=str)}. "
         f"Top hypothesis: {json.dumps(top.model_dump())}. "
-        f"Evidence (index: item): {json.dumps(dict(enumerate(evidence)), default=str)}. "
+        "Evidence (index: item, summarised): "
+        f"{json.dumps(compact_evidence(evidence, config.improve.max_evidence_item_chars), default=str)}. "
         "Propose an improvement."
     )
-    resp = llm.complete(system, [{"role": "user", "content": user}], [])
-    draft = parse_proposal(resp.text, evidence, config)
+    messages: list[dict[str, Any]] = [{"role": "user", "content": user}]
+    attempts = 1 + config.improve.max_format_retries
+    for attempt in range(attempts):
+        resp = llm.complete(system, messages, [])
+        try:
+            draft = parse_proposal(resp.text, evidence, config)
+            break
+        except ProposalError as e:
+            if attempt == attempts - 1:
+                raise ProposalError(f"proposal still invalid after {attempts} attempts: {e}") from e
+            messages.append({"role": "assistant", "content": resp.text or "(empty)"})
+            messages.append({"role": "user", "content": f"Rejected: {e} Reply again with the corrected JSON object."})
 
     proposal: dict[str, Any] = {
         "hypothesis": top.model_dump(),
