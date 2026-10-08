@@ -46,6 +46,12 @@ def versions(s, sop_id=SOP_ID):
         {"decision": "rejected", "approved_by": "alice"},
         {"decision": "approved"},
         {"decision": "approved", "approved_by": "agent"},
+        {"decision": "approved", "approved_by": "llm"},
+        {"decision": "approved", "approved_by": "bot"},
+        {"decision": "approved", "approved_by": "claude"},
+        {"decision": "approved", "approved_by": "system"},
+        {"decision": "approved", "approved_by": "  "},
+        {"decision": "approved", "approved_by": "mallory"},
         {"decision": "approved", "approved_by": "alice", "sop_id": "OTHER"},
     ],
 )
@@ -54,6 +60,11 @@ def test_apply_without_valid_approval_refused(ctx, approval):
     with pytest.raises(PermissionError):
         apply_sop(ctx, sop_id=SOP_ID, new_content="x", approval=approval)
     assert versions(ctx.session) == before
+
+
+def test_apply_accepts_listed_name_case_insensitive(ctx):
+    r = apply_sop(ctx, sop_id=SOP_ID, new_content="x", approval={"decision": "approved", "approved_by": " Bob "})
+    assert r["approved_by"] == "bob"
 
 
 def test_apply_without_approval_argument_refused(ctx):

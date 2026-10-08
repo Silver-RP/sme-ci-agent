@@ -26,6 +26,10 @@ measure:
 loop:
   max_rejections: 3         # số đề xuất bị từ chối tối đa trước khi dừng chờ người
   max_rollbacks: 2          # số lần rollback tối đa mỗi run
+approvers:                  # người được duyệt/từ chối (allow-list, tên synthetic)
+  - alice                   # trưởng ca
+  - bob                     # QA
+  - qa_lead                 # trưởng QA
 hypothesis_groups:          # Ishikawa
   machine: [wrong_setpoint, wear, calibration]
   method: [outdated_sop, missing_check]

@@ -278,11 +278,26 @@ def test_max_rejections_halts(db_session):
     "bad",
     [None, "yes", {}, {"decision": "maybe", "decided_by": "a"}, {"decision": "approved"},
      {"decision": "approved", "decided_by": "agent"}, {"decision": "approved", "decided_by": "  "},
-     {"decision": "approved", "decided_by": "LLM"}],
+     {"decision": "approved", "decided_by": "LLM"}, {"decision": "approved", "decided_by": "bot"},
+     {"decision": "approved", "decided_by": "Claude"}, {"decision": "approved", "decided_by": "mallory"},
+     {"decision": "approved", "decided_by": ""}],
 )
 def test_invalid_decision_rejected(bad):
     with pytest.raises(DecisionError):
         parse_decision(bad)
+
+
+@pytest.mark.parametrize("name", [" ALICE ", "Bob", "qa_lead"])
+def test_allow_listed_name_accepted_case_and_space_insensitive(name):
+    d = parse_decision({"decision": "approved", "decided_by": name})
+    assert d["decided_by"] in CFG.approvers
+
+
+def test_decision_uses_given_config_allow_list():
+    cfg = CFG.model_copy(update={"approvers": ["zed"]})
+    assert parse_decision({"decision": "approved", "decided_by": "zed"}, cfg)["decided_by"] == "zed"
+    with pytest.raises(DecisionError):
+        parse_decision({"decision": "approved", "decided_by": "alice"}, cfg)
 
 
 def test_valid_decision_defaults_reason():

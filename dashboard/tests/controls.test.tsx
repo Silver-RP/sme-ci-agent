@@ -119,8 +119,41 @@ describe("live flow", () => {
   it("shows API errors and keeps the buttons", async () => {
     const f = vi.fn().mockResolvedValue(resp(409, { detail: "not waiting" }));
     render(<RunControls runId="run_1" status={waitingApproval} onStarted={vi.fn()} onStatus={vi.fn()} api={{ baseUrl: BASE, fetchFn: f }} />);
+    fireEvent.change(screen.getByLabelText(/Decided by/), { target: { value: "alice" } });
     fireEvent.click(screen.getByText("Approve"));
     expect(await screen.findByTestId("api-error")).toHaveTextContent("409: not waiting");
     expect(screen.getByText("Approve")).toBeInTheDocument();
+  });
+});
+
+describe("approver field", () => {
+  it("disables Approve/Reject while the approver is empty or blank, enables once filled", () => {
+    const f = vi.fn();
+    render(<RunControls runId="run_1" status={waitingApproval} onStarted={vi.fn()} onStatus={vi.fn()} api={{ baseUrl: BASE, fetchFn: f }} />);
+    expect(screen.getByText("Approve")).toBeDisabled();
+    expect(screen.getByText("Reject")).toBeDisabled();
+    fireEvent.change(screen.getByLabelText(/Decided by/), { target: { value: "   " } });
+    expect(screen.getByText("Approve")).toBeDisabled();
+    fireEvent.click(screen.getByText("Approve"));
+    expect(f).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText(/Decided by/), { target: { value: "alice" } });
+    expect(screen.getByText("Approve")).toBeEnabled();
+    expect(screen.getByText("Reject")).toBeEnabled();
+  });
+
+  it("shows the 422 message for an invalid approver and keeps the buttons", async () => {
+    const f = vi.fn().mockResolvedValue(resp(422, { detail: "decided_by 'llm' is not a valid approver; allowed: alice" }));
+    render(<RunControls runId="run_1" status={waitingApproval} onStarted={vi.fn()} onStatus={vi.fn()} api={{ baseUrl: BASE, fetchFn: f }} />);
+    fireEvent.change(screen.getByLabelText(/Decided by/), { target: { value: "llm" } });
+    fireEvent.click(screen.getByText("Approve"));
+    expect(await screen.findByTestId("api-error")).toHaveTextContent("422: decided_by 'llm' is not a valid approver");
+    expect(screen.getByText("Approve")).toBeEnabled();
+  });
+
+  it("offers names from the approvers list", () => {
+    const { container } = render(
+      <RunControls runId="run_1" status={waitingApproval} onStarted={vi.fn()} onStatus={vi.fn()} approvers={["alice", "bob"]} api={{ baseUrl: BASE, fetchFn: vi.fn() }} />,
+    );
+    expect([...container.querySelectorAll("datalist option")].map((o) => o.getAttribute("value"))).toEqual(["alice", "bob"]);
   });
 });

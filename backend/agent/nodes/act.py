@@ -21,13 +21,12 @@ from langgraph.types import interrupt
 from backend.agent.events import make_event
 from backend.agent.state import AgentState
 from backend.db import repo
-from backend.domain_config import DomainConfig
+from backend.domain_config import DomainConfig, load_domain_config
 from backend.tools.actions import apply_sop, measure, propose_sop, save_learning
 from backend.tools.readonly import ToolContext
 
 APPROVED = "approved"
 REJECTED = "rejected"
-NON_HUMAN = {"agent", "system", "llm"}
 
 
 class DecisionError(ValueError):
@@ -45,16 +44,20 @@ class _Emitter:
         self.events.append(make_event(self.state, type_, agent, payload, seq, self.config.domain))
 
 
-def parse_decision(value: Any) -> dict[str, Any]:
+def parse_decision(value: Any, config: DomainConfig | None = None) -> dict[str, Any]:
     """Validate a human decision: ``{"decision": "approved"|"rejected", "decided_by": str, "reason"?: str}``."""
     if not isinstance(value, dict):
         raise DecisionError("decision must be an object with 'decision' and 'decided_by'")
     decision = value.get("decision")
     if decision not in (APPROVED, REJECTED):
         raise DecisionError(f"decision must be {APPROVED!r} or {REJECTED!r}, got {decision!r}")
-    by = str(value.get("decided_by") or value.get("approved_by") or "").strip()
-    if not by or by.lower() in NON_HUMAN:
-        raise DecisionError("decision must name the human who decided (decided_by)")
+    config = config or load_domain_config()
+    raw_by = value.get("decided_by") or value.get("approved_by")
+    by = config.resolve_approver(raw_by)
+    if by is None:
+        raise DecisionError(
+            f"decided_by {str(raw_by or '').strip()!r} is not a valid approver; allowed: {', '.join(config.approvers)}"
+        )
     return {"decision": decision, "decided_by": by, "reason": str(value.get("reason") or "")}
 
 
@@ -110,7 +113,7 @@ def make_wait_approval_node(config: DomainConfig, ctx: ToolContext):
         if proposal.get("sop_proposal"):
             resolve_change_time(state)  # fail now, not after a person approved something that cannot be measured
         raw = interrupt({"kind": "proposal", "proposal": proposal, "run_id": state.get("run_id", "")})
-        d = parse_decision(raw)
+        d = parse_decision(raw, config)
         repo.append_audit(
             ctx.session, actor=d["decided_by"], action="approval_decided",
             params={"kind": "proposal", **d}, run_id=ctx.run_id,
@@ -260,7 +263,7 @@ def make_wait_rollback_node(config: DomainConfig, ctx: ToolContext):
     def wait_rollback(state: AgentState) -> dict[str, Any]:
         proposal = state.get("proposal") or {}
         raw = interrupt({"kind": "rollback", "proposal": proposal, "run_id": state.get("run_id", "")})
-        d = parse_decision(raw)
+        d = parse_decision(raw, config)
         repo.append_audit(
             ctx.session, actor=d["decided_by"], action="approval_decided",
             params={"kind": "rollback", **d}, run_id=ctx.run_id,

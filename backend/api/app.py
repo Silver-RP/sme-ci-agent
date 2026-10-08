@@ -183,11 +183,15 @@ def create_app(
         with run.lock:
             require_waiting(run, "approval")
             try:
-                decision = parse_decision(body.model_dump())  # reject before resuming: a bad resume would break the run
+                decision = parse_decision(body.model_dump(), cfg_domain)  # reject before resuming: a bad resume would break the run
             except DecisionError as e:
                 raise HTTPException(status_code=422, detail=str(e)) from e
             advance(run, Command(resume=decision))
             return _status(run)
+
+    @app.get("/config/approvers")
+    def approvers() -> dict[str, Any]:
+        return {"approvers": list(cfg_domain.approvers)}
 
     @app.get("/runs/{run_id}")
     def run_status(run_id: str) -> dict[str, Any]:
