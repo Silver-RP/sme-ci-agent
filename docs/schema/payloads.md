@@ -2,7 +2,20 @@
 
 `docs/schema/events.json` là hợp đồng **vỏ** event (`event_id`, `run_id`, `ts`, `type`, `agent`, `domain`, `payload`). File này mô tả **payload** từng loại event và dạng trả về của API, theo code tại `main` ngày 2026-10-09 (sau R8). Tài liệu này không đổi hợp đồng: đổi `events.json` vẫn phải qua PR riêng.
 
-Ví dụ thật (ghi từ API demo, LLM giả): `docs/schema/examples/run-happy.json` (đi hết tới Learn), `docs/schema/examples/run-reject-error.json` (Reject → lỗi, xem H-16).
+Ví dụ thật (sinh bằng `uv run python scripts/export_fixtures.py`, qua API, LLM giả, dữ liệu synthetic). Mỗi file có `steps` (request, body, http, response, `last_event`) và `events` (luồng SSE cuối):
+
+| File | Nhánh | Kết thúc |
+|---|---|---|
+| `run-happy.json` | hỏi, duyệt, KPI đạt, Learn | `run_finished` completed |
+| `run-rollback.json` | sửa sai, Measure không đạt, người xác nhận rollback, điều tra lại, sửa đúng | `run_finished` completed |
+| `run-rollback-declined.json` | người từ chối rollback | pending `halt` `rollback_declined` |
+| `run-insufficient-evidence.json` | Measure chưa đủ mẫu | pending `answer` |
+| `run-revise.json` | người gửi đề xuất lại (`revise`) | `run_finished` completed |
+| `run-halt-max-questions.json` | hỏi quá số lần cho phép | pending `halt` `max_questions_reached` |
+| `run-error-retry.json` | LLM lỗi, Retry | `run_finished` completed (bước đầu là `error` retryable) |
+| `run-no-anomaly.json` | Detect không thấy bất thường | `run_finished` no_anomaly |
+
+`run-reject-error.json` là bản cũ (trước R9), chỉ để tham khảo.
 
 Ký hiệu: `?` = có thể vắng; `|` = một trong các giá trị.
 
@@ -38,7 +51,15 @@ Có hai dạng; phân biệt bằng `kind`.
 - **Câu hỏi thường** (investigation hoặc quality), không có `kind`: `{question, attempt, max_questions}`. Người trả lời qua `POST /runs/{id}/answer`.
 - **Dừng chờ người** (system), `kind: "halt"`:
   - `{kind: "halt", reason, status: "awaiting_human", question, options: ["investigate", "finish"], questions?, sop_still_in_force?, sop_id?, sop_version?}`
-  - `reason` là một trong: `max_questions_reached | insufficient_evidence | rollback_declined | max_rollbacks_reached | max_rejections_reached`.
+  - `reason` là một trong:
+    - `max_questions_reached`: hỏi quá `ask.max_questions`;
+    - `insufficient_evidence`: Measure vẫn thiếu mẫu sau số lần chờ cho phép;
+    - `rollback_declined`: người từ chối rollback (SOP đã áp dụng vẫn hiệu lực, có `sop_still_in_force`);
+    - `max_rollbacks_reached`: quá `loop.max_rollbacks` giữa hai lần dừng (chọn `investigate` thì đếm lại);
+    - `max_total_rollbacks_reached` (R9): tổng rollback của cả run chạm `loop.max_total_rollbacks`. Bộ đếm này (`rollback_total` trong state graph, không có trong event) không bao giờ đặt lại;
+    - `max_rejections_reached`: quá `loop.max_rejections` lần từ chối;
+    - `max_revisions_reached` (R9): quá `loop.max_revisions` lần `revise`.
+  - `options` (R9): thường `["investigate", "finish"]`. Khi `max_total_rollbacks_reached` chỉ còn `["finish"]`; gửi `investigate` thì API trả 422.
   - Người trả lời bằng `POST /runs/{id}/approval` với `kind: "halt"`.
 
 ### answer_received (investigation | quality)
@@ -82,7 +103,7 @@ Có hai dạng; phân biệt bằng `kind`.
 
 `status` có ba giá trị:
 - `measured`: `passed` là `true` hoặc `false`.
-- `insufficient_evidence`: `passed: null`, có thêm `min_samples_after`. Run sẽ hỏi người. Hiện API chưa đưa câu hỏi này ra `pending` (H-09).
+- `insufficient_evidence`: `passed: null`, có thêm `min_samples_after`. Run hỏi người: `pending` là `{type: "answer", question, run_id}` (R9, H-09). Trả lời bằng `POST /runs/{id}/answer` (ví dụ "chờ thêm dữ liệu") thì Measure chạy lại; hết số lần cho phép thì dừng với `reason: "insufficient_evidence"`. Xem `run-insufficient-evidence.json`.
 - `not_applied`: `passed: null`, có thêm `reason`.
 
 `mttd_hours` và `mttr_hours` hiện luôn là `null` trong vòng lặp (H-11).
@@ -100,7 +121,10 @@ Có hai dạng; phân biệt bằng `kind`.
 - `completed`;
 - `no_anomaly` (+ `reason`);
 - `closed` (+ `reason: "closed_by_human"`, `halt_reason`);
-- `error` (+ `error: "<Loại>: <thông điệp>"`, `retryable: true`). Khi nhận `error`, đừng đóng hẳn luồng theo dõi, vì người có thể bấm Retry (H-13).
+- `error` (+ `error: "<Loại>: <thông điệp>"`, `retryable: bool`). Lỗi xảy ra cả sau khi người đã quyết định (duyệt, từ chối, revise, trả lời): quyết định đó đã ghi `audit_log` và không ghi lại khi Retry (R9, H-07, H-08).
+  - `retryable: true`: đừng đóng hẳn luồng theo dõi, người có thể bấm Retry (H-13).
+  - `retryable: false` (R9): đã Retry liên tiếp `loop.max_retries` lần mà vẫn lỗi. `POST /runs/{id}/retry` trả 409. Dashboard ẩn nút Retry và chỉ báo lỗi.
+  - Sau Retry thành công, luồng event được dựng lại từ checkpoint nên event `error` cũ biến mất. Muốn hiện lỗi đã qua thì lưu ở phía dashboard (xem `last_event` của bước đầu trong `run-error-retry.json`).
 
 ## 3. API
 
@@ -111,17 +135,19 @@ Có hai dạng; phân biệt bằng `kind`.
 | GET | `/runs/{id}/events?follow=true&after=N` | | SSE. `id` = số thứ tự (bắt đầu từ 1), `event` = type, `data` = event JSON. Hỗ trợ `Last-Event-ID` |
 | POST | `/runs/{id}/answer` | `{answer}` (không rỗng) | 409 nếu run không chờ câu trả lời |
 | POST | `/runs/{id}/approval` | `{proposal_id, kind, decision, decided_by, reason?}` | 409 nếu sai `kind` hoặc `proposal_id` (đề xuất đã cũ, hoặc bấm hai lần): gọi lại `GET /runs/{id}`. 422 nếu tên không có trong danh sách người duyệt, hoặc `revise` mà thiếu `reason` |
-| POST | `/runs/{id}/retry` | | 409 nếu không có bước lỗi |
+| POST | `/runs/{id}/retry` | | 409 nếu không có bước lỗi, hoặc đã Retry liên tiếp quá `loop.max_retries` lần (khi đó `retryable: false`) |
 | GET | `/config/approvers` | | `{approvers: [str]}` |
 
 Trạng thái run:
 
 ```json
-{"run_id": "run_ff5de085", "state": "waiting | running | finished | error", "status": "", "pending": null | {...}, "error?": "..."}
+{"run_id": "run_ff5de085", "state": "waiting | running | finished | error", "status": "", "pending": null | {...}, "error?": "...", "retryable?": true}
 ```
 
+`error` và `retryable` chỉ có khi `state: "error"` (`retryable` giống trường trong event `run_finished` lỗi). Trạng thái `error` có `status: "error"` và `pending: null`.
+
 Hai dạng `pending`:
-- **Trả lời:** `{type: "answer", question, run_id}`.
+- **Trả lời:** `{type: "answer", question, run_id}`. Có hai nguồn: Investigate chưa chắc, hoặc Measure thiếu mẫu (R9). Cùng dạng, cùng `POST /answer`.
 - **Duyệt:** `{type: "approval", kind, proposal_id, proposal_hash?, run_id, ...}`.
   - `kind: "proposal"` hoặc `"rollback"`: có thêm `proposal` (như event `proposal_created`) và `current_sop: {sop_id, version, content}`. Màn "SOP cũ → mới" so `current_sop.content` với `proposal.sop_proposal.new_content`.
   - `kind: "halt"`: `{reason, question, options, sop_still_in_force, sop_id, sop_version}`.
