@@ -134,6 +134,11 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - `scripts/data_report.py` (một lệnh, ~20 dòng): khoảng ngày 2026-01-01..06-30, số dòng mỗi bảng, anomaly Detect vs ground truth (A1, A2_recurrence khớp; FP1 bảo trì không bị báo). 3 test; README có mục mới.
 - Non-blocking: khớp ground truth dung sai ±1 ngày ở start, không kiểm end; test chỉ seed 42.
 
+### R7/dev-02: DONE
+- Ngày: 2026-10-08. Vòng: 1. Commit: e4076ba. Review: .autodev/reviews/dev-02-r1.json (PASS).
+- Graph có `tool_ctx` gọi `detect()` thật (observe/detect), phát `anomaly_detected` từ output Detect; không anomaly → `run_finished` status `no_anomaly`, không gọi LLM; `POST /runs` `change_time` tuỳ chọn (mặc định `anomaly['end']`). Không có `tool_ctx` giữ mock cũ. 231 test pass.
+- Hai test cũ (change_time bắt buộc) được đổi theo tiêu chí mới. Non-blocking: style thừa `and kpi` trong một assert.
+
 ## Đề xuất chờ duyệt (c)
 
 - ✅ **Đã duyệt 2026-10-07.** **M2-c1 (từ review dev-03):** đưa `DetectParams` (số ngày tham chiếu, luật k trên n, khoảng gộp) vào `data/context_profile.yaml` để leader chỉnh không cần sửa code, và thêm sàn sigma. Hiện không vi phạm quy ước mốc (quy ước chỉ liệt kê baseline, noise, setpoint, ngưỡng SD) nhưng trái tinh thần "domain config tách khỏi code".
