@@ -277,3 +277,82 @@ def test_default_factories_do_not_need_a_key_until_a_run_starts(monkeypatch):
     monkeypatch.delenv("MODEL_REASONING", raising=False)
     app = create_app(load_domain_config())  # building the app touches neither LLM nor DB
     assert app.title
+
+
+# ---- R8/dev-02: failures stop cleanly, retry continues ----
+
+
+class FlakyLLM:
+    """Scripted LLM that raises (e.g. a 429) on call number `fail_at`, once."""
+
+    def __init__(self, script, fail_at):
+        self.inner = ScriptedLLM(script)
+        self.fail_at = fail_at
+        self.n = 0
+
+    def complete(self, system, messages, tools):
+        self.n += 1
+        if self.n == self.fail_at:
+            raise RuntimeError("429 overloaded")
+        return self.inner.complete(system, messages, tools)
+
+
+def make_flaky_client(db_session, script, fail_at):
+    def ctx_factory(run_id):
+        return ToolContext(tables=_fixed_tables(), session=db_session, run_id=run_id)
+
+    return TestClient(create_app(CFG, llm_factory=lambda rid: FlakyLLM(script, fail_at), ctx_factory=ctx_factory))
+
+
+def _audit_actions(db_session, run_id):
+    from sqlalchemy import select
+
+    from backend.db.models import AuditLog
+
+    return [r.action for r in db_session.scalars(select(AuditLog).where(AuditLog.run_id == run_id))]
+
+
+def test_llm_error_midway_marks_run_failed_and_keeps_audit(db_session):
+    client = make_flaky_client(db_session, [*investigate_script(), improve_answer()], fail_at=2)
+    run = start(client)
+    rid = run["run_id"]
+    assert run["state"] == "error" and run["status"] == "error" and "429" in run["error"]
+    got = client.get(f"/runs/{rid}").json()
+    assert got["state"] == "error" and "429" in got["error"]
+    msgs = sse_events(client, rid, follow=True)  # must terminate
+    last = msgs[-1]
+    assert last["event"] == "run_finished" and last["data"]["payload"]["status"] == "error"
+    valid_event(last["data"])
+    assert "correlate" in _audit_actions(db_session, rid)  # the step before the failure is still logged
+    # nothing else can be done on a failed run except retry
+    assert client.post(f"/runs/{rid}/answer", json={"answer": "x"}).status_code == 409
+
+
+def test_retry_after_transient_error_continues(db_session):
+    client = make_flaky_client(db_session, [*investigate_script(), improve_answer()], fail_at=2)
+    rid = start(client)["run_id"]
+    r = client.post(f"/runs/{rid}/retry")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["state"] == "waiting" and body["pending"]["type"] == "approval" and "error" not in body
+    types = [m["event"] for m in sse_events(client, rid)]
+    assert types[-1] == "proposal_created" and "run_finished" not in types  # error event removed
+    done = client.post(f"/runs/{rid}/approval", json=HUMAN).json()
+    assert done["state"] == "finished" and done["status"] == "completed"
+
+
+def test_retry_on_healthy_run_is_409_and_unknown_is_404(db_session):
+    client = make_client(db_session, [[*investigate_script(), improve_answer()]])
+    rid = start(client)["run_id"]
+    assert client.post(f"/runs/{rid}/retry").status_code == 409
+    assert client.post("/runs/nope/retry").status_code == 404
+
+
+def test_error_during_approval_step_then_retry(db_session):
+    # fail at the 3rd call (Improve after approval is not called; use the Improve call = 3rd)
+    client = make_flaky_client(db_session, [*investigate_script(), improve_answer()], fail_at=3)
+    run = start(client)
+    assert run["state"] == "error"
+    r = client.post(f"/runs/{run['run_id']}/retry").json()
+    assert r["state"] == "waiting" and r["pending"]["type"] == "approval"
+    assert client.post(f"/runs/{run['run_id']}/retry").status_code == 409  # repeat call: no stale error

@@ -49,6 +49,8 @@ def _audited(fn: Callable[..., dict]) -> Callable[..., dict]:
             params={k: _jsonable(v) for k, v in params.items()},
             run_id=ctx.run_id,
         )
+        # commit the audit row at once: a later failure (rollback of the step) must not lose it
+        ctx.session.commit()
         return fn(ctx, **params)
 
     return wrapper

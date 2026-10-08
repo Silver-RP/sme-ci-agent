@@ -29,6 +29,7 @@ from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
 from backend.agent.demo_llm import llm_from_env
+from backend.agent.events import make_event
 from backend.agent.graph import build_graph
 from backend.agent.llm import LLM, AnthropicLLM
 from backend.agent.nodes.act import DecisionError, parse_decision
@@ -74,6 +75,7 @@ class Run:
     ctx: ToolContext
     lock: threading.Lock = field(default_factory=threading.Lock)
     events: list[dict[str, Any]] = field(default_factory=list)
+    error: str | None = None
 
 
 @cache
@@ -90,7 +92,9 @@ def _default_llm_factory(run_id: str) -> LLM:
 
 
 def _status(run: Run) -> dict[str, Any]:
-    """Where the run is, derived from the graph state (not stored separately)."""
+    """Where the run is, derived from the graph state (not stored separately); a failed run is "error"."""
+    if run.error is not None:
+        return {"run_id": run.run_id, "state": "error", "status": "error", "pending": None, "error": run.error}
     snap = run.graph.get_state(run.cfg)
     nxt = snap.next[0] if snap.next else None
     pending = None
@@ -150,15 +154,35 @@ def create_app(
         return run
 
     def advance(run: Run, payload: Any) -> None:
-        """Run the graph until the next interrupt or the end; refresh the stored events."""
+        """Run the graph until the next interrupt or the end; refresh the stored events.
+
+        Bad input (ValueError/DecisionError) -> 422. Any other exception (LLM 429, outage, bug) stops the
+        run cleanly: rollback, remember the error, emit a ``run_finished`` event with status ``error``.
+        ``POST /runs/{id}/retry`` runs the failed step again.
+        """
+        run.error = None
         try:
             run.graph.invoke(payload, run.cfg)
             run.ctx.session.commit()
         except (ValueError, DecisionError) as e:  # e.g. missing change_time, invalid decision
             run.ctx.session.rollback()
             raise HTTPException(status_code=422, detail=str(e)) from e
+        except Exception as e:
+            run.ctx.session.rollback()
+            run.error = f"{type(e).__name__}: {e}"
         finally:
             run.events = list(run.graph.get_state(run.cfg).values.get("events", []))
+            if run.error is not None:
+                run.events.append(
+                    make_event(
+                        {"run_id": run.run_id, "domain": cfg_domain.domain},
+                        "run_finished",
+                        "system",
+                        {"status": "error", "error": run.error, "retryable": True},
+                        len(run.events) + 1,
+                        cfg_domain.domain,
+                    )
+                )
 
     def require_waiting(run: Run, kind: str) -> None:
         st = _status(run)
@@ -203,6 +227,15 @@ def create_app(
             advance(run, Command(resume=decision))
             return _status(run)
 
+    @app.post("/runs/{run_id}/retry")
+    def retry(run_id: str) -> dict[str, Any]:
+        run = get_run(run_id)
+        with run.lock:
+            if run.error is None:
+                raise HTTPException(status_code=409, detail=f"run {run_id!r} has no failed step to retry")
+            advance(run, None)  # continue from the last checkpoint: the failed node runs again
+            return _status(run)
+
     @app.get("/config/approvers")
     def approvers() -> dict[str, Any]:
         return {"approvers": list(cfg_domain.approvers)}
@@ -227,7 +260,7 @@ def create_app(
                     ev = run.events[i]
                     yield {"id": str(i + 1), "event": ev["type"], "data": json.dumps(ev)}
                     sent = i + 1
-                if not follow or _status(run)["state"] == "finished":
+                if not follow or _status(run)["state"] in ("finished", "error"):
                     return
                 if await request.is_disconnected():
                     return
