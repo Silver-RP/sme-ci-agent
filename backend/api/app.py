@@ -167,7 +167,7 @@ def create_app(
         except (ValueError, DecisionError) as e:  # e.g. missing change_time, invalid decision
             run.ctx.session.rollback()
             raise HTTPException(status_code=422, detail=str(e)) from e
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - any failure (LLM 429, outage) must stop the run cleanly
             run.ctx.session.rollback()
             run.error = f"{type(e).__name__}: {e}"
         finally:
