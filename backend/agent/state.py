@@ -44,6 +44,7 @@ class AgentState(TypedDict, total=False):
     measurement: dict[str, Any] | None  # last measure result + threshold verdict
     rejection_count: int
     rollback_count: int
+    measure_wait_count: int  # times Measure asked a person because the after-window had too few points
     events: Annotated[list[dict[str, Any]], operator.add]
 
 

@@ -7,6 +7,9 @@ Flow after Improve (conditional edges, ADR-002; no LLM is called in any node her
                     \\--rejected--> improve (or halt)                    |--confirmed--> rollback_apply -> investigate
                                                                          \\--declined--> halt
 
+Measure runs on data the sandbox simulates after ``change_time`` (copy; source tables untouched), measures the
+anomaly's KPI with the good direction from the config, and with too few points answers "insufficient evidence":
+measure -> ask_evidence -> wait_evidence -> measure (bounded by ``ask.max_questions``, then loop_halt).
 The rollback decision is a number comparison against the KPI target and tolerance read from the domain
 config (``evaluate_kpi``), then a person confirms. Nodes that call ``interrupt`` hold no side effect before it
 (the node re-runs from its start on resume); every tool call and decision lands in ``audit_log``.
@@ -14,19 +17,26 @@ config (``evaluate_kpi``), then a person confirms. Nodes that call ``interrupt``
 
 from __future__ import annotations
 
+import dataclasses
 from typing import Any
 
+import pandas as pd
 from langgraph.types import interrupt
 
 from backend.agent.events import make_event
 from backend.agent.state import AgentState
 from backend.db import repo
 from backend.domain_config import DomainConfig, load_domain_config
+from backend.sandbox.injector import load_scenario
+from backend.sandbox.post_change import build_post_change_tables, fix_addresses_cause
 from backend.tools.actions import apply_sop, measure, propose_sop, save_learning
 from backend.tools.readonly import ToolContext
 
 APPROVED = "approved"
 REJECTED = "rejected"
+MEASURED = "measured"
+INSUFFICIENT = "insufficient_evidence"
+NOT_APPLIED = "not_applied"
 
 
 class DecisionError(ValueError):
@@ -75,13 +85,53 @@ def _expected(state: AgentState) -> dict[str, Any]:
     return (state.get("proposal") or {})["expected_kpi"]
 
 
-def resolve_change_time(state: AgentState) -> str:
+def validate_change_time(change_time: str, ctx: ToolContext, anomaly: dict[str, Any] | None) -> None:
+    """``change_time`` must not be in the future of the data, nor before the anomaly started."""
+    t = pd.Timestamp(change_time)
+    last = ctx.tables["kpi_log"]["timestamp"].max()
+    if pd.notna(last) and t > last:
+        raise ValueError(f"change_time {change_time} is in the future: the data ends at {last.isoformat()}")
+    a_start = (anomaly or {}).get("start")
+    if a_start and t < pd.Timestamp(a_start):
+        raise ValueError(f"change_time {change_time} is before the anomaly started ({a_start})")
+
+
+def resolve_change_time(state: AgentState, ctx: ToolContext | None = None) -> str:
     """When the change takes effect: ``state['change_time']`` if given, else the end of the anomaly window
-    (the sandbox clock: the fix is applied once the anomaly run ends). Raises if neither exists."""
-    value = state.get("change_time") or (state.get("anomaly") or {}).get("end")
+    (sandbox clock) when at least ``measure.window_days`` of data follow it, else the latest time that still
+    leaves a full after-window (never before the anomaly start). With ``ctx`` the value is validated
+    against the data. Raises ``ValueError`` if no time can be determined or it is invalid."""
+    anomaly = state.get("anomaly") or {}
+    value = state.get("change_time")
     if not value:
-        raise ValueError("change_time is required: set state['change_time'] or an anomaly with an 'end' time")
-    return str(value)
+        value = anomaly.get("end")
+        if not value:
+            raise ValueError("change_time is required: set state['change_time'] or an anomaly with an 'end' time")
+        if ctx is not None:
+            last = ctx.tables["kpi_log"]["timestamp"].max()
+            window = pd.Timedelta(days=ctx.config.measure.window_days)
+            if pd.notna(last) and pd.Timestamp(value) > last - window:
+                room = last - window
+                if anomaly.get("start"):
+                    room = max(room, pd.Timestamp(anomaly["start"]))
+                value = room.isoformat()
+    value = str(value)
+    if ctx is not None:
+        validate_change_time(value, ctx, anomaly)
+    return value
+
+
+def _sim_levels(kpi: str, config: DomainConfig) -> tuple[float, float]:
+    """(baseline level, noise sd) the sandbox uses for ``kpi`` after a fix; from the scenario, else KPI target."""
+    base = load_scenario().get("baseline", {})
+    if base.get("kpi") == kpi:
+        return float(base["value"]), float(base["noise_sd"])
+    return next(k.target for k in config.kpis if k.name == kpi), 0.0
+
+
+def _measured_kpi(state: AgentState) -> str:
+    """The KPI to measure is the anomaly's KPI; the LLM's expected_kpi is only a fallback when it has none."""
+    return (state.get("anomaly") or {}).get("kpi") or _expected(state)["kpi"]
 
 
 def route_after_approval(state: AgentState, config: DomainConfig) -> str:
@@ -94,7 +144,14 @@ def route_after_approval(state: AgentState, config: DomainConfig) -> str:
 
 
 def route_after_measure(state: AgentState, config: DomainConfig) -> str:
-    return "learn" if (state.get("measurement") or {}).get("passed") else "rollback_propose"
+    m = state.get("measurement") or {}
+    if m.get("status") == NOT_APPLIED:
+        return "learn"  # nothing was changed: nothing to roll back, and nothing to call a success
+    if m.get("status") == INSUFFICIENT:
+        if state.get("measure_wait_count", 0) >= config.ask.max_questions:
+            return "halt"
+        return "ask_evidence"
+    return "learn" if m.get("passed") else "rollback_propose"
 
 
 def route_after_rollback_confirm(state: AgentState, config: DomainConfig) -> str:
@@ -111,7 +168,7 @@ def make_wait_approval_node(config: DomainConfig, ctx: ToolContext):
     def wait_approval(state: AgentState) -> dict[str, Any]:
         proposal = state.get("proposal") or {}
         if proposal.get("sop_proposal"):
-            resolve_change_time(state)  # fail now, not after a person approved something that cannot be measured
+            resolve_change_time(state, ctx)  # fail now, not after a person approved something that cannot be measured
         raw = interrupt({"kind": "proposal", "proposal": proposal, "run_id": state.get("run_id", "")})
         d = parse_decision(raw, config)
         repo.append_audit(
@@ -144,7 +201,8 @@ def make_act_node(config: DomainConfig, ctx: ToolContext):
         if not sop:
             emit("sop_applied", "improvement", {"applied": False, "reason": "proposal has no SOP change"})
             return {"applied": None, "events": emit.events}
-        change_time = resolve_change_time(state)  # validate BEFORE any side effect
+        change_time = resolve_change_time(state, ctx)  # validate BEFORE any side effect
+        anomaly = state.get("anomaly") or {}
         res = apply_sop(
             ctx,
             sop_id=sop["sop_id"],
@@ -159,6 +217,11 @@ def make_act_node(config: DomainConfig, ctx: ToolContext):
             "previous_content": previous.content if previous else None,
             "approved_by": res["approved_by"],
             "change_time": change_time,
+            "sim": {  # what the sandbox needs to produce the data after the change (rebuilt by Measure)
+                "fixed": fix_addresses_cause(proposal.get("hypothesis")),
+                "machine_id": anomaly.get("machine_id") or anomaly.get("machine"),
+                "anomaly_start": anomaly.get("start"),
+            },
         }
         emit("sop_applied", "improvement", {"applied": True, **{k: v for k, v in applied.items() if k != "previous_content"}})
         return {"applied": applied, "events": emit.events, "proposal": {**proposal, "status": "applied"}}
@@ -168,35 +231,100 @@ def make_act_node(config: DomainConfig, ctx: ToolContext):
 
 def make_measure_node(config: DomainConfig, ctx: ToolContext):
     def measure_node(state: AgentState) -> dict[str, Any]:
-        expected = _expected(state)
-        change_time = (state.get("applied") or {}).get("change_time") or resolve_change_time(state)
-        anomaly = state.get("anomaly") or {}
-        res = measure(
-            ctx,
-            kpi=expected["kpi"],
-            change_time=change_time,
-            window_days=config.measure.window_days,
-            machine_id=anomaly.get("machine_id") or anomaly.get("machine"),
-        )
-        kpi_cfg = next(k for k in config.kpis if k.name == expected["kpi"])
-        passed = evaluate_kpi(res, expected["direction"], kpi_cfg.target, config.measure.tolerance)
-        measurement = {
-            **res,
-            "direction": expected["direction"],
+        kpi = _measured_kpi(state)  # the anomaly's KPI, never the LLM's choice
+        kpi_cfg = next((k for k in config.kpis if k.name == kpi), None)
+        if kpi_cfg is None:
+            raise ValueError(f"unknown KPI {kpi!r}; domain config defines {[k.name for k in config.kpis]}")
+        direction = kpi_cfg.direction  # good direction comes from the config
+        applied = state.get("applied")
+        emit = _Emitter(state, config)
+        base = {
+            "kpi": kpi,
+            "direction": direction,
             "target": kpi_cfg.target,
             "tolerance": config.measure.tolerance,
-            "passed": passed,
         }
+        if not applied:
+            measurement = {
+                **base, "status": NOT_APPLIED, "passed": None, "before": None, "after": None,
+                "reason": "the proposal changed no SOP, so there is nothing to measure",
+            }
+            emit("kpi_measured", "quality", measurement)
+            return {"measurement": measurement, "events": emit.events}
+        change_time = applied.get("change_time") or resolve_change_time(state, ctx)
+        anomaly = state.get("anomaly") or {}
+        machine = anomaly.get("machine_id") or anomaly.get("machine")
+        sim = applied.get("sim")
+        measure_ctx = ctx
+        if sim is not None:  # data after the change comes from the simulator, in a copy owned by this run
+            baseline, noise_sd = _sim_levels(kpi, config)
+            post = build_post_change_tables(
+                ctx.tables, kpi=kpi, change_time=change_time, machine_id=sim.get("machine_id"),
+                fixed=bool(sim.get("fixed")), baseline=baseline, noise_sd=noise_sd,
+                window_days=config.measure.window_days, anomaly_start=sim.get("anomaly_start"),
+                run_id=str(state.get("run_id", "")),
+            )
+            measure_ctx = dataclasses.replace(ctx, tables=post)
+        res = measure(
+            measure_ctx,
+            kpi=kpi,
+            change_time=change_time,
+            window_days=config.measure.window_days,
+            machine_id=machine,
+            min_samples_after=config.measure.min_samples_after,
+        )
+        if not res["sufficient"]:
+            measurement = {
+                **res, **base, "status": INSUFFICIENT, "passed": None,
+                "min_samples_after": config.measure.min_samples_after,
+            }
+            emit("kpi_measured", "quality", measurement)
+            return {"measurement": measurement, "events": emit.events}
+        passed = evaluate_kpi(res, direction, kpi_cfg.target, config.measure.tolerance)
+        measurement = {**res, **base, "status": MEASURED, "passed": passed}
         repo.append_audit(
             ctx.session, actor="system", action="kpi_threshold_check",
             params={k: measurement[k] for k in ("kpi", "after", "target", "tolerance", "direction", "passed")},
             run_id=ctx.run_id,
         )
-        emit = _Emitter(state, config)
         emit("kpi_measured", "quality", measurement)
         return {"measurement": measurement, "events": emit.events}
 
     return measure_node
+
+
+def make_ask_evidence_node(config: DomainConfig):
+    """Too few KPI points after the change: say so and ask a person (no rollback, no failure)."""
+
+    def ask_evidence(state: AgentState) -> dict[str, Any]:
+        m = state.get("measurement") or {}
+        count = state.get("measure_wait_count", 0) + 1
+        payload = {
+            "question": (
+                f"Not enough evidence yet: only {m.get('n_after')} {m.get('kpi')} point(s) after the change "
+                f"(need {m.get('min_samples_after')}). Wait for more data and confirm to measure again."
+            ),
+            "attempt": count,
+            "max_questions": config.ask.max_questions,
+        }
+        emit = _Emitter(state, config)
+        emit("question_asked", "quality", payload)
+        return {"measure_wait_count": count, "events": emit.events, "status": ""}
+
+    return ask_evidence
+
+
+def make_wait_evidence_node(config: DomainConfig):
+    def wait_evidence(state: AgentState) -> dict[str, Any]:
+        question = next(
+            (e["payload"]["question"] for e in reversed(state.get("events", [])) if e["type"] == "question_asked"), ""
+        )
+        answer = interrupt({"question": question, "run_id": state.get("run_id", "")})
+        emit = _Emitter(state, config)
+        emit("answer_received", "quality", {"answer": answer})
+        return {"evidence": [*state.get("evidence", []), {"source": "human_answer", "answer": answer}], "events": emit.events}
+
+    return wait_evidence
 
 
 def make_learn_node(config: DomainConfig, ctx: ToolContext):
@@ -214,7 +342,7 @@ def make_learn_node(config: DomainConfig, ctx: ToolContext):
             "kpi": m.get("kpi"),
             "kpi_before": m.get("before"),
             "kpi_after": m.get("after"),
-            "outcome": "success",
+            "outcome": "success" if applied and m.get("passed") else "no_change",
         }
         res = save_learning(ctx, content=lesson)
         emit = _Emitter(state, config)
@@ -307,6 +435,7 @@ def make_rollback_apply_node(config: DomainConfig, ctx: ToolContext):
             "applied": None,
             "measurement": None,
             "evidence_gap": False,
+            "measure_wait_count": 0,
         }
 
     return rollback_apply
@@ -317,7 +446,9 @@ def make_loop_halt_node(config: DomainConfig):
 
     def halt(state: AgentState) -> dict[str, Any]:
         decided = state.get("approval") or {}
-        if decided.get("decision") == REJECTED and (state.get("proposal") or {}).get("kind") == "rollback":
+        if (state.get("measurement") or {}).get("status") == INSUFFICIENT:
+            reason = "insufficient_evidence"
+        elif decided.get("decision") == REJECTED and (state.get("proposal") or {}).get("kind") == "rollback":
             reason = "rollback_declined"
         elif state.get("rollback_count", 0) >= config.loop.max_rollbacks:
             reason = "max_rollbacks_reached"

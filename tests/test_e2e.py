@@ -103,12 +103,7 @@ def test_full_loop_over_http_with_real_detect(server):
     assert bad.status_code == 422
 
     run = c.post(f"/runs/{rid}/approval", json={"decision": "approved", "decided_by": approvers[0]}).json()
-    # the seed-42 anomaly never ends in the data, so Measure sees no improvement and asks to roll back;
-    # a person declines it and the loop halts cleanly (the decision is theirs, not the agent's)
-    assert run["pending"]["type"] == "approval" and run["pending"]["kind"] == "rollback"
-    run = c.post(
-        f"/runs/{rid}/approval", json={"decision": "rejected", "decided_by": approvers[1 % len(approvers)]}
-    ).json()
+    # the demo fix targets the modelled cause (setpoint): the simulator brings the KPI back, Measure passes
     assert run["state"] == "finished"
 
     events = read_sse(server, rid, follow="true")

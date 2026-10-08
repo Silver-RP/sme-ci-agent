@@ -19,6 +19,7 @@ class KPI(_Strict):
     unit: str
     target: float
     alert_threshold_sd: float = Field(gt=0)
+    direction: str = Field(default="decrease", pattern="^(decrease|increase)$")  # which way is good
 
 
 class SOP(_Strict):
@@ -65,6 +66,7 @@ class MeasureParams(_Strict):
     # KPI passes when it is within ``tolerance`` (relative) of the KPI target on the good side:
     # decrease: after <= target * (1 + tolerance); increase: after >= target * (1 - tolerance)
     tolerance: float = Field(default=0.25, ge=0.0)
+    min_samples_after: int = Field(default=6, ge=1)  # fewer KPI points after the change -> "not enough evidence"
 
 
 class LoopParams(_Strict):

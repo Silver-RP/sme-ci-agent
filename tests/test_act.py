@@ -52,12 +52,12 @@ def make_ctx(session, tables):
     return ToolContext(tables=tables, session=session, run_id="run_act")
 
 
-def investigate_script():
+def investigate_script(description="wrong_setpoint"):
     return [
         LLMResponse(tool_calls=[ToolCall(id="t1", name="correlate", arguments={"kpi": KPI, "machine_id": "M02"})]),
         json.dumps(
             {
-                "hypotheses": [{"group": "machine", "description": "wrong_setpoint", "confidence": 0.8}],
+                "hypotheses": [{"group": "machine", "description": description, "confidence": 0.8}],
                 "insufficient_evidence": False,
             }
         ),
@@ -177,11 +177,13 @@ def test_repeated_runs_do_not_leak_state(db_session):
 
 def rollback_script():
     # investigate + improve, then (after rollback) investigate + improve again
-    return [*investigate_script(), improve_answer(), *investigate_script(), improve_answer()]
+    # the fix targets a cause the simulator does not model, so KPI stays high and Measure fails
+    wrong = investigate_script("sensor calibration drift")
+    return [*wrong, improve_answer(), *wrong, improve_answer()]
 
 
 def to_rollback_prompt(db_session):
-    graph, llm = make(db_session, rollback_script(), tables=_tables())  # KPI stays high: fix did not work
+    graph, llm = make(db_session, rollback_script(), tables=_tables())  # wrong cause: KPI stays high
     cfg = cfg_run()
     start(graph, cfg)
     calls = len(llm.calls)
@@ -330,7 +332,8 @@ def test_measure_node_uses_threshold_from_config_and_no_llm(db_session):
         node = make_measure_node(cfg, make_ctx(db_session, _fixed_tables()))
         s = new_state("run_m", CFG.domain)
         s["change_time"] = CHANGE
-        s["anomaly"] = {"machine": "M02"}
+        s["anomaly"] = {"machine": "M02", "kpi": KPI}
+        s["applied"] = {"change_time": CHANGE}  # no "sim": measure the tables as they are
         s["proposal"] = json.loads(improve_answer()) | {"hypothesis": {}}
         return node(s)
 
@@ -343,6 +346,7 @@ def test_measure_requires_change_time(db_session):
     node = make_measure_node(CFG, make_ctx(db_session, _fixed_tables()))
     s = new_state("run_m", CFG.domain)
     s["proposal"] = json.loads(improve_answer())
+    s["applied"] = {"sop_id": SOP_ID}  # applied, but no change_time anywhere
     with pytest.raises(ValueError, match="change_time"):
         node(s)
 
@@ -354,7 +358,7 @@ def test_act_records_change_time_from_anomaly_end_and_measure_uses_it(db_session
     assert "change_time" not in s
     s["anomaly"] = {"machine": "M02", "kpi": KPI, "end": CHANGE}
     s["proposal"] = json.loads(improve_answer()) | {
-        "hypothesis": {}, "sop_proposal": {"sop_id": SOP_ID, "new_content": "Verify setpoint 180 again."},
+        "hypothesis": {"description": "wrong_setpoint"}, "sop_proposal": {"sop_id": SOP_ID, "new_content": "Verify setpoint 180 again."},
     }
     s["approval"] = {"decision": "approved", "decided_by": "alice"}
     s.update(make_act_node(CFG, ctx)(s))

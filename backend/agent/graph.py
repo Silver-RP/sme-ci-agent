@@ -15,12 +15,14 @@ from backend.agent.events import make_event
 from backend.agent.llm import LLM
 from backend.agent.nodes.act import (
     make_act_node,
+    make_ask_evidence_node,
     make_learn_node,
     make_loop_halt_node,
     make_measure_node,
     make_rollback_apply_node,
     make_rollback_propose_node,
     make_wait_approval_node,
+    make_wait_evidence_node,
     make_wait_rollback_node,
     route_after_approval,
     route_after_measure,
@@ -201,6 +203,8 @@ def _add_act_loop(g: StateGraph, config: DomainConfig, ctx: ToolContext, improve
     g.add_node("act", make_act_node(config, ctx))
     g.add_node("measure", make_measure_node(config, ctx))
     g.add_node("learn", make_learn_node(config, ctx))
+    g.add_node("ask_evidence", make_ask_evidence_node(config))
+    g.add_node("wait_evidence", make_wait_evidence_node(config))
     g.add_node("rollback_propose", make_rollback_propose_node(config, ctx))
     g.add_node("wait_rollback", make_wait_rollback_node(config, ctx))
     g.add_node("rollback_apply", make_rollback_apply_node(config, ctx))
@@ -215,8 +219,10 @@ def _add_act_loop(g: StateGraph, config: DomainConfig, ctx: ToolContext, improve
     g.add_conditional_edges(
         "measure",
         lambda s: route_after_measure(s, config),
-        {"learn": "learn", "rollback_propose": "rollback_propose"},
+        {"learn": "learn", "rollback_propose": "rollback_propose", "ask_evidence": "ask_evidence", "halt": "loop_halt"},
     )
+    g.add_edge("ask_evidence", "wait_evidence")
+    g.add_edge("wait_evidence", "measure")
     g.add_edge("learn", END)
     g.add_edge("rollback_propose", "wait_rollback")
     g.add_conditional_edges(

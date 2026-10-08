@@ -112,7 +112,8 @@ def test_rejection_goes_back_to_improve_and_waits_again(db_session):
 
 
 def test_rollback_confirmation_goes_through_approval_endpoint(db_session):
-    script = [*investigate_script(), improve_answer(), *investigate_script(), improve_answer()]
+    wrong = investigate_script("sensor calibration drift")  # a cause the simulator does not fix: KPI stays high
+    script = [*wrong, improve_answer(), *wrong, improve_answer()]
     client = make_client(db_session, [script], tables=_tables())
     run = start(client)
     r = client.post(f"/runs/{run['run_id']}/approval", json=HUMAN).json()

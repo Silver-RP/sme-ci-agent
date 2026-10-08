@@ -65,7 +65,7 @@ def run_scenario(
         if snap.next[0] == "wait_answer":
             payload = Command(resume=answer)
         elif snap.next[0] == "wait_rollback":
-            # the sandbox anomaly never ends, so KPI does not recover; the demo person declines the rollback
+            # the fix did not bring the KPI back: the demo person declines the rollback
             payload = Command(resume={"decision": "rejected", "decided_by": who, "reason": "demo run: keep"})
         else:
             payload = Command(resume={"decision": "approved", "decided_by": who, "reason": "demo run"})
