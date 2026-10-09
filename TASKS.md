@@ -38,11 +38,11 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 ## M4: v0.1-e2e (13/10)
 
 - [x] T-040 [Core] 3 cạnh quay lại: bác bỏ/bổ sung thông tin, từ chối đề xuất, rollback. Due 12/10
-- [ ] T-041 [Core] Temperature thấp + record/replay một lần chạy tốt. Due 12/10
-- [ ] T-042 [Data] Lấy số liệu 3 chỉ số (defect %, MTTD/MTTR, tỷ lệ tái diễn). Due 12/10
-- [ ] T-043 [Demo] Số liệu lên dashboard; kịch bản 4 phút v1 (docs/demoscript.md). Due 12/10
-- [ ] T-044 [Tools] Sổ chi phí token docs/token-cost.md (cập nhật hằng ngày). Due 13/10
-- [ ] T-045 [All] Bug bash 12/10, tag v0.1-e2e, demo nội bộ #1 13/10.
+- [ ] T-041 [Core] Temperature thấp + record/replay một lần chạy tốt. Due 12/10. Owner: auto-dev R10a. (Temperature đã thay bằng `LLM_EFFORT` ở R9h; còn phần record/replay, phục vụ FR-07.)
+- [ ] T-042 [Data] Lấy số liệu 3 chỉ số (defect %, MTTD/MTTR, tỷ lệ tái diễn). Due 12/10. Owner: auto-dev R10b, sau D1 (#66).
+- [ ] T-043 [Demo] Số liệu lên dashboard; kịch bản 4 phút v1 (docs/demoscript.md). Due 12/10. Owner: vai D (#64). Kịch bản v1 nay là `docs/demo-storyboard.md`.
+- [ ] T-044 [Tools] Sổ chi phí token docs/token-cost.md (cập nhật hằng ngày). Due 13/10. Owner: vai Q (#65, Q6).
+- [ ] T-045 [All] Bug bash 12/10, tag v0.1-e2e, demo nội bộ #1 13/10. Owner: vai Q chủ trì (#65, Q4); leader tag.
 
 ## Backlog sau 13/10 (G6 → G8)
 

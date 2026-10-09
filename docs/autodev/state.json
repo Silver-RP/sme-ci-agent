@@ -1,6 +1,6 @@
 {
-  "updated": "2026-10-09",
-  "source": "audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58",
+  "updated": "2026-10-10",
+  "source": "audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + quyết định team 2026-10-10",
   "milestones": {
     "project": [
       {
@@ -398,6 +398,18 @@
   "decisions": [
     {
       "date": "2026-10-10",
+      "text": "Team 4 người theo vai: A dữ liệu (#63), D giao diện (#64), Q kiểm chứng (#65); backend do leader + auto-dev. Auto-dev không sửa phần trình bày dashboard/. main bắt buộc PR + check plugin-guard."
+    },
+    {
+      "date": "2026-10-10",
+      "text": "Leader duyệt hợp đồng dữ liệu v0.1: production_log số đếm; material_batches thay inventory + supplier; environment_log + training_level sang R11."
+    },
+    {
+      "date": "2026-10-09",
+      "text": "Sau T-030: tạm dừng thêm tính năng để chuẩn hoá dữ liệu (hợp đồng + nhập CSV) và làm UI demo (storyboard) trước P6."
+    },
+    {
+      "date": "2026-10-10",
       "text": "T-030 xong: vòng LLM thật khép kín qua API/CLI; dashboard không hiện thẻ đề xuất (H-44); eval thật 50% do chấm theo chuỗi (H-28)"
     },
     {
@@ -451,37 +463,33 @@
   ],
   "outlook": [
     {
-      "id": "R9i",
-      "goal": "Đề xuất: chặn LLM thật bỏ/sai action trước T-030",
+      "id": "R10a",
+      "goal": "API cho storyboard + dự phòng sân khấu (không chờ D1)",
       "gaps": [
-        "H-27",
-        "H-30"
+        "H-13",
+        "H-16",
+        "H-26"
+      ],
+      "tasks": [
+        "T-041"
       ]
     },
     {
-      "id": "T-030",
-      "goal": "Người dùng chạy LLM thật sau R9h, R9i"
-    },
-    {
-      "id": "R10",
-      "goal": "Điều 3 thật + luồng demo",
+      "id": "R10b",
+      "goal": "Dữ liệu theo hợp đồng + điều 3 (sau D1 #66)",
       "gaps": [
         "H-11",
-        "H-13",
-        "H-16",
-        "H-26",
         "H-31",
-        "H-33"
+        "H-33",
+        "H-39"
       ],
       "tasks": [
-        "T-041",
-        "T-042",
-        "T-044"
+        "T-042"
       ]
     },
     {
       "id": "R11",
-      "goal": "Đề xuất: điều 1 thành thật",
+      "goal": "Điều 1 thành thật (sau D4 + D5 của vai A)",
       "gaps": [
         "H-28",
         "H-29",
