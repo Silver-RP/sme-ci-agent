@@ -85,3 +85,12 @@ Trạng thái: đã chốt (leader xác nhận 2026-10-08, xem ADR-009).
   - `base_version` của SOP-RFL-001 đã lên 40 vì DB demo dùng chung, cộng dồn qua mọi lần chạy. Trước buổi demo nên reset DB demo hoặc dùng DB riêng.
   - Người trả lời trung tính không được hỏi lần nào, vì confidence 0,8 ≥ ngưỡng. Nhánh "hỏi người" với LLM thật chưa được thử (liên quan H-29: bài toán quá dễ).
 - Còn lại cho T-030: người dùng chạy một vòng trên dashboard (`?source=live`) và chạy `uv run python scripts/eval_rootcause.py --llm real --seeds 2`.
+
+### T-030 lần 4: người dùng tự chạy (2026-10-10)
+- **Dashboard** (`?source=live`, LLM thật, run `run_25553654`): bấm Start run thì chỉ hiện ô Decided by / Reason, **không thấy thẻ đề xuất** (Review proposal: Change, Rationale, SOP cũ → mới). Trong khi đó backend vẫn báo `pending.type=approval`, `kind=proposal`, đủ `proposal` (wrong_setpoint 0,85) và `current_sop`. Lỗi ở phần trình bày của dashboard. Đăng ký **H-44**, giao team frontend; nếu cần thì R10 thêm test vitest đọc đúng payload R9i (có `action`, `sop_proposal`).
+- **Terminal** (`run_scenario.py --llm real --answer "Không có thêm thông tin." --approver alice`, run `run_9754fbfe`): 12 event, đi trọn tới `learning_saved` và `run_finished`. Trong learning_store: `outcome: success`, nguyên nhân "Wrong setpoint… zone3 180 → 195 °C" (0,8), defect_rate 0,063 → 0,021.
+- **Eval** (`eval_rootcause.py --llm real --seeds 2`): accuracy 50%, ask_rate 0%, khoảng 12,5k token.
+  - Hàm chấm `is_correct` đòi mô tả chứa nguyên văn "wrong setpoint", trong khi LLM thật hay diễn đạt bằng lời khác ("Zone 3 setpoint … raised from 180 to 195"). Nhiều khả năng đây là sai do cách chấm (H-28), không phải agent sai. Sửa ở R11: giả thuyết mang mã nguyên nhân có cấu trúc, chấm theo mã.
+  - ask_rate 0% vì bài toán quá dễ (H-29).
+- Ghi chú môi trường: shell của người dùng còn kích hoạt venv cũ ở Desktop, `uv` cảnh báo `VIRTUAL_ENV ... does not match`. Không ảnh hưởng kết quả; gõ `deactivate` để tắt.
+- **Kết luận T-030:** vòng Detect → Learn chạy được với LLM thật (3 lần thành công qua API và CLI). Các lỗi đã ghi: H-42, H-43 (đã sửa), H-44, H-28, H-29. Tick T-030.

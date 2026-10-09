@@ -9,7 +9,7 @@ Cập nhật: 2026-10-09 · Nguồn: audit `docs/audits/2026-10-09_2.md` + R9i m
 | Loại | Mốc | Trạng thái | Ghi chú |
 |---|---|---|---|
 | Dự án | M0–M2 | ✅ 19/19 task | |
-| Dự án | M3 | 🔄 1/2 | T-030 hết bị chặn (R9h); chờ người dùng chạy LLM thật |
+| Dự án | M3 | ✅ 2/2 | T-030 xong 10/10: vòng LLM thật khép kín; dashboard lỗi H-44 |
 | Dự án | M4 | 🔄 1/6 | T-040 xong; T-041..T-045 mở; tag v0.1-e2e 13/10 |
 | Chạy | R4–R9, R9h, R9i, R9ih | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55, #58 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 / ~0,64 (worker) USD |
 | Plugin | P1–P3 | ✅ | |
@@ -76,6 +76,7 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 | H-18 | vừa | `has_tool_evidence` tính tool của cả run |
 | H-19 | vừa | Halt → điều tra lại quên SOP đang hiệu lực |
 | H-20 | vừa | Trả lời không kèm id câu hỏi |
+| H-44 | vừa | Dashboard không hiện thẻ đề xuất khi chờ duyệt (team frontend) |
 | H-22 | thấp | Giá trị miền hard-code ngoài YAML |
 | H-24 | thấp | UI không phân biệt kết quả run (team frontend) |
 | H-25 | thấp | Payload event chưa có tài liệu |

@@ -20,9 +20,9 @@
       },
       {
         "id": "M3",
-        "status": "in_progress",
-        "tasks": "1/2",
-        "note": "T-030 chờ người dùng chạy với LLM thật"
+        "status": "done",
+        "tasks": "2/2",
+        "note": "T-030 xong 2026-10-10 (LLM thật khép vòng)"
       },
       {
         "id": "M4",
@@ -387,9 +387,19 @@
       "severity": "thấp",
       "summary": "docs/schema/examples không qua test dashboard; payloads.md sai chỗ; SSE after=-1",
       "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-44",
+      "severity": "vừa",
+      "summary": "Dashboard không hiện thẻ đề xuất khi pending approval (LLM thật, payload R9i)",
+      "audit": "2026-10-09_2"
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-10",
+      "text": "T-030 xong: vòng LLM thật khép kín qua API/CLI; dashboard không hiện thẻ đề xuất (H-44); eval thật 50% do chấm theo chuỗi (H-28)"
+    },
     {
       "date": "2026-10-09",
       "text": "R9i merge #55: đóng H-27, H-30, H-41, H-42; điều 2 lên 65%. Supervisor tự kiểm 5 tiêu chí cấp mốc + 3 thử biên."
