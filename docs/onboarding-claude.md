@@ -69,7 +69,7 @@ Muốn Claude đọc được issue: cài GitHub CLI (`brew install gh`) và `gh
 **Cả đội:**
 - Làm trên nhánh riêng (`feat/data-*`, `feat/ui-*`, `docs/qa-*`), mở PR vào `main`. `main` không nhận đẩy thẳng và không nhận force-push.
 - **Không sửa** `.claude/`, `.autodev/`, `docs/autodev/`, `.github/`. Đây là file của plugin auto-dev và CI. PR đụng các thư mục này sẽ bị kiểm tra `plugin-guard` chặn. Muốn đổi thì mở issue cho leader.
-- **Không chạy** `/run-milestone`, `/supervise`, `/audit`. Chỉ leader chạy auto-dev, để các mốc không chồng lên nhau.
+- **Không chạy** `/run-milestone`, `/supervise`, `/audit`, `/mo-phien`, `/dong-phien`. Chỉ leader chạy auto-dev, để các mốc không chồng lên nhau.
 - Đổi `docs/schema/events.json` (hợp đồng backend ↔ dashboard): PR riêng, báo trong sync.
 - Chỉ dùng dữ liệu synthetic. Không dùng dữ liệu thật hay dữ liệu cá nhân.
 - Cần backend thêm API: mở issue nhãn `api`. Gặp lỗi: issue nhãn `bug` + `sev:1–3`; `sev:1` báo ngay trong chat.
