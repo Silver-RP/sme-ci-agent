@@ -8,6 +8,7 @@ applied here) and emits ``proposal_created`` (agent = improvement). KPI names co
 from __future__ import annotations
 
 import json
+import math
 import uuid
 from typing import Any
 
@@ -84,7 +85,9 @@ class ProposalDraft(BaseModel):
     action: ActionDraft | None = None
 
 
-def parse_proposal(text: str, evidence: list[dict[str, Any]], config: DomainConfig) -> ProposalDraft:
+def parse_proposal(
+    text: str, evidence: list[dict[str, Any]], config: DomainConfig, anomaly: dict[str, Any] | None = None
+) -> ProposalDraft:
     """Parse and validate the LLM answer. Raises ProposalError with a clear message."""
     data = extract_json_object(text, "change")
     if data is None:
@@ -119,7 +122,26 @@ def parse_proposal(text: str, evidence: list[dict[str, Any]], config: DomainConf
             f"action.parameter {draft.action.parameter!r} is not a valid action parameter; "
             f"valid: {config.actions.parameters}"
         )
+    if draft.action:
+        _check_action(draft.action, config, anomaly)
     return draft
+
+
+def _check_action(action: ActionDraft, config: DomainConfig, anomaly: dict[str, Any] | None) -> None:
+    value = action.value
+    if not math.isfinite(value):
+        raise ProposalError(f"action.value must be a finite number, got {value}")
+    limit = config.actions.limits.get(action.parameter)
+    if limit is not None and not limit.min <= value <= limit.max:
+        raise ProposalError(
+            f"action.value {value} is outside the allowed range for {action.parameter}: "
+            f"{limit.min} to {limit.max}"
+        )
+    machine = (anomaly or {}).get("machine_id") or (anomaly or {}).get("machine")
+    if machine and action.machine_id != machine:
+        raise ProposalError(
+            f"action.machine_id {action.machine_id!r} is not the anomaly machine {machine!r}; use {machine!r}"
+        )
 
 
 def compact_evidence(evidence: list[dict[str, Any]], max_chars: int) -> dict[int, Any]:
@@ -151,6 +173,7 @@ def run_improvement(
     system = (
         build_system_prompt(config) + "\n" + FINAL_FORMAT
         + f" Valid action parameters: {config.actions.parameters}."
+        + f" Allowed value range per parameter: { {k: [v.min, v.max] for k, v in config.actions.limits.items()} }."
     )
     user = (
         f"Anomaly: {json.dumps(state.get('anomaly'), default=str)}. "
@@ -164,7 +187,7 @@ def run_improvement(
     for attempt in range(attempts):
         resp = llm.complete(system, messages, [])
         try:
-            draft = parse_proposal(resp.text, evidence, config)
+            draft = parse_proposal(resp.text, evidence, config, state.get("anomaly"))
             break
         except ProposalError as e:
             if attempt == attempts - 1:

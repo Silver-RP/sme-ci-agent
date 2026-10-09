@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 DEFAULT_PROFILE_PATH = Path(__file__).resolve().parents[1] / "data" / "context_profile.yaml"
 
@@ -59,12 +59,34 @@ class ImproveParams(_Strict):
     max_format_retries: int = Field(default=1, ge=0)  # times the LLM may be asked to fix an unparsable proposal
 
 
+class ActionLimit(_Strict):
+    """Allowed value range (inclusive) of one action parameter."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    min: float
+    max: float
+
+    @model_validator(mode="after")
+    def _ordered(self) -> ActionLimit:
+        if self.min > self.max:
+            raise ValueError("min must be <= max")
+        return self
+
+
 class ActionParams(_Strict):
     """Actions a proposal may take (YAML key ``actions:``)."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     parameters: list[str] = Field(default_factory=list)  # equipment parameter names a structured action may set
+    limits: dict[str, ActionLimit] = Field(default_factory=dict)  # allowed value range per parameter
+
+    @model_validator(mode="after")
+    def _limits_cover_parameters(self) -> ActionParams:
+        if set(self.limits) != set(self.parameters):
+            raise ValueError("actions.limits must have exactly one min/max entry per actions.parameters name")
+        return self
 
 
 class AskParams(_Strict):

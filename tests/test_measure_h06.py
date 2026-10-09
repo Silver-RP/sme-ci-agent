@@ -61,7 +61,8 @@ def run(db_session, improve, description="wrong_setpoint"):
 
 def test_negative_hypothesis_without_a_setpoint_change_does_not_pass(db_session):
     # H-06: the words "setpoint ... NOT the cause" used to count as a correct fix
-    _, _, out = run(db_session, answer(machine_id="M01"), NEGATIVE)
+    # (R9i/H-30: a foreign machine is now rejected by Improve, so use an unmodelled parameter on the right machine)
+    _, _, out = run(db_session, answer(parameter="other_parameter_c"), NEGATIVE)
     assert out["measurement"]["passed"] is False
     # R9i (H-27/H-42): an answer with a SOP change but no action used to end as `completed` with not_applied.
     # Now Improve rejects it (asks again, then errors), so the SOP is never applied unmeasured.
@@ -91,8 +92,11 @@ def test_partial_fix_follows_the_yaml_threshold(db_session):
 
 
 def test_wrong_machine_or_unmodelled_parameter_does_not_pass(db_session):
-    _, _, out = run(db_session, answer(machine_id="M03"))
-    assert out["measurement"]["passed"] is False
+    # R9i/H-30: a foreign machine never reaches Measure; Improve rejects it (asks again, then errors)
+    with pytest.raises(ProposalError, match="M03"):
+        bad = answer(machine_id="M03")
+        graph, _ = make(db_session, [*script(bad), bad], tables=_tables())
+        start(graph, cfg_run())
     _, _, out = run(db_session, answer(parameter="other_parameter_c"))
     assert out["measurement"]["passed"] is False
 
