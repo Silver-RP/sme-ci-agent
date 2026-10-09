@@ -32,7 +32,7 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 
 ## M3: End-to-end (11/10)
 
-- [ ] T-030 [All] Chạy một vòng Detect → Learn trên dashboard thật; ghi lỗi vào issue list trong docs/decisions.md. Due 11/10
+- [x] T-030 [All] Chạy một vòng Detect → Learn trên dashboard thật; ghi lỗi vào issue list trong docs/decisions.md. Due 11/10
 - [x] T-031 [Data] Chạy simulator đủ 6 tháng. Due 11/10
 
 ## M4: v0.1-e2e (13/10)
