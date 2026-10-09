@@ -9,9 +9,9 @@ Cập nhật: 2026-10-09 · Nguồn: audit `docs/audits/2026-10-09.md`.
 | Loại | Mốc | Trạng thái | Ghi chú |
 |---|---|---|---|
 | Dự án | M0–M2 | ✅ 19/19 task | |
-| Dự án | M3 | 🔄 1/2 | T-030 chờ người dùng chạy LLM thật |
+| Dự án | M3 | 🔄 1/2 | T-030 hết bị chặn (R9h); chờ người dùng chạy LLM thật |
 | Dự án | M4 | 🔄 1/6 | T-040 xong; T-041..T-045 mở; tag v0.1-e2e 13/10 |
-| Chạy | R4–R9 | ✅ merge #19, #21, #27, #31, #37, #44 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 USD |
+| Chạy | R4–R9, R9h | ✅ merge #19, #21, #27, #31, #37, #44, #49 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 (worker) USD |
 | Plugin | P1–P3 | ✅ | |
 | Plugin | P4 | 🔄 | chưa gặp hạn mức thật |
 | Plugin | P5 | 🔄 | audit + trạng thái (file này) |
@@ -76,6 +76,7 @@ R9 (PR #44, 2026-10-09) đã có test tái hiện xanh cho H-06, H-07, H-08, H-0
 
 ## Quyết định gần đây
 
+- 2026-10-09: R9h merge #49 (T-030 lần đầu chạy thật dừng vì SDK bỏ `temperature`; H-23 chỉ kiểm bằng client giả). Thêm test so khoá request với chữ ký SDK đã cài. Supervisor chấp nhận `backend/api/app.py` (2 dòng, ngoài danh sách file) như điều chỉnh (a).
 - 2026-10-09: R9 merge #44. Đóng 9 lỗ hổng; % đạt 45/70/10. Lần đầu chạm hạn mức thật: runner chờ reset rồi chạy tiếp đúng (P4).
 
 - 2026-10-09: R9 merge (PR #44): Measure theo hành động có cấu trúc, eval nguyên nhân (LLM giả), e2e uvicorn chuỗi rollback, 8 fixture. Supervisor chưa đưa eval vào smoke.
@@ -93,6 +94,7 @@ P6 điền chi tiết (đường găng, thứ tự cắt, pre-mortem). Hướng 
 | Mốc | Mục tiêu | Lỗ hổng / task |
 |---|---|---|
 | R9 | ✅ merge #44 | đóng H-06, H-07, H-08, H-09, H-10, H-12, H-17, H-21, H-23 |
-| T-030 | Người dùng chạy LLM thật (sau H-10) | ghi lỗi vào `docs/decisions.md` |
+| R9h | ✅ merge #49 | bỏ `temperature` → `output_config.effort` (`LLM_EFFORT`); script `--llm real` tự nạp `.env`, thiếu key báo rõ |
+| T-030 | Người dùng chạy LLM thật (sau H-10, R9h) | ghi lỗi vào `docs/decisions.md` |
 | R10 | Điều 3 thành thật + luồng demo | H-11, H-13, H-16, H-26; T-041, T-042, T-044 |
 | Audit 2 | Rà sau R9 + R10 | rồi tag v0.1-e2e (người dùng duyệt) |
