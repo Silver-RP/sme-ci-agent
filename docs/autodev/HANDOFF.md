@@ -14,6 +14,26 @@ Supervisor cập nhật file này ở cuối mỗi mốc và trước khi ngư�
 ## Bước tiếp theo (cập nhật 2026-10-09, sau R9i)
 Đọc `docs/autodev/PROJECT_STATE.md` ngay sau file này: mục tiêu, % đạt, lỗ hổng H-xx, hướng 3–5 mốc đã duyệt.
 
+**Cập nhật 2026-10-10: team 4 người.**
+- Đã giao việc qua issue:
+  - #63 vai A dữ liệu (@bobbibao);
+  - #64 vai D giao diện (@Finnng1104);
+  - #65 vai Q kiểm chứng (@daivonpham);
+  - #66 D1 (chặn R10);
+  - #67 FR-01/H-44.
+- Brief nằm trong `docs/briefs/`; onboarding trong `docs/onboarding-claude.md`.
+- Ba bạn đã được mời quyền Write. Gán issue cho họ sau khi họ nhận lời mời.
+- Hợp đồng dữ liệu v0.1 đã được leader duyệt (3 câu hỏi mục 6).
+- Bảo vệ `main` (áp dụng cả admin):
+  - bắt buộc qua PR, không cần người duyệt;
+  - bắt buộc check `plugin-guard`: chỉ @Silver-RP được sửa `.claude/`, `.autodev/`, `docs/autodev/`, `.github/`;
+  - cấm force-push và xoá nhánh.
+- Vì vậy mọi merge phải chờ check xong (`gh pr checks <số> --required --watch`); `run.py` đã tự chờ.
+- Chỉ leader chạy auto-dev. Việc kế tiếp:
+  - R10a (API storyboard, T-041, H-13/H-16/H-26) không chờ D1;
+  - phần dữ liệu của R10 chờ D1;
+  - `demo.sh --fresh-db` chờ duyệt.
+
 Đã xong trong phiên 2026-10-09:
 - **R9ih merge (PR #58, đêm 2026-10-09):** prompt Improve có danh mục SOP (id, version hiệu lực tính `sop_versions`, title, nội dung cắt theo `improve.max_evidence_item_chars`); `sop_id` lạ → thông báo sửa lại nêu id hợp lệ. Đóng H-43. Supervisor tự kiểm 3 tiêu chí cấp mốc (bảng trong PROGRESS), 6 test mới đỏ với `improve.py` của main. **Việc kế tiếp của người dùng: T-030 lần 3** (`SME_LLM=real scripts/demo.sh` và `eval_rootcause.py --llm real`), xem LLM thật có chọn đúng `sop_id` và vòng tới `measured` không.
 - **R9i merge (PR #55, đêm 2026-10-09):** đề xuất của LLM phải đủ `action` + `sop_proposal`; thiếu, `new_content` rỗng, `action` NaN/inf/ngoài `actions.limits` (YAML)/máy lạ → gửi lại LLM, hết lượt → `error` retryable; Act tự vệ, không ghi SOP khi thiếu `action`. Đóng H-27, H-30, H-41, H-42; điều 2 lên 65%. Supervisor tự kiểm 5 tiêu chí cấp mốc (bảng trong PROGRESS), test mới đỏ trên main (20/21). **Việc kế tiếp của người dùng: T-030 lần 2** (`SME_LLM=real scripts/demo.sh` và `eval_rootcause.py --llm real`), xem LLM thật có trả đủ hai trường không. Supervisor lỡ tạo thư mục rỗng `~/dev/sme-ci-agent/red` (lệnh `mkdir` thừa); xoá khi người dùng duyệt.

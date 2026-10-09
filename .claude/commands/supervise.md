@@ -46,7 +46,7 @@ Bạn là SUPERVISOR của hệ thống auto-dev cho mốc $ARGUMENTS (thiết k
 8. **Bảng tiêu chí cấp mốc (bắt buộc):** với từng mục trong "Tiêu chí chấp nhận cấp mốc" của `plan/$ARGUMENTS.md`, ghi một dòng: tiêu chí → lệnh hoặc tên test bạn tự chạy → kết quả thấy được. Không dựa vào báo cáo của worker; mục nào thiếu bằng chứng tự kiểm thì coi là chưa đạt. Đưa bảng vào báo cáo cuối và PR hồ sơ. Bài học R7: tiêu chí cấp mốc 3 (khoá nút duyệt khi tên không hợp lệ) chưa đạt ở UI mà vẫn merge.
 8b. Kiểm tra độc lập có chọn lọc: thử 1–3 trường hợp biên mà reviewer có thể bỏ sót (dữ liệu khác seed, đầu vào mặc định, gọi lặp lại, đầu ra bất thường của LLM). Ghi lệnh và kết quả.
 9. Quyết định:
-   - Đạt: merge (`gh pr merge <số> --merge`, không xoá nhánh). Chuyển số đo của báo cáo mốc vào `docs/autodev/PROGRESS.md`, cập nhật trạng thái mốc plugin trong `ROADMAP.md`, qua một PR `chore/autodev-*`.
+   - Đạt: chờ check bắt buộc (`gh pr checks <số> --required --watch`; main bắt buộc `plugin-guard`), rồi merge (`gh pr merge <số> --merge`, không xoá nhánh). Chuyển số đo của báo cáo mốc vào `docs/autodev/PROGRESS.md`, cập nhật trạng thái mốc plugin trong `ROADMAP.md`, qua một PR `chore/autodev-*`.
    - Chưa đạt: ghi vấn đề thành task mới (b) trong `plan/$ARGUMENTS.md` hoặc gửi worker yêu cầu sửa, rồi lặp lại từ bước 3.
 10. Cập nhật `docs/autodev/HANDOFF.md` (trạng thái, việc mở, mốc kế tiếp) trong cùng PR ở bước 9, để người dùng đóng phiên này và mở phiên supervisor mới bất cứ lúc nào.
 11. Báo người dùng ngắn gọn: kết quả, quyết định (c) đã tự quyết, việc cần họ xem, % hạn mức nếu đo được.

@@ -258,6 +258,42 @@ class Hardening(unittest.TestCase):
         self.assertFalse(run.docs_only(["docs/autodev/PROGRESS.md", "plan/R8.md"]))
         self.assertFalse(run.docs_only([]))
 
+    def _checks(self, results):
+        calls = []
+
+        def fake(cmd, **kw):
+            calls.append(cmd)
+            code, err = results[len(calls) - 1]
+            return subprocess.CompletedProcess(cmd, code, "", err)
+
+        old = run.subprocess.run
+        run.subprocess.run = fake
+        try:
+            return run.wait_required_checks(Path("."), 7, tries=3, pause=0), calls
+        finally:
+            run.subprocess.run = old
+
+    def test_wait_checks_pass(self):
+        ok, calls = self._checks([(0, "")])
+        self.assertTrue(ok)
+        self.assertEqual(calls[0][:4], ["gh", "pr", "checks", "7"])
+        self.assertIn("--required", calls[0])
+
+    def test_wait_checks_retry_until_registered(self):
+        ok, calls = self._checks([(1, "no required checks reported on the 'x' branch"), (0, "")])
+        self.assertTrue(ok)
+        self.assertEqual(len(calls), 2)
+
+    def test_wait_checks_fail_no_retry(self):
+        ok, calls = self._checks([(1, "plugin-guard fail")])
+        self.assertFalse(ok)
+        self.assertEqual(len(calls), 1)
+
+    def test_wait_checks_never_registered(self):
+        ok, calls = self._checks([(1, "no checks reported")] * 3)
+        self.assertFalse(ok)
+        self.assertEqual(len(calls), 3)
+
     def test_docs_only_accepts_audit_reports(self):
         self.assertTrue(run.docs_only(["docs/audits/2026-10-09.md", "docs/autodev/PROJECT_STATE.md"]))
         self.assertFalse(run.docs_only(["docs/audits/2026-10-09.md", "backend/x.py"]))
