@@ -1,6 +1,6 @@
 {
   "updated": "2026-10-09",
-  "source": "audit 2026-10-09 (docs/audits/2026-10-09.md)",
+  "source": "audit 2026-10-09 lần 2 (docs/audits/2026-10-09_2.md)",
   "milestones": {
     "project": [
       {
@@ -125,23 +125,23 @@
     {
       "id": 1,
       "text": "Tìm đúng nguyên nhân gốc so với ground truth và biết hỏi người khi chưa đủ bằng chứng",
-      "percent": 45,
-      "evidence": "eval_rootcause: kịch bản đúng 100%, sai 0%, không chắc hỏi người 100% (LLM giả); SOP khớp scenario (H-10)",
-      "missing": "T-030 + eval --llm real; anomaly quá rõ; correlate thiếu nhóm people"
+      "percent": 30,
+      "evidence": "SOP khớp scenario (H-10); Detect khớp ground truth; luật hỏi theo ngưỡng; eval_rootcause chạy được nhưng tự đúng (H-28)",
+      "missing": "T-030 + eval --llm real có kết quả; H-28 chấm theo chuỗi, script chứa nhãn; H-29 correlate trả nhãn, anomaly ~10σ"
     },
     {
       "id": 2,
       "text": "Đề xuất được duyệt làm KPI cải thiện; nếu không thì rollback và điều tra lại",
-      "percent": 70,
-      "evidence": "Measure theo tham số thật trong simulator (test_measure_h06); e2e uvicorn sai→rollback→đúng→Learn (test_e2e_rollback_r9)",
-      "missing": "Chạy với LLM thật (T-030); H-19 rollback sai bản sau halt"
+      "percent": 55,
+      "evidence": "Measure theo action thật (test_measure_h06); e2e uvicorn sai→rollback→đúng→Learn (test_e2e_rollback_r9)",
+      "missing": "H-27 bỏ action là khỏi đo/rollback; H-30, H-31, H-32, H-36, H-19; LLM thật"
     },
     {
       "id": 3,
       "text": "Đo 3 chỉ số trước/sau trên 6 tháng dữ liệu mô phỏng: defect %, MTTD/MTTR, tỷ lệ tái diễn",
-      "percent": 10,
+      "percent": 5,
       "evidence": "measure() 1 máy 7 ngày; MTTD/MTTR chỉ test nạp tay",
-      "missing": "H-11; T-042, T-043"
+      "missing": "H-11 (kể cả MTTD ≈ 0 do Detect nhìn lại); T-042, T-043"
     }
   ],
   "architecture": [
@@ -215,7 +215,8 @@
     },
     {
       "rule": "Tên model không hard-code",
-      "tests": []
+      "tests": [],
+      "note": "đang vi phạm: backend/agent/llm.py:33 NO_EFFORT_MODEL_PREFIXES (H-39)"
     },
     {
       "rule": "Số lần retry/hỏi/rollback có giới hạn",
@@ -223,84 +224,178 @@
         "tests/test_ask.py::test_ask_is_bounded_then_awaits_human",
         "tests/test_act.py::test_max_rollbacks_halts"
       ],
-      "note": "revise/retry chưa có giới hạn (H-17)"
+      "note": "revise/retry/tổng rollback có giới hạn từ R9 (H-17 đóng); revision_count không đặt lại sau halt (H-33)"
     }
   ],
   "open_gaps": [
     {
       "id": "H-11",
       "severity": "cao",
-      "summary": "Chỉ số 3 chưa có đường code (MTTD/MTTR None, không tái diễn, chỉ anomaly đầu)",
-      "audit": "2026-10-09"
+      "summary": "Chỉ số 3 chưa có đường code; MTTD ≈ 0 theo cấu tạo (Detect nhìn lại cả 6 tháng)",
+      "audit": "2026-10-09, 2026-10-09_2"
     },
     {
       "id": "H-13",
       "severity": "vừa",
       "summary": "Sau retry SSE không mở lại, event_id trùng",
-      "audit": "2026-10-09"
+      "audit": "2026-10-09, 2026-10-09_2"
     },
     {
       "id": "H-14",
       "severity": "vừa",
       "summary": "Hai run song song ghi đè SOP",
-      "audit": "2026-10-09"
+      "audit": "2026-10-09, 2026-10-09_2"
     },
     {
       "id": "H-15",
       "severity": "vừa",
       "summary": "Run/event/checkpointer chỉ ở bộ nhớ",
-      "audit": "2026-10-09"
+      "audit": "2026-10-09, 2026-10-09_2"
     },
     {
       "id": "H-16",
       "severity": "vừa",
       "summary": "Demo LLM giả: reject/revise/halt-investigate lỗi ScriptExhausted",
-      "audit": "2026-10-09"
+      "audit": "2026-10-09, 2026-10-09_2"
     },
     {
       "id": "H-18",
       "severity": "vừa",
       "summary": "has_tool_evidence tính tool của cả run",
-      "audit": "2026-10-09"
+      "audit": "2026-10-09, 2026-10-09_2"
     },
     {
       "id": "H-19",
       "severity": "vừa",
       "summary": "Halt → điều tra lại quên SOP đang hiệu lực; rollback sai bản",
-      "audit": "2026-10-09"
+      "audit": "2026-10-09, 2026-10-09_2"
     },
     {
       "id": "H-20",
       "severity": "vừa",
       "summary": "Trả lời không kèm id câu hỏi, gửi lặp trả lời nhầm",
-      "audit": "2026-10-09"
+      "audit": "2026-10-09, 2026-10-09_2"
     },
     {
       "id": "H-22",
       "severity": "thấp",
       "summary": "Giá trị miền hard-code ngoài YAML",
-      "audit": "2026-10-09"
+      "audit": "2026-10-09, 2026-10-09_2"
     },
     {
       "id": "H-24",
       "severity": "thấp",
       "summary": "UI không phân biệt kết quả run, passed=null",
-      "audit": "2026-10-09"
+      "audit": "2026-10-09, 2026-10-09_2"
     },
     {
       "id": "H-25",
       "severity": "thấp",
       "summary": "Payload event chưa có tài liệu; nội bộ simulator lọt ra client",
-      "audit": "2026-10-09"
+      "audit": "2026-10-09, 2026-10-09_2"
     },
     {
       "id": "H-26",
       "severity": "thấp",
       "summary": "demo.sh --check chỉ kiểm khởi động",
-      "audit": "2026-10-09"
+      "audit": "2026-10-09, 2026-10-09_2"
+    },
+    {
+      "id": "H-27",
+      "severity": "cao",
+      "summary": "sop_change thiếu action → SOP áp dụng, Measure not_applied, không rollback, run completed",
+      "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-28",
+      "severity": "cao",
+      "summary": "Eval nguyên nhân tự đúng: script chứa nhãn ground truth, chấm theo chuỗi (phủ định = đúng)",
+      "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-29",
+      "severity": "cao",
+      "summary": "Bài toán quá dễ: correlate trả nhãn r≈0,98, 8/10 nguyên nhân no_data, anomaly ~10σ",
+      "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-30",
+      "severity": "cao",
+      "summary": "action nhận NaN/1e9/-1000/máy lạ",
+      "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-31",
+      "severity": "vừa",
+      "summary": "Bản SOP rollback chỉ flush, mất nếu lần gọi LLM kế tiếp lỗi",
+      "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-32",
+      "severity": "vừa",
+      "summary": "Chẩn đoán sai + hành động đúng → Learn lưu nguyên nhân sai là success",
+      "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-33",
+      "severity": "vừa",
+      "summary": "revision_count không đặt lại sau halt → investigate",
+      "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-34",
+      "severity": "vừa",
+      "summary": "Câu hỏi chưa đủ bằng chứng của Measure không trả lời được, luôn halt",
+      "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-35",
+      "severity": "vừa",
+      "summary": "UI chưa theo R9: Retry khi retryable false, halt options, thẻ duyệt thiếu action (team frontend)",
+      "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-36",
+      "severity": "vừa",
+      "summary": "Điều tra lại sau rollback không biết action đã thất bại",
+      "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-37",
+      "severity": "vừa",
+      "summary": "Mỗi run một Engine DB mới, không dispose",
+      "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-38",
+      "severity": "thấp",
+      "summary": "Thiếu audit_log cho trả lời, halt, Measure không kết quả",
+      "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-39",
+      "severity": "thấp",
+      "summary": "Tên model hard-code claude-haiku-4-5; MODEL_CHEAP không dùng",
+      "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-40",
+      "severity": "thấp",
+      "summary": "docs/schema/examples không qua test dashboard; payloads.md sai chỗ; SSE after=-1",
+      "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-41",
+      "severity": "thấp",
+      "summary": "new_content toàn khoảng trắng → 422 thay vì yêu cầu LLM sửa",
+      "audit": "2026-10-09_2"
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-09",
+      "text": "Audit 2 (sau R9 + R9h): 15 lỗ hổng mới H-27..H-41 (4 cao), 0 đóng, 27 mở; % đạt 45/70/10 → 30/55/5. Đề xuất R9i (H-27, H-30) trước T-030, R10 giữ hướng + H-31/H-33, R11 điều 1 (H-28, H-29, H-32, H-36, H-18)"
+    },
     {
       "date": "2026-10-09",
       "text": "R9 merge #44: đóng H-06,07,08,09,10,12,17,21,23; % đạt 45/70/10. Lần đầu chạm hạn mức thật: runner chờ reset và chạy tiếp đúng (P4)"
@@ -336,8 +431,16 @@
   ],
   "outlook": [
     {
+      "id": "R9i",
+      "goal": "Đề xuất: chặn LLM thật bỏ/sai action trước T-030",
+      "gaps": [
+        "H-27",
+        "H-30"
+      ]
+    },
+    {
       "id": "T-030",
-      "goal": "Người dùng chạy LLM thật sau R9 (cần H-10)"
+      "goal": "Người dùng chạy LLM thật sau R9h, R9i"
     },
     {
       "id": "R10",
@@ -346,7 +449,9 @@
         "H-11",
         "H-13",
         "H-16",
-        "H-26"
+        "H-26",
+        "H-31",
+        "H-33"
       ],
       "tasks": [
         "T-041",
@@ -355,8 +460,19 @@
       ]
     },
     {
-      "id": "audit-2",
-      "goal": "Audit sau R9+R10 rồi tag v0.1-e2e (người dùng duyệt)"
+      "id": "R11",
+      "goal": "Đề xuất: điều 1 thành thật",
+      "gaps": [
+        "H-28",
+        "H-29",
+        "H-32",
+        "H-36",
+        "H-18"
+      ]
+    },
+    {
+      "id": "audit-3",
+      "goal": "Audit sau R10 rồi tag v0.1-e2e (người dùng duyệt)"
     }
   ]
 }

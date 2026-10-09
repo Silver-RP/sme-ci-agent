@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-09 · Nguồn: audit `docs/audits/2026-10-09.md`.
+Cập nhật: 2026-10-09 · Nguồn: audit `docs/audits/2026-10-09_2.md`.
 
 ## Mốc
 
@@ -23,11 +23,11 @@ MVP: scenario 1 chạy đủ vòng Detect → Learn từ dashboard trên dữ li
 
 | # | Điều cần kiểm chứng | % đạt | Bằng chứng | Còn thiếu |
 |---|---|---|---|---|
-| 1 | Tìm đúng nguyên nhân gốc, biết hỏi người khi thiếu bằng chứng | 45 | eval_rootcause (LLM giả): đúng 100%, sai 0%, không chắc → hỏi người 100%; SOP khớp scenario | T-030 + `eval_rootcause.py --llm real`; anomaly quá rõ (~10σ); correlate thiếu nhóm people |
-| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 70 | Measure theo tham số thật trong simulator (test_measure_h06); e2e uvicorn sai → rollback → đúng → Learn (test_e2e_rollback_r9) | Chạy với LLM thật (T-030); H-19 |
-| 3 | 3 chỉ số trước/sau trên 6 tháng mô phỏng | 10 | `measure()` 1 máy, 7 ngày; MTTD/MTTR chỉ test nạp tay | H-11; T-042, T-043 |
+| 1 | Tìm đúng nguyên nhân gốc, biết hỏi người khi thiếu bằng chứng | 30 | SOP khớp scenario (H-10); Detect khớp ground truth; luật hỏi theo ngưỡng; eval chạy được nhưng tự đúng (H-28) | T-030 + `eval_rootcause.py --llm real` có kết quả; H-28, H-29 |
+| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 55 | Measure theo `action` thật (test_measure_h06); e2e uvicorn sai → rollback → đúng → Learn (test_e2e_rollback_r9) | H-27, H-30, H-31, H-32, H-36, H-19; LLM thật |
+| 3 | 3 chỉ số trước/sau trên 6 tháng mô phỏng | 5 | `measure()` 1 máy, 7 ngày; MTTD/MTTR chỉ test nạp tay | H-11 (cả thiết kế MTTD); T-042, T-043 |
 
-Audit 2026-10-09 hạ % (60/70/15 → 25/40/10) vì kịch bản viết sẵn không phải bằng chứng; sau R9 lên 45/70/10 (supervisor tự chạy lại test và eval).
+Audit 1 hạ % xuống 25/40/10; sau R9 supervisor nâng lên 45/70/10; audit 2 hạ còn 30/55/5 vì eval tự đúng và bỏ `action` là tắt được rollback.
 
 ## Kiến trúc hiện nay
 
@@ -50,18 +50,27 @@ Audit 2026-10-09 hạ % (60/70/15 → 25/40/10) vì kịch bản viết sẵn kh
 | Tên trung tính | test_state::test_no_defect_names, test_tools_readonly::test_no_defect_naming_in_tools |
 | KPI/giả thuyết/SOP trong YAML | test_domain_config::test_no_hardcoded_names_in_code |
 | Event có agent và domain | test_db::test_event_rejects_bad_type_and_agent_and_shape, test_detect::test_domain_comes_from_config |
-| Tên model không hard-code | **chưa có** (R9 `tests/test_invariants.py`) |
+| Tên model không hard-code | **chưa có**; đang vi phạm ở `llm.py:33` (H-39) |
 | Số lần hỏi/rollback/retry có giới hạn | test_ask::test_ask_is_bounded_then_awaits_human, test_act::test_max_rollbacks_halts; retry **chưa có** |
 
 ## Lỗ hổng mở
 
-Từ `docs/audits/2026-10-09.md` (chi tiết, bằng chứng, test cần có để đóng). Đóng khi có test chứng minh.
-
-R9 (PR #44, 2026-10-09) đã có test tái hiện xanh cho H-06, H-07, H-08, H-09, H-10, H-12, H-17, H-21, H-23 (tên test trong `.autodev/reports/R9.md`); audit 2 xác nhận rồi mới đánh dấu đóng và chỉnh % đạt.
+Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có để đóng). Đóng khi có test chứng minh. H-06..H-23 đóng ở R9 (ghi trong audit 1).
 
 | Mã | Mức | Tóm tắt |
 |---|---|---|
-| H-11 | cao | Chỉ số 3 chưa có đường code |
+| H-11 | cao | Chỉ số 3 chưa có đường code; MTTD ≈ 0 theo cấu tạo (Detect nhìn lại) |
+| H-27 | cao | `sop_change` thiếu `action` → SOP áp dụng, không đo, không rollback, `completed` |
+| H-28 | cao | Eval nguyên nhân tự đúng: script chứa nhãn, chấm theo chuỗi (phủ định = đúng) |
+| H-29 | cao | Bài toán quá dễ: `correlate` trả nhãn r≈0,98, anomaly ~10σ, hỏi người chỉ do script |
+| H-30 | cao | `action` nhận NaN/1e9/máy lạ |
+| H-31 | vừa | Bản SOP rollback mất nếu lần gọi LLM kế tiếp lỗi |
+| H-32 | vừa | Chẩn đoán sai + hành động đúng → Learn lưu nguyên nhân sai là success |
+| H-33 | vừa | `revision_count` không đặt lại sau halt → investigate |
+| H-34 | vừa | Câu hỏi "chưa đủ bằng chứng" của Measure không trả lời được |
+| H-35 | vừa | UI chưa theo R9: Retry khi `retryable:false`, halt `options`, thẻ duyệt thiếu `action` (team frontend) |
+| H-36 | vừa | Điều tra lại sau rollback không biết `action` đã thất bại |
+| H-37 | vừa | Mỗi run một Engine DB mới, không dispose |
 | H-13 | vừa | Sau retry SSE không mở lại, `event_id` trùng |
 | H-14 | vừa | Hai run song song ghi đè SOP |
 | H-15 | vừa | Run/event/checkpointer chỉ ở bộ nhớ |
@@ -73,8 +82,14 @@ R9 (PR #44, 2026-10-09) đã có test tái hiện xanh cho H-06, H-07, H-08, H-0
 | H-24 | thấp | UI không phân biệt kết quả run (team frontend) |
 | H-25 | thấp | Payload event chưa có tài liệu |
 | H-26 | thấp | `demo.sh --check` chỉ kiểm khởi động |
+| H-38 | thấp | Thiếu audit_log cho trả lời, halt, Measure không kết quả |
+| H-39 | thấp | Tên model hard-code (`claude-haiku-4-5`); `MODEL_CHEAP` không dùng |
+| H-40 | thấp | Ví dụ `docs/schema/examples` không qua test dashboard; `payloads.md` sai chỗ |
+| H-41 | thấp | `new_content` toàn khoảng trắng → 422 thay vì yêu cầu LLM sửa |
 
 ## Quyết định gần đây
+
+- 2026-10-09: audit 2 (sau R9 + R9h): 15 lỗ hổng mới H-27..H-41 (4 cao), 0 đóng, 27 mở. % đạt 45/70/10 → 30/55/5: eval tự đúng (H-28, H-29), bỏ `action` là tắt được rollback (H-27), MTTD ≈ 0 theo cấu tạo. Đề xuất R9i (H-27, H-30) trước T-030.
 
 - 2026-10-09: R9h merge #49 (T-030 lần đầu chạy thật dừng vì SDK bỏ `temperature`; H-23 chỉ kiểm bằng client giả). Thêm test so khoá request với chữ ký SDK đã cài. Supervisor chấp nhận `backend/api/app.py` (2 dòng, ngoài danh sách file) như điều chỉnh (a).
 - 2026-10-09: R9 merge #44. Đóng 9 lỗ hổng; % đạt 45/70/10. Lần đầu chạm hạn mức thật: runner chờ reset rồi chạy tiếp đúng (P4).
@@ -95,6 +110,8 @@ P6 điền chi tiết (đường găng, thứ tự cắt, pre-mortem). Hướng 
 |---|---|---|
 | R9 | ✅ merge #44 | đóng H-06, H-07, H-08, H-09, H-10, H-12, H-17, H-21, H-23 |
 | R9h | ✅ merge #49 | bỏ `temperature` → `output_config.effort` (`LLM_EFFORT`); script `--llm real` tự nạp `.env`, thiếu key báo rõ |
-| T-030 | Người dùng chạy LLM thật (sau H-10, R9h) | ghi lỗi vào `docs/decisions.md` |
-| R10 | Điều 3 thành thật + luồng demo | H-11, H-13, H-16, H-26; T-041, T-042, T-044 |
-| Audit 2 | Rà sau R9 + R10 | rồi tag v0.1-e2e (người dùng duyệt) |
+| R9i (đề xuất) | Chặn LLM thật bỏ/sai `action` trước T-030 | H-27, H-30 |
+| T-030 | Người dùng chạy LLM thật (sau R9h, R9i) | ghi lỗi vào `docs/decisions.md` |
+| R10 | Điều 3 thành thật + luồng demo | H-11, H-13, H-16, H-26, H-31, H-33; T-041, T-042, T-044 |
+| R11 (đề xuất) | Điều 1 thành thật | H-28, H-29, H-32, H-36, H-18; eval LLM thật |
+| Audit 3 | Rà sau R10 | rồi tag v0.1-e2e (người dùng duyệt) |
