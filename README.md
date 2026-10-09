@@ -6,9 +6,10 @@ Hackathon: Vietnam Japan AI Hackathon 2026. Pitch Day 24/10 (Tokyo), Demo Day 07
 
 ## Chạy nhanh
 
+Thành viên mới: đọc [docs/onboarding-claude.md](docs/onboarding-claude.md) trước (cài công cụ, vai nào cần gì, lệnh mở đầu cho Claude Code). Chạy với LLM giả **không cần** `.env` hay API key.
+
 ```bash
-cp .env.example .env          # điền ANTHROPIC_API_KEY, không commit
-docker compose up -d db       # Postgres local
+docker compose up -d db       # Postgres local (cần Docker)
 uv sync                       # cài thư viện Python
 uv run pytest                 # chạy test
 ```
@@ -27,6 +28,7 @@ Cần Docker (Postgres), `uv`, Node ≥ 22.13 và `yarn` (chạy `yarn install` 
 **Với LLM giả (không cần key)**: dữ liệu synthetic seed 42, Detect chạy thật, LLM được kịch bản hoá.
 
 ```bash
+scripts/demo.sh --check         # kiểm tra cài đặt: bật hết, thử từng phần, tự tắt, in CHECK PASSED
 scripts/demo.sh                 # bật db, migration, backend :8000, dashboard :3000; Ctrl+C để dừng
 # mở http://localhost:3000/?source=live, bấm Start run (để trống change time), trả lời câu hỏi,
 # chọn tên người duyệt trong danh sách rồi Approve
@@ -37,7 +39,7 @@ Backend chọn LLM giả bằng biến môi trường `SME_LLM=scripted` (demo.s
 
 `run_scenario.py` không tự migrate: chạy `uv run alembic upgrade head` một lần trước (demo.sh đã tự làm). Nếu cổng 5432 đã bị Postgres khác chiếm (ví dụ container của worktree auto-dev), chạy với `DB_PORT=5433` và đặt cùng cổng trong `DATABASE_URL`.
 
-**Với LLM thật**: tự điền `ANTHROPIC_API_KEY` và `MODEL_REASONING` trong `.env` (agent/CI không đọc file này), rồi:
+**Với LLM thật** (tốn credit, hỏi leader trước): chép `.env.example` thành `.env`, tự điền `ANTHROPIC_API_KEY` và `MODEL_REASONING` trong `.env` (agent/CI không đọc file này), rồi:
 
 ```bash
 SME_LLM=real scripts/demo.sh                    # dashboard + backend dùng AnthropicLLM

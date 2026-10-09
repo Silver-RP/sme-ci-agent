@@ -1,0 +1,37 @@
+# Chỉ leader được sửa file plugin auto-dev và cấu hình CI (xem .github/CODEOWNERS).
+# pull_request_target: chạy bản workflow trên main, nên PR không tự sửa được luật này.
+# Không checkout code của PR; chỉ đọc danh sách file qua API.
+name: plugin-guard
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  plugin-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check protected paths
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          ALLOWED: Silver-RP
+        run: |
+          files=$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[].filename')
+          hits=$(printf '%s\n' "$files" | grep -E '^(\.claude/|\.autodev/|docs/autodev/|\.github/)' || true)
+          if [ -z "$hits" ]; then
+            echo "Không đụng file plugin."
+            exit 0
+          fi
+          if [ "$AUTHOR" = "$ALLOWED" ]; then
+            echo "Leader sửa file plugin:"; printf '%s\n' "$hits"
+            exit 0
+          fi
+          echo "::error::PR của @$AUTHOR sửa file chỉ leader được sửa. Bỏ các file này khỏi PR, hoặc ghi đề xuất vào issue cho leader:"
+          printf '%s\n' "$hits"
+          exit 1

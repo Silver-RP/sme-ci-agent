@@ -1,0 +1,6 @@
+# File của plugin auto-dev và cấu hình CI: chỉ leader sửa.
+# Workflow plugin-guard chặn PR của người khác đụng các đường dẫn này.
+/.claude/       @Silver-RP
+/.autodev/      @Silver-RP
+/docs/autodev/  @Silver-RP
+/.github/       @Silver-RP
