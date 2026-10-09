@@ -27,22 +27,24 @@ def max_tokens_from_env() -> int:
     return value
 
 
-TEMPERATURE_ENV = "LLM_TEMPERATURE"
-DEFAULT_TEMPERATURE = 0.2
+EFFORT_ENV = "LLM_EFFORT"
+DEFAULT_EFFORT = "medium"
+VALID_EFFORTS = ("low", "medium", "high", "xhigh", "max")
+NO_EFFORT_MODEL_PREFIXES = ("claude-haiku-4-5",)  # these models reject output_config.effort
 
 
-def temperature_from_env() -> float:
-    """Sampling temperature: ``LLM_TEMPERATURE`` (0 to 1) if set, else the low default."""
-    raw = (os.environ.get(TEMPERATURE_ENV) or "").strip()
+def effort_from_env() -> str:
+    """Reasoning effort: ``LLM_EFFORT`` if set (one of VALID_EFFORTS), else the default."""
+    raw = (os.environ.get(EFFORT_ENV) or "").strip().lower()
     if not raw:
-        return DEFAULT_TEMPERATURE
-    try:
-        value = float(raw)
-    except ValueError as e:
-        raise LLMConfigError(f"{TEMPERATURE_ENV} must be a number between 0 and 1, got {raw!r}") from e
-    if not 0.0 <= value <= 1.0:
-        raise LLMConfigError(f"{TEMPERATURE_ENV} must be a number between 0 and 1, got {raw!r}")
-    return value
+        return DEFAULT_EFFORT
+    if raw not in VALID_EFFORTS:
+        raise LLMConfigError(f"{EFFORT_ENV} must be one of {', '.join(VALID_EFFORTS)}, got {raw!r}")
+    return raw
+
+
+def supports_effort(model: str) -> bool:
+    return not model.startswith(NO_EFFORT_MODEL_PREFIXES)
 
 
 class LLMConfigError(RuntimeError):
@@ -89,7 +91,7 @@ class AnthropicLLM:
         model_env: str = "MODEL_REASONING",
         client: Any = None,
         max_tokens: int | None = None,
-        temperature: float | None = None,
+        effort: str | None = None,
     ) -> None:
         if model is None:
             model = (os.environ.get(model_env) or "").strip()
@@ -97,7 +99,9 @@ class AnthropicLLM:
                 raise LLMConfigError(f"Environment variable {model_env} is not set; cannot create the real LLM.")
         self.model = model
         self.max_tokens = max_tokens if max_tokens is not None else max_tokens_from_env()
-        self.temperature = temperature if temperature is not None else temperature_from_env()
+        if effort is not None and effort not in VALID_EFFORTS:
+            raise LLMConfigError(f"effort must be one of {', '.join(VALID_EFFORTS)}, got {effort!r}")
+        self.effort = effort if effort is not None else effort_from_env()
         if client is None:
             import anthropic
 
@@ -108,10 +112,11 @@ class AnthropicLLM:
         kwargs: dict[str, Any] = {
             "model": self.model,
             "max_tokens": self.max_tokens,
-            "temperature": self.temperature,
             "system": system,
             "messages": messages,
         }
+        if supports_effort(self.model):
+            kwargs["output_config"] = {"effort": self.effort}
         if tools:
             kwargs["tools"] = [
                 {"name": t.name, "description": t.description, "input_schema": t.input_schema} for t in tools
