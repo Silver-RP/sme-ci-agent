@@ -69,3 +69,9 @@ Trạng thái: đã chốt (leader xác nhận 2026-10-08, xem ADR-009).
 5. **Chưa làm:**
    - Người dùng xem vòng trên dashboard (`?source=live`).
    - `uv run python scripts/eval_rootcause.py --llm real --seeds 2` (từ R9h script tự nạp file biến môi trường).
+
+### T-030 lần 2 (2026-10-09 23:3x, sau R9i; cùng cách chạy)
+- **Chẩn đoán vẫn đúng** (run `run_43db524f`): giả thuyết `machine` "Wrong setpoint… zone3_setpoint_c" có confidence 0,85. LLM xét giả thuyết người thay ca nhưng chỉ cho 0,3.
+- **Lỗi H-43:** Improve yêu cầu sửa 2 lần rồi lỗi `ProposalError: sop_change.sop_id 'PLACEHOLDER_NEEDS_VALID_SOP_ID' is not a known SOP`. Run vào trạng thái `error` (retryable), đúng hành vi R9i, nhưng vòng vẫn không khép.
+  - Nguyên nhân: prompt của Improve không có danh sách SOP (id, phiên bản, nội dung hiện tại); lượt điều tra không gọi `read_sop`; thông báo khi yêu cầu sửa lại không nêu id hợp lệ.
+  - Sửa ở R9ih.
