@@ -231,6 +231,10 @@ class Hardening(unittest.TestCase):
             os.environ.pop(k, None)
         self.assertEqual(run.role_model("worker"), ("sonnet", ""))
         self.assertEqual(run.role_model("supervisor"), ("opus", "medium"))
+        # audit on sonnet by default (user choice 2026-10-09: audit 2 cost 7.2 USD on opus)
+        for k in ("AUTODEV_AUDIT_MODEL", "AUTODEV_AUDIT_EFFORT"):
+            os.environ.pop(k, None)
+        self.assertEqual(run.role_model("audit"), ("sonnet", "medium"))
         os.environ["AUTODEV_SUPERVISOR_MODEL"] = "sonnet"
         os.environ["AUTODEV_SUPERVISOR_EFFORT"] = "high"
         try:
@@ -333,6 +337,20 @@ class AuditEvery(unittest.TestCase):
         os.environ["AUTODEV_AUDIT_EVERY"] = "1"
         run.main(["R9", "R10", *self.dirs])
         self.assertEqual(self.audits(), ["/audit R9", "/audit R10"])
+
+    def test_hotfix_milestones_do_not_count(self):
+        # user choice 2026-10-09: quick-fix runs (name ending in "h", e.g. R9h) do not trigger audits
+        run.main(["R9", "R9h", *self.dirs])
+        self.assertEqual(self.audits(), [])
+        self.assertEqual(run.audit_pending(), ["R9"])
+        self.assertFalse(run.counts_for_audit("R9h"))
+        self.assertTrue(run.counts_for_audit("R9i"))
+
+    def test_audit_runs_with_audit_role(self):
+        roles = []
+        run.run_step = lambda prompt, cwd, allowed, label, **kw: roles.append((prompt, kw.get("role"))) or {}
+        run.main(["R9", "R10", *self.dirs])
+        self.assertIn(("/audit R9 R10", "audit"), roles)
 
     def test_audit_only(self):
         run.main(["--audit-only", *self.dirs])
