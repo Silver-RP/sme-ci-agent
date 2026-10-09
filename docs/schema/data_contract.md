@@ -82,7 +82,7 @@ Bản gốc nằm trong `data/context_profile.yaml` (`sop:`: id, version, title,
   1. Kiểm hợp lệ theo mục 4, in báo cáo (số dòng, lỗi, cảnh báo).
   2. Nếu không lỗi thì nạp vào dataset được đặt tên để agent dùng: `SME_DATASET=<tên>`, mặc định là dữ liệu simulator.
   3. Không sửa file nguồn.
-- Mẫu: `data/templates/*.csv`, mỗi file có 3–5 dòng ví dụ. Simulator xuất được dữ liệu ra đúng định dạng này (`scripts/gen_data.py --out <thư mục>`), để thử vòng nhập → kiểm → chạy agent.
+- Mẫu: `data/templates/*.csv`, mỗi file có 3–5 dòng ví dụ. Simulator xuất được dữ liệu ra đúng định dạng này (`scripts/gen_data.py --out-dir <thư mục>`), để thử vòng nhập → kiểm → chạy agent.
 
 ## 4. Kiểm hợp lệ (validator)
 Gồm lỗi (chặn) và cảnh báo (cho qua, ghi báo cáo).
