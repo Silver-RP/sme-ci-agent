@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-09 · Nguồn: audit `docs/audits/2026-10-09_2.md`.
+Cập nhật: 2026-10-09 · Nguồn: audit `docs/audits/2026-10-09_2.md` + R9i merge #55.
 
 ## Mốc
 
@@ -11,7 +11,7 @@ Cập nhật: 2026-10-09 · Nguồn: audit `docs/audits/2026-10-09_2.md`.
 | Dự án | M0–M2 | ✅ 19/19 task | |
 | Dự án | M3 | 🔄 1/2 | T-030 hết bị chặn (R9h); chờ người dùng chạy LLM thật |
 | Dự án | M4 | 🔄 1/6 | T-040 xong; T-041..T-045 mở; tag v0.1-e2e 13/10 |
-| Chạy | R4–R9, R9h | ✅ merge #19, #21, #27, #31, #37, #44, #49 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 (worker) USD |
+| Chạy | R4–R9, R9h, R9i | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 (worker) USD |
 | Plugin | P1–P3 | ✅ | |
 | Plugin | P4 | 🔄 | chưa gặp hạn mức thật |
 | Plugin | P5 | 🔄 | audit + trạng thái (file này) |
@@ -24,10 +24,10 @@ MVP: scenario 1 chạy đủ vòng Detect → Learn từ dashboard trên dữ li
 | # | Điều cần kiểm chứng | % đạt | Bằng chứng | Còn thiếu |
 |---|---|---|---|---|
 | 1 | Tìm đúng nguyên nhân gốc, biết hỏi người khi thiếu bằng chứng | 30 | SOP khớp scenario (H-10); Detect khớp ground truth; luật hỏi theo ngưỡng; eval chạy được nhưng tự đúng (H-28) | T-030 + `eval_rootcause.py --llm real` có kết quả; H-28, H-29 |
-| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 55 | Measure theo `action` thật (test_measure_h06); e2e uvicorn sai → rollback → đúng → Learn (test_e2e_rollback_r9) | H-27, H-30, H-31, H-32, H-36, H-19; LLM thật |
+| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 65 | Measure theo `action` thật (test_measure_h06); e2e uvicorn sai → rollback → đúng → Learn (test_e2e_rollback_r9); đề xuất phải đủ `action` + `sop_proposal`, action hữu hạn, trong miền YAML, đúng máy (R9i) | H-31, H-32, H-36, H-19; LLM thật (T-030 lần 2) |
 | 3 | 3 chỉ số trước/sau trên 6 tháng mô phỏng | 5 | `measure()` 1 máy, 7 ngày; MTTD/MTTR chỉ test nạp tay | H-11 (cả thiết kế MTTD); T-042, T-043 |
 
-Audit 1 hạ % xuống 25/40/10; sau R9 supervisor nâng lên 45/70/10; audit 2 hạ còn 30/55/5 vì eval tự đúng và bỏ `action` là tắt được rollback.
+Audit 1 hạ % xuống 25/40/10; sau R9 supervisor nâng lên 45/70/10; audit 2 hạ còn 30/55/5 vì eval tự đúng và bỏ `action` là tắt được rollback; R9i đóng lỗ bỏ `action` → 30/65/5.
 
 ## Kiến trúc hiện nay
 
@@ -60,11 +60,8 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 | Mã | Mức | Tóm tắt |
 |---|---|---|
 | H-11 | cao | Chỉ số 3 chưa có đường code; MTTD ≈ 0 theo cấu tạo (Detect nhìn lại) |
-| H-27 | cao | `sop_change` thiếu `action` → SOP áp dụng, không đo, không rollback, `completed` |
 | H-28 | cao | Eval nguyên nhân tự đúng: script chứa nhãn, chấm theo chuỗi (phủ định = đúng) |
 | H-29 | cao | Bài toán quá dễ: `correlate` trả nhãn r≈0,98, anomaly ~10σ, hỏi người chỉ do script |
-| H-30 | cao | `action` nhận NaN/1e9/máy lạ |
-| H-42 | cao | T-030: đề xuất có `action` nhưng thiếu `sop_proposal` → vòng không khép |
 | H-31 | vừa | Bản SOP rollback mất nếu lần gọi LLM kế tiếp lỗi |
 | H-32 | vừa | Chẩn đoán sai + hành động đúng → Learn lưu nguyên nhân sai là success |
 | H-33 | vừa | `revision_count` không đặt lại sau halt → investigate |
@@ -86,9 +83,10 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 | H-38 | thấp | Thiếu audit_log cho trả lời, halt, Measure không kết quả |
 | H-39 | thấp | Tên model hard-code (`claude-haiku-4-5`); `MODEL_CHEAP` không dùng |
 | H-40 | thấp | Ví dụ `docs/schema/examples` không qua test dashboard; `payloads.md` sai chỗ |
-| H-41 | thấp | `new_content` toàn khoảng trắng → 422 thay vì yêu cầu LLM sửa |
 
 ## Quyết định gần đây
+
+- 2026-10-09: R9i merge #55: đề xuất thiếu `action` hoặc `sop_proposal`, `new_content` rỗng, `action` NaN/inf/ngoài miền YAML/máy lạ → gửi lại LLM, hết lượt thì `error` retryable. Đóng H-27, H-30, H-41, H-42; điều 2: 55 → 65. Supervisor tự kiểm 5 tiêu chí cấp mốc, test mới đỏ trên main.
 
 - 2026-10-09: audit 2 (sau R9 + R9h): 15 lỗ hổng mới H-27..H-41 (4 cao), 0 đóng, 27 mở. % đạt 45/70/10 → 30/55/5: eval tự đúng (H-28, H-29), bỏ `action` là tắt được rollback (H-27), MTTD ≈ 0 theo cấu tạo. Đề xuất R9i (H-27, H-30) trước T-030.
 
@@ -111,8 +109,8 @@ P6 điền chi tiết (đường găng, thứ tự cắt, pre-mortem). Hướng 
 |---|---|---|
 | R9 | ✅ merge #44 | đóng H-06, H-07, H-08, H-09, H-10, H-12, H-17, H-21, H-23 |
 | R9h | ✅ merge #49 | bỏ `temperature` → `output_config.effort` (`LLM_EFFORT`); script `--llm real` tự nạp `.env`, thiếu key báo rõ |
-| R9i (đề xuất) | Chặn LLM thật bỏ/sai `action` trước T-030 | H-27, H-30 |
-| T-030 | Người dùng chạy LLM thật (sau R9h, R9i) | ghi lỗi vào `docs/decisions.md` |
+| R9i | ✅ merge #55 | đóng H-27, H-30, H-41, H-42 |
+| T-030 lần 2 | Người dùng chạy lại LLM thật (sau R9i) | ghi lỗi vào `docs/decisions.md` |
 | R10 | Điều 3 thành thật + luồng demo | H-11, H-13, H-16, H-26, H-31, H-33; T-041, T-042, T-044 |
 | R11 (đề xuất) | Điều 1 thành thật | H-28, H-29, H-32, H-36, H-18; eval LLM thật |
 | Audit 3 | Rà sau R10 | rồi tag v0.1-e2e (người dùng duyệt) |
