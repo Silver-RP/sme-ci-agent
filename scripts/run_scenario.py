@@ -25,13 +25,13 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 from sqlalchemy.orm import Session
 
+from backend.agent.checkpoint import memory_checkpointer
 from backend.agent.demo_llm import scripted_demo_llm
 from backend.agent.graph import build_graph
-from backend.agent.llm import LLM, AnthropicLLM
+from backend.agent.llm import LLM, AnthropicLLM, prepare_real_llm_env
 from backend.agent.state import new_state
 from backend.db.session import make_engine
 from backend.domain_config import DomainConfig, load_domain_config
@@ -57,7 +57,7 @@ def run_scenario(
     """Drive the graph to the end; returns all events. Raises RuntimeError if it does not finish."""
     run_id = f"run_{uuid.uuid4().hex[:8]}"
     ctx = ToolContext(tables=generate_dataset(seed=seed).tables, session=session, run_id=run_id)
-    graph = build_graph(config, checkpointer=InMemorySaver(), llm=llm, tool_ctx=ctx, full_loop=True)
+    graph = build_graph(config, checkpointer=memory_checkpointer(), llm=llm, tool_ctx=ctx, full_loop=True)
     cfg = {"configurable": {"thread_id": run_id}}
     state = new_state(run_id, config.domain)
     if change_time:
@@ -97,6 +97,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--on-halt", choices=["investigate", "finish"], default="finish")
     args = p.parse_args(argv)
 
+    if args.llm == "real":
+        problem = prepare_real_llm_env(ROOT / ".env")
+        if problem:
+            print(problem, file=sys.stderr)
+            return 2
     config = load_domain_config()
     llm: LLM = scripted_demo_llm(config, then=SEND_BACK_SCRIPT[args.on_proposal]) if args.llm == "scripted" else AnthropicLLM()
     with Session(make_engine()) as session:

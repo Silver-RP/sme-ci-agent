@@ -13,7 +13,6 @@ from backend.agent.graph import build_graph
 from backend.agent.jsonutil import extract_json_object, parse_bool
 from backend.agent.llm import (
     DEFAULT_MAX_TOKENS,
-    DEFAULT_TEMPERATURE,
     AnthropicLLM,
     LLMConfigError,
     LLMResponse,
@@ -151,31 +150,63 @@ def test_parse_bool_empty_string_is_unsure_so_true(v):
     assert parse_bool(v) is True
 
 
-def test_temperature_sent_from_config_env_and_arg(monkeypatch):
+def _capturing_client():
     sent = {}
 
     class Msgs:
         def create(self, **kw):
+            sent.clear()
             sent.update(kw)
             return type("R", (), {"content": []})()
 
     class Client:
         messages = Msgs()
 
-    monkeypatch.delenv("LLM_TEMPERATURE", raising=False)
-    AnthropicLLM(model="m", client=Client()).complete("s", [], [])
-    assert sent["temperature"] == DEFAULT_TEMPERATURE <= 0.3
-    monkeypatch.setenv("LLM_TEMPERATURE", "0.7")
-    AnthropicLLM(model="m", client=Client()).complete("s", [], [])
-    assert sent["temperature"] == 0.7
-    AnthropicLLM(model="m", client=Client(), temperature=0.0).complete("s", [], [])
-    assert sent["temperature"] == 0.0
-    monkeypatch.setenv("LLM_TEMPERATURE", "hot")
-    with pytest.raises(LLMConfigError, match="LLM_TEMPERATURE"):
-        AnthropicLLM(model="m", client=Client())
-    monkeypatch.setenv("LLM_TEMPERATURE", "3")
-    with pytest.raises(LLMConfigError, match="LLM_TEMPERATURE"):
-        AnthropicLLM(model="m", client=Client())
+    return Client(), sent
+
+
+def test_effort_sent_from_env_default_and_arg(monkeypatch):
+    client, sent = _capturing_client()
+    monkeypatch.delenv("LLM_EFFORT", raising=False)
+    AnthropicLLM(model="m", client=client).complete("s", [], [])
+    assert sent["output_config"] == {"effort": "medium"}
+    assert "temperature" not in sent and "thinking" not in sent and "tool_choice" not in sent
+    monkeypatch.setenv("LLM_EFFORT", "high")
+    AnthropicLLM(model="m", client=client).complete("s", [], [])
+    assert sent["output_config"] == {"effort": "high"}
+    AnthropicLLM(model="m", client=client, effort="low").complete("s", [], [])
+    assert sent["output_config"] == {"effort": "low"}
+    for bad in ("hot", "3"):
+        monkeypatch.setenv("LLM_EFFORT", bad)
+        with pytest.raises(LLMConfigError, match="LLM_EFFORT"):
+            AnthropicLLM(model="m", client=client)
+    monkeypatch.delenv("LLM_EFFORT", raising=False)
+    with pytest.raises(LLMConfigError):
+        AnthropicLLM(model="m", client=client, effort="turbo")
+
+
+def test_haiku_gets_no_output_config(monkeypatch):
+    client, sent = _capturing_client()
+    monkeypatch.setenv("LLM_EFFORT", "high")
+    AnthropicLLM(model="claude-haiku-4-5-20251001", client=client).complete("s", [], [])
+    assert "output_config" not in sent
+
+
+def test_every_request_key_exists_in_installed_sdk_signature(monkeypatch):
+    import inspect
+
+    import anthropic
+
+    params = set(inspect.signature(anthropic.Anthropic(api_key="test").messages.create).parameters)
+    from backend.agent.llm import ToolSpec
+
+    monkeypatch.delenv("LLM_EFFORT", raising=False)
+    for model in ("claude-sonnet-x", "claude-haiku-4-5"):
+        for tools in ([], [ToolSpec(name="t", description="d")]):
+            client, sent = _capturing_client()
+            AnthropicLLM(model=model, client=client).complete("s", [{"role": "user", "content": "hi"}], tools)
+            unknown = set(sent) - params
+            assert not unknown, f"keys not accepted by installed anthropic SDK: {unknown}"
 
 
 def test_parse_bool_unclear_raises():
