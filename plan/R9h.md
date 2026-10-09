@@ -52,7 +52,7 @@ Quy tắc CLAUDE.md giữ nguyên. Tên model chỉ lấy từ env. Agent không
   1. Test (env tạm, thư mục tạm có file `.env` giả): script nạp được biến; biến đã có trong môi trường không bị ghi đè; thiếu key thì exit khác 0 kèm thông báo rõ.
   2. `uv run python scripts/eval_rootcause.py` (LLM giả) không còn cảnh báo deserializing. Có test bắt warning.
 - **Phụ thuộc:** dev-01
-- **Trạng thái:** TODO · **Số vòng:** 0
+- **Trạng thái:** DONE · **Số vòng:** 1 (commit 11df454)
 
 ## Ghi chú điều chỉnh (Claude ghi khi làm (a)/(b))
 

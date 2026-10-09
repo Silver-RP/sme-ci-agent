@@ -219,3 +219,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 109293a. Review: .autodev/reviews/dev-01-r1.json (PASS).
 - Bỏ temperature, dùng output_config.effort (LLM_EFFORT, mặc định medium; Haiku 4.5 không gửi); test kiểm khoá theo chữ ký SDK đã cài. 414 pytest.
 - Non-blocking: LLM_EFFORT rỗng chưa có test; tiền tố Haiku chỉ khớp 4.5.
+
+### R9h/dev-02: DONE
+- Vòng: 1. Commit: 11df454. Review: .autodev/reviews/dev-02-r1.json (PASS).
+- Script tự nạp file env khi --llm real (không ghi đè), thiếu cấu hình thì exit 2 một dòng; memory_checkpointer cho phép Hypothesis. 421 pytest, smoke sạch.
+- Non-blocking: postgres_checkpointer chưa dùng allowlist; test dọn environ thủ công.

@@ -1,6 +1,6 @@
 {
   "milestone": "R9h",
-  "current_task": "dev-02",
+  "current_task": null,
   "tasks": {
     "dev-01": {
       "status": "DONE",
@@ -9,16 +9,17 @@
       "commit": "109293a"
     },
     "dev-02": {
-      "status": "IN_PROGRESS",
-      "round": 0,
-      "base": "109293a"
+      "status": "DONE",
+      "round": 1,
+      "base": "109293a",
+      "commit": "11df454"
     }
   },
   "verify": {
     "consecutive_blocks": 0,
     "last_status": "PASS",
-    "hook_runs": 34,
-    "last_hook_at": "2026-10-09T13:05:48Z",
+    "hook_runs": 35,
+    "last_hook_at": "2026-10-09T13:14:45Z",
     "last_hook_agent": "developer"
   },
   "history": {
