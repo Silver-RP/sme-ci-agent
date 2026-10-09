@@ -8,7 +8,10 @@ Gửi: bạn frontend phụ trách giao diện sản phẩm (tên ghi ở `docs/
 - **Hợp đồng:**
   - `docs/schema/events.json` cho vỏ event;
   - `docs/schema/payloads.md` cho payload từng event và API;
-  - ví dụ thật trong `docs/schema/examples/`.
+  - ví dụ thật trong `docs/schema/examples/`;
+  - **yêu cầu chi tiết cho frontend (FR-01..12, tiêu chí chấp nhận, DoD, mốc): `docs/briefs/frontend.md`** (đọc đầu tiên);
+  - **storyboard demo 4 phút + đặc tả màn hình theo ưu tiên: `docs/demo-storyboard.md`** (đọc trước);
+  - hợp đồng dữ liệu đầu vào: `docs/schema/data_contract.md`.
 
   Cần trường mới thì mở issue hoặc nói trong sync, không tự đổi `events.json`.
 
