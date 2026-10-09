@@ -234,3 +234,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 65076dd. Review: .autodev/reviews/R9i-dev-02-r1.json (PASS).
 - `actions.limits` (min/max) trong YAML; parse_proposal từ chối NaN/inf, ngoài khoảng, máy khác anomaly. 442 pytest, smoke sạch.
 - Non-blocking: thiếu unit test trực tiếp `action_level` với máy lạ (Measure); 2 test trong test_measure_h06 sửa vì Improve từ chối trước.
+
+### R9ih/dev-01: DONE
+- Vòng: 1. Commit: 3467282. Review: .autodev/reviews/R9ih-dev-01-r1.json (PASS).
+- Prompt Improve có khối "Existing SOPs" (id, version hiệu lực gồm sop_versions, title, nội dung cắt theo config); ProposalError cho sop_id lạ nêu id hợp lệ. 448 pytest, smoke sạch.
+- Non-blocking: chưa test riêng fallback config khi DB trống.

@@ -33,7 +33,7 @@ Hướng (b) của R9i giữ nguyên: đề xuất phải có cả `action` và 
   1. Test bắt prompt gửi cho LLM giả ở Improve: có đủ id và nội dung SOP từ config; sau khi áp dụng một bản mới, prompt của run kế tiếp có version mới. Đỏ trên main.
   2. Test: LLM giả trả `sop_id` = `PLACEHOLDER_NEEDS_VALID_SOP_ID` rồi sửa thành id đúng → `kpi_measured.status == "measured"`. Thông báo sửa lại có chứa id hợp lệ. Đỏ trên main.
 - **Phụ thuộc:** không
-- **Trạng thái:** TODO · **Số vòng:** 0
+- **Trạng thái:** DONE · **Số vòng:** 1 (commit 3467282)
 
 ## Ghi chú điều chỉnh (Claude ghi khi làm (a)/(b))
 

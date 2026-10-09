@@ -19,6 +19,7 @@ from backend.agent.jsonutil import extract_json_object
 from backend.agent.llm import LLM
 from backend.agent.prompts import build_system_prompt
 from backend.agent.state import AgentState
+from backend.db import repo
 from backend.domain_config import DomainConfig
 from backend.tools.actions import propose_sop
 from backend.tools.readonly import ToolContext
@@ -116,7 +117,10 @@ def parse_proposal(
     if draft.expected_kpi.kpi not in {k.name for k in config.kpis}:
         raise ProposalError(f"expected_kpi.kpi {draft.expected_kpi.kpi!r} is not a KPI in the domain config")
     if draft.sop_change and draft.sop_change.sop_id not in {s.id for s in config.sop}:
-        raise ProposalError(f"sop_change.sop_id {draft.sop_change.sop_id!r} is not a known SOP")
+        raise ProposalError(
+            f"sop_change.sop_id {draft.sop_change.sop_id!r} is not a known SOP; "
+            f"valid sop_id values: {sorted({s.id for s in config.sop})}"
+        )
     if draft.action and draft.action.parameter not in config.actions.parameters:
         raise ProposalError(
             f"action.parameter {draft.action.parameter!r} is not a valid action parameter; "
@@ -161,6 +165,20 @@ def compact_evidence(evidence: list[dict[str, Any]], max_chars: int) -> dict[int
     return out
 
 
+def sop_catalog(config: DomainConfig, ctx: ToolContext) -> list[dict[str, Any]]:
+    """SOPs in force (read-only, same lookup as the approval card): id, version, title, content cut to the limit."""
+    limit = config.improve.max_evidence_item_chars
+    out: list[dict[str, Any]] = []
+    for sop_id in dict.fromkeys(s.id for s in config.sop):
+        base = max((s for s in config.sop if s.id == sop_id), key=lambda s: s.version)
+        row = repo.get_sop_version(ctx.session, sop_id)  # newest applied version wins (as current_sop in act.py)
+        version, content = (row.version, row.content) if row is not None else (base.version, "\n".join(base.steps))
+        if len(content) > limit:
+            content = content[: limit - 15] + "...(truncated)"
+        out.append({"sop_id": sop_id, "version": version, "title": base.title, "content": content})
+    return out
+
+
 def run_improvement(
     state: AgentState, config: DomainConfig, llm: LLM, ctx: ToolContext
 ) -> dict[str, Any]:
@@ -175,11 +193,15 @@ def run_improvement(
         + f" Valid action parameters: {config.actions.parameters}."
         + f" Allowed value range per parameter: { {k: [v.min, v.max] for k, v in config.actions.limits.items()} }."
     )
+    catalog = sop_catalog(config, ctx)
     user = (
         f"Anomaly: {json.dumps(state.get('anomaly'), default=str)}. "
         f"Top hypothesis: {json.dumps(top.model_dump())}. "
         "Evidence (index: item, summarised): "
         f"{json.dumps(compact_evidence(evidence, config.improve.max_evidence_item_chars), default=str)}. "
+        f"Existing SOPs (version in force and current content): {json.dumps(catalog, default=str)}. "
+        f"sop_change.sop_id must be one of {[c['sop_id'] for c in catalog]}; new_content is the whole new SOP "
+        "text, edited from the current content of that SOP. "
         "Propose an improvement."
     )
     messages: list[dict[str, Any]] = [{"role": "user", "content": user}]
