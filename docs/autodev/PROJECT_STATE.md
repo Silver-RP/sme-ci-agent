@@ -64,6 +64,7 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 | H-28 | cao | Eval nguyên nhân tự đúng: script chứa nhãn, chấm theo chuỗi (phủ định = đúng) |
 | H-29 | cao | Bài toán quá dễ: `correlate` trả nhãn r≈0,98, anomaly ~10σ, hỏi người chỉ do script |
 | H-30 | cao | `action` nhận NaN/1e9/máy lạ |
+| H-42 | cao | T-030: đề xuất có `action` nhưng thiếu `sop_proposal` → vòng không khép |
 | H-31 | vừa | Bản SOP rollback mất nếu lần gọi LLM kế tiếp lỗi |
 | H-32 | vừa | Chẩn đoán sai + hành động đúng → Learn lưu nguyên nhân sai là success |
 | H-33 | vừa | `revision_count` không đặt lại sau halt → investigate |

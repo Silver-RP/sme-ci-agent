@@ -389,9 +389,19 @@
       "severity": "thấp",
       "summary": "new_content toàn khoảng trắng → 422 thay vì yêu cầu LLM sửa",
       "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-42",
+      "severity": "cao",
+      "summary": "T-030: đề xuất có action nhưng thiếu sop_proposal → vòng không khép",
+      "audit": "2026-10-09_2"
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-09",
+      "text": "Người dùng chốt: đề xuất bắt buộc đủ action + sop_proposal (hướng b); audit chạy Sonnet, mốc sửa nhanh (…h) không tính vào --audit-every. R9i: H-42, H-27, H-30, H-41"
+    },
     {
       "date": "2026-10-09",
       "text": "Audit 2 (sau R9 + R9h): 15 lỗ hổng mới H-27..H-41 (4 cao), 0 đóng, 27 mở; % đạt 45/70/10 → 30/55/5. Đề xuất R9i (H-27, H-30) trước T-030, R10 giữ hướng + H-31/H-33, R11 điều 1 (H-28, H-29, H-32, H-36, H-18)"
