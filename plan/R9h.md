@@ -41,7 +41,7 @@ Quy tắc CLAUDE.md giữ nguyên. Tên model chỉ lấy từ env. Agent không
   1. Test chữ ký SDK thật (tiêu chí cấp mốc 2): đỏ trước khi sửa, xanh sau.
   2. Test: `output_config.effort` lấy từ `LLM_EFFORT`, mặc định `medium`; Haiku không có `output_config`; giá trị lạ thì `LLMConfigError`.
 - **Phụ thuộc:** không
-- **Trạng thái:** TODO · **Số vòng:** 0
+- **Trạng thái:** DONE · **Số vòng:** 1 (commit 109293a)
 
 ### dev-02: Script tự nạp `.env` khi `--llm real`; lỗi cấu hình rõ ràng; checkpoint không cảnh báo kiểu lạ
 - **Mô tả:**
