@@ -102,6 +102,7 @@ Viết bằng **Markdown và YAML**; không cần viết code Python (auto-dev h
 |---|---|
 | Kế hoạch, 3 điều cần kiểm chứng, thứ tự cắt | `docs/PLAN.md` |
 | Quy tắc dự án | `CLAUDE.md` |
+| **Phân tích hiện trạng dữ liệu, dữ liệu xưởng thật, SOP chuẩn, kaizen (đọc đầu tiên)** | `docs/research/data_realism.md` |
 | Hợp đồng dữ liệu đề xuất (điểm xuất phát của D1) | `docs/schema/data_contract.md` |
 | Schema bảng hiện tại (6 bảng) | `backend/sandbox/schema.py` |
 | Kịch bản hiện tại | `data/scenarios/scenario1.yaml` |
