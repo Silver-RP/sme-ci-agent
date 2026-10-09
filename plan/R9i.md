@@ -54,7 +54,7 @@ Quy tắc CLAUDE.md giữ nguyên. `docs/schema/events.json` không đổi; trư
   1. `test_improve_rejects_out_of_range_action`: NaN, inf, 1e9, -1000, `M99` đều bị từ chối; giá trị biên min/max được nhận. Đỏ trên main.
   2. Khoảng giá trị lấy từ YAML: test đổi YAML tạm thì kết quả đổi theo.
 - **Phụ thuộc:** dev-01
-- **Trạng thái:** TODO · **Số vòng:** 0
+- **Trạng thái:** DONE · **Số vòng:** 1 (commit 65076dd)
 
 ## Ghi chú điều chỉnh (Claude ghi khi làm (a)/(b))
 
