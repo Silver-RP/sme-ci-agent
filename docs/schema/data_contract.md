@@ -1,4 +1,4 @@
-# Hợp đồng dữ liệu đầu vào (bản đề xuất v0.1, chờ leader duyệt)
+# Hợp đồng dữ liệu đầu vào v0.1 (leader đã duyệt 2026-10-10)
 
 Tài liệu này mô tả dữ liệu mà một SME cần đưa vào để SME CI Agent phát hiện, điều tra và đo cải tiến. Simulator (sandbox) phải sinh dữ liệu **đúng hợp đồng này**; kịch bản mới (khó hơn, nhiều nguyên nhân) cũng được dựng trên hợp đồng này. MVP chỉ dùng dữ liệu synthetic; không nhận dữ liệu thật hay dữ liệu cá nhân (CLAUDE.md).
 
@@ -108,7 +108,7 @@ Mỗi lỗi trong báo cáo ghi: mã, bảng, dòng, cột, giá trị, cách s�
 - Measure và chỉ số 3 (H-11, T-042) tính từ `production_log` (có trọng số theo sản lượng).
 - `docs/schema/events.json` **không đổi**.
 
-## 6. Câu hỏi chờ leader duyệt
-1. Đổi nhập liệu từ `kpi_log` (tỷ lệ) sang `production_log` (số đếm): đồng ý?
-2. Bỏ `inventory` + `supplier`, thay bằng `material_batches`: đồng ý?
-3. `environment_log` và `training_level` (tuỳ chọn) đưa vào R11 cùng kịch bản khó: đồng ý?
+## 6. Quyết định của leader (2026-10-10: đồng ý cả 3)
+1. Đổi nhập liệu từ `kpi_log` (tỷ lệ) sang `production_log` (số đếm): **đồng ý**.
+2. Bỏ `inventory` + `supplier`, thay bằng `material_batches`: **đồng ý**.
+3. `environment_log` và `training_level` (tuỳ chọn) đưa vào R11 cùng kịch bản khó: **đồng ý**.
