@@ -1,6 +1,6 @@
 {
   "updated": "2026-10-09",
-  "source": "audit 2026-10-09 lần 2 (docs/audits/2026-10-09_2.md)",
+  "source": "audit 2026-10-09 lần 2 + R9i merge #55",
   "milestones": {
     "project": [
       {
@@ -82,6 +82,14 @@
         "cost_usd": 1.15,
         "minutes": 20,
         "note": "sửa nhanh T-030: bỏ temperature, output_config.effort, script nạp .env; cost chỉ tính worker"
+      },
+      {
+        "id": "R9i",
+        "status": "merged",
+        "pr": 55,
+        "cost_usd": 1.6,
+        "minutes": 25,
+        "note": "đề xuất phải đủ action + sop_proposal, kiểm miền giá trị action; cost chỉ tính worker"
       }
     ],
     "plugin": [
@@ -132,9 +140,9 @@
     {
       "id": 2,
       "text": "Đề xuất được duyệt làm KPI cải thiện; nếu không thì rollback và điều tra lại",
-      "percent": 55,
-      "evidence": "Measure theo action thật (test_measure_h06); e2e uvicorn sai→rollback→đúng→Learn (test_e2e_rollback_r9)",
-      "missing": "H-27 bỏ action là khỏi đo/rollback; H-30, H-31, H-32, H-36, H-19; LLM thật"
+      "percent": 65,
+      "evidence": "Measure theo action thật (test_measure_h06); e2e uvicorn sai→rollback→đúng→Learn (test_e2e_rollback_r9); đề xuất thiếu action/sop_proposal hoặc action NaN/ngoài miền/máy lạ bị gửi lại LLM, hết lượt thì error retryable (R9i, test_proposal_complete_r9i, test_improve_action_range_h30)",
+      "missing": "H-31, H-32, H-36, H-19; LLM thật (T-030 lần 2)"
     },
     {
       "id": 3,
@@ -301,12 +309,6 @@
       "audit": "2026-10-09, 2026-10-09_2"
     },
     {
-      "id": "H-27",
-      "severity": "cao",
-      "summary": "sop_change thiếu action → SOP áp dụng, Measure not_applied, không rollback, run completed",
-      "audit": "2026-10-09_2"
-    },
-    {
       "id": "H-28",
       "severity": "cao",
       "summary": "Eval nguyên nhân tự đúng: script chứa nhãn ground truth, chấm theo chuỗi (phủ định = đúng)",
@@ -316,12 +318,6 @@
       "id": "H-29",
       "severity": "cao",
       "summary": "Bài toán quá dễ: correlate trả nhãn r≈0,98, 8/10 nguyên nhân no_data, anomaly ~10σ",
-      "audit": "2026-10-09_2"
-    },
-    {
-      "id": "H-30",
-      "severity": "cao",
-      "summary": "action nhận NaN/1e9/-1000/máy lạ",
       "audit": "2026-10-09_2"
     },
     {
@@ -383,21 +379,13 @@
       "severity": "thấp",
       "summary": "docs/schema/examples không qua test dashboard; payloads.md sai chỗ; SSE after=-1",
       "audit": "2026-10-09_2"
-    },
-    {
-      "id": "H-41",
-      "severity": "thấp",
-      "summary": "new_content toàn khoảng trắng → 422 thay vì yêu cầu LLM sửa",
-      "audit": "2026-10-09_2"
-    },
-    {
-      "id": "H-42",
-      "severity": "cao",
-      "summary": "T-030: đề xuất có action nhưng thiếu sop_proposal → vòng không khép",
-      "audit": "2026-10-09_2"
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-09",
+      "text": "R9i merge #55: đóng H-27, H-30, H-41, H-42; điều 2 lên 65%. Supervisor tự kiểm 5 tiêu chí cấp mốc + 3 thử biên."
+    },
     {
       "date": "2026-10-09",
       "text": "Người dùng chốt: đề xuất bắt buộc đủ action + sop_proposal (hướng b); audit chạy Sonnet, mốc sửa nhanh (…h) không tính vào --audit-every. R9i: H-42, H-27, H-30, H-41"

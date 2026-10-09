@@ -11,10 +11,11 @@ Supervisor cập nhật file này ở cuối mỗi mốc và trước khi ngư�
 - **Phiên supervisor đóng vai con người:** lập plan, giao mốc, duyệt, merge, sửa plugin. Không viết code dự án (developer/reviewer trong worker làm). Quyền: thiết kế mục 6.15, `.claude/commands/supervise.md`.
 - **Người dùng:** giao tiếp bằng tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi họ hỏi "tại sao".
 
-## Bước tiếp theo (cập nhật 2026-10-09, sau R9)
+## Bước tiếp theo (cập nhật 2026-10-09, sau R9i)
 Đọc `docs/autodev/PROJECT_STATE.md` ngay sau file này: mục tiêu, % đạt, lỗ hổng H-xx, hướng 3–5 mốc đã duyệt.
 
 Đã xong trong phiên 2026-10-09:
+- **R9i merge (PR #55, đêm 2026-10-09):** đề xuất của LLM phải đủ `action` + `sop_proposal`; thiếu, `new_content` rỗng, `action` NaN/inf/ngoài `actions.limits` (YAML)/máy lạ → gửi lại LLM, hết lượt → `error` retryable; Act tự vệ, không ghi SOP khi thiếu `action`. Đóng H-27, H-30, H-41, H-42; điều 2 lên 65%. Supervisor tự kiểm 5 tiêu chí cấp mốc (bảng trong PROGRESS), test mới đỏ trên main (20/21). **Việc kế tiếp của người dùng: T-030 lần 2** (`SME_LLM=real scripts/demo.sh` và `eval_rootcause.py --llm real`), xem LLM thật có trả đủ hai trường không. Supervisor lỡ tạo thư mục rỗng `~/dev/sme-ci-agent/red` (lệnh `mkdir` thừa); xoá khi người dùng duyệt.
 - **R9h merge (PR #49, tối 2026-10-09):** bỏ `temperature` (SDK 1.11 không nhận), gửi `output_config.effort` từ `LLM_EFFORT` (mặc định `medium`; Haiku 4.5 không gửi); `eval_rootcause.py`/`run_scenario.py --llm real` tự nạp `.env`, thiếu key thì báo một dòng, exit 2; checkpointer bộ nhớ cho phép `Hypothesis`. Supervisor tự kiểm 3 tiêu chí cấp mốc (bảng trong PROGRESS). **T-030 hết bị chặn.** Người dùng nên thêm `LLM_EFFORT=medium` vào `.env` (tuỳ chọn, mặc định đã là medium) và bỏ `LLM_TEMPERATURE` nếu có.
 - **R9 merge (PR #44):** 6 task PASS vòng 1, 412 pytest, verify + smoke sạch; mọi tiêu chí cấp mốc tự kiểm đạt (bảng trong PROGRESS). Measure theo hành động `{parameter, machine_id, value}`, `scripts/eval_rootcause.py`, `scripts/export_fixtures.py` (8 nhánh), giới hạn revise/rollback/retry trong YAML `loop:`.
 - P5 (PR #40): `/audit`, `run.py --audit-every 2` + `--audit-only`, `PROJECT_STATE.md` + `state.json`, `LESSONS.md`, guard chặn sửa file bằng sed tại chỗ / script Python qua stdin.
