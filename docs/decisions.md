@@ -75,3 +75,13 @@ Trạng thái: đã chốt (leader xác nhận 2026-10-08, xem ADR-009).
 - **Lỗi H-43:** Improve yêu cầu sửa 2 lần rồi lỗi `ProposalError: sop_change.sop_id 'PLACEHOLDER_NEEDS_VALID_SOP_ID' is not a known SOP`. Run vào trạng thái `error` (retryable), đúng hành vi R9i, nhưng vòng vẫn không khép.
   - Nguyên nhân: prompt của Improve không có danh sách SOP (id, phiên bản, nội dung hiện tại); lượt điều tra không gọi `read_sop`; thông báo khi yêu cầu sửa lại không nêu id hợp lệ.
   - Sửa ở R9ih.
+
+### T-030 lần 3 (2026-10-09 23:5x, sau R9ih; cùng cách chạy): vòng khép kín
+- Run `run_ceded1f1` đi đủ các bước Detect → Investigate (3 tool) → Improve → duyệt (alice) → Act → Measure → Learn → `completed`.
+- Chẩn đoán đúng: `wrong_setpoint` 0,8; `training_gap/new_operator` 0,3.
+- `action` = `zone3_setpoint_c` M02 → 180. SOP-RFL-001 sinh bản mới, kèm bước kiểm setpoint và ghi log thay đổi.
+- Measure `measured`, `passed` true: defect_rate 0,063 → 0,019 (target 0,02). Learn lưu `outcome: success`.
+- Còn để ý:
+  - `base_version` của SOP-RFL-001 đã lên 40 vì DB demo dùng chung, cộng dồn qua mọi lần chạy. Trước buổi demo nên reset DB demo hoặc dùng DB riêng.
+  - Người trả lời trung tính không được hỏi lần nào, vì confidence 0,8 ≥ ngưỡng. Nhánh "hỏi người" với LLM thật chưa được thử (liên quan H-29: bài toán quá dễ).
+- Còn lại cho T-030: người dùng chạy một vòng trên dashboard (`?source=live`) và chạy `uv run python scripts/eval_rootcause.py --llm real --seeds 2`.
