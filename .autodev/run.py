@@ -116,6 +116,11 @@ def role_model(role: str) -> tuple[str, str]:
             os.environ.get("AUTODEV_SUPERVISOR_MODEL", "opus"),
             os.environ.get("AUTODEV_SUPERVISOR_EFFORT", "medium"),
         )
+    if role == "audit":  # sonnet by default: audit 2 on opus cost 7.2 USD (user choice 2026-10-09)
+        return (
+            os.environ.get("AUTODEV_AUDIT_MODEL", "sonnet"),
+            os.environ.get("AUTODEV_AUDIT_EFFORT", "medium"),
+        )
     return os.environ.get("AUTODEV_WORKER_MODEL") or os.environ.get("AUTODEV_MODEL", "sonnet"), ""
 
 
@@ -319,11 +324,16 @@ def _set_pending(pending: list[str]) -> None:
     save(_audit_file(), {"pending": pending, "updated": dt.datetime.now().isoformat(timespec="seconds")})
 
 
+def counts_for_audit(milestone: str) -> bool:
+    """Quick-fix runs (name ending in "h", e.g. R9h) do not count towards --audit-every (user choice 2026-10-09)."""
+    return not milestone.endswith("h")
+
+
 def run_audit(supervisor: Path) -> float:
     """Headless read-only /audit over the pending milestones; the runner merges its docs-only PR."""
     pending = audit_pending()
     started = dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=1)
-    res = run_step(" ".join(["/audit", *pending]), supervisor, SUPERVISOR_ALLOWED, "audit", role="supervisor")
+    res = run_step(" ".join(["/audit", *pending]), supervisor, SUPERVISOR_ALLOWED, "audit", role="audit")
     merge_docs_chore_prs(supervisor, started)
     _set_pending([])
     return float(res.get("total_cost_usd") or 0)
@@ -403,7 +413,8 @@ def main(argv: list[str] | None = None) -> int:
             if pr_state(supervisor, pr["number"]) != "MERGED":
                 stop(f"PR #{pr['number']} của {m} chưa merge sau bước supervisor; cần xem báo cáo.\n\n{s.get('result', '')[-1500:]}", 4)
             merge_docs_chore_prs(supervisor, sup_started)
-        _set_pending([*audit_pending(), m])
+        if counts_for_audit(m):
+            _set_pending([*audit_pending(), m])
         if args.audit_every > 0 and len(audit_pending()) >= args.audit_every:
             total += run_audit(supervisor)
         log(f"{m} xong; tổng chi phí ước tính đến giờ {total:.2f} USD")
