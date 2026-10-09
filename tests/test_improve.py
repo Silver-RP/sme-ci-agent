@@ -49,6 +49,7 @@ def answer(**over):
         "evidence_refs": [0],
         "expected_kpi": {"kpi": KPI, "direction": "decrease", "target": 0.02},
         "sop_change": {"sop_id": SOP_ID, "new_content": "step 1\nstep 2 verify setpoint"},
+        "action": {"parameter": CFG.actions.parameters[0], "machine_id": "M02", "value": 180},
     }
     d.update(over)
     return json.dumps(d)
@@ -69,11 +70,12 @@ def test_proposal_fields_and_sop_proposed(ctx):
     assert p["sop_proposal"]["sop_id"] == SOP_ID and p["sop_proposal"]["status"] == "pending_approval"
 
 
-def test_no_sop_change_means_no_propose_call(ctx, db_session):
+def test_no_sop_change_is_rejected_and_makes_no_propose_call(ctx, db_session):
+    # R9i: a proposal needs both sop_change and action; a rejected one proposes nothing
     d = json.loads(answer())
     del d["sop_change"]
-    out = run_improvement(state(), CFG, ScriptedLLM([json.dumps(d)]), ctx)
-    assert out["proposal"]["sop_proposal"] is None
+    with pytest.raises(ProposalError, match="sop_change"):
+        run_improvement(state(), CFG, ScriptedLLM([json.dumps(d)] * 2), ctx)
     n = db_session.scalar(select(func.count()).select_from(AuditLog).where(AuditLog.action == "propose_sop"))
     assert n == 0
 

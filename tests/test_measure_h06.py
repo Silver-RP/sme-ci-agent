@@ -63,8 +63,11 @@ def test_negative_hypothesis_without_a_setpoint_change_does_not_pass(db_session)
     # H-06: the words "setpoint ... NOT the cause" used to count as a correct fix
     _, _, out = run(db_session, answer(machine_id="M01"), NEGATIVE)
     assert out["measurement"]["passed"] is False
-    _, _, out = run(db_session, answer(action=None), NEGATIVE)
-    assert out["measurement"]["status"] == "not_applied" and out["measurement"]["passed"] is None
+    # R9i (H-27/H-42): an answer with a SOP change but no action used to end as `completed` with not_applied.
+    # Now Improve rejects it (asks again, then errors), so the SOP is never applied unmeasured.
+    with pytest.raises(ProposalError, match="action"):
+        graph, _ = make(db_session, [*script(answer(action=None), NEGATIVE), answer(action=None)], tables=_tables())
+        start(graph, cfg_run())
 
 
 def test_hypothesis_words_do_not_decide_the_result(db_session):

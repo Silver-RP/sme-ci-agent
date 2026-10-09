@@ -80,6 +80,8 @@ Có hai dạng; phân biệt bằng `kind`.
     "rationale": "...", "kpi": "defect_rate", "status": "pending_approval"}}}
 ```
 
+**Bắt buộc đủ hai trường (R9i):** đề xuất thường luôn có cả `action` (không `null`) lẫn `sop_proposal` (không `null`, `new_content` không rỗng). Thiếu một trong hai thì Improve yêu cầu LLM sửa lại (tối đa `improve.max_format_retries` lần), rồi mới báo lỗi `retryable`; đề xuất thiếu không bao giờ tới màn duyệt.
+
 **Đề xuất rollback:** `{proposal: {kind: "rollback", proposal_id, change, rationale, expected_kpi, status, sop_proposal}}`.
 
 `proposal_hash` không nằm trong event này; nó có trong `pending` (mục 3) và trong `approval_decided`.
@@ -91,9 +93,8 @@ Có hai dạng; phân biệt bằng `kind`.
 - **Dừng chờ người:** `{kind: "halt", proposal_id: "halt_<n>", halt_reason, decision: "investigate" | "finish", decided_by, reason, sop_still_in_force?, sop_id?, sop_version?}`. Không có `proposal_hash`.
 
 ### sop_applied (improvement)
-- Không áp dụng: `{applied: false, reason}`.
-- Đã áp dụng: `{applied: true, sop_id, version, previous_version, approved_by, change_time, action}`.
-  - `action` là hành động có cấu trúc người đã duyệt: `{parameter, machine_id, value}` hoặc `null` (đề xuất không có hành động; Measure trả `not_applied`). Tên `parameter` hợp lệ lấy từ YAML (`actions.parameters`).
+- Đã áp dụng: `{applied: true, sop_id, version, previous_version, approved_by, change_time, action}`. Từ R9i không còn `applied: false`: đề xuất thiếu `action` hoặc `sop_proposal` không tới Act (Act báo lỗi, không ghi SOP).
+  - `action` là hành động có cấu trúc người đã duyệt: `{parameter, machine_id, value}`, luôn có. Tên `parameter` hợp lệ lấy từ YAML (`actions.parameters`).
   - Không còn trường `sim` (nội bộ simulator, từng lộ `fixed`, H-06, H-25).
 
 ### kpi_measured (quality)

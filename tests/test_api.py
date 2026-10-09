@@ -261,7 +261,7 @@ def test_graph_valueerror_is_422(db_session):
 
 
 def test_two_runs_are_isolated_and_repeatable(db_session):
-    s = [*investigate_script(), improve_answer(sop=False)]
+    s = [*investigate_script(), improve_answer()]
     client = make_client(db_session, [s, s])
     a, b = start(client), start(client)
     assert a["run_id"] != b["run_id"]

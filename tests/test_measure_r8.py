@@ -216,14 +216,13 @@ def test_default_change_time_leaves_room_for_the_after_window(db_session):
 
 
 def test_proposal_without_sop_change_is_not_saved_as_success(db_session):
-    graph, _ = make(db_session, script_with(improve=improve_answer(sop=False)), tables=_tables())
-    c = cfg_run()
-    start(graph, c)
-    out = graph.invoke(Command(resume=HUMAN), c)
-    assert out["measurement"]["status"] == "not_applied" and out["measurement"]["passed"] is None
-    rows = db_session.scalars(select(LearningEntry)).all()
-    assert all(r.content.get("outcome") != "success" for r in rows)
-    assert "rollback_done" not in types(out)
+    # R9i: such a proposal no longer reaches Measure: Improve rejects it, the run errors, nothing is learned
+    from backend.agent.nodes.improve import ProposalError
+
+    graph, _ = make(db_session, [*script_with()[:2], improve_answer(sop=False), improve_answer(sop=False)], tables=_tables())
+    with pytest.raises(ProposalError, match="sop_change"):
+        start(graph, cfg_run())
+    assert db_session.scalars(select(LearningEntry)).all() == []
     assert "apply_sop" not in audit_actions(db_session)
 
 
