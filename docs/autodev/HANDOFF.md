@@ -154,10 +154,7 @@ Mốc tham khảo trong brief (ngày trong `[...]` là đề xuất, chốt ở 
 - **Lỗ hổng dự án:** PROJECT_STATE mục "Lỗ hổng mở" (nguồn `docs/audits/2026-10-09_2.md`).
 - **pytest chập chờn:** đỏ 1/4 lần trên main, không bắt được tên test. Gặp lại thì ghi tên test.
 - **LangGraph cảnh báo** "Deserializing unregistered type …Hypothesis": đưa vào R10b.
-- **Dọn dẹp chờ người dùng duyệt:**
-  - thư mục rỗng `~/dev/sme-ci-agent/red`;
-  - thư mục lịch sử Claude cũ `~/.claude/projects/-Users-ishopjapan-Desktop-…`;
-  - shim guard ở đường dẫn Desktop cũ.
+- **Dọn dẹp:** xong 2026-10-10, người dùng duyệt. Đã xoá thư mục rỗng `red`, 4 thư mục lịch sử Claude ở đường dẫn Desktop, thư mục `sme-ci-agent` cũ ở Desktop. Không còn mục nào chờ dọn.
 - **Để sau** (người dùng chốt): đo độ dài phiên và chất lượng theo thời gian; hook trước khi nén ngữ cảnh.
 
 ## Lịch sử ngắn
