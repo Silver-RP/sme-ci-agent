@@ -166,21 +166,22 @@ def test_end_to_end_approve_apply_measure_learn(db_session):
         assert a in acts
 
 
-def test_proposal_without_sop_change_skips_apply_but_continues(db_session):
-    graph, _ = make(db_session, [*investigate_script(), improve_answer(sop=False)])
+def test_proposal_without_sop_change_is_sent_back_before_anything_is_applied(db_session):
+    # R9i: a proposal with an action but no SOP change never reaches Act; the corrected one does
+    graph, _ = make(db_session, [*investigate_script(), improve_answer(sop=False), improve_answer()])
     cfg = cfg_run()
     start(graph, cfg)
+    assert versions(db_session) == {} and "apply_sop" not in audit_actions(db_session)
     out = graph.invoke(Command(resume=HUMAN), cfg)
     applied = next(e for e in out["events"] if e["type"] == "sop_applied")
-    assert applied["payload"]["applied"] is False
-    assert versions(db_session) == {} and "apply_sop" not in audit_actions(db_session)
+    assert applied["payload"]["applied"] is True
     assert out["status"] == "completed"
 
 
 def test_repeated_runs_do_not_leak_state(db_session):
     seqs = []
     for i in range(2):
-        graph, _ = make(db_session, [*investigate_script(), improve_answer(sop=False)])
+        graph, _ = make(db_session, [*investigate_script(), improve_answer()])
         cfg = cfg_run()
         start(graph, cfg, run_id=f"run_rep{i}")
         out = graph.invoke(Command(resume=HUMAN), cfg)
@@ -400,7 +401,7 @@ def test_default_state_without_change_time_uses_detected_anomaly_end(db_session)
 def test_act_node_validates_change_time_before_apply_sop(db_session):
     ctx = make_ctx(db_session, _fixed_tables())
     s = new_state("run_act", CFG.domain)
-    s["proposal"] = {"sop_proposal": {"sop_id": SOP_ID, "new_content": "x"}}
+    s["proposal"] = {"sop_proposal": {"sop_id": SOP_ID, "new_content": "x"}, "action": json.loads(improve_answer())["action"]}
     s["approval"] = {"decision": "approved", "decided_by": "alice"}
     with pytest.raises(ValueError, match="change_time"):
         make_act_node(CFG, ctx)(s)

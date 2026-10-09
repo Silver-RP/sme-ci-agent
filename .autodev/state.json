@@ -1,28 +1,44 @@
 {
-  "milestone": "R9h",
+  "milestone": "R9i",
   "current_task": null,
   "tasks": {
     "dev-01": {
       "status": "DONE",
       "round": 1,
-      "base": "491f77bf71481b335d7b517bd7f2dfd2fa3d6b50",
-      "commit": "109293a"
+      "base": "4be9c88",
+      "commit": "509a11a"
     },
     "dev-02": {
       "status": "DONE",
       "round": 1,
-      "base": "109293a",
-      "commit": "11df454"
+      "base": "509a11a",
+      "commit": "65076dd"
     }
   },
   "verify": {
     "consecutive_blocks": 0,
     "last_status": "PASS",
-    "hook_runs": 35,
-    "last_hook_at": "2026-10-09T13:14:45Z",
+    "hook_runs": 37,
+    "last_hook_at": "2026-10-09T14:10:24Z",
     "last_hook_agent": "developer"
   },
   "history": {
+    "R9h": {
+      "tasks": {
+        "dev-01": {
+          "status": "DONE",
+          "round": 1,
+          "base": "491f77bf71481b335d7b517bd7f2dfd2fa3d6b50",
+          "commit": "109293a"
+        },
+        "dev-02": {
+          "status": "DONE",
+          "round": 1,
+          "base": "109293a",
+          "commit": "11df454"
+        }
+      }
+    },
     "R9": {
       "tasks": {
         "dev-01": {

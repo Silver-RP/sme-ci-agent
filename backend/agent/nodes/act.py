@@ -274,9 +274,12 @@ def make_act_node(config: DomainConfig, ctx: ToolContext):
         approval = state.get("approval") or {}
         sop = proposal.get("sop_proposal")
         emit = _Emitter(state, config)
+        # Improve already requires both; this is the second line of defence (R9i): never write a SOP that cannot
+        # be measured, and never "complete" a run that changed nothing. Fails before any side effect.
         if not sop:
-            emit("sop_applied", "improvement", {"applied": False, "reason": "proposal has no SOP change"})
-            return {"applied": None, "events": emit.events}
+            raise ValueError("cannot act: the proposal has no sop_proposal (a proposal needs both a SOP change and an action)")
+        if not proposal.get("action"):
+            raise ValueError("cannot act: the proposal has no action, so the SOP change could not be measured; no SOP written")
         change_time = resolve_change_time(state, ctx)  # validate BEFORE any side effect
         anomaly = state.get("anomaly") or {}
         res = apply_sop(

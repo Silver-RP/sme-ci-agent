@@ -8,10 +8,11 @@ applied here) and emits ``proposal_created`` (agent = improvement). KPI names co
 from __future__ import annotations
 
 import json
+import math
 import uuid
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from backend.agent.events import make_event
 from backend.agent.jsonutil import extract_json_object
@@ -27,9 +28,13 @@ AGENT = "improvement"
 FINAL_FORMAT = (
     'Reply with one JSON object: {"change": "...", "rationale": "...", "evidence_refs": [indexes into the '
     'evidence list], "expected_kpi": {"kpi": ..., "direction": "decrease"|"increase", "target": number}, '
-    '"sop_change": {"sop_id": ..., "new_content": ...} (optional, only when a SOP must change), '
-    '"action": {"parameter": ..., "machine_id": ..., "value": number} (the machine parameter change to apply; '
-    "parameter must be one of the valid action parameters listed below)}."
+    '"sop_change": {"sop_id": ..., "new_content": ...}, '
+    '"action": {"parameter": ..., "machine_id": ..., "value": number}}. '
+    "Both sop_change (the new SOP text, not empty) and action (the machine parameter change to apply; "
+    "parameter must be one of the valid action parameters listed below) are REQUIRED: a proposal missing "
+    "either one is rejected. Example: "
+    '"sop_change": {"sop_id": "<a SOP id>", "new_content": "Step 1 ... Step 2 ..."}, '
+    '"action": {"parameter": "<a valid parameter>", "machine_id": "<the anomaly machine>", "value": 1.0}.'
 )
 
 
@@ -50,6 +55,13 @@ class SopChange(BaseModel):
 
     sop_id: str = Field(min_length=1)
     new_content: str = Field(min_length=1)
+
+    @field_validator("new_content")
+    @classmethod
+    def _not_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("new_content must not be empty or only whitespace")
+        return v
 
 
 class ActionDraft(BaseModel):
@@ -73,7 +85,9 @@ class ProposalDraft(BaseModel):
     action: ActionDraft | None = None
 
 
-def parse_proposal(text: str, evidence: list[dict[str, Any]], config: DomainConfig) -> ProposalDraft:
+def parse_proposal(
+    text: str, evidence: list[dict[str, Any]], config: DomainConfig, anomaly: dict[str, Any] | None = None
+) -> ProposalDraft:
     """Parse and validate the LLM answer. Raises ProposalError with a clear message."""
     data = extract_json_object(text, "change")
     if data is None:
@@ -83,6 +97,19 @@ def parse_proposal(text: str, evidence: list[dict[str, Any]], config: DomainConf
     except ValidationError as e:
         fields = sorted({".".join(str(p) for p in err["loc"]) for err in e.errors()})
         raise ProposalError(f"proposal missing or invalid field(s): {fields}. {FINAL_FORMAT}") from e
+    missing = [
+        f"{name} ({hint})"
+        for name, value, hint in (
+            ("sop_change", draft.sop_change, '{"sop_id": ..., "new_content": non-empty text}'),
+            ("action", draft.action, '{"parameter": ..., "machine_id": ..., "value": number}'),
+        )
+        if value is None
+    ]
+    if missing:
+        raise ProposalError(
+            "proposal must have BOTH sop_change and action; missing: " + ", ".join(missing)
+            + f". Valid action parameters: {config.actions.parameters}."
+        )
     bad = [i for i in draft.evidence_refs if i < 0 or i >= len(evidence)]
     if bad:
         raise ProposalError(f"evidence_refs {bad} do not point to existing evidence (size {len(evidence)})")
@@ -95,7 +122,26 @@ def parse_proposal(text: str, evidence: list[dict[str, Any]], config: DomainConf
             f"action.parameter {draft.action.parameter!r} is not a valid action parameter; "
             f"valid: {config.actions.parameters}"
         )
+    if draft.action:
+        _check_action(draft.action, config, anomaly)
     return draft
+
+
+def _check_action(action: ActionDraft, config: DomainConfig, anomaly: dict[str, Any] | None) -> None:
+    value = action.value
+    if not math.isfinite(value):
+        raise ProposalError(f"action.value must be a finite number, got {value}")
+    limit = config.actions.limits.get(action.parameter)
+    if limit is not None and not limit.min <= value <= limit.max:
+        raise ProposalError(
+            f"action.value {value} is outside the allowed range for {action.parameter}: "
+            f"{limit.min} to {limit.max}"
+        )
+    machine = (anomaly or {}).get("machine_id") or (anomaly or {}).get("machine")
+    if machine and action.machine_id != machine:
+        raise ProposalError(
+            f"action.machine_id {action.machine_id!r} is not the anomaly machine {machine!r}; use {machine!r}"
+        )
 
 
 def compact_evidence(evidence: list[dict[str, Any]], max_chars: int) -> dict[int, Any]:
@@ -127,6 +173,7 @@ def run_improvement(
     system = (
         build_system_prompt(config) + "\n" + FINAL_FORMAT
         + f" Valid action parameters: {config.actions.parameters}."
+        + f" Allowed value range per parameter: { {k: [v.min, v.max] for k, v in config.actions.limits.items()} }."
     )
     user = (
         f"Anomaly: {json.dumps(state.get('anomaly'), default=str)}. "
@@ -140,7 +187,7 @@ def run_improvement(
     for attempt in range(attempts):
         resp = llm.complete(system, messages, [])
         try:
-            draft = parse_proposal(resp.text, evidence, config)
+            draft = parse_proposal(resp.text, evidence, config, state.get("anomaly"))
             break
         except ProposalError as e:
             if attempt == attempts - 1:
@@ -159,14 +206,13 @@ def run_improvement(
         "sop_proposal": None,
         "action": draft.action.model_dump() if draft.action else None,
     }
-    if draft.sop_change:
-        proposal["sop_proposal"] = propose_sop(
-            ctx,
-            sop_id=draft.sop_change.sop_id,
-            new_content=draft.sop_change.new_content,
-            rationale=draft.rationale,
-            kpi=draft.expected_kpi.kpi,
-        )
+    proposal["sop_proposal"] = propose_sop(
+        ctx,
+        sop_id=draft.sop_change.sop_id,
+        new_content=draft.sop_change.new_content,
+        rationale=draft.rationale,
+        kpi=draft.expected_kpi.kpi,
+    )
     ev = make_event(
         state, "proposal_created", AGENT, {"proposal": proposal}, len(state.get("events", [])) + 1, config.domain
     )

@@ -8,19 +8,19 @@
       "body": {},
       "http": 201,
       "response": {
-        "run_id": "run_e319586b",
+        "run_id": "run_ec3ebfb9",
         "state": "waiting",
         "status": "",
         "pending": {
           "type": "answer",
           "question": "Top hypothesis (machine: unclear cause) has confidence 0.20, below 0.60. Can you confirm or add information?",
-          "run_id": "run_e319586b"
+          "run_id": "run_ec3ebfb9"
         }
       },
       "last_event": {
-        "event_id": "evt_run_e319586b_0004",
-        "run_id": "run_e319586b",
-        "ts": "2026-10-08T18:44:06Z",
+        "event_id": "evt_run_ec3ebfb9_0004",
+        "run_id": "run_ec3ebfb9",
+        "ts": "2026-10-09T13:54:49Z",
         "type": "question_asked",
         "agent": "investigation",
         "domain": "manufacturing",
@@ -38,19 +38,19 @@
       },
       "http": 200,
       "response": {
-        "run_id": "run_e319586b",
+        "run_id": "run_ec3ebfb9",
         "state": "waiting",
         "status": "",
         "pending": {
           "type": "answer",
           "question": "Top hypothesis (machine: unclear cause) has confidence 0.20, below 0.60. Can you confirm or add information?",
-          "run_id": "run_e319586b"
+          "run_id": "run_ec3ebfb9"
         }
       },
       "last_event": {
-        "event_id": "evt_run_e319586b_0007",
-        "run_id": "run_e319586b",
-        "ts": "2026-10-08T18:44:06Z",
+        "event_id": "evt_run_ec3ebfb9_0007",
+        "run_id": "run_ec3ebfb9",
+        "ts": "2026-10-09T13:54:49Z",
         "type": "question_asked",
         "agent": "investigation",
         "domain": "manufacturing",
@@ -68,14 +68,14 @@
       },
       "http": 200,
       "response": {
-        "run_id": "run_e319586b",
+        "run_id": "run_ec3ebfb9",
         "state": "waiting",
         "status": "awaiting_human",
         "pending": {
           "type": "approval",
           "kind": "halt",
           "proposal_id": "halt_1",
-          "run_id": "run_e319586b",
+          "run_id": "run_ec3ebfb9",
           "reason": "max_questions_reached",
           "question": "The agent stopped (max_questions_reached). Investigate again (add information if you have any) or finish?",
           "options": [
@@ -88,9 +88,9 @@
         }
       },
       "last_event": {
-        "event_id": "evt_run_e319586b_0010",
-        "run_id": "run_e319586b",
-        "ts": "2026-10-08T18:44:06Z",
+        "event_id": "evt_run_ec3ebfb9_0010",
+        "run_id": "run_ec3ebfb9",
+        "ts": "2026-10-09T13:54:49Z",
         "type": "question_asked",
         "agent": "system",
         "domain": "manufacturing",
@@ -110,9 +110,9 @@
   ],
   "events": [
     {
-      "event_id": "evt_run_e319586b_0001",
-      "run_id": "run_e319586b",
-      "ts": "2026-10-08T18:44:06Z",
+      "event_id": "evt_run_ec3ebfb9_0001",
+      "run_id": "run_ec3ebfb9",
+      "ts": "2026-10-09T13:54:49Z",
       "type": "tool_called",
       "agent": "quality",
       "domain": "manufacturing",
@@ -126,9 +126,9 @@
       }
     },
     {
-      "event_id": "evt_run_e319586b_0002",
-      "run_id": "run_e319586b",
-      "ts": "2026-10-08T18:44:06Z",
+      "event_id": "evt_run_ec3ebfb9_0002",
+      "run_id": "run_ec3ebfb9",
+      "ts": "2026-10-09T13:54:49Z",
       "type": "anomaly_detected",
       "agent": "quality",
       "domain": "manufacturing",
@@ -148,9 +148,9 @@
       }
     },
     {
-      "event_id": "evt_run_e319586b_0003",
-      "run_id": "run_e319586b",
-      "ts": "2026-10-08T18:44:06Z",
+      "event_id": "evt_run_ec3ebfb9_0003",
+      "run_id": "run_ec3ebfb9",
+      "ts": "2026-10-09T13:54:49Z",
       "type": "hypothesis_updated",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -166,9 +166,9 @@
       }
     },
     {
-      "event_id": "evt_run_e319586b_0004",
-      "run_id": "run_e319586b",
-      "ts": "2026-10-08T18:44:06Z",
+      "event_id": "evt_run_ec3ebfb9_0004",
+      "run_id": "run_ec3ebfb9",
+      "ts": "2026-10-09T13:54:49Z",
       "type": "question_asked",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -179,9 +179,9 @@
       }
     },
     {
-      "event_id": "evt_run_e319586b_0005",
-      "run_id": "run_e319586b",
-      "ts": "2026-10-08T18:44:06Z",
+      "event_id": "evt_run_ec3ebfb9_0005",
+      "run_id": "run_ec3ebfb9",
+      "ts": "2026-10-09T13:54:49Z",
       "type": "answer_received",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -190,9 +190,9 @@
       }
     },
     {
-      "event_id": "evt_run_e319586b_0006",
-      "run_id": "run_e319586b",
-      "ts": "2026-10-08T18:44:06Z",
+      "event_id": "evt_run_ec3ebfb9_0006",
+      "run_id": "run_ec3ebfb9",
+      "ts": "2026-10-09T13:54:49Z",
       "type": "hypothesis_updated",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -208,9 +208,9 @@
       }
     },
     {
-      "event_id": "evt_run_e319586b_0007",
-      "run_id": "run_e319586b",
-      "ts": "2026-10-08T18:44:06Z",
+      "event_id": "evt_run_ec3ebfb9_0007",
+      "run_id": "run_ec3ebfb9",
+      "ts": "2026-10-09T13:54:49Z",
       "type": "question_asked",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -221,9 +221,9 @@
       }
     },
     {
-      "event_id": "evt_run_e319586b_0008",
-      "run_id": "run_e319586b",
-      "ts": "2026-10-08T18:44:06Z",
+      "event_id": "evt_run_ec3ebfb9_0008",
+      "run_id": "run_ec3ebfb9",
+      "ts": "2026-10-09T13:54:49Z",
       "type": "answer_received",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -232,9 +232,9 @@
       }
     },
     {
-      "event_id": "evt_run_e319586b_0009",
-      "run_id": "run_e319586b",
-      "ts": "2026-10-08T18:44:06Z",
+      "event_id": "evt_run_ec3ebfb9_0009",
+      "run_id": "run_ec3ebfb9",
+      "ts": "2026-10-09T13:54:49Z",
       "type": "hypothesis_updated",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -250,9 +250,9 @@
       }
     },
     {
-      "event_id": "evt_run_e319586b_0010",
-      "run_id": "run_e319586b",
-      "ts": "2026-10-08T18:44:06Z",
+      "event_id": "evt_run_ec3ebfb9_0010",
+      "run_id": "run_ec3ebfb9",
+      "ts": "2026-10-09T13:54:49Z",
       "type": "question_asked",
       "agent": "system",
       "domain": "manufacturing",

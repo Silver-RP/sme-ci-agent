@@ -28,6 +28,10 @@ actions:
   # tên tham số máy mà đề xuất được phép đổi (action.parameter); tên lạ thì yêu cầu LLM sửa.
   # Simulator chỉ mô hình hoá zone3_setpoint_c; đổi tham số khác hợp lệ nhưng không làm KPI giảm.
   parameters: [zone3_setpoint_c, zone2_setpoint_c, other_parameter_c]
+  limits:                   # miền giá trị hợp lệ (gồm biên) của từng tham số; ngoài miền/NaN/inf thì yêu cầu LLM sửa
+    zone3_setpoint_c: {min: 150, max: 220}
+    zone2_setpoint_c: {min: 150, max: 220}
+    other_parameter_c: {min: 0, max: 500}
 ask:
   confidence_threshold: 0.6 # độ tin cậy giả thuyết đứng đầu dưới ngưỡng này thì hỏi người
   max_questions: 2          # số lần hỏi tối đa mỗi run; vượt thì dừng chờ người

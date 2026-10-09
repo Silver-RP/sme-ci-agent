@@ -8,15 +8,15 @@
       "body": {},
       "http": 201,
       "response": {
-        "run_id": "run_e48c7d98",
+        "run_id": "run_e3acf96f",
         "state": "finished",
         "status": "no_anomaly",
         "pending": null
       },
       "last_event": {
-        "event_id": "evt_run_e48c7d98_0002",
-        "run_id": "run_e48c7d98",
-        "ts": "2026-10-08T18:44:06Z",
+        "event_id": "evt_run_e3acf96f_0002",
+        "run_id": "run_e3acf96f",
+        "ts": "2026-10-09T13:54:49Z",
         "type": "run_finished",
         "agent": "system",
         "domain": "manufacturing",
@@ -29,9 +29,9 @@
   ],
   "events": [
     {
-      "event_id": "evt_run_e48c7d98_0001",
-      "run_id": "run_e48c7d98",
-      "ts": "2026-10-08T18:44:06Z",
+      "event_id": "evt_run_e3acf96f_0001",
+      "run_id": "run_e3acf96f",
+      "ts": "2026-10-09T13:54:49Z",
       "type": "tool_called",
       "agent": "quality",
       "domain": "manufacturing",
@@ -45,9 +45,9 @@
       }
     },
     {
-      "event_id": "evt_run_e48c7d98_0002",
-      "run_id": "run_e48c7d98",
-      "ts": "2026-10-08T18:44:06Z",
+      "event_id": "evt_run_e3acf96f_0002",
+      "run_id": "run_e3acf96f",
+      "ts": "2026-10-09T13:54:49Z",
       "type": "run_finished",
       "agent": "system",
       "domain": "manufacturing",
