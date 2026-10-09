@@ -19,7 +19,7 @@ Không tin bàn giao một mình. So với thực tế:
 - Runner: `tail -5 .autodev/runs/run.log`, `ls -t .autodev/runs/STOPPED-* | head -1`; tiến trình `pgrep -fl autodev-run`.
 - Demo: `lsof -iTCP:8000 -iTCP:3000 -sTCP:LISTEN`.
 
-Lệch giữa HANDOFF và thực tế (PR đã merge, issue đã đóng, lời mời đã nhận, mốc đã chạy xong) thì tin thực tế và ghi lại để `/dong-phien` sửa.
+Lệch giữa HANDOFF và thực tế (PR đã merge, issue đã đóng, lời mời đã nhận, mốc đã chạy xong) thì tin thực tế và ghi lại để `/session-end` sửa.
 
 ## 3. Báo cáo (tiếng Việt, ngắn, không quá 25 dòng)
 ```
