@@ -37,22 +37,11 @@ Không có backend thì mở trang không kèm tham số (mặc định `?source
 
 Thứ tự gợi ý đến 13/10: 4, 5, 6, 7, 8, 3, 2, rồi 9. Màn 1, 10, 11 làm khi API có.
 
-## Nhánh cần có fixture
-Đã có ví dụ thật:
-- `docs/schema/examples/run-happy.json`: đi hết tới Learn;
-- `docs/schema/examples/run-reject-error.json`: Từ chối dẫn tới lỗi.
-
-Backend sẽ bổ sung ở R9 (script xuất fixture, chạy qua HTTP):
-- rollback (đề xuất sai → KPI không đạt → duyệt rollback);
-- từ chối rollback dẫn tới halt `rollback_declined`;
-- chưa đủ bằng chứng;
-- `revise`;
-- halt `max_questions_reached`;
-- retry sau lỗi;
-- không có anomaly.
+## Fixture các nhánh
+`docs/schema/examples/run-<nhánh>.json` sinh bằng `uv run python scripts/export_fixtures.py` (R9), chạy qua HTTP với LLM giả. Có 8 nhánh: happy, rollback, rollback bị từ chối → halt, chưa đủ bằng chứng, revise, halt max_questions, lỗi + retry, không có anomaly. Danh sách và ý nghĩa xem `docs/schema/payloads.md`.
 
 ## Lỗ hổng liên quan UI (từ `docs/audits/2026-10-09.md`)
-- H-09: câu hỏi "chưa đủ bằng chứng" chưa ra `pending` (backend sửa).
+- H-09: đã sửa ở R9 (câu hỏi "chưa đủ bằng chứng" ra `pending.type == "answer"`).
 - H-13: Retry làm timeline đứng (SSE đóng ở `run_finished` lỗi; trùng `event_id`). Backend sửa phần `event_id`; frontend giữ luồng mở khi `status == "error"`.
 - H-16: demo LLM giả, Reject / Bác bỏ / Điều tra lại hiện kết thúc bằng lỗi (backend sửa).
 - H-24: kết quả run và `passed: null` hiển thị chưa rõ (frontend).
