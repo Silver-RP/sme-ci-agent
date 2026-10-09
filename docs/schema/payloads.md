@@ -15,8 +15,6 @@ Ví dụ thật (sinh bằng `uv run python scripts/export_fixtures.py`, qua API
 | `run-error-retry.json` | LLM lỗi, Retry | `run_finished` completed (bước đầu là `error` retryable) |
 | `run-no-anomaly.json` | Detect không thấy bất thường | `run_finished` no_anomaly |
 
-`run-reject-error.json` là bản cũ (trước R9), chỉ để tham khảo.
-
 Ký hiệu: `?` = có thể vắng; `|` = một trong các giá trị.
 
 ## 1. Vỏ event

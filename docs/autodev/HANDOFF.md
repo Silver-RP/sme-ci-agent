@@ -22,7 +22,7 @@ Supervisor cập nhật file này ở cuối mỗi mốc và trước khi ngư�
 - Người dùng cho supervisor tự merge PR (`.claude/settings.local.json`, không commit).
 
 Làm tiếp theo thứ tự:
-1. **Việc của người dùng sau R9:** (a) duyệt xoá `docs/schema/examples/run-reject-error.json` (file cũ, ngoài 8 nhánh); (b) T-030: chạy LLM thật và `uv run python scripts/eval_rootcause.py --llm real` (chỉ cách này mới chứng minh điều 1, LLM giả là đáp án viết sẵn).
+1. **Việc của người dùng sau R9:** (a) đã xoá `run-reject-error.json`, stash dev-02 và 32 nhánh remote đã merge (người dùng duyệt 2026-10-09; giữ 3 nhánh mới nhất); (b) T-030: chạy LLM thật và `uv run python scripts/eval_rootcause.py --llm real` (chỉ cách này mới chứng minh điều 1, LLM giả là đáp án viết sẵn).
    Đưa vào R10 (b): chặn `value` NaN/không hữu hạn trong action (hiện ném `DataError` khi ghi audit JSON); `parse_bool("maybe")` → thiếu bằng chứng; bỏ `fix_addresses_cause` không dùng; "M02" trong `fake_metrics.py`. Quyết định có đưa `eval_rootcause.py` vào smoke (supervisor chưa đưa: chạy ~vài giây, nhưng là file plugin `.autodev/config.json`).
 2. **T-030 (người dùng chạy, sau R9):** một vòng LLM thật trên dashboard, ghi lỗi vào `docs/decisions.md` mục "Việc cần sửa sau khi chạy". Người dùng tạo key ở console.anthropic.com (~5 USD; gói Pro/Max không kèm API; khuyên Anthropic theo ADR-006), tự điền `.env` (`ANTHROPIC_API_KEY`, `MODEL_REASONING=claude-sonnet-5-5`, `MODEL_CHEAP=claude-haiku-4-5-20251001`), chạy `SME_LLM=real scripts/demo.sh`. Agent không đọc `.env`. Chạy thêm script eval của R9 với `--llm real`.
 3. **P6:** bảng 3–5 mốc tới v0.1-e2e (13/10) và freeze (20/10), đường găng, thứ tự cắt (PLAN mục 7), pre-mortem mỗi mốc, đối chiếu ước tính với thực tế. Hướng đã duyệt nằm ở PROJECT_STATE mục "Tầm nhìn"; người dùng duyệt việc cắt.
@@ -84,7 +84,6 @@ Làm tiếp theo thứ tự:
 - **Theo dõi sau R9 (supervisor tương tác):**
   - pytest đỏ 1/4 lần trên main, không bắt được tên test; 3 lần chạy lại xanh (412). Nếu gặp lại thì ghi tên test.
   - LangGraph cảnh báo "Deserializing unregistered type backend.agent.state.Hypothesis" khi chạy `eval_rootcause.py`; bản sau sẽ chặn. Thêm vào R10 (b): đăng ký `allowed_msgpack_modules` hoặc lưu dict.
-  - Worktree worker còn `stash@{0}` (dev-02 dở dang từ lần R9 bị cắt). Chờ người dùng duyệt bỏ.
 - **Dọn dẹp chờ:** thư mục lịch sử Claude cũ `~/.claude/projects/-Users-ishopjapan-Desktop-…` (người dùng muốn giữ vài ngày rồi xoá, hỏi lại trước khi xoá).
 - **Để sau** (người dùng chốt): đo độ dài phiên và chất lượng theo thời gian; hook trước khi nén ngữ cảnh.
 
