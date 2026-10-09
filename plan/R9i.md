@@ -43,7 +43,7 @@ Quy tắc CLAUDE.md giữ nguyên. `docs/schema/events.json` không đổi; trư
   3. Test: H-41 (`new_content` = "   ") → yêu cầu sửa, không 422.
   4. Sửa `tests/test_measure_h06.py` dòng 62–67 theo hành vi mới (ghi trong báo cáo vì sao đổi).
 - **Phụ thuộc:** không
-- **Trạng thái:** TODO · **Số vòng:** 0
+- **Trạng thái:** DONE · **Số vòng:** 1 (commit 509a11a)
 
 ### dev-02: Kiểm miền giá trị của `action` (H-30)
 - **Mô tả:**

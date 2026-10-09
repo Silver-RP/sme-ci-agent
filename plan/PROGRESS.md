@@ -224,3 +224,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 11df454. Review: .autodev/reviews/dev-02-r1.json (PASS).
 - Script tự nạp file env khi --llm real (không ghi đè), thiếu cấu hình thì exit 2 một dòng; memory_checkpointer cho phép Hypothesis. 421 pytest, smoke sạch.
 - Non-blocking: postgres_checkpointer chưa dùng allowlist; test dọn environ thủ công.
+
+### R9i/dev-01: DONE
+- Vòng: 1. Commit: 509a11a. Review: .autodev/reviews/R9i-dev-01-r1.json (PASS).
+- Đề xuất bắt buộc đủ `action` + `sop_proposal` (không rỗng); thiếu → ProposalError để LLM sửa; Act từ chối thiếu, không ghi SOP. 431 pytest, smoke sạch.
+- Non-blocking: Act tự vệ ném ValueError (run error, không cờ retryable riêng).
