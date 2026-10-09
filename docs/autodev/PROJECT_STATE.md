@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-09 · Nguồn: audit `docs/audits/2026-10-09_2.md` + R9i merge #55.
+Cập nhật: 2026-10-09 · Nguồn: audit `docs/audits/2026-10-09_2.md` + R9i merge #55 + R9ih merge #58.
 
 ## Mốc
 
@@ -11,7 +11,7 @@ Cập nhật: 2026-10-09 · Nguồn: audit `docs/audits/2026-10-09_2.md` + R9i m
 | Dự án | M0–M2 | ✅ 19/19 task | |
 | Dự án | M3 | 🔄 1/2 | T-030 hết bị chặn (R9h); chờ người dùng chạy LLM thật |
 | Dự án | M4 | 🔄 1/6 | T-040 xong; T-041..T-045 mở; tag v0.1-e2e 13/10 |
-| Chạy | R4–R9, R9h, R9i | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 (worker) USD |
+| Chạy | R4–R9, R9h, R9i, R9ih | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55, #58 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 / ~0,64 (worker) USD |
 | Plugin | P1–P3 | ✅ | |
 | Plugin | P4 | 🔄 | chưa gặp hạn mức thật |
 | Plugin | P5 | 🔄 | audit + trạng thái (file này) |
@@ -59,7 +59,6 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 
 | Mã | Mức | Tóm tắt |
 |---|---|---|
-| H-43 | cao | Prompt Improve không có danh sách SOP; LLM thật đặt `sop_id` giả |
 | H-11 | cao | Chỉ số 3 chưa có đường code; MTTD ≈ 0 theo cấu tạo (Detect nhìn lại) |
 | H-28 | cao | Eval nguyên nhân tự đúng: script chứa nhãn, chấm theo chuỗi (phủ định = đúng) |
 | H-29 | cao | Bài toán quá dễ: `correlate` trả nhãn r≈0,98, anomaly ~10σ, hỏi người chỉ do script |
@@ -87,6 +86,7 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 
 ## Quyết định gần đây
 
+- 2026-10-09: R9ih merge #58: prompt Improve có danh mục SOP (id, version hiệu lực tính `sop_versions`, title, nội dung cắt theo config); `sop_id` lạ → thông báo sửa lại nêu id hợp lệ. Đóng H-43. % đạt giữ nguyên (cần T-030 lần 3 với LLM thật để chứng minh vòng khép). Supervisor tự kiểm 3 tiêu chí cấp mốc, 6 test mới đỏ trên main.
 - 2026-10-09: R9i merge #55: đề xuất thiếu `action` hoặc `sop_proposal`, `new_content` rỗng, `action` NaN/inf/ngoài miền YAML/máy lạ → gửi lại LLM, hết lượt thì `error` retryable. Đóng H-27, H-30, H-41, H-42; điều 2: 55 → 65. Supervisor tự kiểm 5 tiêu chí cấp mốc, test mới đỏ trên main.
 
 - 2026-10-09: audit 2 (sau R9 + R9h): 15 lỗ hổng mới H-27..H-41 (4 cao), 0 đóng, 27 mở. % đạt 45/70/10 → 30/55/5: eval tự đúng (H-28, H-29), bỏ `action` là tắt được rollback (H-27), MTTD ≈ 0 theo cấu tạo. Đề xuất R9i (H-27, H-30) trước T-030.
@@ -111,7 +111,8 @@ P6 điền chi tiết (đường găng, thứ tự cắt, pre-mortem). Hướng 
 | R9 | ✅ merge #44 | đóng H-06, H-07, H-08, H-09, H-10, H-12, H-17, H-21, H-23 |
 | R9h | ✅ merge #49 | bỏ `temperature` → `output_config.effort` (`LLM_EFFORT`); script `--llm real` tự nạp `.env`, thiếu key báo rõ |
 | R9i | ✅ merge #55 | đóng H-27, H-30, H-41, H-42 |
-| T-030 lần 2 | Người dùng chạy lại LLM thật (sau R9i) | ghi lỗi vào `docs/decisions.md` |
+| R9ih | ✅ merge #58 | đóng H-43 (danh mục SOP trong prompt Improve) |
+| T-030 lần 3 | Người dùng chạy lại LLM thật (sau R9ih) | ghi lỗi vào `docs/decisions.md` |
 | R10 | Điều 3 thành thật + luồng demo | H-11, H-13, H-16, H-26, H-31, H-33; T-041, T-042, T-044 |
 | R11 (đề xuất) | Điều 1 thành thật | H-28, H-29, H-32, H-36, H-18; eval LLM thật |
 | Audit 3 | Rà sau R10 | rồi tag v0.1-e2e (người dùng duyệt) |

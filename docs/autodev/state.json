@@ -1,6 +1,6 @@
 {
   "updated": "2026-10-09",
-  "source": "audit 2026-10-09 lần 2 + R9i merge #55",
+  "source": "audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58",
   "milestones": {
     "project": [
       {
@@ -90,6 +90,14 @@
         "cost_usd": 1.6,
         "minutes": 25,
         "note": "đề xuất phải đủ action + sop_proposal, kiểm miền giá trị action; cost chỉ tính worker"
+      },
+      {
+        "id": "R9ih",
+        "status": "merged",
+        "pr": 58,
+        "cost_usd": 0.64,
+        "minutes": 12,
+        "note": "sửa nhanh H-43: danh mục SOP trong prompt Improve; cost chỉ tính worker"
       }
     ],
     "plugin": [
@@ -379,12 +387,6 @@
       "severity": "thấp",
       "summary": "docs/schema/examples không qua test dashboard; payloads.md sai chỗ; SSE after=-1",
       "audit": "2026-10-09_2"
-    },
-    {
-      "id": "H-43",
-      "severity": "cao",
-      "summary": "Prompt Improve không có danh sách SOP; LLM thật đặt sop_id giả",
-      "audit": "2026-10-09_2"
     }
   ],
   "decisions": [
@@ -431,6 +433,10 @@
     {
       "date": "2026-10-08",
       "text": "Supervisor Opus effort medium, worker Sonnet; smoke bắt buộc trước merge"
+    },
+    {
+      "date": "2026-10-09",
+      "text": "R9ih merge #58: đóng H-43; T-030 lần 3 (LLM thật) là việc kế tiếp của người dùng"
     }
   ],
   "outlook": [
