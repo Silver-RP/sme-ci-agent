@@ -51,6 +51,21 @@ class LLMConfigError(RuntimeError):
     """Raised when the real LLM is not configured (e.g. missing model env var)."""
 
 
+REQUIRED_REAL_ENV = ("ANTHROPIC_API_KEY", "MODEL_REASONING")
+
+
+def prepare_real_llm_env(env_file: Any) -> str | None:
+    """For the scripts' ``--llm real``: load ``env_file`` without overriding variables already set, then check
+    the required ones. Returns None when ready, else a one-line message (never a value)."""
+    from dotenv import load_dotenv
+
+    load_dotenv(env_file, override=False)
+    missing = [k for k in REQUIRED_REAL_ENV if not (os.environ.get(k) or "").strip()]
+    if not missing:
+        return None
+    return f"Missing {', '.join(missing)}: set it in the environment or in .env at the repo root (see .env.example)."
+
+
 class ScriptExhaustedError(RuntimeError):
     """Raised when a ScriptedLLM is called after its script ran out."""
 

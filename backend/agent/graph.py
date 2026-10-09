@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 
+from backend.agent.checkpoint import memory_checkpointer
 from backend.agent.events import make_event
 from backend.agent.llm import LLM
 from backend.agent.nodes.act import (
@@ -197,7 +197,7 @@ def build_graph(
         )
         if full_loop:
             _add_act_loop(g, config, tool_ctx, improve)
-    return g.compile(checkpointer=checkpointer or InMemorySaver())
+    return g.compile(checkpointer=checkpointer or memory_checkpointer())
 
 
 def _add_act_loop(g: StateGraph, config: DomainConfig, ctx: ToolContext, improve) -> None:

@@ -143,9 +143,9 @@ def create_app(
     make_llm = llm_factory or env_llm_factory
     make_ctx = ctx_factory or _default_ctx_factory
     if checkpointer is None:
-        from langgraph.checkpoint.memory import InMemorySaver
+        from backend.agent.checkpoint import memory_checkpointer
 
-        checkpointer = InMemorySaver()  # one saver for all runs; thread_id isolates them
+        checkpointer = memory_checkpointer()  # one saver for all runs; thread_id isolates them
     runs: dict[str, Run] = {}
     app = FastAPI(title="SME CI Agent")
     app.state.runs = runs

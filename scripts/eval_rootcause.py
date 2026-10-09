@@ -36,13 +36,21 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 from sqlalchemy.orm import Session
 
+from backend.agent.checkpoint import memory_checkpointer
 from backend.agent.demo_llm import scripted_demo_llm
 from backend.agent.graph import build_graph
-from backend.agent.llm import LLM, AnthropicLLM, LLMResponse, ScriptedLLM, ToolCall, ToolSpec
+from backend.agent.llm import (
+    LLM,
+    AnthropicLLM,
+    LLMResponse,
+    ScriptedLLM,
+    ToolCall,
+    ToolSpec,
+    prepare_real_llm_env,
+)
 from backend.agent.nodes.ask import has_tool_evidence
 from backend.agent.state import new_state
 from backend.db.session import make_engine
@@ -168,7 +176,7 @@ def run_once(llm: LLM, config: DomainConfig, session: Session, *, seed: int) -> 
     root_cause = data.ground_truth[0].root_cause
     run_id = f"eval_{uuid.uuid4().hex[:8]}"
     ctx = ToolContext(tables=data.tables, session=session, run_id=run_id)
-    graph = build_graph(config, checkpointer=InMemorySaver(), llm=counted, tool_ctx=ctx, full_loop=True)
+    graph = build_graph(config, checkpointer=memory_checkpointer(), llm=counted, tool_ctx=ctx, full_loop=True)
     cfg = {"configurable": {"thread_id": run_id}}
     payload: object = new_state(run_id, config.domain)
     ended = "finished"
@@ -238,6 +246,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--llm", choices=["scripted", "real"], default="scripted")
     p.add_argument("--seeds", type=int, default=3, help="runs per scenario (data seeds 42, 43, ...)")
     args = p.parse_args(argv)
+    if args.llm == "real":
+        problem = prepare_real_llm_env(ROOT / ".env")
+        if problem:
+            print(problem, file=sys.stderr)
+            return 2
     config = load_domain_config()
     seeds = [42 + i for i in range(max(1, args.seeds))]
     factories: dict[str, Callable[[DomainConfig], LLM]] = (
