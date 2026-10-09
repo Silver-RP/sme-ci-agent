@@ -1,11 +1,12 @@
 {
   "milestone": "R9ih",
-  "current_task": "dev-01",
+  "current_task": null,
   "tasks": {
     "dev-01": {
-      "status": "IN_PROGRESS",
-      "round": 0,
-      "base": "82cc65e15346ed593b47c718862302bfba1e9f38"
+      "status": "DONE",
+      "round": 1,
+      "base": "82cc65e15346ed593b47c718862302bfba1e9f38",
+      "commit": "3467282"
     }
   },
   "verify": {
