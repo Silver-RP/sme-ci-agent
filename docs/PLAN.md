@@ -34,14 +34,16 @@ Bản gốc: G3 3/10, G4 8/10, G5 13/10. Thực tế G3 chưa làm khi bắt đ�
 
 ## 4. Phân công (4 người, đổi vai được)
 
-| Vai | Phụ trách | Người |
-|---|---|---|
-| A: Data | sandbox, simulator, injector, ground truth, detect | TBD |
-| B: Tools/API | DB, tools, FastAPI + SSE, audit_log, sop_versions | TBD |
-| C: Core | graph, state, prompt, các node, interrupt, checkpointer | TBD |
-| D: Demo/UI + Domain | proposal, dashboard, context_profile.yaml, SOP mẫu, kịch bản, sổ token | TBD |
+Cập nhật 2026-10-10: backend (vai B + C cũ) do leader + auto-dev làm. Ba thành viên nhận vai mới, mỗi vai có brief và issue.
 
-Ai xong việc sớm thì nhận việc ở mảng đang nằm trên đường găng (ưu tiên hỗ trợ C và A).
+| Vai | Phụ trách | Người | Brief / issue |
+|---|---|---|---|
+| Leader + auto-dev | backend: graph, node, tools, API + SSE, DB, simulator; duyệt, merge | @Silver-RP | `plan/Rx.md` |
+| A: Dữ liệu, kịch bản | hợp đồng dữ liệu, CSV mẫu, thực tế ngành, kịch bản, chấm điểm | @bobbibao | `docs/briefs/data-research.md`, #63, #66 |
+| D: Giao diện | dashboard demo theo storyboard (FR-01..12, NFR-1..7) | @Finnng1104 | `docs/briefs/frontend.md`, #64, #67 |
+| Q: Kiểm chứng | ca kiểm thử, kiểm dữ liệu và UI, Responsible AI, sổ token, go/no-go, diễn tập | @daivonpham | `docs/briefs/qa.md`, #65 |
+
+Bắt đầu: `docs/onboarding-claude.md`. Ai xong việc sớm thì hỗ trợ mảng đang nằm trên đường găng.
 
 ## 5. Kế hoạch theo ngày
 

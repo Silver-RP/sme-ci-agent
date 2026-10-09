@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-09 · Nguồn: audit `docs/audits/2026-10-09_2.md` + R9i merge #55 + R9ih merge #58.
+Cập nhật: 2026-10-10 · Nguồn: audit `docs/audits/2026-10-09_2.md` + R9i merge #55 + R9ih merge #58 + quyết định team 10/10.
 
 ## Mốc
 
@@ -87,6 +87,9 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 
 ## Quyết định gần đây
 
+- 2026-10-10: team 4 người theo vai: A dữ liệu (#63), D giao diện (#64), Q kiểm chứng (#65); backend do leader + auto-dev. Từ nay auto-dev không sửa phần trình bày `dashboard/`; dữ liệu mới chờ D1 (#66). `main` bắt buộc qua PR + check `plugin-guard` (chỉ leader sửa file plugin).
+- 2026-10-10: leader duyệt hợp đồng dữ liệu v0.1 (`docs/schema/data_contract.md`): nhập số đếm `production_log`; `material_batches` thay `inventory` + `supplier`; `environment_log` + `training_level` sang R11.
+- 2026-10-09: sau T-030, tạm dừng thêm tính năng để chuẩn hoá dữ liệu (hợp đồng + nhập CSV) và làm UI demo (`docs/demo-storyboard.md`) trước P6.
 - 2026-10-09: R9ih merge #58: prompt Improve có danh mục SOP (id, version hiệu lực tính `sop_versions`, title, nội dung cắt theo config); `sop_id` lạ → thông báo sửa lại nêu id hợp lệ. Đóng H-43. % đạt giữ nguyên (cần T-030 lần 3 với LLM thật để chứng minh vòng khép). Supervisor tự kiểm 3 tiêu chí cấp mốc, 6 test mới đỏ trên main.
 - 2026-10-09: R9i merge #55: đề xuất thiếu `action` hoặc `sop_proposal`, `new_content` rỗng, `action` NaN/inf/ngoài miền YAML/máy lạ → gửi lại LLM, hết lượt thì `error` retryable. Đóng H-27, H-30, H-41, H-42; điều 2: 55 → 65. Supervisor tự kiểm 5 tiêu chí cấp mốc, test mới đỏ trên main.
 
@@ -113,7 +116,8 @@ P6 điền chi tiết (đường găng, thứ tự cắt, pre-mortem). Hướng 
 | R9h | ✅ merge #49 | bỏ `temperature` → `output_config.effort` (`LLM_EFFORT`); script `--llm real` tự nạp `.env`, thiếu key báo rõ |
 | R9i | ✅ merge #55 | đóng H-27, H-30, H-41, H-42 |
 | R9ih | ✅ merge #58 | đóng H-43 (danh mục SOP trong prompt Improve) |
-| T-030 lần 3 | Người dùng chạy lại LLM thật (sau R9ih) | ghi lỗi vào `docs/decisions.md` |
-| R10 | Điều 3 thành thật + luồng demo | H-11, H-13, H-16, H-26, H-31, H-33; T-041, T-042, T-044 |
-| R11 (đề xuất) | Điều 1 thành thật | H-28, H-29, H-32, H-36, H-18; eval LLM thật |
+| T-030 | ✅ 10/10 vòng LLM thật khép kín | lỗi trong `docs/decisions.md`; H-44 giao vai D |
+| R10a | API cho storyboard + dự phòng sân khấu (không chờ D1) | 4 API (FR-09..12), T-041, H-13, H-16, H-26 |
+| R10b | Dữ liệu theo hợp đồng + điều 3 (sau D1 #66) | `production_log`, import CSV + validator V01–V09, simulator số đếm; H-11, T-042, H-31, H-33, H-39 |
+| R11 | Điều 1 thành thật (sau D4 + D5 của vai A) | H-28, H-29, H-32, H-36, H-18; kịch bản khó; eval chấm theo mã |
 | Audit 3 | Rà sau R10 | rồi tag v0.1-e2e (người dùng duyệt) |
