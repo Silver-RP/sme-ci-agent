@@ -46,4 +46,26 @@ Trạng thái: đã chốt (leader xác nhận 2026-10-08, xem ADR-009).
 
 ## Việc cần sửa sau khi chạy (log lỗi M3)
 
-(để trống)
+### T-030 lần 1 (2026-10-09, LLM thật `claude-sonnet-5-5`, chạy qua API của `demo.sh`, người trả lời trung tính)
+1. **Chặn (đã sửa ở R9h, PR #49):** lần gọi LLM đầu lỗi `TypeError: Messages.create() got an unexpected keyword argument 'temperature'`. SDK `anthropic` 1.11 đã bỏ `temperature`. Test của H-23 chỉ dùng client giả. Nay dùng `output_config.effort`, kèm test đối chiếu với chữ ký SDK thật.
+2. **Kết quả tốt (bằng chứng cho điều 1, một mẫu):**
+   - Agent tự gọi `query_logs` (machine_log), `correlate`, `get_shift_schedule`.
+   - Từ machine_log, agent kết luận đúng nguyên nhân: zone3 setpoint M02 bị đổi từ 180 lên 195 °C lúc 2026-03-10T22:00, confidence 0,8.
+   - Agent loại giả thuyết "thay ca" nhờ lịch ca (defect vẫn cao khi người cũ quay lại).
+   - Không cần người gợi ý. Run `run_c72860d2`, khoảng 16 giây.
+3. **Lỗi: đề xuất có `action` đúng nhưng không có `sop_proposal`.**
+   - Đề xuất là `action = {zone3_setpoint_c, M02, 180}`.
+   - Act trả `sop_applied.applied=false` ("proposal has no SOP change"), Measure trả `not_applied`, Learn lưu `outcome: no_change`, run vẫn `completed`.
+   - Hệ quả: vòng không khép, dù chẩn đoán và hành động đều đúng.
+   - Đây là mặt ngược của H-27 (audit 2: `sop_change` thiếu `action`).
+   - Cần quyết thiết kế:
+     - (a) hành động tham số được áp dụng và đo ngay cả khi không đổi SOP, với điều kiện đã có người duyệt; hoặc
+     - (b) Improve bắt buộc có cả `action` lẫn `sop_proposal`, và yêu cầu LLM sửa lại nếu thiếu.
+
+     Đề xuất của supervisor: (b) cho demo, vì vòng Detect → Learn cần SOP có phiên bản; kèm test với câu trả lời LLM thiếu `sop_proposal`.
+4. **Hạn chế:**
+   - Tool `correlate` báo không kiểm được vì chuỗi setpoint trong cửa sổ là hằng số (LLM tự ghi nhận điều này). Liên quan H-29.
+   - Run kết thúc `completed` trong khi Measure `not_applied`; UI nên phân biệt trường hợp này (H-24).
+5. **Chưa làm:**
+   - Người dùng xem vòng trên dashboard (`?source=live`).
+   - `uv run python scripts/eval_rootcause.py --llm real --seeds 2` (từ R9h script tự nạp file biến môi trường).
