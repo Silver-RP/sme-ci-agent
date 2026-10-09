@@ -1,14 +1,14 @@
 ---
-description: (Chỉ leader) Đóng phiên - ghi bàn giao (HANDOFF, PROJECT_STATE + state.json, TASKS, bộ nhớ), mở PR, chờ check, merge. Phiên sau chỉ cần /mo-phien.
+description: (Chỉ leader) Đóng phiên - ghi bàn giao (HANDOFF, PROJECT_STATE + state.json, TASKS, bộ nhớ), mở PR, chờ check, merge. Phiên sau chỉ cần /session-start.
 argument-hint: <tuỳ chọn: ghi chú thêm của leader cần lưu>
 ---
 
-Bạn đóng phiên làm việc. Mục tiêu: phiên sau chạy `/mo-phien` là làm tiếp được ngay, leader không phải giải thích lại. Ghi **sự thật đã kiểm**, không ghi dự định như thể đã xong.
+Bạn đóng phiên làm việc. Mục tiêu: phiên sau chạy `/session-start` là làm tiếp được ngay, leader không phải giải thích lại. Ghi **sự thật đã kiểm**, không ghi dự định như thể đã xong.
 
 ## 1. Gom những gì đổi trong phiên
 - Ngày cập nhật cuối của HANDOFF (dòng "Bước tiếp theo (cập nhật …)") → `git log --oneline --since=<ngày> origin/main`, `gh pr list --state merged --search "merged:>=<ngày>"`, issue tạo/đóng (`gh issue list --state all --search "updated:>=<ngày>"`).
 - Từ cuộc hội thoại: quyết định của leader (duyệt, cắt, đổi thứ tự, ngân sách), việc leader hứa làm, việc còn chờ leader trả lời, lỗi gặp phải và cách xử lý.
-- Trạng thái thật: runner, demo, lời mời team, PR mở (xem lệnh ở `/mo-phien` mục 2).
+- Trạng thái thật: runner, demo, lời mời team, PR mở (xem lệnh ở `/session-start` mục 2).
 - $ARGUMENTS: ghi chú leader muốn lưu.
 
 ## 2. Cập nhật file (dùng Edit/Write; guard chặn sửa tại chỗ bằng sed và script Python qua stdin)
@@ -31,4 +31,4 @@ Không sửa: brief của team (`docs/briefs/`) trừ khi leader quyết đổi 
 - PR số mấy, đã merge chưa.
 - 3–5 dòng: phiên sau sẽ bắt đầu từ đâu.
 - Việc đang chờ leader (đúng như mục 1 của "Làm tiếp theo thứ tự").
-- Nhắc: phiên mới gõ `/mo-phien`.
+- Nhắc: phiên mới gõ `/session-start`.
