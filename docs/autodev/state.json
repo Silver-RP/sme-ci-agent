@@ -70,15 +70,18 @@
       {
         "id": "R9",
         "status": "merged",
-        "pr": 44
-      },
-      {
-        "id": "R9",
-        "status": "merged",
         "pr": 44,
         "cost_usd": 7.18,
         "minutes": 145,
         "note": "1 lần dừng (sub-agent chạy nền) + 1 lần chạm hạn mức thật, chờ 59 phút"
+      },
+      {
+        "id": "R9h",
+        "status": "merged",
+        "pr": 49,
+        "cost_usd": 1.15,
+        "minutes": 20,
+        "note": "sửa nhanh T-030: bỏ temperature, output_config.effort, script nạp .env; cost chỉ tính worker"
       }
     ],
     "plugin": [
