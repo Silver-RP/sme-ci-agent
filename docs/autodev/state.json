@@ -398,6 +398,10 @@
   "decisions": [
     {
       "date": "2026-10-10",
+      "text": "Mở/đóng phiên bằng lệnh của leader /session-start, /session-end (bàn giao qua HANDOFF + PROJECT_STATE, PR, merge sau check)."
+    },
+    {
+      "date": "2026-10-10",
       "text": "Team 4 người theo vai: A dữ liệu (#63), D giao diện (#64), Q kiểm chứng (#65); backend do leader + auto-dev. Auto-dev không sửa phần trình bày dashboard/. main bắt buộc PR + check plugin-guard."
     },
     {

@@ -61,6 +61,9 @@ Mốc tham khảo trong brief (ngày trong `[...]` là đề xuất, chốt ở 
   
   Nhánh xanh đã chạy thật (#69). Nhánh chặn (PR của thành viên) **chưa thử**: kiểm ở PR đầu tiên của team.
 - **Chờ check trước khi merge:** `run.py` có `wait_required_checks` (#69), `/supervise` cũng được dặn chờ. Merge tay: `gh pr checks <số> --required --watch` rồi `gh pr merge <số> --merge`.
+- **Lệnh mở/đóng phiên cho leader:** `/session-start` (chỉ đọc: bàn giao + trạng thái thật → báo việc tiếp) và `/session-end` (cập nhật bàn giao, PR, merge). PR #72, #73; tên tiếng Anh theo ý người dùng. Lần chạy thật đầu: `/session-end` của phiên này (PR bàn giao kèm theo). `/session-start` **chưa chạy thật**; phiên sau là lần đầu, gặp chỗ chưa ổn thì sửa lệnh.
+- **Dọn dẹp** (người dùng duyệt, PR #71): đã xoá thư mục `red`, 4 thư mục lịch sử Claude ở đường dẫn Desktop, thư mục `sme-ci-agent` cũ ở Desktop.
+- Lúc đóng phiên: 3 lời mời **vẫn chờ** nhận; chưa có comment hay PR nào của team; runner và demo không chạy; không có PR mở.
 
 ### Làm tiếp theo thứ tự
 1. **Chờ người dùng:**
@@ -161,5 +164,5 @@ Mốc tham khảo trong brief (ngày trong `[...]` là đề xuất, chốt ở 
 - P1–P3 xong; R4–R9ih chạy bằng chế độ B, tất cả merge.
 - 2026-10-08: chuyển repo khỏi iCloud; hardening + R8.
 - 2026-10-09: P5, audit 1–2, R9, R9h, R9i, R9ih, T-030 khép vòng LLM thật.
-- 2026-10-10: tạm dừng tính năng; hợp đồng dữ liệu, storyboard, brief A/D/Q, issue #63–#67, onboarding, bảo vệ `main` + `plugin-guard`.
+- 2026-10-10: tạm dừng tính năng; hợp đồng dữ liệu, storyboard, brief A/D/Q, issue #63–#67, onboarding, bảo vệ `main` + `plugin-guard`; dọn thư mục cũ; lệnh `/session-start`, `/session-end`.
 - Chi tiết trong `PROGRESS.md`.
