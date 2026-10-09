@@ -36,6 +36,7 @@ RESET_MARGIN = dt.timedelta(minutes=5)
 UNKNOWN_RESET_WAIT = dt.timedelta(minutes=30)
 MAX_LIMIT_WAITS = 6
 MAX_ERROR_RETRIES = 1
+CHECK_TRIES = 6
 
 LIMIT_RE = re.compile(r"(hit|reached|exceeded)[^.\n]{0,40}\blimit\b|usage limit|rate[_ ]limit", re.IGNORECASE)
 WEEKLY_RE = re.compile(r"weekly|week(ly)?\s+limit|7-day", re.IGNORECASE)
@@ -339,6 +340,24 @@ def run_audit(supervisor: Path) -> float:
     return float(res.get("total_cost_usd") or 0)
 
 
+def wait_required_checks(cwd: Path, number: int, tries: int = CHECK_TRIES, pause: float = 10) -> bool:
+    """Wait for the PR's required checks (main requires plugin-guard); True when they pass.
+
+    Right after a PR opens, GitHub may not have registered the check yet ("no ... checks reported"): retry.
+    """
+    for _ in range(tries):
+        proc = subprocess.run(
+            ["gh", "pr", "checks", str(number), "--required", "--watch", "--interval", "10"],
+            cwd=cwd, capture_output=True, text=True, check=False,
+        )
+        if proc.returncode == 0:
+            return True
+        if "checks reported" not in (proc.stdout + proc.stderr):
+            return False
+        time.sleep(pause)
+    return False
+
+
 def merge_docs_chore_prs(cwd: Path, since: dt.datetime) -> None:
     """Merge the supervisor's record PR (chore/autodev-*) when it only touches docs/autodev/**.
 
@@ -353,6 +372,9 @@ def merge_docs_chore_prs(cwd: Path, since: dt.datetime) -> None:
         ).stdout.split()
         if not docs_only(files):
             log(f"PR #{p['number']} không chỉ sửa docs/autodev; để người xem")
+            continue
+        if not wait_required_checks(cwd, p["number"]):
+            log(f"PR #{p['number']}: check bắt buộc chưa đạt; để người xem")
             continue
         proc = subprocess.run(
             ["gh", "pr", "merge", str(p["number"]), "--merge"], cwd=cwd, capture_output=True, text=True, check=False
