@@ -15,6 +15,14 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
   Không viết code dự án (developer/reviewer trong worker làm). Quyền: thiết kế mục 6.15, `.claude/commands/supervise.md`.
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao". Hỏi "tiếp theo làm gì" thì trả lời bằng danh sách ưu tiên: việc của người dùng trước, việc Claude làm song song sau.
 
+## Cập nhật sau R10c (2026-10-10 chiều, supervisor `--review-only`)
+- **R10c merge (PR #84):** run/event/checkpoint vào Postgres (sống qua restart), khoá SOP theo `base_version`, `question_id` cho câu hỏi, audit mọi quyết định, `tests/test_invariants.py`. Đóng H-14, H-15, H-19, H-20, H-37, H-38. 553 pytest + 1 xfail. Worker 7/7 PASS vòng 1, ~115 phút, 5,81 USD (trong ước tính: B3 ≈ 1,0).
+- Supervisor tự kiểm 4 tiêu chí cấp mốc (bảng trong PROGRESS), tự tắt luật duyệt để chứng minh test bất biến bắt được, chạy test mới trên code main (đỏ), và 3 ca biên qua API (xung đột SOP, restart lúc đang hỏi, duyệt lại run đã xong): đều đúng. A6 = 0 vi phạm → điều 2 = 50%.
+- **Cho vai D (#64):** `pending` câu hỏi có `question_id`, `attempt`; `POST /answer` nhận `question_id` tuỳ chọn (cũ → 409); `approval_decided.decision` có `sop_conflict`; `rollback_done` có thể `rolled_back: false`. Ghi trong `docs/schema/payloads.md`. Chưa ghi: action audit mới `answer_received`, `halt_raised`, `kpi_not_measured` (việc nhỏ cho R10b1/R10b2).
+- **Phải nhớ ở R10b2:** đóng H-39 thì gỡ `xfail(strict=True)` của `test_no_model_name_in_backend` (strict nên sẽ tự báo đỏ khi hết vi phạm).
+- **Hạn chế đã biết (không chặn demo):** sau restart `retries` về 0, `steps` của `/export` mất; `DB_POOL_SIZE` không phải số ném ValueError không rõ nghĩa.
+- **Việc kế tiếp:** audit 3 (runner `--audit-every 2` tự chạy sau R10a + R10c, đo B1) → R10b1 (sau D1 #66) → R10b2 → tag v0.1-e2e 13/10 (leader duyệt). Cột phút R10c trong bảng `metrics.py` = 0 vì runner chưa ghi xong `run.log` lúc supervisor chạy: phiên sau chạy lại `python3 .autodev/metrics.py --write`.
+
 ## Cập nhật sau R10a (2026-10-10 trưa, supervisor `--review-only`)
 - **R10a merge (PR #82):** `GET /runs`, `/runs/{id}/export`, `/kpi/series`, `/audit`, `/sop/{id}/versions`, `/metrics` (chỉ số chưa có nguồn để `available: false`); `scripts/record_run.py`; `scripts/check_run.py` + `demo.sh --check [--repeat N]` đi hết một run; LLM giả đi mọi nhánh, `SME_DEMO_SCENARIO=rollback` cho S7. Đóng H-13, H-16, H-26; T-041 tick. 504 pytest.
 - Supervisor tự kiểm 5 tiêu chí cấp mốc (bảng trong PROGRESS), kể cả reject/revise/halt/rollback qua uvicorn thật (worker chưa kiểm). A5 (a) 1,00, (b) 1,00 (LLM giả, 5 seed); A8 10/10, p95 0,4 s. Ước tính ↔ thực tế: 73/55–75 phút, 4,00 USD worker, 1,0 vòng/task: B3 = 1,0.
