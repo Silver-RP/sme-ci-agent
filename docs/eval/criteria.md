@@ -29,6 +29,8 @@ Mỗi chỉ số quy về điểm `min(giá trị / ngưỡng freeze, 1)`. Chỉ
 - Điều 2 = trung bình A4, A5, A6.
 - Điều 3 = trung bình 3 phần của A7.
 - A8 là cổng demo, không tính vào %. Chỉ số chưa đo được tính 0.
+- **Chỉ số nhiều phần** (leader chốt 2026-10-10): ngưỡng freeze gồm nhiều phần đo riêng (ví dụ A5 = LLM giả 5 seed + LLM thật 3 seed; A4 = LLM giả + LLM thật) thì mỗi phần có trọng số bằng nhau. Điểm của chỉ số = trung bình điểm các phần; phần chưa đo tính 0. Ví dụ: A5 đạt đủ phần LLM giả, chưa chạy LLM thật → A5 = 0,5.
+- Một phần chỉ được tính khi phép đo không "đạt theo cấu tạo": kết quả phải đổi được khi agent làm sai (ví dụ A5(b) đọc `kpi_measured.passed`, có đối chứng "không áp dụng gì" cho KPI không đổi; H-54). Audit thấy phép đo đạt theo cấu tạo thì phần đó tính 0 đến khi sửa.
 
 Audit vẫn tìm lỗ hổng (H-xx) nhưng không còn tự đặt %.
 

@@ -27,7 +27,7 @@ Từ 2026-10-10, **% đạt tính bằng công thức từ chỉ số đo đư�
 | # | Điều cần kiểm chứng | % đo được | Ước lượng cũ | Chỉ số (ngưỡng freeze) | Nền 10/10 | Mốc đo |
 |---|---|---|---|---|---|---|
 | 1 | Tìm đúng nguyên nhân gốc, biết hỏi người khi thiếu bằng chứng | 0 | 30 | A1 top-1 tập giữ lại ≥ 0,7; A2 precision ≥ 0,6, recall ≥ 0,8; A3 = 0 | eval LLM giả chỉ kiểm bộ chấm (right 100%, wrong 0%, unsure hỏi 100%); chấm theo chuỗi (H-28) | đo nền LLM thật sau R10a; R11a, R11b |
-| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 50 | 65 | A4 ≥ 0,9; A5 (a) 1,0, (b) ≥ 0,8; A6 = 0 vi phạm | R10a: A5 (a) 1,0, (b) 1,0 LLM giả 5 seed (tính A5 = 0,5 vì freeze cần LLM thật 3 seed); R10c: A6 = 0 vi phạm (60 chuỗi, 22 nhánh) → 1 | R10b2 (A4), A5 LLM thật |
+| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 42 | 65 | A4 ≥ 0,9; A5 (a) 1,0, (b) ≥ 0,8; A6 = 0 vi phạm | Luật chỉ số nhiều phần (`criteria.md`, 10/10): A5 = trung bình (LLM giả, LLM thật); LLM giả = trung bình ((a) 1,0; (b) 0 vì đạt theo cấu tạo, H-54) = 0,5; LLM thật chưa đo → A5 = 0,25. A6 = 0 vi phạm (60 chuỗi, 22 nhánh) → 1. A4 chưa có lệnh → 0. (0 + 0,25 + 1)/3 = 42 | R10ch (H-54), R10b2 (A4), A5 LLM thật |
 | 3 | 3 chỉ số trước/sau trên 6 tháng mô phỏng | 0 | 5 | A7: 3 chỉ số tính được, tốt hơn đối chứng "không agent" | `measure()` 1 máy, 7 ngày; H-11 | R10b2 |
 
 Cổng go/no-go 13/10 và 20/10: `docs/eval/criteria.md` mục 3. Chỉ số plugin B1–B5: `python3 .autodev/metrics.py` (nền: B1 = 1,67 ở audit 1, 1,75 ở audit 2; B2 = 2/44 task cần ≥ 2 vòng sau R10a).
@@ -96,6 +96,7 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 
 ## Quyết định gần đây
 
+- 2026-10-10: luật chỉ số nhiều phần (`docs/eval/criteria.md`): mỗi phần trọng số bằng nhau, phần chưa đo = 0; phần đo "đạt theo cấu tạo" (audit phát hiện, ví dụ H-54) = 0 đến khi sửa. Điều 2 = 42%. Mốc sửa nhanh R10ch trước tag 13/10 (H-45, H-31, H-47, H-48, H-50, H-51, H-54).
 - 2026-10-10: audit 3 (sau R9i, R9ih, R10a, R10c): 15 lỗ hổng mới H-45..H-59 (2 cao), 0 đóng, 31 mở. A5 và A6 tái hiện (A5 1,00/1,00; A6 60 chuỗi, 0 vi phạm). % đạt 0/50/0 giữ nguyên; điều 2: `criteria.md` cho A5 LLM giả = 1,0 (67%) còn bảng trên dùng 0,5, leader chốt. Đề xuất H-45, H-48, H-54 vào R10b2; H-47, H-49, H-50, H-51 trước tag; H-46 giao vai D.
 - 2026-10-10: R10c merge #84: Postgres cho run/event/checkpoint (sống qua restart, kiểm bằng 2 tiến trình uvicorn), khoá SOP theo `base_version`, `question_id` (cũ → 409), audit cho trả lời/halt/Measure không kết quả, `tests/test_invariants.py`. Đóng H-14, H-15, H-19, H-20, H-37, H-38 (supervisor tự chạy test đỏ trên main). A6 = 0 → điều 2 = 50%. Bất biến "không có `claude-`" xfail strict tới R10b2 (H-39, gỡ xfail khi đóng).
 - 2026-10-10: R10a merge #82: API storyboard (`/runs`, `/runs/{id}/export`, `/kpi/series`, `/audit`, `/sop/{id}/versions`, `/metrics` khung trung thực), record_run, `demo.sh --check --repeat`, LLM giả mọi nhánh + chế độ rollback. Đóng H-13, H-16, H-26. A5 v0.1 đạt (LLM giả), A8 10/10 p95 0,4 s. Supervisor tự quyết: A5 tính 0,5 vào % điều 2 (phần LLM thật của ngưỡng freeze chưa đo) → điều 2 = 17%.
