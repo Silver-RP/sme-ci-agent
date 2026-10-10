@@ -27,7 +27,13 @@ import pandas as pd
 from langgraph.types import interrupt
 
 from backend.agent.events import make_event
-from backend.agent.nodes.ask import halt_options, halt_payload, open_question
+from backend.agent.nodes.ask import (
+    audit_answer,
+    audit_halt_raised,
+    halt_options,
+    halt_payload,
+    open_question,
+)
 from backend.agent.state import AgentState
 from backend.db import repo
 from backend.domain_config import DomainConfig, load_domain_config
@@ -342,6 +348,20 @@ def make_act_node(config: DomainConfig, ctx: ToolContext):
     return act
 
 
+def _audit_not_measured(ctx: ToolContext, measurement: dict[str, Any]) -> None:
+    """One audit_log row when Measure gives no verdict (not_applied / insufficient_evidence) (H-38). The row is
+    written from the fresh measurement of this call, never from an ``applied`` kept over a halt."""
+    repo.append_audit(
+        ctx.session, actor="system", action="kpi_not_measured",
+        params={
+            k: measurement.get(k)
+            for k in ("kpi", "status", "reason", "n_after", "min_samples_after")
+            if measurement.get(k) is not None
+        },
+        run_id=ctx.run_id,
+    )
+
+
 def make_measure_node(config: DomainConfig, ctx: ToolContext):
     def measure_node(state: AgentState) -> dict[str, Any]:
         kpi = _measured_kpi(state)  # the anomaly's KPI, never the LLM's choice
@@ -362,6 +382,7 @@ def make_measure_node(config: DomainConfig, ctx: ToolContext):
                 **base, "status": NOT_APPLIED, "passed": None, "before": None, "after": None,
                 "reason": "the proposal changed no SOP, so there is nothing to measure",
             }
+            _audit_not_measured(ctx, measurement)
             emit("kpi_measured", "quality", measurement)
             return {"measurement": measurement, "events": emit.events}
         change_time = applied.get("change_time") or resolve_change_time(state, ctx)
@@ -374,6 +395,7 @@ def make_measure_node(config: DomainConfig, ctx: ToolContext):
                 **base, "status": NOT_APPLIED, "passed": None, "before": None, "after": None,
                 "reason": "the proposal has no structured action, so no machine parameter was changed",
             }
+            _audit_not_measured(ctx, measurement)
             emit("kpi_measured", "quality", measurement)
             return {"measurement": measurement, "events": emit.events}
         if sim is not None:  # data after the change comes from the simulator, in a copy owned by this run
@@ -399,6 +421,7 @@ def make_measure_node(config: DomainConfig, ctx: ToolContext):
                 **res, **base, "status": INSUFFICIENT, "passed": None,
                 "min_samples_after": config.measure.min_samples_after,
             }
+            _audit_not_measured(ctx, measurement)
             emit("kpi_measured", "quality", measurement)
             return {"measurement": measurement, "events": emit.events}
         passed = evaluate_kpi(res, direction, kpi_cfg.target, config.measure.tolerance)
@@ -435,9 +458,11 @@ def make_ask_evidence_node(config: DomainConfig):
     return ask_evidence
 
 
-def make_wait_evidence_node(config: DomainConfig):
+def make_wait_evidence_node(config: DomainConfig, ctx: ToolContext | None = None):
     def wait_evidence(state: AgentState) -> dict[str, Any]:
-        answer = interrupt(open_question(state))
+        question = open_question(state)
+        answer = interrupt(question)
+        audit_answer(ctx, question, answer)
         emit = _Emitter(state, config)
         emit("answer_received", "quality", {"answer": answer})
         return {"evidence": [*state.get("evidence", []), {"source": "human_answer", "answer": answer}], "events": emit.events}
@@ -579,7 +604,7 @@ def make_rollback_apply_node(config: DomainConfig, ctx: ToolContext):
     return rollback_apply
 
 
-def make_loop_halt_node(config: DomainConfig):
+def make_loop_halt_node(config: DomainConfig, ctx: ToolContext | None = None):
     """A loop limit was reached or a person declined a rollback: stop and wait for a person."""
 
     def halt(state: AgentState) -> dict[str, Any]:
@@ -601,7 +626,9 @@ def make_loop_halt_node(config: DomainConfig):
         if applied:  # an SOP version is in force (e.g. the rollback was declined): say which
             extra = {"sop_still_in_force": True, "sop_id": applied.get("sop_id"), "sop_version": applied.get("version")}
         emit = _Emitter(state, config)
-        emit("question_asked", "system", halt_payload(reason, options=halt_options(state, config), **extra))
+        payload = halt_payload(reason, options=halt_options(state, config), **extra)
+        audit_halt_raised(ctx, payload)
+        emit("question_asked", "system", payload)
         return {"status": "awaiting_human", "events": emit.events}
 
     return halt
@@ -642,7 +669,7 @@ def make_wait_halt_node(config: DomainConfig, ctx: ToolContext | None = None):
         if ctx is not None:
             repo.append_audit(
                 ctx.session, actor=d["decided_by"], action="halt_decided",
-                params={"kind": "halt", "proposal_id": halt_id, "halt_reason": halt.get("reason"), **d, **info},
+                params={"kind": "halt", "proposal_id": halt_id, "halt_reason": halt.get("reason"), "options": offered, **d, **info},
                 run_id=ctx.run_id,
             )
             ctx.session.commit()  # durable even if a later step fails (H-07)

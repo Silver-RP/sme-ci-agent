@@ -182,8 +182,8 @@ def build_graph(
         g.add_edge("investigate", END)  # legacy mock skeleton: no Ask
     else:
         g.add_node("ask", make_ask_node(config))
-        g.add_node("wait_answer", make_wait_answer_node(config))
-        g.add_node("halt", make_halt_node(config))
+        g.add_node("wait_answer", make_wait_answer_node(config, tool_ctx))
+        g.add_node("halt", make_halt_node(config, tool_ctx))
         g.add_conditional_edges(
             "investigate",
             lambda s: route_after_investigate(s, config),
@@ -209,11 +209,11 @@ def _add_act_loop(g: StateGraph, config: DomainConfig, ctx: ToolContext, improve
     g.add_node("measure", make_measure_node(config, ctx))
     g.add_node("learn", make_learn_node(config, ctx))
     g.add_node("ask_evidence", make_ask_evidence_node(config))
-    g.add_node("wait_evidence", make_wait_evidence_node(config))
+    g.add_node("wait_evidence", make_wait_evidence_node(config, ctx))
     g.add_node("rollback_propose", make_rollback_propose_node(config, ctx))
     g.add_node("wait_rollback", make_wait_rollback_node(config, ctx))
     g.add_node("rollback_apply", make_rollback_apply_node(config, ctx))
-    g.add_node("loop_halt", make_loop_halt_node(config))
+    g.add_node("loop_halt", make_loop_halt_node(config, ctx))
     g.add_edge("improve", "wait_approval")
     g.add_conditional_edges(
         "wait_approval",
