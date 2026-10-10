@@ -38,6 +38,7 @@ from backend.agent.nodes.act import DecisionError, parse_decision
 from backend.agent.nodes.improve import ProposalError
 from backend.agent.state import new_state
 from backend.api.kpi_series import SeriesError, kpi_series
+from backend.api.run_export import build_export
 from backend.db import repo
 from backend.db.session import make_engine
 from backend.domain_config import DomainConfig, load_domain_config
@@ -90,6 +91,8 @@ class Run:
     retryable: bool = True
     started_at: str = field(default_factory=lambda: _now())
     finished_at: str | None = None
+    llm_kind: str = "giả"  # for the export note: "thật" only for the real Anthropic client
+    steps: list[dict[str, Any]] = field(default_factory=list)  # successful HTTP steps, for GET /runs/{id}/export
 
 
 def _now() -> str:
@@ -230,19 +233,31 @@ def create_app(
                 detail=f"run {run.run_id!r} is not waiting for {kind} (state: {st['state']})",
             )
 
+    def record_step(run: Run, request: str, body: Any, http: int) -> dict[str, Any]:
+        """Remember a successful step (what the client sent and saw) for the export; returns the response."""
+        resp = _status(run)
+        step: dict[str, Any] = {"request": request}
+        if body is not None:
+            step["body"] = body
+        step.update(http=http, response=resp, last_event=run.events[-1] if run.events else None)
+        run.steps.append(json.loads(json.dumps(step)))
+        return resp
+
     @app.post("/runs", status_code=201)
     def start_run(body: StartRun) -> dict[str, Any]:
         run_id = f"run_{uuid.uuid4().hex[:8]}"
         ctx = make_ctx(run_id)
-        graph = build_graph(cfg_domain, checkpointer=checkpointer, llm=make_llm(run_id), tool_ctx=ctx, full_loop=True)
+        llm = make_llm(run_id)
+        graph = build_graph(cfg_domain, checkpointer=checkpointer, llm=llm, tool_ctx=ctx, full_loop=True)
         run = Run(run_id=run_id, graph=graph, cfg={"configurable": {"thread_id": run_id}}, ctx=ctx)
+        run.llm_kind = "thật" if isinstance(llm, AnthropicLLM) else "giả"
         state = new_state(run_id, cfg_domain.domain)
         if body.change_time is not None:
             state["change_time"] = body.change_time
         with run.lock:
             advance(run, state)  # on failure the run is not registered
             runs[run_id] = run
-            return _status(run)
+            return record_step(run, "POST /runs", body.model_dump(exclude_none=True), 201)
 
     @app.post("/runs/{run_id}/answer")
     def answer(run_id: str, body: AnswerBody) -> dict[str, Any]:
@@ -250,7 +265,7 @@ def create_app(
         with run.lock:
             require_waiting(run, "answer")
             advance(run, Command(resume=body.answer), resumed=True)
-            return _status(run)
+            return record_step(run, "POST /runs/{run_id}/answer", {"answer": body.answer}, 200)
 
     @app.post("/runs/{run_id}/approval")
     def approval(run_id: str, body: ApprovalBody) -> dict[str, Any]:
@@ -274,7 +289,7 @@ def create_app(
             if body.kind == "halt" and offered and decision["decision"] not in offered:
                 raise HTTPException(status_code=422, detail=f"this halt only allows {offered}, got {decision['decision']!r}")
             advance(run, Command(resume={**decision, "proposal_id": body.proposal_id, "kind": body.kind}), resumed=True)
-            return _status(run)
+            return record_step(run, "POST /runs/{run_id}/approval", body.model_dump(), 200)
 
     @app.post("/runs/{run_id}/retry")
     def retry(run_id: str) -> dict[str, Any]:
@@ -289,7 +304,16 @@ def create_app(
                 )
             run.retries += 1
             advance(run, None, resumed=True)  # continue from the last checkpoint: the failed node runs again
-            return _status(run)
+            return record_step(run, "POST /runs/{run_id}/retry", None, 200)
+
+    @app.get("/runs/{run_id}/export")
+    def export_run(run_id: str) -> dict[str, Any]:
+        """The run in the fixture format of docs/schema/examples/ (steps + SSE events), without internal details."""
+        run = get_run(run_id)
+        with run.lock:
+            finished = [e for e in run.events if e["type"] == "run_finished"]
+            outcome = finished[-1]["payload"].get("status") if finished else None
+            return build_export(run.run_id, run.llm_kind, outcome, run.steps, run.events)
 
     @app.get("/config/approvers")
     def approvers() -> dict[str, Any]:
