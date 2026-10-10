@@ -2,7 +2,10 @@
 # Demo: Postgres + backend (uvicorn) + dashboard (yarn dev). Stop everything with Ctrl+C.
 #   scripts/demo.sh            # scripted (fake) LLM, no key needed
 #   SME_LLM=real scripts/demo.sh   # real LLM: put ANTHROPIC_API_KEY and MODEL_REASONING in .env yourself
-#   scripts/demo.sh --check    # start everything, probe /docs, POST /runs and the dashboard page, stop; exit 0 if all OK
+#   scripts/demo.sh --check    # start everything, probe /docs, run one whole run over HTTP (scripts/check_run.py:
+#                              answers, approves, reaches learning_saved, calls the 5 read APIs), probe the dashboard
+#                              page, stop; prints CHECK PASSED, or CHECK FAILED: <step> and exits 1
+#   scripts/demo.sh --check --repeat N   # N runs in a row; prints time per run, passes and p95
 # Env: API_PORT (default 8000), DASH_PORT (default 3000), DB_PORT (default 5432),
 #      DATABASE_URL (default built from DB_PORT; if it already connects, no new container is started),
 #      SME_CORS_ORIGINS (default built from DASH_PORT), DB_WAIT (seconds to wait for Postgres, default 30).
@@ -15,7 +18,16 @@ DASH_PORT="${DASH_PORT:-3000}"
 DB_PORT="${DB_PORT:-5432}"
 DB_WAIT="${DB_WAIT:-30}"
 CHECK=0
-[ "${1:-}" = "--check" ] && CHECK=1
+REPEAT=1
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --check) CHECK=1 ;;
+    --repeat) shift; REPEAT="${1:-}" ;;
+    *) echo "unknown argument: $1" >&2; exit 2 ;;
+  esac
+  shift
+done
+case "$REPEAT" in ''|*[!0-9]*|0) echo "--repeat needs a positive number" >&2; exit 2 ;; esac
 
 if [ "${SME_LLM:-scripted}" = "real" ] && [ "$CHECK" = "0" ]; then
   unset SME_LLM
@@ -92,13 +104,8 @@ if [ "$CHECK" = "1" ]; then
   fail() { echo "CHECK FAILED: $1" >&2; exit 1; }
   wait_url "http://localhost:$API_PORT/docs" 60 || fail "GET /docs"
   echo "ok: GET /docs"
-  body="$(curl -fsS --max-time 120 -X POST "http://localhost:$API_PORT/runs" -H 'content-type: application/json' -d '{}')" || fail "POST /runs"
-  case "$body" in
-    *'"state":"error"'*) fail "POST /runs returned an error run: $body" ;;
-    *'"run_id"'*) ;;
-    *) fail "POST /runs unexpected body: $body" ;;
-  esac
-  echo "ok: POST /runs"
+  # check_run.py prints "CHECK FAILED: <step>" itself and exits 1; "CHECK PASSED" is printed below, after the dashboard probe
+  uv run python scripts/check_run.py --api "http://localhost:$API_PORT" --repeat "$REPEAT" || exit 1
   wait_url "http://localhost:$DASH_PORT/?source=live" 120 || fail "dashboard page"
   echo "ok: dashboard page"
   echo "CHECK PASSED"

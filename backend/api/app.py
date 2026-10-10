@@ -17,11 +17,13 @@ import os
 import threading
 import uuid
 from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from functools import cache
 from typing import Any, Literal
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from langgraph.types import Command
 from pydantic import BaseModel, ConfigDict, Field
@@ -35,6 +37,9 @@ from backend.agent.llm import LLM, AnthropicLLM
 from backend.agent.nodes.act import DecisionError, parse_decision
 from backend.agent.nodes.improve import ProposalError
 from backend.agent.state import new_state
+from backend.api.kpi_series import SeriesError, kpi_series
+from backend.api.run_export import build_export
+from backend.db import repo
 from backend.db.session import make_engine
 from backend.domain_config import DomainConfig, load_domain_config
 from backend.sandbox import generate_dataset
@@ -80,9 +85,22 @@ class Run:
     ctx: ToolContext
     lock: threading.Lock = field(default_factory=threading.Lock)
     events: list[dict[str, Any]] = field(default_factory=list)
+    error_events: list[tuple[int, dict[str, Any]]] = field(default_factory=list)  # (index in events, event), append-only
     error: str | None = None
     retries: int = 0  # consecutive /retry calls since the last successful step
     retryable: bool = True
+    started_at: str = field(default_factory=lambda: _now())
+    finished_at: str | None = None
+    llm_kind: str = "giả"  # for the export note: "thật" only for the real Anthropic client
+    steps: list[dict[str, Any]] = field(default_factory=list)  # successful HTTP steps, for GET /runs/{id}/export
+
+
+def _now() -> str:
+    return datetime.now(UTC).isoformat(timespec="seconds")
+
+
+AUDIT_DEFAULT_LIMIT = 100
+AUDIT_MAX_LIMIT = 500
 
 
 @cache
@@ -188,18 +206,23 @@ def create_app(
             run.error = f"{type(e).__name__}: {e}"
         finally:
             run.events = list(run.graph.get_state(run.cfg).values.get("events", []))
+            for pos, ev in run.error_events:  # H-13: error events stay where the client saw them
+                run.events.insert(pos, ev)
             run.retryable = run.retries < cfg_domain.loop.max_retries
+            if run.error is None and run.finished_at is None and _status(run)["state"] == "finished":
+                run.finished_at = _now()
             if run.error is not None:
-                run.events.append(
-                    make_event(
-                        {"run_id": run.run_id, "domain": cfg_domain.domain},
-                        "run_finished",
-                        "system",
-                        {"status": "error", "error": run.error, "retryable": run.retryable},
-                        len(run.events) + 1,
-                        cfg_domain.domain,
-                    )
+                err_ev = make_event(
+                    {"run_id": run.run_id, "domain": cfg_domain.domain},
+                    "run_finished",
+                    "system",
+                    {"status": "error", "error": run.error, "retryable": run.retryable},
+                    len(run.events) + 1,
+                    cfg_domain.domain,
                 )
+                err_ev["event_id"] = f"evt_{run.run_id}_err{len(run.error_events) + 1:02d}"  # never collides
+                run.error_events.append((len(run.events), err_ev))
+                run.events.append(err_ev)
 
     def require_waiting(run: Run, kind: str) -> None:
         st = _status(run)
@@ -210,19 +233,31 @@ def create_app(
                 detail=f"run {run.run_id!r} is not waiting for {kind} (state: {st['state']})",
             )
 
+    def record_step(run: Run, request: str, body: Any, http: int) -> dict[str, Any]:
+        """Remember a successful step (what the client sent and saw) for the export; returns the response."""
+        resp = _status(run)
+        step: dict[str, Any] = {"request": request}
+        if body is not None:
+            step["body"] = body
+        step.update(http=http, response=resp, last_event=run.events[-1] if run.events else None)
+        run.steps.append(json.loads(json.dumps(step)))
+        return resp
+
     @app.post("/runs", status_code=201)
     def start_run(body: StartRun) -> dict[str, Any]:
         run_id = f"run_{uuid.uuid4().hex[:8]}"
         ctx = make_ctx(run_id)
-        graph = build_graph(cfg_domain, checkpointer=checkpointer, llm=make_llm(run_id), tool_ctx=ctx, full_loop=True)
+        llm = make_llm(run_id)
+        graph = build_graph(cfg_domain, checkpointer=checkpointer, llm=llm, tool_ctx=ctx, full_loop=True)
         run = Run(run_id=run_id, graph=graph, cfg={"configurable": {"thread_id": run_id}}, ctx=ctx)
+        run.llm_kind = "thật" if isinstance(llm, AnthropicLLM) else "giả"
         state = new_state(run_id, cfg_domain.domain)
         if body.change_time is not None:
             state["change_time"] = body.change_time
         with run.lock:
             advance(run, state)  # on failure the run is not registered
             runs[run_id] = run
-            return _status(run)
+            return record_step(run, "POST /runs", body.model_dump(exclude_none=True), 201)
 
     @app.post("/runs/{run_id}/answer")
     def answer(run_id: str, body: AnswerBody) -> dict[str, Any]:
@@ -230,7 +265,7 @@ def create_app(
         with run.lock:
             require_waiting(run, "answer")
             advance(run, Command(resume=body.answer), resumed=True)
-            return _status(run)
+            return record_step(run, "POST /runs/{run_id}/answer", {"answer": body.answer}, 200)
 
     @app.post("/runs/{run_id}/approval")
     def approval(run_id: str, body: ApprovalBody) -> dict[str, Any]:
@@ -254,7 +289,7 @@ def create_app(
             if body.kind == "halt" and offered and decision["decision"] not in offered:
                 raise HTTPException(status_code=422, detail=f"this halt only allows {offered}, got {decision['decision']!r}")
             advance(run, Command(resume={**decision, "proposal_id": body.proposal_id, "kind": body.kind}), resumed=True)
-            return _status(run)
+            return record_step(run, "POST /runs/{run_id}/approval", body.model_dump(), 200)
 
     @app.post("/runs/{run_id}/retry")
     def retry(run_id: str) -> dict[str, Any]:
@@ -269,11 +304,154 @@ def create_app(
                 )
             run.retries += 1
             advance(run, None, resumed=True)  # continue from the last checkpoint: the failed node runs again
-            return _status(run)
+            return record_step(run, "POST /runs/{run_id}/retry", None, 200)
+
+    @app.get("/runs/{run_id}/export")
+    def export_run(run_id: str) -> dict[str, Any]:
+        """The run in the fixture format of docs/schema/examples/ (steps + SSE events), without internal details."""
+        run = get_run(run_id)
+        with run.lock:
+            finished = [e for e in run.events if e["type"] == "run_finished"]
+            outcome = finished[-1]["payload"].get("status") if finished else None
+            return build_export(run.run_id, run.llm_kind, outcome, run.steps, run.events)
 
     @app.get("/config/approvers")
     def approvers() -> dict[str, Any]:
         return {"approvers": list(cfg_domain.approvers)}
+
+    read_lock = threading.Lock()
+    shared_read: dict[str, Session] = {}
+
+    @contextmanager
+    def read_db():
+        """A session for read-only endpoints (audit, SOP versions). With an injected ctx_factory (tests) reuse its
+        session; otherwise open one per request on the default engine and close it."""
+        if ctx_factory is not None:
+            with read_lock:
+                if "s" not in shared_read:
+                    shared_read["s"] = ctx_factory("api_read").session
+                yield shared_read["s"]
+            return
+        session = Session(make_engine())
+        try:
+            yield session
+        finally:
+            session.close()
+            session.get_bind().dispose()
+
+    @app.get("/runs")
+    def list_runs() -> dict[str, Any]:
+        """Runs held by this app, newest first. In memory only (lost on restart, H-15)."""
+        out = []
+        for run in reversed(list(runs.values())):
+            with run.lock:
+                st = _status(run)
+                finished = [e for e in run.events if e["type"] == "run_finished"]
+                pending = st["pending"]
+                out.append(
+                    {
+                        "run_id": run.run_id,
+                        "state": st["state"],
+                        "started_at": run.started_at,
+                        "finished_at": run.finished_at,
+                        "outcome": (
+                            finished[-1]["payload"].get("status")
+                            if finished and st["state"] in ("finished", "error")
+                            else None
+                        ),
+                        "pending": (
+                            {k: pending.get(k) for k in ("type", "kind", "proposal_id") if k in pending}
+                            if pending
+                            else None
+                        ),
+                    }
+                )
+        return {"runs": out}
+
+    @app.get("/audit")
+    def audit(
+        run_id: str | None = None,
+        limit: int = Query(AUDIT_DEFAULT_LIMIT, ge=1, le=AUDIT_MAX_LIMIT),
+    ) -> dict[str, Any]:
+        """Read audit_log, newest first (read only)."""
+        with read_db() as session:
+            rows = repo.recent_actions(session, run_id=run_id, limit=limit)
+            return {
+                "rows": [
+                    {"id": r.id, "ts": r.ts.isoformat(), "run_id": r.run_id, "actor": r.actor, "action": r.action, "params": r.params}
+                    for r in rows
+                ]
+            }
+
+    @app.get("/sop/{sop_id}/versions")
+    def sop_versions(sop_id: str) -> dict[str, Any]:
+        """The config version plus the versions in sop_versions, oldest first. On the same version number the DB row
+        wins (the first DB row is a copy of the config version)."""
+        base = [s for s in cfg_domain.sop if s.id == sop_id]
+        if not base:
+            raise HTTPException(status_code=404, detail=f"sop {sop_id!r} not found")
+        found: dict[int, dict[str, Any]] = {
+            s.version: {
+                "version": s.version, "created_by": "config", "run_id": None, "created_at": None,
+                "content": "\n".join(s.steps),
+            }
+            for s in base
+        }
+        with read_db() as session:
+            for r in repo.list_sop_versions(session, sop_id):
+                found[r.version] = {
+                    "version": r.version, "created_by": r.created_by, "run_id": r.run_id,
+                    "created_at": r.created_at.isoformat(), "content": r.content,
+                }
+        return {"sop_id": sop_id, "versions": [found[v] for v in sorted(found)]}
+
+    @app.get("/metrics")
+    def metrics() -> dict[str, Any]:
+        """The 3 PLAN metrics. Only what has a real source is filled: the KPI before/after of the latest lesson in
+        learning_store for the first configured KPI. MTTD/MTTR and recurrence stay unavailable until R10b2."""
+        kpi = cfg_domain.kpis[0]
+        with read_db() as session:
+            lessons = repo.list_learning(session, cfg_domain.domain)
+        latest = next(
+            (r for r in lessons if r.content.get("kpi") == kpi.name and r.content.get("kpi_before") is not None
+             and r.content.get("kpi_after") is not None),
+            None,
+        )
+        if latest is not None:
+            first = {
+                "name": kpi.name, "unit": kpi.unit, "before": latest.content["kpi_before"],
+                "after": latest.content["kpi_after"], "available": True, "reason": None, "run_id": latest.run_id,
+            }
+        else:
+            first = {
+                "name": kpi.name, "unit": kpi.unit, "before": None, "after": None, "available": False,
+                "reason": "no finished run has saved a lesson with this KPI yet", "run_id": None,
+            }
+        pending = "no real source yet (planned for R10b2)"
+        return {
+            "metrics": [
+                first,
+                {"name": "mttd_mttr", "unit": "hours", "before": None, "after": None, "available": False,
+                 "reason": pending, "run_id": None},
+                {"name": "recurrence_rate", "unit": "ratio", "before": None, "after": None, "available": False,
+                 "reason": pending, "run_id": None},
+            ]
+        }
+
+    @app.get("/kpi/series")
+    def kpi_series_api(
+        kpi: str,
+        machine: str | None = None,
+        shift: str | None = None,
+        start: str | None = None,
+        end: str | None = None,
+    ) -> dict[str, Any]:
+        """KPI over time from the app's sandbox data (read only, no DB)."""
+        tables = make_ctx("api_read").tables if ctx_factory is not None else _default_tables()
+        try:
+            return kpi_series(tables, cfg_domain, kpi, machine, shift, start, end)
+        except SeriesError as e:
+            raise HTTPException(status_code=422, detail=str(e)) from e
 
     @app.get("/runs/{run_id}")
     def run_status(run_id: str) -> dict[str, Any]:

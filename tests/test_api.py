@@ -338,7 +338,7 @@ def test_retry_after_transient_error_continues(db_session):
     body = r.json()
     assert body["state"] == "waiting" and body["pending"]["type"] == "approval" and "error" not in body
     types = [m["event"] for m in sse_events(client, rid)]
-    assert types[-1] == "proposal_created" and "run_finished" not in types  # error event removed
+    assert types[-1] == "proposal_created" and types.count("run_finished") == 1  # H-13: error event is kept
     done = approve(client, rid, HUMAN).json()
     assert done["state"] == "finished" and done["status"] == "completed"
 

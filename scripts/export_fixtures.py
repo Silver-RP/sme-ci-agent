@@ -8,7 +8,7 @@ not evidence that the agent is right. Needs Postgres (DATABASE_URL) with migrati
 
 File format: ``{"note", "branch", "description", "steps": [{"request", "body"?, "http", "response", "last_event"}],
 "events": [...]}``. ``events`` is the full SSE stream at the end; ``last_event`` is the last event after that step
-(it is where a retryable ``run_finished`` error shows, because a retry replaces the failed stream).
+(where a retryable ``run_finished`` error shows right after it happens; it also stays in ``events``, H-13).
 """
 
 import argparse

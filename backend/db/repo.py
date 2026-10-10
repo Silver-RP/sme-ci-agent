@@ -116,3 +116,23 @@ def save_learning(
     session.add(row)
     session.flush()
     return row
+
+
+def list_learning(session: Session, domain: str) -> list[LearningEntry]:
+    """Read only: lessons of one domain, newest first."""
+    return list(
+        session.scalars(select(LearningEntry).where(LearningEntry.domain == domain).order_by(LearningEntry.id.desc()))
+    )
+
+
+def recent_actions(session: Session, run_id: str | None = None, limit: int = 100) -> list[AuditLog]:
+    """Read only: newest first, optionally one run."""
+    q = select(AuditLog).order_by(AuditLog.id.desc()).limit(limit)
+    if run_id is not None:
+        q = q.where(AuditLog.run_id == run_id)
+    return list(session.scalars(q))
+
+
+def list_sop_versions(session: Session, sop_id: str) -> list[SopVersion]:
+    """Read only: every stored version of one SOP, oldest first."""
+    return list(session.scalars(select(SopVersion).where(SopVersion.sop_id == sop_id).order_by(SopVersion.version)))

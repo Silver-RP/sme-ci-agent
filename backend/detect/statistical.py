@@ -93,6 +93,41 @@ def _runs(flags: list[bool], rule_window: int, rule_hits: int, max_gap: int) -> 
     return runs
 
 
+def control_limits(
+    grp: pd.DataFrame, ref_end: pd.Timestamp, threshold_sd: float
+) -> tuple[float, float, float] | None:
+    """(baseline, sigma, upper_limit) of one machine's KPI series from its reference period; None if too few points.
+
+    ``grp`` has maintenance already removed. Shared by detection and by the KPI series API so the numbers agree.
+    """
+    ref = grp[grp["timestamp"] < ref_end]["value"]
+    if len(ref) < 2:
+        return None
+    baseline = float(ref.mean())
+    sigma = float(ref.std(ddof=1))
+    return baseline, sigma, baseline + threshold_sd * sigma
+
+
+def series_limits(
+    tables: dict[str, pd.DataFrame], config: DomainConfig, kpi: str, machine: str
+) -> tuple[float, float, float] | None:
+    """Same (baseline, sigma, upper_limit) that ``detect_anomalies`` uses for this machine and KPI."""
+    k = next((x for x in config.kpis if x.name == kpi), None)
+    if k is None:
+        raise ValueError(f"unknown KPI: {kpi}")
+    kpi_log = tables.get("kpi_log")
+    if kpi_log is None or kpi_log.empty:
+        return None
+    horizon_end = pd.to_datetime(kpi_log["timestamp"]).max() + pd.Timedelta(hours=1)
+    windows = planned_maintenance_windows(tables.get("machine_log"), horizon_end)
+    t0 = pd.to_datetime(kpi_log["timestamp"]).min().normalize()
+    ref_end = t0 + pd.Timedelta(days=config.detect.reference_days)
+    sub = kpi_log[(kpi_log["kpi"] == kpi) & (kpi_log["machine_id"] == machine)]
+    grp = sub.assign(timestamp=pd.to_datetime(sub["timestamp"])).sort_values("timestamp")
+    grp = grp[~_in_windows(grp["timestamp"], windows.get(machine, []))]
+    return control_limits(grp, ref_end, k.alert_threshold_sd)
+
+
 def detect_anomalies(
     tables: dict[str, pd.DataFrame],
     config: DomainConfig,
@@ -125,12 +160,10 @@ def detect_anomalies(
         for machine, grp in sub.groupby("machine_id"):
             grp = grp.assign(timestamp=pd.to_datetime(grp["timestamp"])).sort_values("timestamp")
             grp = grp[~_in_windows(grp["timestamp"], windows.get(str(machine), []))]
-            ref = grp[grp["timestamp"] < ref_end]["value"]
-            if len(ref) < 2:
+            stats = control_limits(grp, ref_end, k_sd)
+            if stats is None:
                 continue
-            baseline = float(ref.mean())
-            sigma = float(ref.std(ddof=1))
-            limit = baseline + k_sd * sigma
+            baseline, sigma, limit = stats
             flags = (grp["value"] > limit).tolist()
             # points inside the reference period are never alarms (they define "normal")
             in_ref = (grp["timestamp"] < ref_end).tolist()

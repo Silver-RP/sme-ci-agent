@@ -25,7 +25,7 @@ Ký hiệu: `?` = có thể vắng; `|` = một trong các giá trị.
 ```
 
 - `agent`: `quality | investigation | improvement | system`.
-- `event_id` = `evt_<run_id>_<số thứ tự 4 chữ số>`. Dedupe theo trường này. Lưu ý: sau retry có thể trùng (H-13).
+- `event_id` = `evt_<run_id>_<số thứ tự 4 chữ số>`. Dedupe theo trường này. Event lỗi (`run_finished` status `error`) có dạng `evt_<run_id>_errNN`. Sau retry không có `event_id` trùng (H-13).
 
 ## 2. Payload từng loại
 
@@ -123,7 +123,7 @@ Có hai dạng; phân biệt bằng `kind`.
 - `error` (+ `error: "<Loại>: <thông điệp>"`, `retryable: bool`). Lỗi xảy ra cả sau khi người đã quyết định (duyệt, từ chối, revise, trả lời): quyết định đó đã ghi `audit_log` và không ghi lại khi Retry (R9, H-07, H-08).
   - `retryable: true`: đừng đóng hẳn luồng theo dõi, người có thể bấm Retry (H-13).
   - `retryable: false` (R9): đã Retry liên tiếp `loop.max_retries` lần mà vẫn lỗi. `POST /runs/{id}/retry` trả 409. Dashboard ẩn nút Retry và chỉ báo lỗi.
-  - Sau Retry thành công, luồng event được dựng lại từ checkpoint nên event `error` cũ biến mất. Muốn hiện lỗi đã qua thì lưu ở phía dashboard (xem `last_event` của bước đầu trong `run-error-retry.json`).
+  - Danh sách event của run chỉ nối thêm (H-13): sau Retry, event `error` cũ vẫn nằm ở vị trí cũ, chỉ số SSE (`id`) tiếp tục tăng, nối lại bằng `Last-Event-ID` nhận event thật kế tiếp. Luồng cuối có thể có `run_finished` lỗi rồi `run_finished` completed (xem `run-error-retry.json`).
 
 ## 3. API
 
@@ -136,6 +136,48 @@ Có hai dạng; phân biệt bằng `kind`.
 | POST | `/runs/{id}/approval` | `{proposal_id, kind, decision, decided_by, reason?}` | 409 nếu sai `kind` hoặc `proposal_id` (đề xuất đã cũ, hoặc bấm hai lần): gọi lại `GET /runs/{id}`. 422 nếu tên không có trong danh sách người duyệt, hoặc `revise` mà thiếu `reason` |
 | POST | `/runs/{id}/retry` | | 409 nếu không có bước lỗi, hoặc đã Retry liên tiếp quá `loop.max_retries` lần (khi đó `retryable: false`) |
 | GET | `/config/approvers` | | `{approvers: [str]}` |
+| GET | `/runs` | | `{runs: [RunSummary]}`, mới nhất trước (R10a) |
+| GET | `/audit?run_id=&limit=` | | `{rows: [AuditRow]}`, mới nhất trước. `limit` 1..500 (mặc định 100), ngoài khoảng thì 422 |
+| GET | `/sop/{sop_id}/versions` | | `{sop_id, versions: [SopVersion]}`, cũ nhất trước; 404 nếu `sop_id` không có trong config |
+| GET | `/metrics` | | `{metrics: [Metric]}`, luôn đúng 3 phần tử theo thứ tự: KPI chính (tên, đơn vị lấy từ config), `mttd_mttr`, `recurrence_rate` (R10a) |
+| GET | `/kpi/series?kpi=&machine=&shift=&start=&end=` | `kpi` bắt buộc | chuỗi KPI từ dữ liệu sandbox của app (R10b1 đổi nguồn sang `production_log`). `kpi`, `machine`, `shift` lạ hoặc `start`/`end` sai định dạng thì 422. `start <= ts < end`; khoảng rỗng thì `points: []` |
+
+Ví dụ phản hồi `GET /kpi/series`:
+
+```json
+{"kpi": "defect_rate", "machine": "M02", "shift": null,
+ "points": [{"ts": "2026-01-01T06:00:00", "value": 0.019283}],
+ "baseline": 0.019544, "upper_limit": 0.030544,
+ "anomalies": [{"start": "2026-03-10T22:00:00", "end": "2026-06-30T22:00:00", "machine": "M02", "shift": "night"}]}
+```
+
+`baseline` và `upper_limit` là số của Detect cho (máy, KPI), bằng giá trị trong event `anomaly_detected`; là `null` khi không chọn `machine` (khi đó nhiều máy cùng thời điểm được lấy trung bình). Quá 1000 điểm thì gộp theo ngày (`ts` là 00:00 của ngày). `anomalies` lọc theo `machine`/`shift`/khoảng thời gian.
+
+Ví dụ phản hồi `GET /metrics` (chưa có run nào học xong; mọi chỉ số `available: false`, không có số):
+
+```json
+{"metrics": [
+  {"name": "defect_rate", "unit": "ratio", "before": null, "after": null, "available": false,
+   "reason": "no finished run has saved a lesson with this KPI yet", "run_id": null},
+  {"name": "mttd_mttr", "unit": "hours", "before": null, "after": null, "available": false,
+   "reason": "no real source yet (planned for R10b2)", "run_id": null},
+  {"name": "recurrence_rate", "unit": "ratio", "before": null, "after": null, "available": false,
+   "reason": "no real source yet (planned for R10b2)", "run_id": null}]}
+```
+
+Sau một run học xong, phần tử đầu có `available: true`, `reason: null`, `run_id` của run đó, `before`/`after` bằng `kpi_before`/`kpi_after` trong `learning_saved` (lấy bài học mới nhất của KPI đó trong `learning_store`). Ở R10b2 sẽ có thêm: `mttd_mttr` điền `before`/`after` (giờ, từ `mttd_hours`/`mttr_hours` của `kpi_measured` khi H-11 xong) và `recurrence_rate` điền `before`/`after`; hai phần tử này đổi `available` thành `true`, `reason: null`. Hình dạng không đổi. Tuyệt đối không có số giả khi `available: false`.
+
+Ba API đọc trên (R10a) chỉ đọc, không ghi DB. `GET /runs` đọc từ bộ nhớ của app nên mất khi backend khởi động lại (H-15, sửa ở R10c).
+
+```json
+RunSummary: {"run_id": "run_ff5de085", "state": "waiting | running | finished | error", "started_at": "2026-10-10T09:00:00+00:00",
+  "finished_at": null | "2026-10-10T09:00:05+00:00", "outcome": null | "completed | closed | no_anomaly | error",
+  "pending": null | {"type": "answer | approval", "kind?": "proposal | rollback | halt", "proposal_id?": "..."}}
+AuditRow: {"id": 12, "ts": "2026-10-10T09:00:03+00:00", "run_id": "run_ff5de085" | null, "actor": "alice", "action": "approval_decided", "params": {...}}
+SopVersion: {"version": 2, "created_by": "config | <người duyệt>", "run_id": "run_ff5de085" | null, "created_at": "..." | null, "content": "..."}
+```
+
+`outcome` là `status` của event `run_finished` cuối (null khi chưa có). Bản gốc từ config có `created_by: "config"`, `run_id` và `created_at` là null; khi run đầu tiên sửa SOP, bản 1 trong DB là bản sao của bản gốc nên chỉ hiện một lần.
 
 Trạng thái run:
 

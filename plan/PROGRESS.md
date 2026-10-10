@@ -239,3 +239,38 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 3467282. Review: .autodev/reviews/R9ih-dev-01-r1.json (PASS).
 - Prompt Improve có khối "Existing SOPs" (id, version hiệu lực gồm sop_versions, title, nội dung cắt theo config); ProposalError cho sop_id lạ nêu id hợp lệ. 448 pytest, smoke sạch.
 - Non-blocking: chưa test riêng fallback config khi DB trống.
+
+### R10a/dev-01: DONE
+- Vòng: 1. Commit: a474722. Review: .autodev/reviews/R10a-dev-01-r1.json (PASS).
+- `GET /runs`, `GET /audit`, `GET /sop/{id}/versions` chỉ đọc; hàm đọc `repo.recent_actions`, `repo.list_sop_versions` (tên "list_audit" bị test_db cấm). 455 pytest, smoke sạch.
+- Non-blocking: nhánh session mới (không ctx_factory) chưa có test; giới hạn audit 500 hard-code; chưa có test đối chiếu khoá với ví dụ payloads.md.
+
+### R10a/dev-02: DONE
+- Vòng: 1. Commit: f736861. Review: .autodev/reviews/R10a-dev-02-r1.json (PASS).
+- `GET /kpi/series` (`backend/api/kpi_series.py`); `control_limits`/`series_limits` tách trong detect/statistical.py dùng chung với Detect. 461 pytest.
+- Non-blocking: baseline/upper_limit theo máy (không theo ca); MAX_POINTS=1000 hằng số; sửa thứ tự test_approval_r8 (order_by).
+
+### R10a/dev-03: DONE
+- Vòng: 1. Commit: becbd39. Review: .autodev/reviews/R10a-dev-03-r1.json (PASS).
+- `GET /metrics` 3 phần tử (KPI đầu config, mttd_mttr, recurrence_rate); hai phần tử sau `available:false` đến R10b2. 465 pytest.
+- Non-blocking: lesson `no_change` vẫn hiện available:true (cân nhắc trường outcome ở R10b2); chỉ KPI đầu config.
+
+### R10a/dev-04: DONE
+- Vòng: 1. Commit: 1f3f577. Review: .autodev/reviews/R10a-dev-04-r1.json (PASS).
+- H-13: event lỗi giữ append-only (`Run.error_events`, id `evt_<run>_errNN`), SSE `id` liên tục, `Last-Event-ID` nối lại đúng; `/runs` không trả outcome cũ khi run đang waiting. Sinh lại `run-error-retry.json`. 471 pytest.
+- Non-blocking: chèn lại error event theo vị trí.
+
+### R10a/dev-05: DONE
+- Vòng: 1. Commit: 582887a. Review: .autodev/reviews/R10a-dev-05-r1.json (PASS).
+- H-16: `DemoLLM` trả lời theo bước (mỗi run một instance); reject/revise/halt → điều tra lại không hết script; `SME_DEMO_SCENARIO=rollback` cho rollback S7. A5 (a)=1,00, (b)=1,00 trên 5 seed. 481 pytest.
+- Non-blocking: chưa có test halt/revise trong kịch bản rollback.
+
+### R10a/dev-06: DONE
+- Vòng: 1. Commit: 7ae4057. Review: .autodev/reviews/R10a-dev-06-r1.json (PASS).
+- T-041: `GET /runs/{id}/export` (định dạng fixture, lọc traceback/sim/key), `scripts/record_run.py`, kiểm định dạng dùng chung với 8 fixture. 498 pytest.
+- Non-blocking: record_run.py chưa test qua httpx thật; steps chỉ trong bộ nhớ (H-15).
+
+### R10a/dev-07: DONE
+- Vòng: 1. Commit: 15cc785. Review: .autodev/reviews/R10a-dev-07-r1.json (PASS).
+- H-26: `scripts/check_run.py` + `demo.sh --check [--repeat N]` đi hết một run qua HTTP tới learning_saved, gọi 5 API GET, in p95. 504 pytest, smoke sạch.
+- Non-blocking: p95 chưa nói gì về LLM thật (run ~0,4 s với LLM giả).

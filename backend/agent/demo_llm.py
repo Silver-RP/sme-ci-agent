@@ -83,9 +83,53 @@ def scripted_demo_llm(config: DomainConfig, *, ask_first: bool = True, then: tup
     return ScriptedLLM([*([demo_low_confidence(config)] if ask_first else []), *investigate, improve, *extra])
 
 
+SCENARIO_ENV = "SME_DEMO_SCENARIO"
+ROLLBACK_SCENARIO = "rollback"
+
+
+class DemoLLM:
+    """Demo LLM that answers by step, not from a fixed list, so it never runs out when a person rejects, revises
+    or halts and the agent investigates / proposes again. One instance per run (it counts the steps it was asked).
+
+    Investigate calls pass tools; Improve calls do not. The first investigation asks a person (low confidence);
+    later ones are confident. With ``rollback=True`` the first proposal sets a parameter the simulator does not
+    link to the anomaly, so Measure fails and the agent proposes a rollback; every later proposal is the right fix.
+    """
+
+    def __init__(self, config: DomainConfig, *, ask_first: bool = True, rollback: bool = False) -> None:
+        self._config = config
+        self._ask_first = ask_first
+        self._rollback = rollback
+        self._investigations = 0
+        self._improvements = 0
+        self.calls: list[dict] = []
+
+    def complete(self, system: str, messages: list, tools: list) -> LLMResponse:
+        self.calls.append({"system": system, "messages": list(messages), "tools": list(tools)})
+        if tools:
+            return self._investigate(messages)
+        return self._improve()
+
+    def _investigate(self, messages: list) -> LLMResponse:
+        steps = demo_investigate(self._config)
+        if len(messages) > 1:  # a tool result (or a format retry) came back: give the final answer
+            return LLMResponse(text=steps[1])
+        self._investigations += 1
+        if self._ask_first and self._investigations == 1:
+            return LLMResponse(text=demo_low_confidence(self._config))
+        return steps[0]
+
+    def _improve(self) -> LLMResponse:
+        self._improvements += 1
+        wrong = self._rollback and self._improvements == 1
+        return LLMResponse(text=demo_improve(self._config, self._config.actions.parameters[-1] if wrong else None))
+
+
 def llm_from_env(config: DomainConfig) -> LLM | None:
-    """The scripted LLM when ``SME_LLM=scripted``, else None (caller falls back to the real one)."""
+    """The demo LLM when ``SME_LLM=scripted``, else None (caller falls back to the real one).
+    ``SME_DEMO_SCENARIO=rollback`` makes the first proposal fail Measure; any other value keeps the straight path."""
     mode = (os.environ.get(LLM_ENV) or "").strip().lower()
     if mode == "scripted":
-        return scripted_demo_llm(config)
+        scenario = (os.environ.get(SCENARIO_ENV) or "").strip().lower()
+        return DemoLLM(config, rollback=scenario == ROLLBACK_SCENARIO)
     return None
