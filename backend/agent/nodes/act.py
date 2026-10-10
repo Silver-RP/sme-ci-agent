@@ -33,7 +33,7 @@ from backend.db import repo
 from backend.domain_config import DomainConfig, load_domain_config
 from backend.sandbox.injector import load_scenario
 from backend.sandbox.post_change import action_level, build_post_change_tables
-from backend.tools.actions import apply_sop, measure, propose_sop, save_learning
+from backend.tools.actions import SopConflict, apply_sop, measure, propose_sop, save_learning
 from backend.tools.readonly import ToolContext
 
 APPROVED = "approved"
@@ -268,6 +268,25 @@ def make_wait_approval_node(config: DomainConfig, ctx: ToolContext):
     return wait_approval
 
 
+def _sop_conflict_update(state: AgentState, emit: _Emitter, proposal: dict[str, Any], exc: SopConflict) -> dict[str, Any]:
+    """The SOP changed since the proposal was built: nothing written, tell the person, propose again (bounded)."""
+    info = {"sop_id": exc.sop_id, "base_version": exc.base_version, "current_version": exc.current_version}
+    emit("approval_decided", "system", {"kind": "proposal", "decision": "sop_conflict", "message": str(exc), **info})
+    return {
+        "events": emit.events,
+        "approval": None,
+        "rejection_count": state.get("rejection_count", 0) + 1,
+        "proposal": {**proposal, "status": "sop_conflict", "conflict": str(exc)},
+        "evidence": [*state.get("evidence", []), {"source": "sop_conflict", "message": str(exc), **info}],
+    }
+
+
+def route_after_act(state: AgentState, config: DomainConfig) -> str:
+    if (state.get("proposal") or {}).get("status") != "sop_conflict":
+        return "measure"
+    return "halt" if state.get("rejection_count", 0) >= config.loop.max_rejections else "improve"
+
+
 def make_act_node(config: DomainConfig, ctx: ToolContext):
     def act(state: AgentState) -> dict[str, Any]:
         proposal = state.get("proposal") or {}
@@ -282,12 +301,19 @@ def make_act_node(config: DomainConfig, ctx: ToolContext):
             raise ValueError("cannot act: the proposal has no action, so the SOP change could not be measured; no SOP written")
         change_time = resolve_change_time(state, ctx)  # validate BEFORE any side effect
         anomaly = state.get("anomaly") or {}
-        res = apply_sop(
-            ctx,
-            sop_id=sop["sop_id"],
-            new_content=sop["new_content"],
-            approval={"decision": APPROVED, "approved_by": approval.get("decided_by"), "sop_id": sop["sop_id"]},
-        )
+        # H-14: refuse if another run changed this SOP meanwhile. propose_sop always sets base_version (None = SOP
+        # unknown then); a hand-built proposal without the key is not checked.
+        lock = {"base_version": sop["base_version"]} if "base_version" in sop else {}
+        try:
+            res = apply_sop(
+                ctx,
+                sop_id=sop["sop_id"],
+                new_content=sop["new_content"],
+                approval={"decision": APPROVED, "approved_by": approval.get("decided_by"), "sop_id": sop["sop_id"]},
+                **lock,
+            )
+        except SopConflict as exc:
+            return _sop_conflict_update(state, emit, proposal, exc)
         previous = repo.get_sop_version(ctx.session, sop["sop_id"], res["version"] - 1)
         prev_version = previous.version if previous else None
         prev_content = previous.content if previous else None
@@ -513,16 +539,20 @@ def make_rollback_apply_node(config: DomainConfig, ctx: ToolContext):
         emit = _Emitter(state, config)
         payload: dict[str, Any] = {"rolled_back": False, "approved_by": approval.get("decided_by")}
         if applied and applied.get("previous_content"):
-            res = apply_sop(
-                ctx,
-                sop_id=applied["sop_id"],
-                new_content=applied["previous_content"],
-                approval={"decision": APPROVED, "approved_by": approval.get("decided_by"), "sop_id": applied["sop_id"]},
-            )  # a NEW version holding the old content; the failed version stays in sop_versions
-            payload.update(
-                rolled_back=True, sop_id=applied["sop_id"], version=res["version"],
-                restored_from_version=applied["previous_version"], failed_version=applied["version"],
-            )
+            try:
+                res = apply_sop(
+                    ctx,
+                    sop_id=applied["sop_id"],
+                    new_content=applied["previous_content"],
+                    approval={"decision": APPROVED, "approved_by": approval.get("decided_by"), "sop_id": applied["sop_id"]},
+                    base_version=applied["version"],  # H-14: only roll back the version this run applied itself
+                )  # a NEW version holding the old content; the failed version stays in sop_versions
+                payload.update(
+                    rolled_back=True, sop_id=applied["sop_id"], version=res["version"],
+                    restored_from_version=applied["previous_version"], failed_version=applied["version"],
+                )
+            except SopConflict as exc:  # another run changed the SOP after this one: do not overwrite it
+                payload.update(sop_id=applied["sop_id"], conflict=str(exc), current_version=exc.current_version)
         emit("rollback_done", "improvement", payload)
         count = state.get("rollback_count", 0) + 1
         evidence = [

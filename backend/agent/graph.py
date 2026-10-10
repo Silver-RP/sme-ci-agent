@@ -25,6 +25,7 @@ from backend.agent.nodes.act import (
     make_wait_evidence_node,
     make_wait_halt_node,
     make_wait_rollback_node,
+    route_after_act,
     route_after_approval,
     route_after_halt,
     route_after_measure,
@@ -219,7 +220,11 @@ def _add_act_loop(g: StateGraph, config: DomainConfig, ctx: ToolContext, improve
         lambda s: route_after_approval(s, config),
         {"act": "act", "improve": "improve", "investigate": "investigate", "halt": "loop_halt"},
     )
-    g.add_edge("act", "measure")
+    g.add_conditional_edges(
+        "act",
+        lambda s: route_after_act(s, config),
+        {"measure": "measure", "improve": "improve", "halt": "loop_halt"},
+    )
     g.add_conditional_edges(
         "measure",
         lambda s: route_after_measure(s, config),
