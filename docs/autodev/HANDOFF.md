@@ -16,7 +16,7 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao" hay "là gì". Cuối mỗi báo cáo có câu hỏi "làm gì tiếp": danh sách **đánh số kèm nội dung**, leader trả lời bằng số.
 - **Đo bằng số, không ước lượng:** % đạt 3 điều tính theo `docs/eval/criteria.md` (A1–A8, luật chỉ số nhiều phần); chỉ số plugin B1–B6 bằng `python3 .autodev/metrics.py`.
 
-## Bước tiếp theo (cập nhật 2026-10-10 tối, đóng phiên)
+## Bước tiếp theo (cập nhật 2026-10-10 đêm, đóng phiên)
 
 ### Bối cảnh
 - **Team 4 người** (`docs/PLAN.md` mục 4). Ranh giới: auto-dev không làm thay việc của vai A/D/Q, kể cả khi không đụng file của họ (**trùng việc** khác **trùng file**).
@@ -31,32 +31,25 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Mốc tham khảo:** kickoff 11/10 (giờ chưa chốt); cổng go/no-go + tag v0.1-e2e 13/10; Đợt 2 UI 17/10; freeze 20/10; Pitch 24/10.
 - **Kế hoạch P6 hai luồng** (dự án + plugin) đã duyệt: `ROADMAP.md` mục "Kế hoạch hai luồng"; bảng mốc ở PROJECT_STATE mục "Tầm nhìn".
 
-### Đã xong trong phiên 2026-10-10
-- **Kế hoạch và tiêu chí:**
-  - P6 hai luồng (#76); tiêu chí đo được A1–A8, B1–B6 + `.autodev/metrics.py` (#78);
-  - luật chỉ số nhiều phần: phần chưa đo hoặc "đạt theo cấu tạo" tính 0 (#87).
-  - **% hiện tại: 0 / 50 / 0** (điều 2 = A5 LLM giả 0,5 + A6 1; A4 và phần LLM thật chưa đo).
-- **P6a:** mẫu plan có "Ước tính" + "Pre-mortem"; reviewer kiểm cấp mục tiêu; supervisor ghi ước tính so với thực tế (#76).
-- **Mốc merge:**
-  - **R10a (#82):** API storyboard, record/replay, `demo.sh --check --repeat`.
-  - **R10c (#84):** Postgres cho run/event/checkpoint, khoá SOP, `question_id`, bất biến (A6 = 0).
-  - **Audit 3 (#86):** B1 = 0,71 (ngưỡng ≤ 0,5), H-45..H-59.
-  - **R10ch (#91):** H-31, H-45, H-47, H-48, H-50, H-51, H-54; `POST /runs/{id}/close`.
-
-  Chi tiết từng mốc (bảng tiêu chí, thử biên): `PROGRESS.md`.
-- **Ước tính so với thực tế (B3):**
-  - R10a: phút 1,09, USD 1,19;
-  - R10c: 1,11 / 1,0;
-  - R10ch: worker 111/40–60 phút (≈ 1,85; mỗi vòng pytest + Postgres ~3 phút), USD 1,19;
-  - audit 3 tốn 5,55 USD, gấp khoảng 3× ước tính.
-- **Đổi thứ tự (leader quyết):** R10b1 chờ D1 #66 merge. D1 là việc của Bảo; `data_contract.md` ghi rõ là bản đề xuất (#81); comment ở #66, #63.
-- **GitHub:**
-  - workflow `auto-assign` (#75) không chạy theo lịch lần nào, đã tắt;
-  - issue #89, #90 cho Finn;
-  - lệnh `/session-start`, `/session-end` đánh số lựa chọn (#79).
-- **P5 (đóng):** trang trạng thái Artifact https://claude.ai/artifact/X6TLNZGZmzraP36WKgBKxF (loại Dashboard, riêng tư, làm mới 18:54 10/10).
-  - Script xuất `.autodev/export_status.py` (7 file JSON). **Chỉ làm mới khi leader yêu cầu** (leader chọn 10/10), không làm ở `/session-end`; cách làm trong docstring của script.
-- **Plugin (phiên đêm 10/10):** `metrics.py` sửa 3 lỗi (– cho mốc chưa chạy; B3 phút so với phút worker; supervisor cộng tạm chi phí của chính nó, đọc `runs/` của worktree chính); ước tính audit 5–6 USD (`/audit`); workflow `auto-assign` đã tắt (`gh workflow disable`, file giữ nguyên), gán #65 bằng tay khi Daivon nhận lời; leader duyệt `demo.sh --fresh-db`.
+### Đã xong trong phiên 2026-10-10 đêm (PR #94–#101, đều merge)
+- **Plugin P5, P6 đóng:**
+  - `metrics.py` sửa 3 lỗi; đoạn R10ch trong PROGRESS từng bị `--write` xoá, đã khôi phục (#94);
+  - `export_status.py`; trang trạng thái **chỉ làm mới khi leader yêu cầu** (#94, #96);
+  - báo cáo đối chiếu ước tính R10a–R10ch trong PROGRESS. Luật mới ở thiết kế 6.5, **leader duyệt**: ≥ 25 phút/task có Postgres; USD = worker + 2; audit +5–6 USD; pre-mortem "kill ở giữa?", "đạt theo cấu tạo?" (#97).
+- **Dự án:** `demo.sh --fresh-db` chạy trên DB `sme_ci_demo`, tạo lại sạch mỗi lần (#95). Sau đó **tạm dừng việc dự án chờ team** (#98, mục ⏸ dưới).
+- **Quy tắc mới:**
+  - `CLAUDE.md`: ước tính thời gian khi bắt đầu nhiệm vụ (#99);
+  - ghi % hạn mức 5 giờ và tuần trước/sau nhiệm vụ bằng `.autodev/usage.py` + status line (#101, mục Môi trường).
+- **Nghiên cứu:** `docs/autodev/research/2026-10-10-so-sanh-ben-ngoai.md` (#100), 10 nguồn bên ngoài. 7 đề xuất chưa vào ROADMAP:
+  - 1: cổng "không nới test" trong `verify.py`;
+  - 2: reviewer dùng model khác developer;
+  - 3: câu hỏi bắt buộc theo 4 loại lỗi đã lọt;
+  - 4: bộ thử reviewer (= hướng 1);
+  - 5: review 3 lần cho task rủi ro;
+  - 6: thử đột biến;
+  - 7: không làm.
+- **GitHub:** workflow `auto-assign` đã tắt (`gh workflow disable`, file giữ nguyên).
+- **Hạn mức lúc đóng phiên:** 5 giờ 11% (reset 00:20 11/10), tuần 60% (reset 13:00 14/10). R10b1 + R10b2 + audit 4 (~20–25 USD) có thể chạm hạn mức tuần trước 14/10: cân nhắc khi D1 xong.
 
 ### ⏸ Tạm dừng việc dự án (leader quyết 2026-10-10 đêm)
 Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại chuyển sang nghiên cứu auto-dev (plugin). Không chạy mốc R nào cho tới khi có tín hiệu dưới đây. Luật ước tính + pre-mortem mới (thiết kế 6.5) đã được leader duyệt.
@@ -74,8 +67,15 @@ Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại
    - (a) nhắc Bảo làm D1 (#66) trước sáng 12/10, và nhắc Daivon nhận lời mời (leader tự gửi vào nhóm chat);
    - (b) chốt giờ kickoff 11/10;
    - (c) cho phép đo nền LLM thật: `eval_rootcause.py --llm real --seeds 3`, ≤ 2 USD, ghi `docs/token-cost.md`;
-   - (d) D1 chưa merge sáng 12/10 thì leader quyết R10b1.
-2. **Plugin:** P5, P6 đã đóng (10/10). Gán #65 cho Daivon bằng tay khi nhận lời. Plan R10b1/R10b2 khi sửa sau D1: áp luật ước tính + pre-mortem mới (thiết kế 6.5).
+   - (d) D1 chưa merge sáng 12/10 thì leader quyết R10b1;
+   - (e) đưa 7 đề xuất của báo cáo nghiên cứu vào ROADMAP hay không.
+2. **Plugin, phiên sau bắt đầu ở đây (leader chọn):**
+   - Đề xuất 1 + 3 của `docs/autodev/research/2026-10-10-so-sanh-ben-ngoai.md`, ước tính ~1,5 giờ, 1–2 USD:
+     - (1) cổng "không nới test" trong `verify.py`: so với baseline, chặn khi số test giảm, test mới bị `skip`/`xfail`, hay assert bị xoá mà plan không ghi lý do. Viết test trong `.autodev/tests/test_verify.py` trước;
+     - (3) câu hỏi bắt buộc trong `.claude/agents/reviewer.md`: kill/restart giữa hai bước; chỉ số "đạt theo cấu tạo"; test chỉ chạy TestClient hay mock; luồng trạng thái xuyên file ngoài diff. Chỉ chặn lỗi ảnh hưởng đúng đắn, tránh làm thừa.
+   - Tuỳ chọn (~10 phút): `usage.py` báo tuổi số liệu, và hỏi leader `/usage` khi số đã quá cũ (status line chỉ cập nhật khi Claude Code chạy trong terminal).
+   - Sau đó: đề xuất 4 (bộ thử reviewer từ lỗi đã lọt, 15–20 USD, hỏi leader trước mỗi lượt đo).
+   - Khi Daivon nhận lời: gán #65 bằng tay. Plan R10b1/R10b2 khi sửa sau D1: áp luật 6.5.
 3. **R10b1 khi D1 merge:** đối chiếu `plan/R10b1.md` với bản D1 (cột, luật V01–V09), sửa plan qua PR, rồi chạy `R10b1 R10b2` nối tiếp. Đặt `audit.json` sao cho audit 4 chạy sau R10b2.
 4. **Cổng 13/10:** theo `criteria.md` mục 3. Đang có A6 = 0; A5 phần LLM giả; A8 (LLM giả). A4, A7 cần R10b2; UI FR-01..05 cần vai D. Leader duyệt tag.
 5. **R11a** (13–14/10): H-28, H-29, H-56 (gộp H-18), H-32, H-36, H-52, H-53, H-55; kịch bản `ask` và `none`; treo từ R10ch: bản SOP trùng nếu kill giữa commit và checkpoint.
@@ -92,12 +92,13 @@ Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại
 - **Claude của thành viên không có quyền tự merge** (quyền đó nằm trong `settings.local.json` của máy leader).
 - **`plugin-guard`** chưa thử nhánh chặn (PR của thành viên): kiểm ở PR đầu tiên của team.
 
-## Trạng thái hiện tại (2026-10-10 tối)
-- **Dự án:**
+## Trạng thái hiện tại (2026-10-10 đêm)
+- **Dự án (⏸ tạm dừng chờ team):**
   - M0–M3 xong; M4: T-040, T-041 xong, T-042..T-045 mở;
-  - 583 pytest + 1 xfail (`test_no_model_name_in_backend`, gỡ khi đóng H-39 ở R10b2).
+  - 587 pytest + 1 xfail (`test_no_model_name_in_backend`, gỡ khi đóng H-39 ở R10b2);
+  - % đạt 3 điều: **0 / 50 / 0**.
 - **Plugin:**
-  - P1–P3 xong; P4, P5, P6 đang làm (ghi chú trong PROJECT_STATE);
+  - P1–P3, P5, P6 xong; P4 đang làm (còn kiểm hạn mức trước mốc);
   - P7–P9 chưa làm.
   - Chi phí cả ngày 10/10 (worker + supervisor + audit): R10a 5,94; R10c 7,88; audit 3 5,55; R10ch 4,77 USD.
 - **Runner:** rảnh. `.autodev/runs/audit.json` `pending = []`.
@@ -149,5 +150,6 @@ Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại
 - 2026-10-08: chuyển repo khỏi iCloud; hardening + R8.
 - 2026-10-09: P5, audit 1–2, R9, R9h, R9i, R9ih, T-030 khép vòng LLM thật.
 - 2026-10-10 sáng: tạm dừng tính năng; hợp đồng dữ liệu, storyboard, brief A/D/Q, issue #63–#67, onboarding, bảo vệ `main` + `plugin-guard`; dọn thư mục cũ; lệnh `/session-start`, `/session-end`.
-- 2026-10-10 chiều–tối: kế hoạch P6 + tiêu chí đo được; R10a, R10c, audit 3, R10ch; R10b1 chờ D1; trang trạng thái Artifact.
+- 2026-10-10 chiều–tối: kế hoạch P6 + tiêu chí đo được (#76, #78, #87); R10a (#82), R10c (#84), audit 3 (#86, B1 = 0,71), R10ch (#91); R10b1 chờ D1; trang trạng thái Artifact.
+- 2026-10-10 đêm: P5, P6 đóng; `--fresh-db`; tạm dừng dự án chờ team; quy tắc ước tính + ghi % hạn mức; báo cáo so sánh bên ngoài (#94–#101).
 - Chi tiết trong `PROGRESS.md`.
