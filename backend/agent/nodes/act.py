@@ -289,11 +289,18 @@ def make_act_node(config: DomainConfig, ctx: ToolContext):
             approval={"decision": APPROVED, "approved_by": approval.get("decided_by"), "sop_id": sop["sop_id"]},
         )
         previous = repo.get_sop_version(ctx.session, sop["sop_id"], res["version"] - 1)
+        prev_version = previous.version if previous else None
+        prev_content = previous.content if previous else None
+        earlier = state.get("applied")
+        if earlier and earlier.get("sop_id") == sop["sop_id"] and earlier.get("previous_content"):
+            # H-19: an SOP of this run is still in force (kept across a halt): a rollback goes back to the SOP
+            # as it was before the run, not to the version this run applied earlier
+            prev_version, prev_content = earlier.get("previous_version"), earlier["previous_content"]
         applied = {
             "sop_id": sop["sop_id"],
             "version": res["version"],
-            "previous_version": previous.version if previous else None,
-            "previous_content": previous.content if previous else None,
+            "previous_version": prev_version,
+            "previous_content": prev_content,
             "approved_by": res["approved_by"],
             "change_time": change_time,
             "change": proposal.get("change"),  # kept for the memory of a later rollback; not sent in the event
@@ -623,7 +630,8 @@ def make_wait_halt_node(config: DomainConfig, ctx: ToolContext | None = None):
         return {
             "approval": None, "status": "", "events": emit.events, "evidence": evidence,
             "question_count": 0, "rejection_count": 0, "rollback_count": 0, "measure_wait_count": 0,
-            "evidence_gap": False, "proposal": None, "applied": None, "measurement": None,
+            "evidence_gap": False, "proposal": None, "measurement": None,
+            # "applied" is kept on purpose (H-19): the SOP in force stays known while investigating again
         }
 
     return wait_halt
