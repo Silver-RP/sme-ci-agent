@@ -17,7 +17,7 @@ import os
 import threading
 import uuid
 from collections.abc import Callable
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from functools import cache
@@ -40,7 +40,7 @@ from backend.agent.state import new_state
 from backend.api.kpi_series import SeriesError, kpi_series
 from backend.api.run_export import build_export
 from backend.db import repo
-from backend.db.session import make_engine
+from backend.db.session import dispose_shared_engines, get_shared_engine
 from backend.domain_config import DomainConfig, load_domain_config
 from backend.sandbox import generate_dataset
 from backend.tools.readonly import ToolContext
@@ -109,7 +109,7 @@ def _default_tables():
 
 
 def _default_ctx_factory(run_id: str) -> ToolContext:
-    return ToolContext(tables=_default_tables(), session=Session(make_engine()), run_id=run_id)
+    return ToolContext(tables=_default_tables(), session=Session(get_shared_engine()), run_id=run_id)
 
 
 def _default_llm_factory(run_id: str) -> LLM:
@@ -165,7 +165,13 @@ def create_app(
 
         checkpointer = memory_checkpointer()  # one saver for all runs; thread_id isolates them
     runs: dict[str, Run] = {}
-    app = FastAPI(title="SME CI Agent")
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        yield
+        if ctx_factory is None:  # the shared engine belongs to the default context factory
+            dispose_shared_engines()
+
+    app = FastAPI(title="SME CI Agent", lifespan=lifespan)
     app.state.runs = runs
     # the dashboard (yarn dev, port 3000) calls this API from the browser
     app.add_middleware(
@@ -211,6 +217,8 @@ def create_app(
             run.retryable = run.retries < cfg_domain.loop.max_retries
             if run.error is None and run.finished_at is None and _status(run)["state"] == "finished":
                 run.finished_at = _now()
+                if ctx_factory is None:  # H-37: the run owns its session only with the default factory
+                    run.ctx.session.close()
             if run.error is not None:
                 err_ev = make_event(
                     {"run_id": run.run_id, "domain": cfg_domain.domain},
@@ -332,12 +340,11 @@ def create_app(
                     shared_read["s"] = ctx_factory("api_read").session
                 yield shared_read["s"]
             return
-        session = Session(make_engine())
+        session = Session(get_shared_engine())
         try:
             yield session
         finally:
-            session.close()
-            session.get_bind().dispose()
+            session.close()  # the connection goes back to the shared pool
 
     @app.get("/runs")
     def list_runs() -> dict[str, Any]:
