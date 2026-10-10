@@ -244,3 +244,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: a474722. Review: .autodev/reviews/R10a-dev-01-r1.json (PASS).
 - `GET /runs`, `GET /audit`, `GET /sop/{id}/versions` chỉ đọc; hàm đọc `repo.recent_actions`, `repo.list_sop_versions` (tên "list_audit" bị test_db cấm). 455 pytest, smoke sạch.
 - Non-blocking: nhánh session mới (không ctx_factory) chưa có test; giới hạn audit 500 hard-code; chưa có test đối chiếu khoá với ví dụ payloads.md.
+
+### R10a/dev-02: DONE
+- Vòng: 1. Commit: f736861. Review: .autodev/reviews/R10a-dev-02-r1.json (PASS).
+- `GET /kpi/series` (`backend/api/kpi_series.py`); `control_limits`/`series_limits` tách trong detect/statistical.py dùng chung với Detect. 461 pytest.
+- Non-blocking: baseline/upper_limit theo máy (không theo ca); MAX_POINTS=1000 hằng số; sửa thứ tự test_approval_r8 (order_by).
