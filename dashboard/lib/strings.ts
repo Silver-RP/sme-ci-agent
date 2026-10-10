@@ -202,6 +202,7 @@ export const vi = {
     placeholder: "Ví dụ: ca đêm hôm đó có người thay ca; lô nguyên liệu không đổi…",
     send: "Gửi câu trả lời",
     fallback: "Agent cần thêm thông tin.",
+    conflict: "Câu hỏi đã thay đổi, hãy xem câu hỏi mới.",
     evidenceConfirm: "Đo lại khi có thêm dữ liệu",
     // sent as the answer: the backend only needs a confirmation here, it does not read the text (H-34)
     evidenceAnswer: "Đã chờ thêm dữ liệu, đo lại.",

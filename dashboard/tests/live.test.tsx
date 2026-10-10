@@ -38,11 +38,13 @@ describe("api calls", () => {
   it("send correct URL, method and body", async () => {
     const f = vi.fn().mockResolvedValue(resp(200, finished));
     await startRun("2026-01-15T00:00:00", { baseUrl: BASE + "/", fetchFn: f });
-    await answerRun("run_1", "yes", { baseUrl: BASE, fetchFn: f });
+    await answerRun("run_1", "yes", "evt_run_1_0004", { baseUrl: BASE, fetchFn: f });
+    await answerRun("run_1", "no id", null, { baseUrl: BASE, fetchFn: f });
     await decideApproval("run_1", { proposal_id: "p1", kind: "proposal", decision: "approved", decided_by: "qa" }, { baseUrl: BASE, fetchFn: f });
     expect(f.mock.calls.map(([u, i]) => [u, i.method, JSON.parse(i.body)])).toEqual([
       [`${BASE}/runs`, "POST", { change_time: "2026-01-15T00:00:00" }],
-      [`${BASE}/runs/run_1/answer`, "POST", { answer: "yes" }],
+      [`${BASE}/runs/run_1/answer`, "POST", { answer: "yes", question_id: "evt_run_1_0004" }],
+      [`${BASE}/runs/run_1/answer`, "POST", { answer: "no id" }],
       [`${BASE}/runs/run_1/approval`, "POST", { reason: "", proposal_id: "p1", kind: "proposal", decision: "approved", decided_by: "qa" }],
     ]);
   });
@@ -57,7 +59,7 @@ describe("api calls", () => {
 
   it.each([404, 409, 422])("surfaces %i with the backend detail", async (code) => {
     const f = vi.fn().mockResolvedValue(resp(code, { detail: code === 422 ? [{ msg: "bad field" }] : "nope" }));
-    const err = await answerRun("r", "x", { baseUrl: BASE, fetchFn: f }).catch((e) => e);
+    const err = await answerRun("r", "x", null, { baseUrl: BASE, fetchFn: f }).catch((e) => e);
     expect(err).toBeInstanceOf(ApiError);
     expect(err.message).toBe(code === 422 ? "bad field" : "nope");
   });
@@ -111,6 +113,44 @@ describe("live run", () => {
       decided_by: "alice",
       reason: "M02 was serviced that night",
     });
+  });
+
+  // R10c pending of a question (payloads.md "Trả lời"); the bundled fixtures predate it (H-40)
+  const askedFirst: RunStatus = { ...waitingAnswer, pending: { ...waitingAnswer.pending!, question_id: "evt_run_1_0004", attempt: 1 } };
+  const askedSecond: RunStatus = { ...waitingAnswer, pending: { ...waitingAnswer.pending!, question_id: "evt_run_1_0007", attempt: 2 } };
+
+  it("FR-05 / H-49: the answer carries question_id of the question on screen", async () => {
+    const f = vi.fn().mockResolvedValueOnce(resp(201, askedFirst)).mockResolvedValueOnce(resp(200, waitingApproval));
+    render(<LiveRun api={{ baseUrl: BASE, fetchFn: f }} ctor={FakeES} />);
+    fireEvent.click(screen.getByTestId("start-button"));
+    await screen.findByTestId("question-stage");
+    fireEvent.change(screen.getByLabelText("Câu trả lời của bạn"), { target: { value: "lot B" } });
+    fireEvent.click(screen.getByTestId("answer-submit"));
+    await screen.findByTestId("decision-panel");
+    const [url, init] = f.mock.calls[1];
+    expect(url).toBe(`${BASE}/runs/run_1/answer`);
+    expect(JSON.parse(init.body)).toEqual({ answer: "lot B", question_id: "evt_run_1_0004" });
+  });
+
+  it("FR-05 / H-49: 409 on an old question reloads the run and says the question changed", async () => {
+    const f = vi
+      .fn()
+      .mockResolvedValueOnce(resp(201, askedFirst))
+      .mockResolvedValueOnce(resp(409, { detail: "question_id does not match the open question" }))
+      .mockResolvedValueOnce(resp(200, askedSecond));
+    render(<LiveRun api={{ baseUrl: BASE, fetchFn: f }} ctor={FakeES} />);
+    fireEvent.click(screen.getByTestId("start-button"));
+    await screen.findByTestId("question-stage");
+    fireEvent.change(screen.getByLabelText("Câu trả lời của bạn"), { target: { value: "from an old tab" } });
+    fireEvent.click(screen.getByTestId("answer-submit"));
+    expect(await screen.findByTestId("api-error")).toHaveTextContent("Câu hỏi đã thay đổi");
+    expect(f.mock.calls[2][0]).toBe(`${BASE}/runs/run_1`);
+    // the question on screen is the current one: answering it now sends its own id
+    fireEvent.change(screen.getByLabelText("Câu trả lời của bạn"), { target: { value: "second" } });
+    f.mockResolvedValueOnce(resp(200, waitingApproval));
+    fireEvent.click(screen.getByTestId("answer-submit"));
+    await waitFor(() => expect(f).toHaveBeenCalledTimes(4));
+    expect(JSON.parse(f.mock.calls[3][1].body).question_id).toBe("evt_run_1_0007");
   });
 
   it("on 409 shows the message and reloads the run", async () => {
