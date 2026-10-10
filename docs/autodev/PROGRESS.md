@@ -96,6 +96,15 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
   | 2. Prompt Improve chứa id, version hiệu lực (tính `sop_versions`), nội dung SOP; lấy từ config/DB | `tests/test_improve_sop_catalog_h43.py::test_prompt_lists_every_sop_with_id_version_and_content_from_config`, `test_prompt_shows_the_new_version_after_a_sop_was_applied`, `test_prompt_cuts_long_sop_content_by_config_limit`; đọc diff `sop_catalog` (dùng `repo.get_sop_version` như `current_sop`) | xanh trên nhánh, đỏ khi thay `improve.py` bằng bản main |
   | 3. `sop_id` lạ → thông báo nêu id hợp lệ; sai rồi đúng → `measured` | `test_unknown_sop_id_is_sent_back_with_valid_ids_then_measured`, `test_unknown_sop_id_twice_error_lists_valid_ids` | xanh trên nhánh, đỏ trên main (6/6 test H-43 đỏ với `improve.py` của main) |
   Thử biên độc lập (test tạm ở scratchpad, không commit): DB có bản mới cho 1 SOP dài 5000 ký tự → danh mục cắt đúng giới hạn config, đuôi `...(truncated)`, SOP còn lại giữ bản config; gọi lặp lại cho kết quả giống nhau. Non-blocking: chưa có test riêng cho nhánh fallback config khi DB trống (đã gián tiếp qua test 1); khi DB và config cùng trống thì prompt nói "phải là một trong []" (không xảy ra với YAML hiện tại).
+- R10a (API storyboard + dự phòng sân khấu; T-041, H-13, H-16, H-26): chế độ B, plan đầu theo mẫu P6a. Worker 7/7 task PASS vòng 1 (ước tính 1,2 vòng/task), 73 phút (ước tính 55–75), 4,00 USD worker (ước tính 4–5 gồm supervisor), 77 lượt; B3 phút = 1,0, B3 USD = 1,0. PR #82 merge. Supervisor Opus chạy lại (`--review-only`):
+  | Tiêu chí cấp mốc R10a | Lệnh / test supervisor tự chạy | Kết quả |
+  |---|---|---|
+  | 1. verify + smoke sạch | `python3 .autodev/verify.py`; `--smoke`; `uv run pytest -q` | sạch; smoke 4/4 ok; 504 passed |
+  | 2. LLM giả qua uvicorn thật: reject, revise, halt → điều tra lại không hết script; rollback trực tiếp (S7) | script tạm ở scratchpad gọi uvicorn cổng 8011 (mặc định) và 8012 (`SME_DEMO_SCENARIO=rollback`) bằng httpx | reject → proposal → `learning_saved`; revise → proposal → `learning_saved`; reject đến `halt` → `investigate` → proposal → `learning_saved`; rollback (2 run liên tiếp) → `pending.kind = rollback` → `rollback_done` + `learning_saved`. 0 `ScriptExhausted` trong log uvicorn; `event_id` duy nhất mọi run |
+  | 3. `demo.sh --check` hết một run + 5 API GET | `bash scripts/demo.sh --check --repeat 10` | `CHECK PASSED`; mỗi run in ok cho `/runs`, `/kpi/series`, `/audit`, `/sop/{id}/versions`, `/metrics` |
+  | 4. Ghi run ra file qua cùng luật kiểm 8 fixture | `scripts/record_run.py --api` (uvicorn thật, run rollback) rồi `tests.test_run_export_r10a.check_fixture_format` | 8 fixture cũ + file ghi (22 event, note "Bản ghi từ run thật, LLM giả") qua kiểm; không có `Traceback`, `"sim"`, `sk-ant` |
+  | 5. A5, A8 | `tests/test_demo_llm_branches_r10a.py -k a5 -s`; `demo.sh --check --repeat 10` | A5 (a) = 1,00, (b) = 1,00 trên 5 seed; A8 = 10/10, p95 0,4 s/run (LLM giả) |
+  Đỏ trên main (code `backend/` của `origin/main`, test mới): H-13 4/6 test đỏ (`test_api_retry_events_r10a.py`); H-16 lỗi import `SCENARIO_ENV` (cả file đỏ). Thử biên độc lập qua HTTP thật: `/audit?limit=-1` và `limit=100000` → 422 (giới hạn 500); `/sop/NOPE/versions` → 404; `/kpi/series` kpi lạ, máy lạ → 422 kèm danh sách hợp lệ; khoảng 2030 → 200 `points: []`; `/runs/nope/export` → 404; `record_run.py` qua httpx thật (worker chưa có test này) chạy đúng. Ghi chú: `metrics.py` in dòng 0 phút / B3 0,00 cho mốc chưa chạy (R10b1, R10b2, R10c) vì đã có plan; nên in "–" (sửa plugin, không chặn).
 
 <!-- metrics:start (tự sinh bởi .autodev/metrics.py, đừng sửa tay) -->
 ## Số đo plugin B1–B5 (định nghĩa: ROADMAP bảng B)
@@ -107,7 +116,7 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
 | 2026-10-09.md | R7, R8 | 15 | 9 | 1,67 |
 | 2026-10-09_2.md | R9, R9h | 14 | 8 | 1,75 |
 
-### B2 Độ chặt review: 2/37 task cần ≥ 2 vòng (5%). Đọc cùng B1: B2 thấp mà B1 cao là reviewer lỏng.
+### B2 Độ chặt review: 2/44 task cần ≥ 2 vòng (5%). Đọc cùng B1: B2 thấp mà B1 cao là reviewer lỏng.
 
 ### B3–B5 theo mốc (B3: thực tế / ước tính, 1,0 = trong khoảng, ngưỡng 0,5–2; B4: số lần runner dừng, ngưỡng 0; B5: chi phí trên task)
 
@@ -116,6 +125,10 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
 | M1 | 4 | 0 | 0,00 | 0,0 | 0,00 | 0 | – | – | 0 |
 | M2 | 3 | 0 | 0,00 | 0,0 | 0,00 | 0 | – | – | 0 |
 | M3 | 3 | 0 | 0,00 | 0,0 | 0,00 | 0 | – | – | 0 |
+| R10a | 7 | 73 | 4,00 | 10,5 | 0,57 | 77 | 1,00 | 1,00 | 0 |
+| R10b1 | 6 | 0 | 0,00 | 0,0 | 0,00 | 0 | 0,00 | 0,00 | 0 |
+| R10b2 | 7 | 0 | 0,00 | 0,0 | 0,00 | 0 | 0,00 | 0,00 | 0 |
+| R10c | 7 | 0 | 0,00 | 0,0 | 0,00 | 0 | 0,00 | 0,00 | 0 |
 | R4 | 4 | 21 | 2,59 | 5,3 | 0,65 | 86 | – | – | 1 |
 | R5 | 3 | 21 | 3,01 | 7,1 | 1,00 | 26 | – | – | 0 |
 | R6 | 3 | 23 | 1,81 | 7,8 | 0,60 | 63 | – | – | 0 |
