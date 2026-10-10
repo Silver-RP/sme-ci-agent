@@ -264,3 +264,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 582887a. Review: .autodev/reviews/R10a-dev-05-r1.json (PASS).
 - H-16: `DemoLLM` trả lời theo bước (mỗi run một instance); reject/revise/halt → điều tra lại không hết script; `SME_DEMO_SCENARIO=rollback` cho rollback S7. A5 (a)=1,00, (b)=1,00 trên 5 seed. 481 pytest.
 - Non-blocking: chưa có test halt/revise trong kịch bản rollback.
+
+### R10a/dev-06: DONE
+- Vòng: 1. Commit: 7ae4057. Review: .autodev/reviews/R10a-dev-06-r1.json (PASS).
+- T-041: `GET /runs/{id}/export` (định dạng fixture, lọc traceback/sim/key), `scripts/record_run.py`, kiểm định dạng dùng chung với 8 fixture. 498 pytest.
+- Non-blocking: record_run.py chưa test qua httpx thật; steps chỉ trong bộ nhớ (H-15).
