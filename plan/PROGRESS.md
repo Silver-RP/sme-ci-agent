@@ -309,3 +309,23 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: cada99a. Review: .autodev/reviews/dev-07-r1.json (PASS).
 - A6: tests/test_invariants.py, 60 chuỗi (seed 20261010+i), 22 nhánh, 995 thao tác sai thứ tự bị từ chối, 0 vi phạm. 553 pytest, 1 xfailed (claude- trong backend/, H-39 chờ R10b2).
 - Non-blocking: lệnh mutation trên app thật ghi vào báo cáo mốc.
+
+### R10ch/dev-01: DONE
+- Vòng: 1. Commit: 1a5f7fd. Review: .autodev/reviews/R10ch-dev-01-r1.json (PASS).
+- H-45, H-31: commit bản SOP (apply_sop, rollback) trước checkpoint; 558 pytest.
+- Non-blocking: cửa sổ kill giữa commit và checkpoint applied (retry có thể tạo bản trùng), chưa có test.
+
+### R10ch/dev-02: DONE
+- Vòng: 1. Commit: 4455a6b. Review: .autodev/reviews/R10ch-dev-02-r1.json (PASS).
+- H-48: POST /runs kiểm change_time (422, LLM không gọi; có múi giờ bị từ chối), POST /runs/{id}/close (audit run_closed, run_finished status closed). 571 pytest.
+- Non-blocking: restart với run đã đóng chưa có test (giao dev-03).
+
+### R10ch/dev-03: DONE
+- Vòng: 1. Commit: b562d22. Review: .autodev/reviews/R10ch-dev-03-r1.json (PASS).
+- H-47, H-50, H-51: run bị kill giữa bước → error retryable; retries suy ra từ chuỗi event lỗi; LLM lỗi khi khôi phục chỉ làm run đó error (stub). Sửa thứ tự event lỗi theo hậu tố id (run đóng không còn thành running). 578 pytest.
+- Non-blocking: cửa sổ kill giữa commit apply_sop và checkpoint chưa có test (đề xuất R11a); PROJECT_STATE còn ghi "retries về 0".
+
+### R10ch/dev-04: DONE
+- Vòng: 1. Commit: 2eec698, f500ce1. Review: .autodev/reviews/R10ch-dev-04-r1.json (PASS).
+- H-54: A5(b) đọc kpi_measured.passed. 5 seed 42..46: LLM đúng (a)=1,00 (b)=1,00; LLM luôn sai (b)=0,00; không áp dụng gì: passed không bao giờ true. Chỉ sửa test. 583 pytest.
+- Điều chỉnh (a): tiêu chí "đỏ trên main" không áp dụng cho code (code đã đúng, chỉ phép đo cũ sai).

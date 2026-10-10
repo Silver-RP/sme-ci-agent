@@ -486,3 +486,66 @@ def test_error_and_pending_runs_do_not_hold_connections(own_db_url, monkeypatch)
                 if r["state"] == "finished":
                     break
             assert r["state"] == "finished", r
+
+
+# ---- H-45 / H-31: a version named by an event is durable (read by a second session), also after a later failure ----
+
+
+def check_versions_durable(events, durable):
+    """Every ``sop_applied`` / ``rollback_done(rolled_back=true)`` names a ``(sop_id, version)`` that another session sees."""
+    bad = []
+    for e in events:
+        p = e["payload"]
+        names_version = e["type"] == "sop_applied" or (e["type"] == "rollback_done" and p.get("rolled_back"))
+        if names_version and (p["sop_id"], p["version"]) not in durable:
+            bad.append(f"{e['type']} names {p['sop_id']} v{p['version']} which is not in sop_versions")
+    return bad
+
+
+def test_checker_catches_event_naming_a_lost_version():
+    events = [ev(1, "sop_applied", sop_id="S", version=2), ev(2, "rollback_done", rolled_back=True, sop_id="S", version=3)]
+    assert len(check_versions_durable(events, {("S", 1)})) == 2
+    assert check_versions_durable(events, {("S", 2), ("S", 3)}) == []
+    assert check_versions_durable([ev(1, "rollback_done", rolled_back=False, sop_id="S")], set()) == []
+
+
+@pytest.mark.parametrize("branch", ["measure_fails", "llm_fails_after_rollback"])
+def test_versions_in_events_are_durable_after_a_failure_after_act(own_db_url, monkeypatch, branch):  # noqa: F811
+    from sqlalchemy.orm import Session
+
+    from backend.agent.nodes import act as act_mod
+    from backend.db.session import get_shared_engine
+    from tests.test_engine_pool_r10c import ANSWER
+
+    monkeypatch.setenv("DATABASE_URL", own_db_url)
+    monkeypatch.delenv("SME_LLM", raising=False)
+    llms = []
+
+    def llm_factory(run_id):
+        llm = FlakyDemo(DemoLLM(CFG, rollback=branch == "llm_fails_after_rollback"), 0)
+        llms.append(llm)
+        return llm
+
+    if branch == "measure_fails":
+        monkeypatch.setattr(act_mod, "build_post_change_tables", lambda *a, **k: (_ for _ in ()).throw(OSError("disk")))
+    with TestClient(create_app(CFG, llm_factory=llm_factory)) as c:
+        run = c.post("/runs", json={}).json()
+        rid = run["run_id"]
+        if run["pending"]["type"] == "answer":
+            run = c.post(f"/runs/{rid}/answer", json=ANSWER).json()
+        for _ in range(4):
+            p = run["pending"]
+            if p is None:
+                break
+            if p["kind"] == "rollback":
+                llms[0].fail_at = llms[0].n + 1  # the first LLM call after the rollback fails
+            body = {"proposal_id": p["proposal_id"], "kind": p["kind"], "decision": "approved", "decided_by": "alice"}
+            run = c.post(f"/runs/{rid}/approval", json=body).json()
+            if run["state"] == "error":
+                break
+        assert run["state"] == "error", run
+        events = [m["data"] for m in sse_events(c, rid)]
+        assert any(e["type"] in NEEDS_VERDICT for e in events)
+        with Session(get_shared_engine()) as other:
+            durable = {(r.sop_id, r.version) for r in other.scalars(select(SopVersion))}
+        assert check_versions_durable(events, durable) == []

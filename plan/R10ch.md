@@ -48,7 +48,7 @@ Chỉ số đẩy: A5 (đo lại theo cách không đạt theo cấu tạo). Sau
   2. Test H-31: lỗi LLM ở lần gọi đầu sau rollback → nội dung SOP hiệu lực là bản đã khôi phục. Đỏ trên main.
   3. Thêm vào `tests/test_invariants.py`: sau mỗi `sop_applied` / `rollback_done(rolled_back=true)`, `(sop_id, version)` trong event có trong `sop_versions` đọc bằng session khác, kể cả nhánh có lỗi sau Act.
 - **Phụ thuộc:** không
-- **Trạng thái:** TODO · **Số vòng:** 0
+- **Trạng thái:** DONE · **Số vòng:** 1
 
 ### dev-02: Kiểm `change_time` lúc bắt đầu; đóng run lỗi (H-48)
 - **Mô tả:** `POST /runs` kiểm `change_time` trước khi gọi LLM: sai định dạng, có múi giờ không chuẩn hoá được, ở tương lai, hoặc trước anomaly → 422. Thêm `POST /runs/{id}/close` (lý do bắt buộc, người đóng thuộc danh sách người duyệt) cho run ở trạng thái `error` không retry được: ghi audit, phát `run_finished` với trạng thái đóng bởi người. Cập nhật `payloads.md`.
@@ -57,7 +57,7 @@ Chỉ số đẩy: A5 (đo lại theo cách không đạt theo cấu tạo). Sau
   2. Test: run `error` hết lượt retry → `close` → `run_finished` đóng bởi người, có một dòng audit.
   3. Test: `close` trên run đang chờ duyệt hoặc chờ rollback → 409; `close` không tạo hay khôi phục bản SOP nào.
 - **Phụ thuộc:** không
-- **Trạng thái:** TODO · **Số vòng:** 0
+- **Trạng thái:** DONE · **Số vòng:** 1
 
 ### dev-03: Khôi phục run sau restart không kẹt (H-47, H-50, H-51)
 - **Mô tả:** khi app khởi động và nạp run từ DB:
@@ -69,7 +69,7 @@ Chỉ số đẩy: A5 (đo lại theo cách không đạt theo cấu tạo). Sau
   2. Test: run hết lượt retry → restart → `/retry` 409 và `retryable=false` khớp nhau.
   3. Test: `llm_factory` ném lỗi khi khôi phục → app lên, `GET /runs` 200, run lỗi có lý do, run khác đọc được.
 - **Phụ thuộc:** không
-- **Trạng thái:** TODO · **Số vòng:** 0
+- **Trạng thái:** DONE · **Số vòng:** 1
 
 ### dev-04: A5 đo được thật, có đối chứng (H-54)
 - **Mô tả:** phép đo A5 trong `tests/test_demo_llm_branches_r10a.py` (và hàm in chỉ số nếu có): (b) = tỷ lệ run có `kpi_measured.passed == true` ở lần Measure cuối, không đếm `learning_saved`. Thêm đối chứng: không áp dụng `action` nào thì KPI sau thay đổi không cải thiện (Measure không `passed`); LLM giả luôn đề xuất `action` sai thì (b) = 0. Không đổi công thức sinh anomaly; nếu dữ liệu sau thay đổi cần sửa để đối chứng đúng thì chỉ sửa ở `post_change`.
@@ -78,8 +78,10 @@ Chỉ số đẩy: A5 (đo lại theo cách không đạt theo cấu tạo). Sau
   2. Test đối chứng "không áp dụng gì" → `passed` không bao giờ true trên 5 seed.
   3. Seed thay đổi dữ liệu thật (kết quả KPI khác nhau giữa các seed), in ra để chứng minh.
 - **Phụ thuộc:** dev-01
-- **Trạng thái:** TODO · **Số vòng:** 0
+- **Trạng thái:** DONE · **Số vòng:** 1
 
 ## Ghi chú điều chỉnh (Claude ghi khi làm (a)/(b))
+- (a) dev-04: tiêu chí 1 "đỏ trên main" không áp dụng cho phần code: `action_level` + Measure đã đúng, lỗi H-54 chỉ nằm ở phép đo của test (đếm `learning_saved`, không đối chứng). Test mới xanh ngay; phép đo cũ đã được thay.
+- (a) dev-02: `change_time` có múi giờ bị từ chối hẳn (giờ sandbox không múi giờ), không chuẩn hoá.
 
 ## Đề xuất chờ duyệt

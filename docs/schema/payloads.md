@@ -122,7 +122,7 @@ Có hai dạng; phân biệt bằng `kind`.
 `status` là một trong:
 - `completed`;
 - `no_anomaly` (+ `reason`);
-- `closed` (+ `reason: "closed_by_human"`, `halt_reason`);
+- `closed` (+ `reason: "closed_by_human"`). Hai nguồn: người chọn `finish` ở halt (kèm `halt_reason`), hoặc người đóng run lỗi không retry được qua `POST /runs/{id}/close` (kèm `closed_by`, `close_reason`, `error`; R10ch, H-48);
 - `error` (+ `error: "<Loại>: <thông điệp>"`, `retryable: bool`). Lỗi xảy ra cả sau khi người đã quyết định (duyệt, từ chối, revise, trả lời): quyết định đó đã ghi `audit_log` và không ghi lại khi Retry (R9, H-07, H-08).
   - `retryable: true`: đừng đóng hẳn luồng theo dõi, người có thể bấm Retry (H-13).
   - `retryable: false` (R9): đã Retry liên tiếp `loop.max_retries` lần mà vẫn lỗi. `POST /runs/{id}/retry` trả 409. Dashboard ẩn nút Retry và chỉ báo lỗi.
@@ -132,12 +132,13 @@ Có hai dạng; phân biệt bằng `kind`.
 
 | Phương thức | Đường dẫn | Body | Trả về / lỗi |
 |---|---|---|---|
-| POST | `/runs` | `{change_time?}` | 201 + trạng thái run |
+| POST | `/runs` | `{change_time?}` | 201 + trạng thái run. 422 ngay (trước khi gọi LLM) nếu `change_time` sai định dạng, có múi giờ (`Z`, `+09:00`), ở tương lai của dữ liệu, hoặc trước lúc anomaly bắt đầu (H-48) |
 | GET | `/runs/{id}` | | trạng thái run; 404 nếu backend đã khởi động lại (H-15) |
 | GET | `/runs/{id}/events?follow=true&after=N` | | SSE. `id` = số thứ tự (bắt đầu từ 1), `event` = type, `data` = event JSON. Hỗ trợ `Last-Event-ID` |
 | POST | `/runs/{id}/answer` | `{answer, question_id?}` (`answer` không rỗng) | 409 nếu run không chờ câu trả lời, hoặc `question_id` không khớp câu đang chờ (câu cũ, H-20): gọi lại `GET /runs/{id}`, câu hiện tại không bị trả lời. Không gửi `question_id` thì nhận như trước (R10c) |
 | POST | `/runs/{id}/approval` | `{proposal_id, kind, decision, decided_by, reason?}` | 409 nếu sai `kind` hoặc `proposal_id` (đề xuất đã cũ, hoặc bấm hai lần): gọi lại `GET /runs/{id}`. 422 nếu tên không có trong danh sách người duyệt, hoặc `revise` mà thiếu `reason` |
 | POST | `/runs/{id}/retry` | | 409 nếu không có bước lỗi, hoặc đã Retry liên tiếp quá `loop.max_retries` lần (khi đó `retryable: false`) |
+| POST | `/runs/{id}/close` | `{reason, closed_by}` (cả hai không rỗng; `closed_by` thuộc danh sách người duyệt) | 200 + trạng thái `finished`/`closed`. 409 nếu run không ở trạng thái `error` đã hết lượt retry (đang chờ duyệt, chờ rollback, còn retry được, đã đóng). 422 nếu thiếu lý do hoặc người đóng không hợp lệ. Ghi một dòng audit `run_closed`, phát `run_finished` `closed`; không tạo hay khôi phục bản SOP (H-48) |
 | GET | `/config/approvers` | | `{approvers: [str]}` |
 | GET | `/runs` | | `{runs: [RunSummary]}`, mới nhất trước (R10a) |
 | GET | `/audit?run_id=&limit=` | | `{rows: [AuditRow]}`, mới nhất trước. `limit` 1..500 (mặc định 100), ngoài khoảng thì 422 |

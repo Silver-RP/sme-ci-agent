@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import re
 import threading
@@ -35,13 +36,14 @@ from backend.agent.demo_llm import llm_from_env
 from backend.agent.events import make_event
 from backend.agent.graph import build_graph
 from backend.agent.llm import LLM, AnthropicLLM
-from backend.agent.nodes.act import DecisionError, parse_decision
+from backend.agent.nodes.act import DecisionError, parse_decision, validate_change_time
 from backend.agent.nodes.improve import ProposalError
 from backend.agent.state import new_state
 from backend.api.kpi_series import SeriesError, kpi_series
 from backend.api.run_export import build_export
 from backend.db import repo
 from backend.db.session import dispose_shared_engines, get_shared_engine
+from backend.detect.statistical import detect as run_detect
 from backend.domain_config import DomainConfig, load_domain_config
 from backend.sandbox import generate_dataset
 from backend.tools.readonly import ToolContext
@@ -58,6 +60,13 @@ class StartRun(BaseModel):
 
     # when the fix takes effect; Measure compares windows around it. Optional: default = end of the anomaly
     change_time: str | None = Field(default=None, min_length=1)
+
+
+class CloseBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(min_length=1)
+    closed_by: str = Field(min_length=1)  # must be on the approvers list
 
 
 class AnswerBody(BaseModel):
@@ -97,13 +106,28 @@ class Run:
     llm_kind: str = "giả"  # for the export note: "thật" only for the real Anthropic client
     steps: list[dict[str, Any]] = field(default_factory=list)  # successful HTTP steps, for GET /runs/{id}/export
     persisted_ids: set[str] = field(default_factory=set)  # event ids already in the events table (H-15)
+    closed: bool = False  # closed by a person after a non-retryable error (H-48)
 
 
 def _now() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
 
 
-_ERR_ID = re.compile(r"_err\d+$")  # ids of the run_finished(error) events made by advance()
+_ERR_ID = re.compile(r"_(?:err|close)\d+$")  # ids of the run_finished events made by advance() and close
+
+def _failures_in_row(error_events: list[tuple[int, dict[str, Any]]], n_events: int | None = None) -> int:
+    """How many error events follow each other directly (no step succeeded between them). ``n_events``: the length
+    of the event list; the chain only counts if it ends the list (a new failure would follow it)."""
+    if not error_events or (n_events is not None and error_events[-1][0] != n_events - 1):
+        return 0
+    n, expect = 0, error_events[-1][0]
+    for pos, _ev in reversed(error_events):
+        if pos != expect:
+            break
+        n += 1
+        expect -= 1
+    return n
+
 
 AUDIT_DEFAULT_LIMIT = 100
 AUDIT_MAX_LIMIT = 500
@@ -124,11 +148,15 @@ def _default_llm_factory(run_id: str) -> LLM:
 
 def _status(run: Run) -> dict[str, Any]:
     """Where the run is, derived from the graph state (not stored separately); a failed run is "error"."""
+    if run.closed:
+        return {"run_id": run.run_id, "state": "finished", "status": "closed", "pending": None}
     if run.error is not None:
         return {
             "run_id": run.run_id, "state": "error", "status": "error", "pending": None, "error": run.error,
             "retryable": run.retryable,
         }
+    if run.graph is None:  # restored without a graph (H-51), not failed: a finished run read from the events table
+        return {"run_id": run.run_id, "state": "finished", "status": "", "pending": None}
     snap = run.graph.get_state(run.cfg)
     nxt = snap.next[0] if snap.next else None
     pending = None
@@ -202,7 +230,10 @@ def create_app(
             with Session(get_shared_engine()) as s:
                 todo = [r.run_id for r in repo.list_runs(s) if r.status != "finished"]
             for rid in todo:
-                get_run_or_none(rid)
+                try:
+                    get_run_or_none(rid)
+                except Exception:  # H-51: a run that cannot be restored must not stop the app
+                    logging.getLogger(__name__).exception("could not restore run %s", rid)
         yield
         if persist:
             close_checkpointer()
@@ -236,20 +267,55 @@ def create_app(
                 return None
             db_events = repo.list_run_events(s, run_id)
             started_at, finished_at, db_status = row.started_at, row.finished_at, row.status
-        run = build_run(run_id)
+        build_error = None
+        try:
+            run = build_run(run_id)
+        except Exception as e:  # noqa: BLE001 - H-51: one run that cannot be rebuilt must not stop the app
+            build_error = f"{type(e).__name__}: {e}"
+            run = Run(run_id=run_id, graph=None, cfg={"configurable": {"thread_id": run_id}}, ctx=None)
         run.started_at = started_at.astimezone(UTC).isoformat(timespec="seconds")
         run.finished_at = finished_at.astimezone(UTC).isoformat(timespec="seconds") if finished_at else None
         run.persisted_ids = {e["event_id"] for e in db_events}
-        run.events = list(run.graph.get_state(run.cfg).values.get("events", []))
-        errs = [e for e in db_events if _ERR_ID.search(e["event_id"])]
+        if run.graph is not None:
+            run.events = list(run.graph.get_state(run.cfg).values.get("events", []))
+        else:
+            run.events = [e for e in db_events if not _ERR_ID.search(e["event_id"])]
+        # the number in the id grows with each one; ts has only second resolution and "close04" sorts before "err01"
+        errs = sorted(
+            (e for e in db_events if _ERR_ID.search(e["event_id"])),
+            key=lambda e: int(re.search(r"(\d+)$", e["event_id"]).group(1)),
+        )
         for k, ev in enumerate(errs):
             pos = sum(1 for g in run.events if datetime.fromisoformat(g["ts"]) <= datetime.fromisoformat(ev["ts"]))
             pos = min(pos, len(run.events))
             run.error_events.append((pos, ev))
             run.events.insert(pos, ev)
-        if db_status == "error" and errs:
+        max_retries = cfg_domain.loop.max_retries
+        if errs and errs[-1]["payload"].get("status") == "closed":
+            run.closed = True
+            run.retryable = False
+        elif db_status == "error" and errs:
             run.error = errs[-1]["payload"].get("error")
-            run.retryable = bool(errs[-1]["payload"].get("retryable", True))
+            # H-50: failures in a row = error events at the same place; the stored flag may also say "used up"
+            run.retries = max(
+                _failures_in_row(run.error_events) - 1,
+                0 if errs[-1]["payload"].get("retryable", True) else max_retries,
+            )
+            run.retryable = run.retries < max_retries
+        if not run.closed and run.error is None and db_status != "finished":
+            reason = None
+            if build_error is not None:
+                reason = f"Could not restore the run: {build_error}"
+            else:
+                nxt = run.graph.get_state(run.cfg).next
+                if nxt and nxt[0] not in WAIT_ANSWER and nxt[0] not in WAIT_APPROVAL:
+                    reason = f"Interrupted: the process stopped during step {nxt[0]!r}; retry continues from the last checkpoint"
+            if reason is not None:  # H-47: killed in a step (or not rebuildable) -> a retryable error
+                run.error = reason
+                run.retries = _failures_in_row(run.error_events, len(run.events))
+                run.retryable = run.retries < max_retries
+                add_error_event(run)
+                persist_run(run)
         return run
 
     def get_run_or_none(run_id: str) -> Run | None:
@@ -287,6 +353,20 @@ def create_app(
             s.commit()
         run.persisted_ids.update(new_ids)
 
+    def add_error_event(run: Run) -> None:
+        """Append the ``run_finished`` error event for the current ``run.error`` (the id never collides)."""
+        err_ev = make_event(
+            {"run_id": run.run_id, "domain": cfg_domain.domain},
+            "run_finished",
+            "system",
+            {"status": "error", "error": run.error, "retryable": run.retryable},
+            len(run.events) + 1,
+            cfg_domain.domain,
+        )
+        err_ev["event_id"] = f"evt_{run.run_id}_err{len(run.error_events) + 1:02d}"
+        run.error_events.append((len(run.events), err_ev))
+        run.events.append(err_ev)
+
     def advance(run: Run, payload: Any, resumed: bool = False) -> None:
         """Run the graph until the next interrupt or the end; refresh the stored events.
 
@@ -320,17 +400,7 @@ def create_app(
                 if ctx_factory is None:  # H-37: the run owns its session only with the default factory
                     run.ctx.session.close()
             if run.error is not None:
-                err_ev = make_event(
-                    {"run_id": run.run_id, "domain": cfg_domain.domain},
-                    "run_finished",
-                    "system",
-                    {"status": "error", "error": run.error, "retryable": run.retryable},
-                    len(run.events) + 1,
-                    cfg_domain.domain,
-                )
-                err_ev["event_id"] = f"evt_{run.run_id}_err{len(run.error_events) + 1:02d}"  # never collides
-                run.error_events.append((len(run.events), err_ev))
-                run.events.append(err_ev)
+                add_error_event(run)
         persist_run(run)  # skipped when the start was refused with 422 (HTTPException above)
 
     def require_waiting(run: Run, kind: str) -> None:
@@ -358,6 +428,13 @@ def create_app(
         run = build_run(run_id)
         state = new_state(run_id, cfg_domain.domain)
         if body.change_time is not None:
+            try:  # H-48: refuse a bad value now, before any LLM call (needs only the data, no LLM)
+                found = run_detect(run.ctx.tables, cfg_domain, run_id=run_id)
+                validate_change_time(body.change_time, run.ctx, found[0]["payload"] if found else None)
+            except ValueError as e:
+                if ctx_factory is None:
+                    run.ctx.session.close()
+                raise HTTPException(status_code=422, detail=str(e)) from e
             state["change_time"] = body.change_time
         starting.add(run_id)
         try:
@@ -421,8 +498,58 @@ def create_app(
                     detail=f"run {run_id!r} was retried {run.retries} time(s) in a row (limit {cfg_domain.loop.max_retries}); not retryable",
                 )
             run.retries += 1
+            if run.graph is None:  # restored without a graph (H-51): try to build it again
+                try:
+                    rebuilt = build_run(run_id)
+                except Exception as e:  # noqa: BLE001
+                    run.error = f"Could not restore the run: {type(e).__name__}: {e}"
+                    run.retryable = run.retries < cfg_domain.loop.max_retries
+                    add_error_event(run)
+                    persist_run(run)
+                    return record_step(run, "POST /runs/{run_id}/retry", None, 200)
+                run.graph, run.cfg, run.ctx, run.llm_kind = rebuilt.graph, rebuilt.cfg, rebuilt.ctx, rebuilt.llm_kind
             advance(run, None, resumed=True)  # continue from the last checkpoint: the failed node runs again
             return record_step(run, "POST /runs/{run_id}/retry", None, 200)
+
+    @app.post("/runs/{run_id}/close")
+    def close_run(run_id: str, body: CloseBody) -> dict[str, Any]:
+        """A person gives up a run whose error can no longer be retried (H-48). It never touches an SOP."""
+        run = get_run(run_id)
+        with run.lock:
+            if run.closed or run.error is None or run.retries < cfg_domain.loop.max_retries:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"run {run_id!r} is not in a failed state that can no longer be retried; only such a run can be closed",
+                )
+            closer = cfg_domain.resolve_approver(body.closed_by)
+            if closer is None:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"closed_by {body.closed_by!r} is not a valid approver; allowed: {', '.join(cfg_domain.approvers)}",
+                )
+            audit_session = run.ctx.session if run.ctx is not None else Session(get_shared_engine())
+            repo.append_audit(
+                audit_session, actor=closer, action="run_closed",
+                params={"reason": body.reason, "error": run.error, "retries": run.retries}, run_id=run_id,
+            )
+            audit_session.commit()
+            if run.ctx is None:
+                audit_session.close()
+            ev = make_event(
+                {"run_id": run_id, "domain": cfg_domain.domain}, "run_finished", "system",
+                {"status": "closed", "reason": "closed_by_human", "closed_by": closer, "close_reason": body.reason,
+                 "error": run.error},
+                len(run.events) + 1, cfg_domain.domain,
+            )
+            ev["event_id"] = f"evt_{run_id}_close{len(run.error_events) + 1:02d}"
+            run.error_events.append((len(run.events), ev))
+            run.events.append(ev)
+            run.closed, run.retryable = True, False
+            run.finished_at = _now()
+            if ctx_factory is None and run.ctx is not None:
+                run.ctx.session.close()
+            persist_run(run)
+            return record_step(run, "POST /runs/{run_id}/close", body.model_dump(), 200)
 
     @app.get("/runs/{run_id}/export")
     def export_run(run_id: str) -> dict[str, Any]:
