@@ -115,7 +115,6 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
   | 4. 100 run không vượt pool | `tests/test_engine_pool_r10c.py::test_100_runs_do_not_exceed_pool` (đếm `pg_stat_activity` của DB test riêng) | PASSED (≤ 10 = pool 5 + overflow 5) |
   Đỏ trên main (code `backend/` của `origin/main`, test mới): H-19 2/2 đỏ, H-20 2/3 đỏ, H-14 và H-38 lỗi import (`SopConflict`, `max_connections`). Thử biên độc lập (test tạm ở scratchpad, không commit): hai run cùng thấy v1 qua API, duyệt A rồi B → B có `sop_conflict`, quay lại đề xuất trên `base_version` 2, `sop_versions` không trùng số; restart lúc đang chờ trả lời → `question_id` giữ nguyên, trả lời 200, gửi lại cùng id → 409; duyệt lại run đã xong sau restart → 409. Ước tính ↔ thực tế: 7/7 task; 115/90–120 phút (B3 = 1,0); USD 5,81 worker + supervisor ~1–2 / 7–9 (B3 ≈ 1,0); 7/8–10 vòng review (0,9; tốt hơn ước tính). Pre-mortem: 1 chặn bằng test uvicorn thật; 2 bằng `test_hypothesis_state_roundtrips_through_postgres_saver`; 3 bằng đếm nhánh + `out_of_order_refused`; 4 bằng `test_run_rolls_back_its_own_version_is_not_a_conflict`. Ghi chú: cột phút R10c của `metrics.py` = 0 cho tới khi runner ghi xong `run.log` (chạy lại `--write` ở phiên sau).
 
-<!-- metrics:start (tự sinh bởi .autodev/metrics.py, đừng sửa tay) -->
 - R10ch (sửa nhanh sau audit 3; H-31, H-45, H-47, H-48, H-50, H-51, H-54, A5): chế độ B. Worker 4/4 task PASS vòng 1, 111 phút (15:13–17:04 JST), 3,51 USD worker. PR #91 merge. Supervisor Opus chạy lại (`--review-only`):
   | Tiêu chí cấp mốc R10ch | Lệnh / test supervisor tự chạy | Kết quả |
   |---|---|---|
@@ -124,6 +123,7 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
   | 3. A5 trên 5 seed (42..46) LLM giả | `uv run pytest -q tests/test_demo_llm_branches_r10a.py -s -k a5` | LLM đúng (a) 1,00, (b) 1,00 (after 0,018–0,022); LLM luôn sai tham số (b) 0,00 và đúng tham số sai giá trị (b) 0,00, đều có đo; không áp dụng gì: không Measure ở mức run, mức dữ liệu KPI 0,060–0,062 (nền 0,02), không `passed` |
   Thử biên độc lập (test tạm ở scratchpad, không commit): `change_time` đúng bằng điểm bắt đầu anomaly → qua kiểm (đúng, biên hợp lệ); `change_time` đúng mốc cuối dữ liệu → qua kiểm lúc bắt đầu (không đủ cửa sổ sau, Measure trả `insufficient_evidence`, không kẹt; có thể 422 sớm, việc nhỏ); `/runs/nope/close` → 404; `close` lý do `" "` trên run còn retry → 409. Ước tính ↔ thực tế: 4/4 task; 111/40–60 phút (B3 1,85: developer/reviewer tuần tự, mỗi vòng pytest + Postgres ~3 phút); 3,51 USD worker + supervisor ~1 / 3–4 (B3 ≈ 1,0–1,1); 4/4–5 vòng review. Pre-mortem: 1 chặn bằng `test_invariants.py::test_versions_in_events_are_durable_after_a_failure_after_act` (đọc session khác); 2 bằng `test_close_waiting_run_is_409_and_changes_nothing`, `test_close_run_waiting_for_rollback_is_409`; 3 bằng `test_run_killed_between_steps_becomes_retryable_error_and_continues` (kèm run đang interrupt); 4 bằng `test_a5_always_wrong_llm_never_passes`, `test_a5_control_*`. Treo (đề xuất R11a): kill giữa commit `apply_sop` và checkpoint `applied` có thể tạo bản trùng khi retry; số retry suy từ hậu tố `event_id`. Cột USD R10ch của `metrics.py` = 0 vì thiếu `runs/R10ch*.json` lúc supervisor chạy.
 
+<!-- metrics:start (tự sinh bởi .autodev/metrics.py, đừng sửa tay) -->
 ## Số đo plugin B1–B5 (định nghĩa: ROADMAP bảng B)
 
 ### B1 Lỗi lọt qua review (lỗ hổng mới mức cao + vừa / task trong phạm vi audit; ngưỡng ≤ 0,5)
@@ -138,25 +138,25 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
 
 ### B3–B5 theo mốc (B3: thực tế / ước tính, 1,0 = trong khoảng, ngưỡng 0,5–2; B4: số lần runner dừng, ngưỡng 0; B5: chi phí trên task)
 
-| Mốc | Task | Phút | USD | Phút/task | USD/task | Lượt | B3 phút | B3 USD | B4 dừng |
+| Mốc | Task | Phút worker | USD | Phút/task | USD/task | Lượt | B3 phút | B3 USD | B4 dừng |
 |---|---|---|---|---|---|---|---|---|---|
-| M1 | 4 | 0 | 0,00 | 0,0 | 0,00 | 0 | – | – | 0 |
-| M2 | 3 | 0 | 0,00 | 0,0 | 0,00 | 0 | – | – | 0 |
-| M3 | 3 | 0 | 0,00 | 0,0 | 0,00 | 0 | – | – | 0 |
-| R10a | 7 | 81 | 5,94 | 11,6 | 0,85 | 127 | 1,09 | 1,19 | 0 |
-| R10b1 | 6 | 0 | 0,00 | 0,0 | 0,00 | 0 | 0,00 | 0,00 | 0 |
-| R10b2 | 7 | 0 | 0,00 | 0,0 | 0,00 | 0 | 0,00 | 0,00 | 0 |
-| R10c | 7 | 133 | 5,81 | 19,0 | 0,83 | 81 | 1,11 | 0,83 | 0 |
-| R10ch | 4 | 111 | 0,00 | 27,7 | 0,00 | 0 | 1,85 | 0,00 | 0 |
-| R4 | 4 | 21 | 2,59 | 5,3 | 0,65 | 86 | – | – | 1 |
-| R5 | 3 | 21 | 3,01 | 7,1 | 1,00 | 26 | – | – | 0 |
-| R6 | 3 | 23 | 1,81 | 7,8 | 0,60 | 63 | – | – | 0 |
-| R7 | 4 | 40 | 2,58 | 10,1 | 0,65 | 61 | – | – | 0 |
-| R8 | 5 | 71 | 6,40 | 14,2 | 1,28 | 71 | – | – | 0 |
-| R9 | 6 | 83 | 7,18 | 13,8 | 1,20 | 108 | – | – | 1 |
-| R9h | 2 | 25 | 2,02 | 12,7 | 1,01 | 59 | – | – | 0 |
-| R9i | 2 | 35 | 2,90 | 17,5 | 1,45 | 80 | – | – | 0 |
-| R9ih | 1 | 18 | 1,45 | 17,9 | 1,45 | 43 | – | – | 0 |
+| M1 | 4 | – | – | – | – | – | – | – | – |
+| M2 | 3 | – | – | – | – | – | – | – | – |
+| M3 | 3 | – | – | – | – | – | – | – | – |
+| R10a | 7 | 73 | 5,94 | 10,5 | 0,85 | 127 | 1,00 | 1,19 | 0 |
+| R10b1 | 6 | – | – | – | – | – | – | – | – |
+| R10b2 | 7 | – | – | – | – | – | – | – | – |
+| R10c | 7 | 115 | 7,88 | 16,4 | 1,13 | 138 | 1,00 | 1,00 | 0 |
+| R10ch | 4 | 111 | 4,77 | 27,7 | 1,19 | 75 | 1,85 | 1,19 | 0 |
+| R4 | 4 | 18 | 2,59 | 4,4 | 0,65 | 86 | – | – | 1 |
+| R5 | 3 | 18 | 3,01 | 6,2 | 1,00 | 26 | – | – | 0 |
+| R6 | 3 | 21 | 1,81 | 7,1 | 0,60 | 63 | – | – | 0 |
+| R7 | 4 | 35 | 2,58 | 8,8 | 0,65 | 61 | – | – | 0 |
+| R8 | 5 | 64 | 6,40 | 12,8 | 1,28 | 71 | – | – | 0 |
+| R9 | 6 | 76 | 7,18 | 12,7 | 1,20 | 108 | – | – | 1 |
+| R9h | 2 | 20 | 2,02 | 9,9 | 1,01 | 59 | – | – | 0 |
+| R9i | 2 | 27 | 2,90 | 13,7 | 1,45 | 80 | – | – | 0 |
+| R9ih | 1 | 13 | 1,45 | 12,5 | 1,45 | 43 | – | – | 0 |
 
-Mốc trước R4 chạy chế độ A (không có `runs/*.json`) nên phút/USD = 0.
+– = mốc chưa chạy. Phút = giờ thật của worker trong `run.log` (ước tính chỉ tính worker); USD gồm worker + supervisor. `+ ~x`: chưa có `runs/*.json` của supervisor (nó đang chạy), cộng tạm chi phí supervisor trung bình; chạy lại `--write` sau khi mốc xong để có số thật. Mốc trước R4 chạy chế độ A (không có `runs/*.json`) nên hiện –.
 <!-- metrics:end -->

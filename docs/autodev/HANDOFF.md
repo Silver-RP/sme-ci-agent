@@ -51,25 +51,20 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
   - audit 3 tốn 5,55 USD, gấp khoảng 3× ước tính.
 - **Đổi thứ tự (leader quyết):** R10b1 chờ D1 #66 merge. D1 là việc của Bảo; `data_contract.md` ghi rõ là bản đề xuất (#81); comment ở #66, #63.
 - **GitHub:**
-  - workflow `auto-assign` (#75) chưa chạy theo lịch lần nào;
+  - workflow `auto-assign` (#75) không chạy theo lịch lần nào, đã tắt;
   - issue #89, #90 cho Finn;
   - lệnh `/session-start`, `/session-end` đánh số lựa chọn (#79).
-- **P5:** trang trạng thái Artifact https://claude.ai/artifact/X6TLNZGZmzraP36WKgBKxF (loại Dashboard, riêng tư, ảnh chụp 15:28 10/10).
-  - Dữ liệu là 7 file JSON tải lên bằng script ở thư mục tạm của phiên. Script **mất khi phiên đóng**, phải viết lại vào repo.
-  - Làm mới: chạy script → tải file → cập nhật `url` của từng nguồn.
+- **P5 (đóng):** trang trạng thái Artifact https://claude.ai/artifact/X6TLNZGZmzraP36WKgBKxF (loại Dashboard, riêng tư, làm mới 18:54 10/10).
+  - Script xuất `.autodev/export_status.py` (7 file JSON); làm mới ở `/session-end` mục 2a.
+- **Plugin (phiên đêm 10/10):** `metrics.py` sửa 3 lỗi (– cho mốc chưa chạy; B3 phút so với phút worker; supervisor cộng tạm chi phí của chính nó, đọc `runs/` của worktree chính); ước tính audit 5–6 USD (`/audit`); workflow `auto-assign` đã tắt (`gh workflow disable`, file giữ nguyên), gán #65 bằng tay khi Daivon nhận lời; leader duyệt `demo.sh --fresh-db`.
 
 ### Làm tiếp theo thứ tự
 1. **Chờ leader:**
    - (a) nhắc Bảo làm D1 (#66) trước sáng 12/10, và nhắc Daivon nhận lời mời (leader tự gửi vào nhóm chat);
    - (b) chốt giờ kickoff 11/10;
    - (c) cho phép đo nền LLM thật: `eval_rootcause.py --llm real --seeds 3`, ≤ 2 USD, ghi `docs/token-cost.md`;
-   - (d) duyệt hay không `demo.sh --fresh-db` (treo từ 09/10);
-   - (e) D1 chưa merge sáng 12/10 thì leader quyết R10b1.
-2. **Plugin (Claude làm, không cần runner):**
-   - sửa 3 lỗi `metrics.py`: in "–" cho mốc chưa chạy; B3 phút so với phút worker vì ước tính chỉ tính worker; supervisor ghi B3 sau khi cộng chi phí của chính nó;
-   - ước tính audit là 5–6 USD;
-   - đưa script xuất trang trạng thái vào `.autodev/`, thêm bước làm mới vào `/session-end`, đóng P5;
-   - sửa hoặc thay `auto-assign`, dùng để gán #65 khi Daivon nhận lời.
+   - (d) D1 chưa merge sáng 12/10 thì leader quyết R10b1.
+2. **Plugin:** báo cáo đối chiếu ước tính R10a–R10ch để đóng P6; gán #65 cho Daivon bằng tay khi nhận lời.
 3. **R10b1 khi D1 merge:** đối chiếu `plan/R10b1.md` với bản D1 (cột, luật V01–V09), sửa plan qua PR, rồi chạy `R10b1 R10b2` nối tiếp. Đặt `audit.json` sao cho audit 4 chạy sau R10b2.
 4. **Cổng 13/10:** theo `criteria.md` mục 3. Đang có A6 = 0; A5 phần LLM giả; A8 (LLM giả). A4, A7 cần R10b2; UI FR-01..05 cần vai D. Leader duyệt tag.
 5. **R11a** (13–14/10): H-28, H-29, H-56 (gộp H-18), H-32, H-36, H-52, H-53, H-55; kịch bản `ask` và `none`; treo từ R10ch: bản SOP trùng nếu kill giữa commit và checkpoint.

@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -115,10 +116,23 @@ class Milestones(Fixture):
     def test_actual_cost_minutes_turns_per_milestone(self):
         ms = {m["id"]: m for m in metrics.milestones(self.root)}
         self.assertAlmostEqual(ms["R1"]["usd"], 2.0)
-        self.assertAlmostEqual(ms["R1"]["minutes"], 35.0)  # wall clock from run.log: failed try 10 + 20 + supervisor 5
+        # wall clock from run.log; the estimate counts worker minutes only: failed try 10 + 20, supervisor 5 apart
+        self.assertAlmostEqual(ms["R1"]["minutes"], 30.0)
+        self.assertAlmostEqual(ms["R1"]["minutes_supervisor"], 5.0)
         self.assertAlmostEqual(ms["R2"]["minutes"], 12.0)
         self.assertEqual(ms["R1"]["turns"], 40)
         self.assertAlmostEqual(ms["R2"]["usd"], 1.0)  # R2h is a different milestone, not part of R2
+
+    def test_milestone_without_runs_is_not_run(self):
+        (self.root / "plan" / "R3.md").write_text(PLAN_A.replace("# R1", "# R3"), encoding="utf-8")
+        ms = {m["id"]: m for m in metrics.milestones(self.root)}
+        self.assertTrue(ms["R1"]["ran"])
+        self.assertFalse(ms["R3"]["ran"])
+
+    def test_missing_supervisor_cost_is_assumed_from_the_mean_of_other_milestones(self):
+        ms = {m["id"]: m for m in metrics.milestones(self.root)}
+        self.assertIsNone(ms["R1"]["usd_supervisor_assumed"])  # R1 has its supervisor JSON
+        self.assertAlmostEqual(ms["R2"]["usd_supervisor_assumed"], 0.5)  # mean supervisor cost (R1 only)
 
     def test_interventions_count_stops_inside_the_milestone(self):
         ms = {m["id"]: m for m in metrics.milestones(self.root)}
@@ -157,6 +171,18 @@ class Report(Fixture):
         # B2: 1 of 3 tasks needed >= 2 rounds
         self.assertIn("1/3", text)
 
+    def test_milestone_not_run_prints_dashes_not_zeros(self):
+        (self.root / "plan" / "R3.md").write_text(PLAN_A.replace("# R1", "# R3"), encoding="utf-8")
+        row = next(ln for ln in metrics.report(self.root).splitlines() if ln.startswith("| R3 |"))
+        self.assertEqual(row, "| R3 | 2 | – | – | – | – | – | – | – | – |")
+
+    def test_supervisor_cost_not_yet_recorded_is_added_and_marked(self):
+        (self.root / "plan" / "R2.md").write_text(PLAN_A.replace("# R1", "# R2"), encoding="utf-8")
+        row = next(ln for ln in metrics.report(self.root).splitlines() if ln.startswith("| R2 |"))
+        cells = [c.strip() for c in row.strip("|").split("|")]
+        self.assertEqual(cells[3], "1,00 + ~0,50")
+        self.assertEqual(cells[8], "~0,75")  # (1.0 + 0.5) / lower bound 2
+
     def test_write_replaces_only_the_marked_section(self):
         progress = self.root / "PROGRESS.md"
         progress.write_text("# head\n\nkeep me\n", encoding="utf-8")
@@ -167,6 +193,24 @@ class Report(Fixture):
         self.assertIn("TABLE 2", body)
         self.assertNotIn("TABLE 1", body)
         self.assertEqual(body.count(metrics.START), 1)
+
+
+class RunsDir(unittest.TestCase):
+    def test_a_linked_worktree_reads_runs_of_the_main_worktree(self):
+        # the supervisor runs in its own worktree; runs/*.json and run.log live only in the main one (gitignored)
+        with tempfile.TemporaryDirectory() as tmp:
+            main, linked = Path(tmp) / "main", Path(tmp) / "linked"
+            git = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "init.defaultBranch=main"]
+            subprocess.run([*git, "init", "-q", str(main)], check=True)
+            subprocess.run([*git, "-C", str(main), "commit", "-q", "--allow-empty", "-m", "init"], check=True)
+            subprocess.run([*git, "-C", str(main), "worktree", "add", "-q", str(linked)], check=True)
+            (main / ".autodev" / "runs").mkdir(parents=True)
+            self.assertEqual(metrics.runs_dir(linked).resolve(), (main / ".autodev" / "runs").resolve())
+            self.assertEqual(metrics.runs_dir(main).resolve(), (main / ".autodev" / "runs").resolve())
+
+    def test_outside_git_uses_its_own_runs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(metrics.runs_dir(Path(tmp)), Path(tmp) / ".autodev" / "runs")
 
 
 if __name__ == "__main__":
