@@ -16,6 +16,7 @@ from collections.abc import Callable
 from typing import Any
 
 import pandas as pd
+from sqlalchemy.exc import IntegrityError
 
 from backend.db import repo
 from backend.db.models import SopVersion
@@ -69,6 +70,28 @@ def _check_approval(approval: dict | None, sop_id: str, config) -> str:
     return approver
 
 
+class SopConflict(RuntimeError):
+    """The SOP in force is not the version the proposal was built on (H-14): nothing was written."""
+
+    def __init__(self, sop_id: str, base_version: int | None, current_version: int | None) -> None:
+        self.sop_id, self.base_version, self.current_version = sop_id, base_version, current_version
+        super().__init__(
+            f"SOP {sop_id} conflict: the proposal is based on version {base_version}, "
+            f"but version {current_version} is now in force; nothing was changed"
+        )
+
+
+_NOT_CHECKED: Any = object()
+
+
+def sop_version_in_force(ctx: ToolContext, sop_id: str) -> int | None:
+    """Version now in force: the newest row in ``sop_versions``, else the newest in the domain config."""
+    current = repo.get_sop_version(ctx.session, sop_id)
+    if current is not None:
+        return current.version
+    return max((s.version for s in ctx.config.sop if s.id == sop_id), default=None)
+
+
 @_audited
 def apply_sop(
     ctx: ToolContext,
@@ -76,11 +99,31 @@ def apply_sop(
     sop_id: str,
     new_content: str,
     approval: dict | None = None,
+    base_version: Any = _NOT_CHECKED,
 ) -> dict:
-    """Create a new SOP version (previous + 1). Refused without a human approval record."""
+    """Create a new SOP version (previous + 1). Refused without a human approval record.
+
+    With ``base_version`` given (the version the proposal was built on; may be None for an unknown SOP), a different
+    version in force raises ``SopConflict`` and writes nothing. A concurrent write that takes the same version number
+    is also a ``SopConflict`` (unique ``(sop_id, version)``).
+    """
     approver = _check_approval(approval, sop_id, ctx.config)
     if not new_content.strip():
         raise ValueError("new_content must be non-empty")
+    if base_version is not _NOT_CHECKED:
+        in_force = sop_version_in_force(ctx, sop_id)
+        if in_force != base_version:
+            raise SopConflict(sop_id, base_version, in_force)
+    try:
+        with ctx.session.begin_nested():
+            return _write_sop_version(ctx, sop_id, new_content, approver)
+    except IntegrityError as exc:
+        if base_version is _NOT_CHECKED:
+            raise
+        raise SopConflict(sop_id, base_version, sop_version_in_force(ctx, sop_id)) from exc
+
+
+def _write_sop_version(ctx: ToolContext, sop_id: str, new_content: str, approver: str) -> dict:
     if repo.get_sop_version(ctx.session, sop_id) is None:
         # First DB version of a config-defined SOP: keep the config version as the base row,
         # so the new version is base + 1 and the old content stays readable.

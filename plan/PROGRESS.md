@@ -274,3 +274,38 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 15cc785. Review: .autodev/reviews/R10a-dev-07-r1.json (PASS).
 - H-26: `scripts/check_run.py` + `demo.sh --check [--repeat N]` đi hết một run qua HTTP tới learning_saved, gọi 5 API GET, in p95. 504 pytest, smoke sạch.
 - Non-blocking: p95 chưa nói gì về LLM thật (run ~0,4 s với LLM giả).
+
+### R10c/dev-01: DONE
+- Vòng: 1. Commit: 785b68c. Review: .autodev/reviews/dev-01-r1.json (PASS).
+- H-37: engine SQLAlchemy dùng chung theo URL, session run đóng khi kết thúc, dispose khi tắt app; 100 run không vượt pool. 509 pytest.
+- Non-blocking: chưa test đường run lỗi/pending không đóng session (xem ở dev-02); env pool không phải số ném ValueError thiếu thông báo.
+
+### R10c/dev-02: DONE
+- Vòng: 1. Commit: 64a729c. Review: .autodev/reviews/dev-02-r1.json (PASS).
+- H-15: run, event, checkpoint lưu Postgres (PostgresSaver + ALLOWED_MSGPACK_MODULES), khôi phục run chưa kết thúc khi khởi động; e2e hai tiến trình uvicorn thật (SIGKILL tiến trình 1) tới learning_saved. 516 pytest.
+- Non-blocking: chế độ Postgres chỉ bật khi có DATABASE_URL và không tiêm checkpointer/ctx_factory; sau restart retries về 0 và steps cho /export mất; DemoLLM khôi phục hỏi lại câu đầu.
+
+### R10c/dev-03: DONE
+- Vòng: 1. Commit: 89b5a19. Review: .autodev/reviews/dev-03-r1.json (PASS).
+- H-19: wait_halt không xoá applied; act giữ previous_* của lần áp dụng đầu cùng sop_id nên rollback khôi phục SOP trước run. 518 pytest.
+- Non-blocking: learn có thể dùng applied cũ qua halt (theo dõi ở dev-06/07).
+
+### R10c/dev-04: DONE
+- Vòng: 1. Commit: 7a0c4eb. Review: .autodev/reviews/dev-04-r1.json (PASS).
+- H-14: apply_sop so base_version, SopConflict (kể cả IntegrityError ghi đồng thời); act đề xuất lại có giới hạn rồi halt; rollback chỉ hoàn tác bản của chính run. Không thêm migration (ràng buộc đã có ở 0001). 524 pytest.
+- Non-blocking: đề xuất dựng tay không có base_version không bị kiểm; event mới decision sop_conflict, rollback_done có conflict (báo vai D).
+
+### R10c/dev-05: DONE
+- Vòng: 1. Commit: 97c4805. Review: .autodev/reviews/dev-05-r1.json (PASS).
+- H-20: pending của câu hỏi có question_id và attempt; POST /answer nhận question_id tuỳ chọn, cũ thì 409; payloads.md cập nhật (cả sop_conflict, conflict của dev-04). 527 pytest.
+- Báo vai D: pending.question_id/attempt mới; dashboard mới nên gửi lại question_id và xử lý 409 bằng GET /runs/{id}.
+
+### R10c/dev-06: DONE
+- Vòng: 1. Commit: f8a1193. Review: .autodev/reviews/dev-06-r1.json (PASS).
+- H-38: audit_log cho answer_received (human), halt_raised, kpi_not_measured (not_applied/insufficient_evidence); halt_decided thêm options; khôi phục sau restart không ghi trùng. 536 pytest.
+- Non-blocking: audit_answer có thể lặp khi /retry sau lỗi (rủi ro thấp, dev-07 phủ); action mới chưa ghi vào tài liệu payload.
+
+### R10c/dev-07: DONE
+- Vòng: 1. Commit: cada99a. Review: .autodev/reviews/dev-07-r1.json (PASS).
+- A6: tests/test_invariants.py, 60 chuỗi (seed 20261010+i), 22 nhánh, 995 thao tác sai thứ tự bị từ chối, 0 vi phạm. 553 pytest, 1 xfailed (claude- trong backend/, H-39 chờ R10b2).
+- Non-blocking: lệnh mutation trên app thật ghi vào báo cáo mốc.

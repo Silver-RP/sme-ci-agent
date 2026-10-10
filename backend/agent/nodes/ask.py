@@ -14,7 +14,9 @@ from langgraph.types import interrupt
 
 from backend.agent.events import make_event
 from backend.agent.state import AgentState
+from backend.db import repo
 from backend.domain_config import DomainConfig
+from backend.tools.readonly import ToolContext
 
 AGENT = "investigation"
 
@@ -74,13 +76,37 @@ def make_ask_node(config: DomainConfig):
     return ask
 
 
-def make_wait_answer_node(config: DomainConfig):
+def open_question(state: AgentState) -> dict[str, Any]:
+    """The question now waiting for a person: text, id (the event_id of its question_asked) and attempt (H-20)."""
+    ev = next((e for e in reversed(state.get("events", [])) if e["type"] == "question_asked"), None)
+    if ev is None:
+        return {"question": "", "question_id": "", "attempt": 0, "run_id": state.get("run_id", "")}
+    return {
+        "question": ev["payload"]["question"],
+        "question_id": ev["event_id"],
+        "attempt": ev["payload"].get("attempt", 0),
+        "run_id": state.get("run_id", ""),
+    }
+
+
+def audit_answer(ctx: ToolContext | None, question: dict[str, Any], answer: str) -> None:
+    """One audit_log row for the answer of a person (H-38). Written after the interrupt returns, so a run that is
+    only restored or waiting writes nothing. Committed at once, like the other decisions of people (H-07)."""
+    if ctx is None:
+        return
+    repo.append_audit(
+        ctx.session, actor="human", action="answer_received",
+        params={"question_id": question.get("question_id"), "attempt": question.get("attempt"), "answer": answer},
+        run_id=ctx.run_id,
+    )
+    ctx.session.commit()
+
+
+def make_wait_answer_node(config: DomainConfig, ctx: ToolContext | None = None):
     def wait_answer(state: AgentState) -> dict[str, Any]:
-        question = next(
-            (e["payload"]["question"] for e in reversed(state.get("events", [])) if e["type"] == "question_asked"),
-            "",
-        )
-        answer = interrupt({"question": question, "run_id": state.get("run_id", "")})
+        question = open_question(state)
+        answer = interrupt(question)
+        audit_answer(ctx, question, answer)
         ev = make_event(
             state, "answer_received", AGENT, {"answer": answer}, len(state.get("events", [])) + 1, config.domain
         )
@@ -117,18 +143,26 @@ def halt_payload(reason: str, options: list[str] | None = None, **extra: Any) ->
     }
 
 
-def make_halt_node(config: DomainConfig):
+def audit_halt_raised(ctx: ToolContext | None, payload: dict[str, Any]) -> None:
+    """One audit_log row when the rules stop a run for a person (H-38): reason and the options offered."""
+    if ctx is None:
+        return
+    repo.append_audit(
+        ctx.session, actor="system", action="halt_raised",
+        params={"reason": payload.get("reason"), "options": list(payload.get("options") or [])},
+        run_id=ctx.run_id,
+    )
+
+
+def make_halt_node(config: DomainConfig, ctx: ToolContext | None = None):
     """Question limit reached: stop and wait for a person (``wait_halt`` interrupts); never conclude by itself."""
 
     def halt(state: AgentState) -> dict[str, Any]:
-        ev = make_event(
-            state,
-            "question_asked",
-            "system",
-            halt_payload("max_questions_reached", options=halt_options(state, config), questions=state.get("question_count", 0)),
-            len(state.get("events", [])) + 1,
-            config.domain,
+        payload = halt_payload(
+            "max_questions_reached", options=halt_options(state, config), questions=state.get("question_count", 0)
         )
+        audit_halt_raised(ctx, payload)
+        ev = make_event(state, "question_asked", "system", payload, len(state.get("events", [])) + 1, config.domain)
         return {"status": "awaiting_human", "events": [ev]}
 
     return halt
