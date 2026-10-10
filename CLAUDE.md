@@ -47,6 +47,7 @@ docs/schema/events.json là hợp đồng backend ↔ dashboard. Đổi file nà
 
 ## Công cụ (Claude Code)
 
+- Bắt đầu mỗi nhiệm vụ: ghi một dòng ước tính thời gian (phút người phải chờ; thêm USD nếu chạy auto-dev, LLM thật hay tìm web), tách riêng phần chờ bên ngoài (check GitHub, pytest + Postgres, demo). Vượt quá 2 lần thì báo giữa chừng kèm ước tính mới.
 - ADR trong docs/decisions.md và TASKS.md là cố định: không đề xuất lại multi-agent hay Agent Manager.
 - Brainstorm/lập kế hoạch chỉ trong phạm vi một task; ghi kế hoạch vào PR, không tạo file kế hoạch mới ở gốc repo.
 - Dùng TDD cho backend/detect, backend/sandbox, backend/tools.
