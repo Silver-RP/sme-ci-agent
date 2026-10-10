@@ -299,3 +299,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 97c4805. Review: .autodev/reviews/dev-05-r1.json (PASS).
 - H-20: pending của câu hỏi có question_id và attempt; POST /answer nhận question_id tuỳ chọn, cũ thì 409; payloads.md cập nhật (cả sop_conflict, conflict của dev-04). 527 pytest.
 - Báo vai D: pending.question_id/attempt mới; dashboard mới nên gửi lại question_id và xử lý 409 bằng GET /runs/{id}.
+
+### R10c/dev-06: DONE
+- Vòng: 1. Commit: f8a1193. Review: .autodev/reviews/dev-06-r1.json (PASS).
+- H-38: audit_log cho answer_received (human), halt_raised, kpi_not_measured (not_applied/insufficient_evidence); halt_decided thêm options; khôi phục sau restart không ghi trùng. 536 pytest.
+- Non-blocking: audit_answer có thể lặp khi /retry sau lỗi (rủi ro thấp, dev-07 phủ); action mới chưa ghi vào tài liệu payload.
