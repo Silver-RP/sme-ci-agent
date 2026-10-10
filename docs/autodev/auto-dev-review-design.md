@@ -346,8 +346,12 @@ CẤU HÌNH TỪNG DỰ ÁN  (nằm trong repo dự án)
 plan/M1.md
   - Mục tiêu mốc, phạm vi (in/out of scope)
   - Ước tính (P6): số task, phút, USD, số vòng review dự kiến  ← supervisor đối chiếu với thực tế
+      phút: task có pytest + Postgres ≥ 25 phút/task; USD = worker + 2 USD supervisor Opus;
+      audit sau mốc cộng 5–6 USD (đối chiếu R10a–R10ch, PROGRESS)
   - Pre-mortem (P6): 2–4 cách mốc "đạt trên giấy mà hỏng thực tế",
-      mỗi cách gắn với một tiêu chí cấp mốc hoặc task chặn nó
+      mỗi cách gắn với một tiêu chí cấp mốc hoặc task chặn nó;
+      mốc đụng trạng thái bền phải có "kill ở giữa thì sao?", mốc đẩy chỉ số A phải có
+      "chỉ số có đạt sẵn nhờ cách dựng dữ liệu không?" (lớp lỗi audit 3 tìm ra mà pre-mortem bỏ sót)
   - Tiêu chí chấp nhận cấp mốc            ← chỉ người dùng được sửa (R8-c)
   - Danh sách task:
       dev-01: tiêu đề | mô tả | tiêu chí chấp nhận | phụ thuộc | trạng thái | số vòng

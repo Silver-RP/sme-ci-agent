@@ -64,7 +64,7 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
    - (b) chốt giờ kickoff 11/10;
    - (c) cho phép đo nền LLM thật: `eval_rootcause.py --llm real --seeds 3`, ≤ 2 USD, ghi `docs/token-cost.md`;
    - (d) D1 chưa merge sáng 12/10 thì leader quyết R10b1.
-2. **Plugin:** báo cáo đối chiếu ước tính R10a–R10ch để đóng P6; gán #65 cho Daivon bằng tay khi nhận lời.
+2. **Plugin:** P5, P6 đã đóng (10/10). Gán #65 cho Daivon bằng tay khi nhận lời. Plan R10b1/R10b2 khi sửa sau D1: áp luật ước tính + pre-mortem mới (thiết kế 6.5).
 3. **R10b1 khi D1 merge:** đối chiếu `plan/R10b1.md` với bản D1 (cột, luật V01–V09), sửa plan qua PR, rồi chạy `R10b1 R10b2` nối tiếp. Đặt `audit.json` sao cho audit 4 chạy sau R10b2.
 4. **Cổng 13/10:** theo `criteria.md` mục 3. Đang có A6 = 0; A5 phần LLM giả; A8 (LLM giả). A4, A7 cần R10b2; UI FR-01..05 cần vai D. Leader duyệt tag.
 5. **R11a** (13–14/10): H-28, H-29, H-56 (gộp H-18), H-32, H-36, H-52, H-53, H-55; kịch bản `ask` và `none`; treo từ R10ch: bản SOP trùng nếu kill giữa commit và checkpoint.
