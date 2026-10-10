@@ -161,6 +161,8 @@ export function buildRunModel(events: readonly AgentEvent[]): RunModel {
         finished = p;
         break;
     }
+    // the error before a Retry stays in the stream (H-13): any later event means the run went on
+    if (e.type !== "run_finished") finished = null;
   }
   return {
     anomaly,

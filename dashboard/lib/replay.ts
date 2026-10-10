@@ -25,8 +25,6 @@ export interface Recording {
 export interface Chunk {
   /** events this step adds to the stream */
   events: AgentEvent[];
-  /** an event that exists only until the next step (the run_finished error before a Retry, H-13) */
-  transient: boolean;
   /** run status after the step; null for a recording without steps */
   status: RunStatus | null;
   /** what the person did to get to the NEXT chunk (shown as a hint during replay) */
@@ -34,8 +32,7 @@ export interface Chunk {
 }
 
 function sameEvent(a: unknown, b: AgentEvent): boolean {
-  // id alone is not enough: after a retry the error event shares its id with a real event (H-13)
-  return isObj(a) && a.event_id === b.event_id && a.type === b.type;
+  return isObj(a) && a.event_id === b.event_id;
 }
 
 function asStatus(v: unknown): RunStatus | null {
@@ -45,38 +42,25 @@ function asStatus(v: unknown): RunStatus | null {
 export function chunksOf(rec: Recording): Chunk[] {
   const events = rec.events;
   const steps = (rec.steps ?? []).filter((s) => s.http < 400);
-  if (steps.length === 0) return [{ events: [...events], transient: false, status: null, next: null }];
+  if (steps.length === 0) return [{ events: [...events], status: null, next: null }];
   const chunks: Chunk[] = [];
   let from = 0;
   steps.forEach((s, i) => {
     const next = steps[i + 1] ? { request: steps[i + 1].request, body: steps[i + 1].body } : null;
+    // the stream is append-only (H-13), so each step's last event is found after the previous one
     const idx = events.findIndex((e, k) => k >= from && sameEvent(s.last_event, e));
-    if (idx >= 0) {
-      chunks.push({ events: events.slice(from, idx + 1), transient: false, status: asStatus(s.response), next });
-      from = idx + 1;
-    } else if (isObj(s.last_event)) {
-      // not in the final stream: shown now, gone after the next step (the stream is rebuilt from 0)
-      chunks.push({ events: [s.last_event as unknown as AgentEvent], transient: true, status: asStatus(s.response), next });
-      from = 0;
-    } else {
-      chunks.push({ events: [], transient: false, status: asStatus(s.response), next });
-    }
+    const end = idx >= 0 ? idx + 1 : from;
+    chunks.push({ events: events.slice(from, end), status: asStatus(s.response), next });
+    from = end;
   });
-  if (from < events.length && from > 0) chunks[chunks.length - 1].events.push(...events.slice(from));
+  if (from < events.length) chunks[chunks.length - 1].events.push(...events.slice(from));
   return chunks;
 }
 
 /** Events visible after `chunk` is fully shown, plus `cursor` events of the next one. */
 export function visibleEvents(chunks: Chunk[], chunk: number, cursor: number): AgentEvent[] {
   const out: AgentEvent[] = [];
-  for (let i = 0; i < chunk && i < chunks.length; i++) {
-    const c = chunks[i];
-    if (c.transient) {
-      out.length = 0; // after the retry the backend replays the stream from the checkpoint
-      continue;
-    }
-    out.push(...c.events);
-  }
+  for (let i = 0; i < chunk && i < chunks.length; i++) out.push(...chunks[i].events);
   const cur = chunks[chunk];
   if (cur) out.push(...cur.events.slice(0, cursor));
   return out;

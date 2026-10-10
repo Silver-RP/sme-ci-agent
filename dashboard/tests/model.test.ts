@@ -103,20 +103,26 @@ describe("run model on real recordings", () => {
 });
 
 describe("replay chunks", () => {
-  it("one chunk per recorded step; the error before a retry is transient (H-13)", () => {
+  it("one chunk per recorded step; the error before a retry stays in the stream (H-13)", () => {
     for (const r of RECORDINGS) {
       if (!r.steps) continue;
       const chunks = chunksOf(r);
       expect(chunks).toHaveLength(r.steps.filter((s) => s.http < 400).length);
     }
     const chunks = chunksOf(recording("run-error-retry"));
-    expect(chunks[0]).toMatchObject({ transient: true });
-    expect(chunks[0].events[0].type).toBe("run_finished");
+    expect(chunks[0].events.at(-1)?.type).toBe("run_finished");
     expect(chunks[0].status?.state).toBe("error");
-    // after the retry the stream starts again from the checkpoint: the error event is gone
     const after = visibleEvents(chunks, 2, chunks[2].events.length);
-    expect(after.some((e) => e.type === "run_finished" && e.payload.status === "error")).toBe(false);
-    expect(after.at(-1)?.type).toBe("run_finished");
+    expect(after.some((e) => e.type === "run_finished" && e.payload.status === "error")).toBe(true);
+    expect(after.at(-1)?.payload.status).toBe("completed");
+  });
+
+  it("an error followed by more events is no longer the run's end (retry, H-13)", () => {
+    const events = recording("run-error-retry").events;
+    const errorAt = events.findIndex((e) => e.type === "run_finished");
+    expect(buildRunModel(events.slice(0, errorAt + 1)).finished?.status).toBe("error");
+    expect(buildRunModel(events.slice(0, errorAt + 2)).finished).toBeNull();
+    expect(buildRunModel(events).finished?.status).toBe("completed");
   });
 
   it("replaying all chunks gives back the final stream", () => {
