@@ -1,72 +1,150 @@
+@import "tailwindcss";
+
+/* Dark mode follows the `.dark` class on <html> (toggle in the topbar). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens. Colors carry meaning (brief NFR-2), the same everywhere:
+ *   ok    = đạt / an toàn          bad  = bất thường / chưa đạt
+ *   wait  = chờ người              run  = đang chạy
+ *   accent = hành động chính và mục đang chọn (không mang nghĩa trạng thái)
+ */
 :root {
-  --fg: #1a1a1a;
-  --bg: #fafafa;
-  --muted: #666;
-  --border: #ddd;
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f1f3f6;
+  --border: #e3e6eb;
+  --fg: #111827;
+  --muted: #5b6474;
+  --accent: #4f46e5;
+  --accent-fg: #ffffff;
+  --accent-soft: #eef0ff;
+  --ok: #0f9d58;
+  --ok-soft: #e6f6ee;
+  --bad: #e5531a;
+  --bad-soft: #fdeee7;
+  --wait: #c98a00;
+  --wait-soft: #fdf5e1;
+  --run: #64748b;
+  --run-soft: #eef1f5;
+  --diff-add: #e3f7ea;
+  --diff-del: #fde8e4;
+  --shadow: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 16px rgb(16 24 40 / 0.06);
 }
 
-* {
-  box-sizing: border-box;
+.dark {
+  --bg: #0d1117;
+  --surface: #151b24;
+  --surface-2: #1c2430;
+  --border: #2a3441;
+  --fg: #e8ecf2;
+  --muted: #9aa5b5;
+  --accent: #818cf8;
+  --accent-fg: #0d1117;
+  --accent-soft: #23264a;
+  --ok: #34c77b;
+  --ok-soft: #12301f;
+  --bad: #ff7a45;
+  --bad-soft: #3a1d12;
+  --wait: #f2b632;
+  --wait-soft: #352a0e;
+  --run: #94a3b8;
+  --run-soft: #1e2733;
+  --diff-add: #133222;
+  --diff-del: #3a1a16;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-wait: var(--wait);
+  --color-wait-soft: var(--wait-soft);
+  --color-run: var(--run);
+  --color-run-soft: var(--run-soft);
+  --color-diff-add: var(--diff-add);
+  --color-diff-del: var(--diff-del);
+  --shadow-card: var(--shadow);
+  --font-sans: var(--font-app), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --animate-fade-up: fade-up 0.35s ease-out both;
+  --animate-pulse-ring: pulse-ring 1.6s ease-out infinite;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-dot: dot 1.2s ease-in-out infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent);
+    }
+    100% {
+      box-shadow: 0 0 0 12px transparent;
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: -200% 0;
+    }
+    to {
+      background-position: 200% 0;
+    }
+  }
+  @keyframes dot {
+    0%,
+    80%,
+    100% {
+      opacity: 0.25;
+      transform: scale(0.8);
+    }
+    40% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+/* Body text >= 18px on the projector (NFR-1): Tailwind sizes are rem-based, so scale the root. */
+html {
+  font-size: 112.5%;
+}
+html[data-present="true"] {
+  font-size: 125%;
 }
 
 body {
-  margin: 0;
-  color: var(--fg);
   background: var(--bg);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  line-height: 1.5;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
 
-main {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 24px 16px;
-}
-
-h1,
-h2 {
-  margin: 0 0 12px;
-}
-
-section {
-  margin-bottom: 32px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  text-align: left;
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--border);
-}
-
-.muted {
-  color: var(--muted);
-}
-
-.timeline {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.timeline li {
-  display: grid;
-  grid-template-columns: 90px 120px 190px 1fr;
-  gap: 8px;
-  padding: 6px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 14px;
-}
-
-.badge {
-  display: inline-block;
-  padding: 0 8px;
-  border-radius: 10px;
-  background: #e8eefc;
-  font-size: 12px;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

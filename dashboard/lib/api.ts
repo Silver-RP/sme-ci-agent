@@ -9,6 +9,8 @@ export interface RunStatus {
   pending: ({ type: "answer" | "approval" } & Record<string, unknown>) | null;
   /** set when state is "error" (the step failed; POST /runs/{id}/retry runs it again) */
   error?: string;
+  /** with state "error": false once /retry was used up (loop.max_retries); then the UI hides Retry */
+  retryable?: boolean;
 }
 
 export interface Decision {
