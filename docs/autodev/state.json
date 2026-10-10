@@ -144,13 +144,13 @@
       },
       {
         "id": "P5",
-        "status": "in_progress",
-        "note": "audit + trạng thái; trang Artifact đã tạo 2026-10-10 (làm mới tay); còn đưa script xuất vào repo + bước làm mới ở /session-end"
+        "status": "done",
+        "note": "audit + trạng thái; trang Artifact làm mới bằng .autodev/export_status.py ở /session-end (đóng 2026-10-10)"
       },
       {
         "id": "P6",
         "status": "in_progress",
-        "note": "kế hoạch duyệt 2026-10-10; P6a dùng từ R10a; P6b metrics.py có; còn sửa 3 lỗi metrics.py/supervisor + báo cáo đối chiếu R10a–R10ch"
+        "note": "kế hoạch duyệt 2026-10-10; P6a dùng từ R10a; P6b metrics.py có, 3 lỗi đã sửa 2026-10-10; còn báo cáo đối chiếu R10a–R10ch"
       },
       {
         "id": "P7",

@@ -117,7 +117,8 @@ def role_model(role: str) -> tuple[str, str]:
             os.environ.get("AUTODEV_SUPERVISOR_MODEL", "opus"),
             os.environ.get("AUTODEV_SUPERVISOR_EFFORT", "medium"),
         )
-    if role == "audit":  # sonnet by default: audit 2 on opus cost 7.2 USD (user choice 2026-10-09)
+    # sonnet by default: audit 2 on opus cost 7.2 USD (user choice 2026-10-09); estimate 5-6 USD (audit 3: 5.55)
+    if role == "audit":
         return (
             os.environ.get("AUTODEV_AUDIT_MODEL", "sonnet"),
             os.environ.get("AUTODEV_AUDIT_EFFORT", "medium"),

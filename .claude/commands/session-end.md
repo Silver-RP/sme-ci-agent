@@ -21,6 +21,15 @@ Bạn đóng phiên làm việc. Mục tiêu: phiên sau chạy `/session-start`
 
 Không sửa: brief của team (`docs/briefs/`) trừ khi leader quyết đổi yêu cầu (khi đó ghi vào mục "Lịch sử thay đổi yêu cầu" của brief).
 
+Số đo plugin: `python3 .autodev/metrics.py --write` (bảng B1–B5 trong `docs/autodev/PROGRESS.md`). Lúc này mọi `runs/*.json` đã có, nên số thay cho số tạm (`+ ~x`) mà supervisor ghi khi đang chạy.
+
+## 2a. Trang trạng thái (P5)
+Trang riêng tư https://claude.ai/artifact/X6TLNZGZmzraP36WKgBKxF (loại Dashboard, 7 nguồn dữ liệu là file JSON). Làm **sau** khi sửa `state.json`, trước khi merge:
+1. `python3 .autodev/export_status.py` → 7 file trong `.autodev/runs/status/` (`goals`, `milestones`, `audits`, `gaps`, `plugin`, `outlook`, `runner`).
+2. Tải từng file lên kho tài sản của trang: Artifact `publish`, `url` như trên, `asset: true`, `file_path` (JSON phải tải từng file một). Ghi lại `url` (`/_blob/<id>`) của từng file.
+3. ArtifactData `batch` (đọc `datasets` trước để lấy `version`): với mỗi nguồn `datasets/<tên>`, `update` `source` = `{kind: "file", name: "<tên>.json", url}` và `updated` = `{at: <giờ ISO>, by: "Claude (.autodev/export_status.py)"}`.
+4. File cũ trong kho tài sản để nguyên (không xoá khi leader chưa duyệt). Lỗi tải lên hoặc ghi thì báo leader, không chặn merge.
+
 ## 3. Kiểm và merge
 1. `uv run python -m pytest .autodev/tests -q` phải xanh (kiểm cấu trúc PROJECT_STATE, state.json).
 2. Nhánh `chore/autodev-handoff-<YYYYMMDD>`, commit `chore(autodev): bàn giao đóng phiên <ngày>`, PR.
