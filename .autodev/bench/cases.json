@@ -1,0 +1,25 @@
+[
+  {
+    "id": "p1", "hole": "H-57", "family": "test chỉ qua TestClient",
+    "task_id": "R10a/dev-02", "base": "5534331", "head": "f736861", "plan": "plan/R10a.md",
+    "files": ["backend/api/kpi_series.py"],
+    "keywords": "múi giờ|timezone|tz|TypeError|NaT"
+  },
+  {
+    "id": "p2", "hole": "H-50", "family": "kill/restart",
+    "task_id": "R10c/dev-02", "base": "7864ed3", "head": "64a729c", "plan": "plan/R10c.md",
+    "files": ["backend/api/app.py"],
+    "keywords": "retries|max_retries|retryable"
+  },
+  {
+    "id": "p3", "hole": "H-49", "family": "đạt trên giấy / xuyên file",
+    "task_id": "R10c/dev-05", "base": "aa02c58", "head": "97c4805", "plan": "plan/R10c.md",
+    "files": ["backend/api/app.py", "scripts/check_run.py", "dashboard/"],
+    "keywords": "question_id.{0,80}(tuỳ chọn|tùy chọn|optional|None|không gửi|thiếu|bỏ qua|omit)|(tuỳ chọn|tùy chọn|optional|không gửi|thiếu|omit).{0,80}question_id"
+  },
+  {
+    "id": "p4", "hole": null, "family": "sạch",
+    "task_id": "R10a/dev-03", "base": "a00a387", "head": "becbd39", "plan": "plan/R10a.md",
+    "files": [], "keywords": ""
+  }
+]
