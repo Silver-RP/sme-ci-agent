@@ -22,13 +22,15 @@ Cập nhật: 2026-10-10 · Nguồn: audit `docs/audits/2026-10-09_2.md` + R9i m
 
 MVP: scenario 1 chạy đủ vòng Detect → Learn từ dashboard trên dữ liệu sandbox (docs/PLAN.md mục 1).
 
-| # | Điều cần kiểm chứng | % đạt | Bằng chứng | Còn thiếu |
-|---|---|---|---|---|
-| 1 | Tìm đúng nguyên nhân gốc, biết hỏi người khi thiếu bằng chứng | 30 | SOP khớp scenario (H-10); Detect khớp ground truth; luật hỏi theo ngưỡng; eval chạy được nhưng tự đúng (H-28) | T-030 + `eval_rootcause.py --llm real` có kết quả; H-28, H-29 |
-| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 65 | Measure theo `action` thật (test_measure_h06); e2e uvicorn sai → rollback → đúng → Learn (test_e2e_rollback_r9); đề xuất phải đủ `action` + `sop_proposal`, action hữu hạn, trong miền YAML, đúng máy (R9i) | H-31, H-32, H-36, H-19; LLM thật (T-030 lần 2) |
-| 3 | 3 chỉ số trước/sau trên 6 tháng mô phỏng | 5 | `measure()` 1 máy, 7 ngày; MTTD/MTTR chỉ test nạp tay | H-11 (cả thiết kế MTTD); T-042, T-043 |
+Từ 2026-10-10, **% đạt tính bằng công thức từ chỉ số đo được** (`docs/eval/criteria.md` mục 2), không ước lượng. Chỉ số chưa đo được tính 0, nên % hiện là 0. Cột "Ước lượng cũ" chỉ để tham khảo.
 
-Audit 1 hạ % xuống 25/40/10; sau R9 supervisor nâng lên 45/70/10; audit 2 hạ còn 30/55/5 vì eval tự đúng và bỏ `action` là tắt được rollback; R9i đóng lỗ bỏ `action` → 30/65/5.
+| # | Điều cần kiểm chứng | % đo được | Ước lượng cũ | Chỉ số (ngưỡng freeze) | Nền 10/10 | Mốc đo |
+|---|---|---|---|---|---|---|
+| 1 | Tìm đúng nguyên nhân gốc, biết hỏi người khi thiếu bằng chứng | 0 | 30 | A1 top-1 tập giữ lại ≥ 0,7; A2 precision ≥ 0,6, recall ≥ 0,8; A3 = 0 | eval LLM giả chỉ kiểm bộ chấm (right 100%, wrong 0%, unsure hỏi 100%); chấm theo chuỗi (H-28) | đo nền LLM thật sau R10a; R11a, R11b |
+| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 0 | 65 | A4 ≥ 0,9; A5 (a) 1,0, (b) ≥ 0,8; A6 = 0 vi phạm | test_measure_h06, test_e2e_rollback_r9 (1 nhánh, 1 seed); T-030 1 run thật | R10a (A5), R10b2 (A4), R10c (A6) |
+| 3 | 3 chỉ số trước/sau trên 6 tháng mô phỏng | 0 | 5 | A7: 3 chỉ số tính được, tốt hơn đối chứng "không agent" | `measure()` 1 máy, 7 ngày; H-11 | R10b2 |
+
+Cổng go/no-go 13/10 và 20/10: `docs/eval/criteria.md` mục 3. Chỉ số plugin B1–B5: `python3 .autodev/metrics.py` (nền: B1 = 1,67 ở audit 1, 1,75 ở audit 2; B2 = 2/37 task cần ≥ 2 vòng).
 
 ## Kiến trúc hiện nay
 
@@ -88,6 +90,7 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 
 ## Quyết định gần đây
 
+- 2026-10-10: % đạt tính bằng công thức từ chỉ số đo được (`docs/eval/criteria.md`: A1–A8, cổng 13/10 và 20/10); ước lượng audit chỉ tham khảo. Ngưỡng A1 freeze trên tập giữ lại ≥ 0,7. Chỉ số plugin B1–B6 (ROADMAP bảng B, `.autodev/metrics.py`). Đo nền LLM thật sau R10a, ≤ 2 USD.
 - 2026-10-10: leader duyệt kế hoạch P6 hai luồng đến Demo Day (ROADMAP). R10b không còn chờ D1 (hợp đồng v0.1 đã duyệt); R10c (H-15, H-14, H-19, H-20, H-37, H-38) làm trước v0.1; R11 tách R11a (cơ chế eval, không chờ team) và R11b (nhập D4/D5). Cổng UI 13/10: chưa có PR FR-01 thì hỏi leader. P9 (reviewer cho PR của team, chỉ comment) sau v0.1.
 - 2026-10-10: mở/đóng phiên bằng lệnh của leader `/session-start`, `/session-end` (bàn giao qua HANDOFF + file này, PR, merge sau check).
 - 2026-10-10: team 4 người theo vai: A dữ liệu (#63), D giao diện (#64), Q kiểm chứng (#65); backend do leader + auto-dev. Từ nay auto-dev không sửa phần trình bày `dashboard/`; dữ liệu mới chờ D1 (#66). `main` bắt buộc qua PR + check `plugin-guard` (chỉ leader sửa file plugin).
@@ -124,4 +127,4 @@ Kế hoạch P6 (duyệt 10/10; đầy đủ, kèm luồng plugin, pre-mortem, t
 | R11b | 15–17/10 | Điều 1: đề độc lập | nhập D4/D5; eval nhiều seed LLM thật; ghi run tốt để phát lại | vai A |
 | R12 | 18–19/10 | Gom lỗi bug bash 2, audit 4, bộ dữ liệu demo (D6) | | vai Q, A |
 
-Ước tính làm một mình tối đa (không team): điều 1 ≈ 60%, điều 2 ≈ 90%, điều 3 ≈ 75%.
+Chỉ số mỗi mốc phải đo được khi xong: R10a → A5, A8; R10b2 → A4, A7; R10c → A6; R11a → A1–A3 tập dev; R11b → A1 tập giữ lại (`TASKS.md`, `docs/eval/criteria.md`). Plan R10b1/R10b2/R10c duyệt chung một PR ngày 11/10; R10c trễ thì H-15 chuyển vào R10b2.
