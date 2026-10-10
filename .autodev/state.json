@@ -1,58 +1,93 @@
 {
-  "milestone": "R10a",
-  "current_task": null,
+  "milestone": "R10c",
+  "current_task": "dev-02",
   "tasks": {
     "dev-01": {
       "status": "DONE",
       "round": 1,
-      "base": "be2ee57451cb49d2d11604bece3c6b5e148ab895",
-      "commit": "a474722"
+      "base": "8b4c4f2196cac4edbbcf708ba56b5f2da2cd4224",
+      "commit": "785b68c"
     },
     "dev-02": {
-      "status": "DONE",
+      "status": "IN_PROGRESS",
       "round": 1,
-      "base": "a474722",
-      "commit": "f736861"
+      "base": "785b68c"
     },
     "dev-03": {
-      "status": "DONE",
-      "round": 1,
-      "base": "f736861",
-      "commit": "becbd39"
+      "status": "TODO",
+      "round": 0
     },
     "dev-04": {
-      "status": "DONE",
-      "round": 1,
-      "base": "becbd39",
-      "commit": "1f3f577"
+      "status": "TODO",
+      "round": 0
     },
     "dev-05": {
-      "status": "DONE",
-      "round": 1,
-      "base": "1f3f577",
-      "commit": "582887a"
+      "status": "TODO",
+      "round": 0
     },
     "dev-06": {
-      "status": "DONE",
-      "round": 1,
-      "base": "582887a",
-      "commit": "7ae4057"
+      "status": "TODO",
+      "round": 0
     },
     "dev-07": {
-      "status": "DONE",
-      "round": 1,
-      "base": "7ae4057",
-      "commit": "15cc785"
+      "status": "TODO",
+      "round": 0
     }
   },
   "verify": {
     "consecutive_blocks": 0,
     "last_status": "PASS",
-    "hook_runs": 45,
-    "last_hook_at": "2026-10-10T03:01:06Z",
+    "hook_runs": 46,
+    "last_hook_at": "2026-10-10T03:26:34Z",
     "last_hook_agent": "developer"
   },
   "history": {
+    "R10a": {
+      "tasks": {
+        "dev-01": {
+          "status": "DONE",
+          "round": 1,
+          "base": "be2ee57451cb49d2d11604bece3c6b5e148ab895",
+          "commit": "a474722"
+        },
+        "dev-02": {
+          "status": "DONE",
+          "round": 1,
+          "base": "a474722",
+          "commit": "f736861"
+        },
+        "dev-03": {
+          "status": "DONE",
+          "round": 1,
+          "base": "f736861",
+          "commit": "becbd39"
+        },
+        "dev-04": {
+          "status": "DONE",
+          "round": 1,
+          "base": "becbd39",
+          "commit": "1f3f577"
+        },
+        "dev-05": {
+          "status": "DONE",
+          "round": 1,
+          "base": "1f3f577",
+          "commit": "582887a"
+        },
+        "dev-06": {
+          "status": "DONE",
+          "round": 1,
+          "base": "582887a",
+          "commit": "7ae4057"
+        },
+        "dev-07": {
+          "status": "DONE",
+          "round": 1,
+          "base": "7ae4057",
+          "commit": "15cc785"
+        }
+      }
+    },
     "R9ih": {
       "tasks": {
         "dev-01": {

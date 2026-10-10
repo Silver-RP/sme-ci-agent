@@ -274,3 +274,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 15cc785. Review: .autodev/reviews/R10a-dev-07-r1.json (PASS).
 - H-26: `scripts/check_run.py` + `demo.sh --check [--repeat N]` đi hết một run qua HTTP tới learning_saved, gọi 5 API GET, in p95. 504 pytest, smoke sạch.
 - Non-blocking: p95 chưa nói gì về LLM thật (run ~0,4 s với LLM giả).
+
+### R10c/dev-01: DONE
+- Vòng: 1. Commit: 785b68c. Review: .autodev/reviews/dev-01-r1.json (PASS).
+- H-37: engine SQLAlchemy dùng chung theo URL, session run đóng khi kết thúc, dispose khi tắt app; 100 run không vượt pool. 509 pytest.
+- Non-blocking: chưa test đường run lỗi/pending không đóng session (xem ở dev-02); env pool không phải số ném ValueError thiếu thông báo.
