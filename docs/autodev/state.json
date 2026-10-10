@@ -1,6 +1,6 @@
 {
   "updated": "2026-10-10",
-  "source": "audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10",
+  "source": "audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10)",
   "milestones": {
     "project": [
       {
@@ -147,23 +147,42 @@
     {
       "id": 1,
       "text": "Tìm đúng nguyên nhân gốc so với ground truth và biết hỏi người khi chưa đủ bằng chứng",
-      "percent": 30,
-      "evidence": "SOP khớp scenario (H-10); Detect khớp ground truth; luật hỏi theo ngưỡng; eval_rootcause chạy được nhưng tự đúng (H-28)",
-      "missing": "T-030 + eval --llm real có kết quả; H-28 chấm theo chuỗi, script chứa nhãn; H-29 correlate trả nhãn, anomaly ~10σ"
+      "percent": 0,
+      "evidence": "Chưa chỉ số nào đo được theo docs/eval/criteria.md; eval LLM giả chỉ kiểm bộ chấm (right 100%, wrong 0%, unsure hỏi 100%); chấm theo chuỗi (H-28)",
+      "missing": "T-030 + eval --llm real có kết quả; H-28 chấm theo chuỗi, script chứa nhãn; H-29 correlate trả nhãn, anomaly ~10σ",
+      "estimate_old": 30,
+      "metrics": [
+        "A1",
+        "A2",
+        "A3"
+      ],
+      "baseline": "eval LLM giả chỉ kiểm bộ chấm (right 100%, wrong 0%, unsure hỏi 100%); chấm theo chuỗi (H-28)"
     },
     {
       "id": 2,
       "text": "Đề xuất được duyệt làm KPI cải thiện; nếu không thì rollback và điều tra lại",
-      "percent": 65,
-      "evidence": "Measure theo action thật (test_measure_h06); e2e uvicorn sai→rollback→đúng→Learn (test_e2e_rollback_r9); đề xuất thiếu action/sop_proposal hoặc action NaN/ngoài miền/máy lạ bị gửi lại LLM, hết lượt thì error retryable (R9i, test_proposal_complete_r9i, test_improve_action_range_h30)",
-      "missing": "H-31, H-32, H-36, H-19; LLM thật (T-030 lần 2)"
+      "percent": 0,
+      "evidence": "Chưa chỉ số nào đo được theo docs/eval/criteria.md; test_measure_h06, test_e2e_rollback_r9 (1 nhánh, 1 seed); T-030 1 run LLM thật",
+      "missing": "H-31, H-32, H-36, H-19; LLM thật (T-030 lần 2)",
+      "estimate_old": 65,
+      "metrics": [
+        "A4",
+        "A5",
+        "A6"
+      ],
+      "baseline": "test_measure_h06, test_e2e_rollback_r9 (1 nhánh, 1 seed); T-030 1 run LLM thật"
     },
     {
       "id": 3,
       "text": "Đo 3 chỉ số trước/sau trên 6 tháng dữ liệu mô phỏng: defect %, MTTD/MTTR, tỷ lệ tái diễn",
-      "percent": 5,
-      "evidence": "measure() 1 máy 7 ngày; MTTD/MTTR chỉ test nạp tay",
-      "missing": "H-11 (kể cả MTTD ≈ 0 do Detect nhìn lại); T-042, T-043"
+      "percent": 0,
+      "evidence": "Chưa chỉ số nào đo được theo docs/eval/criteria.md; measure() 1 máy 7 ngày; H-11",
+      "missing": "H-11 (kể cả MTTD ≈ 0 do Detect nhìn lại); T-042, T-043",
+      "estimate_old": 5,
+      "metrics": [
+        "A7"
+      ],
+      "baseline": "measure() 1 máy 7 ngày; H-11"
     }
   ],
   "architecture": [
@@ -402,6 +421,10 @@
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-10",
+      "text": "% đạt tính bằng công thức từ chỉ số đo được (docs/eval/criteria.md: A1–A8, cổng 13/10 và 20/10); ước lượng audit chỉ tham khảo. Ngưỡng A1 freeze trên tập giữ lại ≥ 0,7. Chỉ số plugin B1–B6 (ROADMAP bảng B, .autodev/metrics.py). Đo nền LLM thật sau R10a, ≤ 2 USD."
+    },
     {
       "date": "2026-10-10",
       "text": "Leader duyệt kế hoạch P6 hai luồng đến Demo Day (ROADMAP). R10b không chờ D1; R10c (H-15, H-14, H-19, H-20, H-37, H-38) trước v0.1; R11 tách R11a (không chờ team) và R11b (nhập D4/D5). Cổng UI 13/10: chưa có PR FR-01 thì hỏi leader. P9 (reviewer cho PR của team, chỉ comment) sau v0.1."

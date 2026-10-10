@@ -14,6 +14,8 @@ Ba điều cần kiểm chứng
 2. Đề xuất sau khi được duyệt làm KPI cải thiện; nếu không thì rollback và điều tra lại.
 3. Đo được 3 chỉ số trước/sau trên 6 tháng dữ liệu mô phỏng: defect (%), MTTD/MTTR, tỷ lệ lỗi tái diễn.
 
+Cách đo từng điều (chỉ số A1–A8, ngưỡng, cổng go/no-go 13/10 và 20/10): `docs/eval/criteria.md`.
+
 Mốc cuộc thi: v0.1-e2e 13/10 · freeze 20/10 · Pitch Day 24/10 · Demo Day 07/11.
 
 Ngoài phạm vi đến 13/10: multi-agent hoặc Agent Manager dùng LLM, scenario 2–3, biểu đồ phức tạp, dữ liệu thật.

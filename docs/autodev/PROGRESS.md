@@ -96,3 +96,35 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
   | 2. Prompt Improve chứa id, version hiệu lực (tính `sop_versions`), nội dung SOP; lấy từ config/DB | `tests/test_improve_sop_catalog_h43.py::test_prompt_lists_every_sop_with_id_version_and_content_from_config`, `test_prompt_shows_the_new_version_after_a_sop_was_applied`, `test_prompt_cuts_long_sop_content_by_config_limit`; đọc diff `sop_catalog` (dùng `repo.get_sop_version` như `current_sop`) | xanh trên nhánh, đỏ khi thay `improve.py` bằng bản main |
   | 3. `sop_id` lạ → thông báo nêu id hợp lệ; sai rồi đúng → `measured` | `test_unknown_sop_id_is_sent_back_with_valid_ids_then_measured`, `test_unknown_sop_id_twice_error_lists_valid_ids` | xanh trên nhánh, đỏ trên main (6/6 test H-43 đỏ với `improve.py` của main) |
   Thử biên độc lập (test tạm ở scratchpad, không commit): DB có bản mới cho 1 SOP dài 5000 ký tự → danh mục cắt đúng giới hạn config, đuôi `...(truncated)`, SOP còn lại giữ bản config; gọi lặp lại cho kết quả giống nhau. Non-blocking: chưa có test riêng cho nhánh fallback config khi DB trống (đã gián tiếp qua test 1); khi DB và config cùng trống thì prompt nói "phải là một trong []" (không xảy ra với YAML hiện tại).
+
+<!-- metrics:start (tự sinh bởi .autodev/metrics.py, đừng sửa tay) -->
+## Số đo plugin B1–B5 (định nghĩa: ROADMAP bảng B)
+
+### B1 Lỗi lọt qua review (lỗ hổng mới mức cao + vừa / task trong phạm vi audit; ngưỡng ≤ 0,5)
+
+| Audit | Phạm vi | Lỗ hổng mới cao+vừa | Task | B1 |
+|---|---|---|---|---|
+| 2026-10-09.md | R7, R8 | 15 | 9 | 1,67 |
+| 2026-10-09_2.md | R9, R9h | 14 | 8 | 1,75 |
+
+### B2 Độ chặt review: 2/37 task cần ≥ 2 vòng (5%). Đọc cùng B1: B2 thấp mà B1 cao là reviewer lỏng.
+
+### B3–B5 theo mốc (B3: thực tế / ước tính, 1,0 = trong khoảng, ngưỡng 0,5–2; B4: số lần runner dừng, ngưỡng 0; B5: chi phí trên task)
+
+| Mốc | Task | Phút | USD | Phút/task | USD/task | Lượt | B3 phút | B3 USD | B4 dừng |
+|---|---|---|---|---|---|---|---|---|---|
+| M1 | 4 | 0 | 0,00 | 0,0 | 0,00 | 0 | – | – | 0 |
+| M2 | 3 | 0 | 0,00 | 0,0 | 0,00 | 0 | – | – | 0 |
+| M3 | 3 | 0 | 0,00 | 0,0 | 0,00 | 0 | – | – | 0 |
+| R4 | 4 | 21 | 2,59 | 5,3 | 0,65 | 86 | – | – | 1 |
+| R5 | 3 | 21 | 3,01 | 7,1 | 1,00 | 26 | – | – | 0 |
+| R6 | 3 | 23 | 1,81 | 7,8 | 0,60 | 63 | – | – | 0 |
+| R7 | 4 | 40 | 2,58 | 10,1 | 0,65 | 61 | – | – | 0 |
+| R8 | 5 | 71 | 6,40 | 14,2 | 1,28 | 71 | – | – | 0 |
+| R9 | 6 | 83 | 7,18 | 13,8 | 1,20 | 108 | – | – | 1 |
+| R9h | 2 | 25 | 2,02 | 12,7 | 1,01 | 59 | – | – | 0 |
+| R9i | 2 | 35 | 2,90 | 17,5 | 1,45 | 80 | – | – | 0 |
+| R9ih | 1 | 18 | 1,45 | 17,9 | 1,45 | 43 | – | – | 0 |
+
+Mốc trước R4 chạy chế độ A (không có `runs/*.json`) nên phút/USD = 0.
+<!-- metrics:end -->

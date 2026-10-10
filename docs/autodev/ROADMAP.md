@@ -95,7 +95,16 @@ Mốc dự án chi tiết: `docs/autodev/PROJECT_STATE.md` mục "Tầm nhìn". 
   - nút thao tác (dừng runner, chạy mốc kế): để sau cùng, vì cần guard và xác nhận của người dùng.
 - Xa hơn: extension VS Code (webview) hoặc statusline của Claude Code hiện một dòng tiến độ.
 
-## Tiêu chí "plugin đạt" cho từng mốc
-- Không cần người dùng chuyển tin giữa các phiên trong suốt một mốc.
-- Lỗi người dùng phát hiện sau khi mốc đã merge: 0, hoặc mỗi lỗi dẫn tới một sửa đổi prompt/gate.
-- Hạn mức mỗi mốc được ghi lại trong `PROGRESS.md`.
+## Tiêu chí "plugin đạt": bảng B (đo được, duyệt 2026-10-10)
+Bảng tự sinh: `python3 .autodev/metrics.py` (`--write` ghi vào `PROGRESS.md`). Định nghĩa và nguồn:
+
+| Mã | Chỉ số | Định nghĩa | Nền 10/10 | Ngưỡng (đo R10a–R10c, audit 3) | Nguồn |
+|---|---|---|---|---|---|
+| B1 | Lỗi lọt qua review | lỗ hổng **mới** mức cao + vừa do audit tìm / số task của các mốc trong phạm vi audit | audit 1: 15/9 = 1,67; audit 2: 14/8 = 1,75 | ≤ 0,5 | `docs/audits/*.md` (dòng "Mốc:" + bảng H-xx), `plan/*.md` |
+| B2 | Độ chặt review | task cần ≥ 2 vòng / task đã review. Đọc cùng B1: B2 thấp + B1 cao = reviewer lỏng | 2/37 (5%) | báo cáo, không ngưỡng | `plan/*.md` "Số vòng" |
+| B3 | Độ chính xác ước tính | thực tế / ước tính (phút, USD); 1,0 khi nằm trong khoảng | chưa có (mục "Ước tính" bắt đầu từ R10a) | 0,5–2 ở ≥ 80% mốc | mục "Ước tính" + `runs/*.json`, `run.log` |
+| B4 | Tự chủ | số lần runner dừng (`STOP`) trong một mốc, tức người phải can thiệp | R4: 1, R9: 1, còn lại 0 | 0 / mốc | `run.log` |
+| B5 | Hiệu suất | phút / task (giờ thật trong `run.log`), USD / task, lượt / mốc | R7–R9ih: 10–18 phút, 0,65–1,45 USD | không quá 1,5× trung bình R7–R9ih | `run.log`, `runs/*.json` |
+| B6 | Lỗi sau merge do người tìm | bug leader/team báo trên code auto-dev đã merge | chưa ghi | đếm; mỗi lỗi → một sửa prompt/gate | issue nhãn `escaped` |
+
+Giữ thêm hai điều kiện cũ: không cần người dùng chuyển tin giữa các phiên trong một mốc; hạn mức mỗi mốc được ghi trong `PROGRESS.md`. Chỉ số sản phẩm (A1–A8) ở `docs/eval/criteria.md`.
