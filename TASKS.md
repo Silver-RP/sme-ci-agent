@@ -50,10 +50,11 @@ Chi tiết, pre-mortem và thứ tự cắt: `docs/autodev/ROADMAP.md` mục "K�
 
 - [ ] R10a (10–11/10): API storyboard (FR-09..12), T-041 record/replay; H-13, H-16, H-26. [A5 LLM giả, A8 `--repeat`]
 - [ ] Đo nền LLM thật sau R10a (leader cho phép, ≤ 2 USD): A1 + chi phí mỗi run vào `docs/token-cost.md`
-- [ ] R10b1 (11/10): dữ liệu theo hợp đồng v0.1 (`production_log`, `material_batches`, simulator nhị thức, `import_data.py` + V01–V09)
-- [ ] R10b2 (12/10): điều 3 (H-11, T-042, `/metrics` thật, `scripts/metrics_report.py` có đối chứng); H-31, H-33, H-39. [A7, A4]
-- [ ] R10c (12/10): lưu run/event/checkpointer vào Postgres (H-15), H-14, H-19, H-20, H-37, H-38. [A6 `test_invariants.py`] Plan R10b1/R10b2/R10c duyệt chung một PR ngày 11/10; R10c trễ thì H-15 chuyển vào R10b2.
-- [ ] Audit 3 (12/10) → cổng 13/10 (`docs/eval/criteria.md` mục 3) → tag v0.1-e2e; cổng UI FR-01..05 (vai D). [B1 ≤ 0,5]
+- [ ] R10c (11–12/10, ngay sau R10a): lưu run/event/checkpointer vào Postgres (H-15), H-14, H-19, H-20, H-37, H-38. [A6 `test_invariants.py`]
+- [ ] Audit 3 (tự chạy sau R10c) [B1 ≤ 0,5]
+- [ ] R10b1 (12/10, **sau khi D1 #66 của vai A merge**; vai A review phần dữ liệu): dữ liệu theo hợp đồng D1 (`production_log`, `material_batches`, simulator nhị thức, `import_data.py` + V01–V09, dùng file mẫu/file sai của D2). D1 chưa merge sáng 12/10 thì leader quyết.
+- [ ] R10b2 (12–13/10): điều 3 (H-11, T-042, `/metrics` thật, `scripts/metrics_report.py` có đối chứng; giả định lấy nguồn từ D3); H-31, H-33, H-39. [A7, A4]
+- [ ] Cổng 13/10 (`docs/eval/criteria.md` mục 3) → tag v0.1-e2e; cổng UI FR-01..05 (vai D). R10b2 trễ thì A7 không thuộc cổng 13/10, chuyển sang cổng 20/10 (leader quyết).
 - [ ] R11a (13–14/10): chấm theo mã nguyên nhân, `--set dev|holdout`, nhãn `expect` (H-28, H-29, H-32, H-36, H-18), kịch bản khó do backend soạn. [A1–A3 tập dev]
 - [ ] R11b (15–17/10): nhập D4/D5 của vai A làm tập giữ lại, eval nhiều seed LLM thật. [A1 tập giữ lại ≥ 0,7]
 - [ ] R12 (18–19/10): gom lỗi bug bash 2, audit 4, bộ dữ liệu demo (D6) → cổng 20/10 → freeze
