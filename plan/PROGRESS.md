@@ -314,3 +314,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 1a5f7fd. Review: .autodev/reviews/R10ch-dev-01-r1.json (PASS).
 - H-45, H-31: commit bản SOP (apply_sop, rollback) trước checkpoint; 558 pytest.
 - Non-blocking: cửa sổ kill giữa commit và checkpoint applied (retry có thể tạo bản trùng), chưa có test.
+
+### R10ch/dev-02: DONE
+- Vòng: 1. Commit: 4455a6b. Review: .autodev/reviews/R10ch-dev-02-r1.json (PASS).
+- H-48: POST /runs kiểm change_time (422, LLM không gọi; có múi giờ bị từ chối), POST /runs/{id}/close (audit run_closed, run_finished status closed). 571 pytest.
+- Non-blocking: restart với run đã đóng chưa có test (giao dev-03).

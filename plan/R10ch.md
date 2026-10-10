@@ -57,7 +57,7 @@ Chỉ số đẩy: A5 (đo lại theo cách không đạt theo cấu tạo). Sau
   2. Test: run `error` hết lượt retry → `close` → `run_finished` đóng bởi người, có một dòng audit.
   3. Test: `close` trên run đang chờ duyệt hoặc chờ rollback → 409; `close` không tạo hay khôi phục bản SOP nào.
 - **Phụ thuộc:** không
-- **Trạng thái:** TODO · **Số vòng:** 0
+- **Trạng thái:** DONE · **Số vòng:** 1
 
 ### dev-03: Khôi phục run sau restart không kẹt (H-47, H-50, H-51)
 - **Mô tả:** khi app khởi động và nạp run từ DB:
