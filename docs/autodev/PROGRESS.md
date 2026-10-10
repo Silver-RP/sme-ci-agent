@@ -123,6 +123,36 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
   | 3. A5 trên 5 seed (42..46) LLM giả | `uv run pytest -q tests/test_demo_llm_branches_r10a.py -s -k a5` | LLM đúng (a) 1,00, (b) 1,00 (after 0,018–0,022); LLM luôn sai tham số (b) 0,00 và đúng tham số sai giá trị (b) 0,00, đều có đo; không áp dụng gì: không Measure ở mức run, mức dữ liệu KPI 0,060–0,062 (nền 0,02), không `passed` |
   Thử biên độc lập (test tạm ở scratchpad, không commit): `change_time` đúng bằng điểm bắt đầu anomaly → qua kiểm (đúng, biên hợp lệ); `change_time` đúng mốc cuối dữ liệu → qua kiểm lúc bắt đầu (không đủ cửa sổ sau, Measure trả `insufficient_evidence`, không kẹt; có thể 422 sớm, việc nhỏ); `/runs/nope/close` → 404; `close` lý do `" "` trên run còn retry → 409. Ước tính ↔ thực tế: 4/4 task; 111/40–60 phút (B3 1,85: developer/reviewer tuần tự, mỗi vòng pytest + Postgres ~3 phút); 3,51 USD worker + supervisor ~1 / 3–4 (B3 ≈ 1,0–1,1); 4/4–5 vòng review. Pre-mortem: 1 chặn bằng `test_invariants.py::test_versions_in_events_are_durable_after_a_failure_after_act` (đọc session khác); 2 bằng `test_close_waiting_run_is_409_and_changes_nothing`, `test_close_run_waiting_for_rollback_is_409`; 3 bằng `test_run_killed_between_steps_becomes_retryable_error_and_continues` (kèm run đang interrupt); 4 bằng `test_a5_always_wrong_llm_never_passes`, `test_a5_control_*`. Treo (đề xuất R11a): kill giữa commit `apply_sop` và checkpoint `applied` có thể tạo bản trùng khi retry; số retry suy từ hậu tố `event_id`. Cột USD R10ch của `metrics.py` = 0 vì thiếu `runs/R10ch*.json` lúc supervisor chạy.
 
+## Đối chiếu ước tính ↔ thực tế R10a–R10ch (đóng P6, 2026-10-10)
+
+Nguồn: mục "Ước tính" và "Pre-mortem" của `plan/R10a.md`, `R10c.md`, `R10ch.md`; số thực tế từ `python3 .autodev/metrics.py` (phút worker theo `run.log`, USD worker + supervisor theo `runs/*.json`); lỗ hổng từ `docs/audits/2026-10-10.md` (audit 3).
+
+| Mốc | Task | Phút worker: ước tính / thực tế (B3) | USD: ước tính / thực tế (B3) | Vòng review: ước tính / thực tế | Dừng (B4) |
+|---|---|---|---|---|---|
+| R10a | 7 | 55–75 / 73 (1,00) | 4–5 / 5,94 (1,19) | 8–9 / 7 | 0 |
+| R10c | 7 | 90–120 / 115 (1,00) | 7–9 / 7,88 (1,00) | 8–10 / 7 | 0 |
+| R10ch | 4 | 40–60 / 111 (1,85) | 3–4 / 4,77 (1,19) | 4–5 / 4 | 0 |
+| Audit 3 | – | – | ~1,8 / 5,55 (≈ 3) | – | 0 |
+
+**Kết luận:**
+1. **Phút và USD của mốc:** 3/3 mốc nằm trong 0,5–2 ở cả phút và USD. Đạt ngưỡng B3 (≥ 80% mốc), nhưng mới có 3 mốc.
+   - R10ch lệch nhiều nhất (1,85). Lý do: developer và reviewer chạy tuần tự, mỗi vòng pytest + Postgres mất khoảng 3 phút.
+   - Từ nay ước tính task có pytest + Postgres ≥ 25 phút/task.
+   - USD thường vượt cận trên khoảng 20%, vì supervisor Opus tốn 1,3–2,1 USD, nhiều hơn mức ~1 USD đã đoán.
+   - Từ nay ước tính USD = worker + 2 USD supervisor.
+2. **Audit:** ước tính thấp khoảng 3 lần. Đã nâng lên 5–6 USD (`/audit`, PR #94).
+3. **Vòng review:** 18/18 task PASS ở vòng 1, ít hơn ước tính ở cả 3 mốc. Audit 3 sau đó vẫn tìm thêm 12 lỗ hổng mới mức cao + vừa (B1 = 0,71 > 0,5).
+   - Ít vòng ở đây **không** có nghĩa task tốt hơn. Nó cho thấy reviewer lỏng: B2 thấp đi cùng B1 cao.
+   - Việc này thuộc chất lượng review, theo dõi ở audit 4. Nó không làm sai ước tính.
+4. **Pre-mortem:** mọi mục đã nêu đều có test hoặc lệnh chặn (bảng ở các dòng R10a, R10c, R10ch phía trên). Nhưng audit 3 tìm ra những lớp lỗi mà pre-mortem không nêu:
+   - **kill/restart giữa các bước:** H-45, H-47, H-50, H-51, đều lọt từ R10c;
+   - **"đạt theo cấu tạo":** H-54, lọt từ R10a;
+   - **đầu vào thật khác TestClient:** H-57, H-58.
+
+   Từ nay pre-mortem của mốc nào đụng tới trạng thái bền hoặc chỉ số A phải có một dòng cho mỗi câu hỏi:
+   - "kill ở giữa thì sao?";
+   - "chỉ số có đạt sẵn nhờ cách dựng dữ liệu không?".
+
 <!-- metrics:start (tự sinh bởi .autodev/metrics.py, đừng sửa tay) -->
 ## Số đo plugin B1–B5 (định nghĩa: ROADMAP bảng B)
 

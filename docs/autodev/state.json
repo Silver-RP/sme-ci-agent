@@ -149,8 +149,8 @@
       },
       {
         "id": "P6",
-        "status": "in_progress",
-        "note": "kế hoạch duyệt 2026-10-10; P6a dùng từ R10a; P6b metrics.py có, 3 lỗi đã sửa 2026-10-10; còn báo cáo đối chiếu R10a–R10ch"
+        "status": "done",
+        "note": "kế hoạch duyệt 2026-10-10; P6a dùng từ R10a; P6b metrics.py (3 lỗi sửa 2026-10-10); báo cáo đối chiếu R10a–R10ch trong PROGRESS (B3 3/3 mốc đạt); luật ước tính + pre-mortem mới ở thiết kế 6.5"
       },
       {
         "id": "P7",
