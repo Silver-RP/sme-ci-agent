@@ -3,17 +3,16 @@ has a rollback mode (SME_DEMO_SCENARIO=rollback). Over HTTP (TestClient), no net
 
 import json
 
+import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-import pandas as pd
-
 from backend.agent.demo_llm import SCENARIO_ENV, DemoLLM, llm_from_env, scripted_demo_llm
 from backend.agent.llm import LLMResponse, ScriptExhaustedError
-from backend.sandbox.post_change import action_level, build_post_change_tables
 from backend.api.app import create_app
 from backend.domain_config import load_domain_config
 from backend.sandbox.injector import generate_dataset
+from backend.sandbox.post_change import action_level, build_post_change_tables
 from backend.tools.readonly import ToolContext
 from tests.test_act import HUMAN
 
@@ -277,21 +276,21 @@ def test_a5_control_no_action_applied_never_passes(db_session, monkeypatch, caps
 def test_a5_control_no_change_leaves_kpi_unchanged_on_every_seed():
     """Data level: with no action the post-change KPI stays as it was (no model pulls it to baseline)."""
     mach = CFG.demo.machine_id
+    t0 = pd.Timestamp("2026-03-20")  # ten days into the anomaly
+
+    def mean_after(df):
+        sel = (df["kpi"] == CFG.kpis[0].name) & (df["machine_id"] == mach) & (df["timestamp"] >= t0)
+        return df.loc[sel & (df["timestamp"] < t0 + pd.Timedelta(days=7)), "value"].mean()
+
     for seed in SEEDS:
         tables = generate_dataset(seed=seed).tables
         k = tables["kpi_log"]
-        t0 = pd.Timestamp("2026-03-20")  # ten days into the anomaly
         level = action_level(None, mach, 0.02)
         assert level is None
         post = build_post_change_tables(
             tables, kpi=CFG.kpis[0].name, change_time=t0, machine_id=mach, fixed=False,
             anomaly_start="2026-03-10T22:00:00", level=level, baseline=0.02, noise_sd=0.004,
         )["kpi_log"]
-
-        def mean_after(df):
-            sel = (df["kpi"] == CFG.kpis[0].name) & (df["machine_id"] == mach) & (df["timestamp"] >= t0)
-            return df.loc[sel & (df["timestamp"] < t0 + pd.Timedelta(days=7)), "value"].mean()
-
         before, after = mean_after(k), mean_after(post)
         print(f"seed {seed}: KPI after 'apply nothing' = {after:.4f} (source data {before:.4f}, baseline 0.02)")
         assert after > 0.04  # the problem continues; nothing pulled it to the 0.02 baseline
