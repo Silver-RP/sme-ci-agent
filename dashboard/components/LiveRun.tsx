@@ -75,7 +75,7 @@ export function LiveRun({
   }, [initialRunId]);
 
   const run = useCallback(
-    async (fn: () => Promise<RunStatus>, done: (s: RunStatus) => void) => {
+    async (fn: () => Promise<RunStatus>, done: (s: RunStatus) => void, conflict: string = t.decision.conflict) => {
       setBusy(true);
       setApiError(null);
       try {
@@ -83,7 +83,7 @@ export function LiveRun({
       } catch (e) {
         if (e instanceof ApiError && e.status === 409 && runId) {
           // the run moved on (another tab, a double click): show what it is waiting for now
-          setApiError(`409: ${e.message} · ${t.decision.conflict}`);
+          setApiError(`409: ${e.message} · ${conflict}`);
           try {
             setStatus(await getRun(runId, api));
           } catch {
@@ -109,7 +109,14 @@ export function LiveRun({
           setRunInUrl(s.run_id);
         },
       ),
-    answer: (text) => runId && void run(() => answerRun(runId, text, api), setStatus),
+    // sends the id of the question on screen, so an answer meant for an old question is refused (H-49)
+    answer: (text) =>
+      runId &&
+      void run(
+        () => answerRun(runId, text, typeof status?.pending?.question_id === "string" ? status.pending.question_id : null, api),
+        setStatus,
+        t.question.conflict,
+      ),
     decide: (proposalId, kind, d) => runId && void run(() => decideApproval(runId, { proposal_id: proposalId, kind, ...d }, api), setStatus),
     retry: () =>
       runId &&
