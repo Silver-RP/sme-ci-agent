@@ -441,6 +441,10 @@
   "decisions": [
     {
       "date": "2026-10-10",
+      "text": "Đóng phiên đêm: quy tắc ước tính thời gian khi bắt đầu nhiệm vụ (CLAUDE.md) + ghi % hạn mức 5 giờ và tuần trước/sau (.autodev/usage.py). Báo cáo so sánh bên ngoài (docs/autodev/research/): phiên sau làm đề xuất 1 (cổng không nới test) + 3 (câu hỏi bắt buộc cho reviewer); 7 đề xuất chưa vào ROADMAP. Chỉ đề xuất đóng phiên khi có lý do."
+    },
+    {
+      "date": "2026-10-10",
       "text": "Đêm: tạm dừng việc dự án, chờ team (D1 #66, FR #67/#89/#90, Daivon #65); điểm bắt đầu lại ở HANDOFF mục 'Tạm dừng'. Duyệt luật ước tính + pre-mortem mới (thiết kế 6.5). Chuyển sang nghiên cứu auto-dev. demo.sh --fresh-db duyệt và merge (#95). Trang trạng thái chỉ làm mới khi leader yêu cầu."
     },
     {
