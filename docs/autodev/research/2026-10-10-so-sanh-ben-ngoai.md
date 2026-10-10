@@ -49,6 +49,8 @@ Người đọc: leader. Mục đích: tìm cách giải sẵn có cho các vấ
 
 **Thứ tự khuyến nghị:** 1 và 3 trước (rẻ, không tốn thêm khi chạy). Sau đó làm 4 để có số đo, rồi dùng số đo đó quyết 2 và 5 (đáng tiền hay không). 6 để sau v0.1. 7 không làm.
 
+**Đã làm (2026-10-10):** 1 và 3. Cổng `test_guard` trong `verify.py`: chạy thử trên 12 PR mốc cũ thì 5 PR bị gắn cờ, cả 5 đều là đổi hành vi hợp lệ theo plan. Vì vậy developer được giải trình bằng dòng `allow-test-change:` trong commit; khi đó cổng không chặn nhưng reviewer phải xét lý do. Dòng giải trình trong `plan/` trên main thì miễn hẳn. Câu hỏi (a)–(d) nằm trong `.claude/agents/reviewer.md` bước 8, trả lời ở trường `risk_checks`.
+
 ## 4. Điều plugin đang làm tốt (dùng được cho pitch)
 - Nhiều tầng kiểm độc lập, mỗi tầng nhìn một góc: task, mốc, toàn dự án. Kết quả nghiên cứu cho thấy reviewer đơn lẻ chỉ bắt khoảng 20–50% lỗi, nên cần nhiều tầng.
 - Quy tắc quan trọng thành cổng cứng (guard, `plugin-guard`, verify, smoke), không chỉ là lời dặn; khớp khuyến nghị của Anthropic.
