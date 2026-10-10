@@ -41,10 +41,20 @@ class Prompt(unittest.TestCase):
         self.assertIn("--output-format", cmd)
 
 
+class Config(unittest.TestCase):
+    def test_prompt_path_reads_that_file(self):
+        body = bench.reviewer_body({"prompt_path": ".autodev/bench/configs.json"})
+        self.assertIn('"old"', body)
+
+
 class Extract(unittest.TestCase):
     def test_last_json_block(self):
         text = 'blah {"a": 1}\n```json\n{"status": "PASS", "x": {"y": [1]}}\n```'
         self.assertEqual(bench.extract_json(text)["status"], "PASS")
+
+    def test_braces_inside_strings(self):
+        text = 'xem {a} trước\n```json\n{"status": "PASS", "summary": "dict {x: 1} và }"}\n```'
+        self.assertEqual(bench.extract_json(text)["summary"], "dict {x: 1} và }")
 
     def test_no_json(self):
         self.assertIsNone(bench.extract_json("no json here"))
@@ -66,6 +76,13 @@ class Score(unittest.TestCase):
                                                               "description": "timezone"}])), "missed")
         self.assertEqual(bench.score(BUG, review("PASS")), "missed")
 
+    def test_seen_only_as_non_blocking(self):
+        r = review("PASS")
+        r["non_blocking"] = ["kpi_series.py:32: start có múi giờ thì TypeError"]
+        self.assertEqual(bench.score(BUG, r), "seen")
+        r["non_blocking"] = ["app.py: start có múi giờ thì TypeError"]
+        self.assertEqual(bench.score(BUG, r), "missed")
+
     def test_clean_case(self):
         self.assertEqual(bench.score(CLEAN, review("PASS")), "clean_pass")
         self.assertEqual(bench.score(CLEAN, review("FAIL", [{"file": "x", "description": "y"}])), "false_alarm")
@@ -82,14 +99,16 @@ class Summary(unittest.TestCase):
             {"case": "p4", "config": "old", "outcome": "false_alarm", "cost": 0.3, "minutes": 4},
             {"case": "p1", "config": "new", "outcome": "caught", "cost": 0.6, "minutes": 7},
             {"case": "p2", "config": "new", "outcome": "run_error", "cost": 0.1, "minutes": 1},
+            {"case": "p3", "config": "new", "outcome": "seen", "cost": 0.0, "minutes": 0},
         ]
         s = bench.summarize(rows)
         self.assertEqual(s["old"]["recall"], "1/2")
         self.assertEqual(s["old"]["false_alarms"], "1/1")
-        self.assertEqual(s["new"]["recall"], "1/1")
+        self.assertEqual(s["new"]["recall"], "1/2")
+        self.assertEqual(s["new"]["seen"], "2/2")
         self.assertEqual(s["new"]["run_errors"], 1)
         self.assertAlmostEqual(s["new"]["cost"], 0.7)
-        self.assertIn("| new | 1/1 |", bench.summary_table(s))
+        self.assertIn("| new | 1/2 | 2/2 |", bench.summary_table(s))
 
 
 class Cases(unittest.TestCase):

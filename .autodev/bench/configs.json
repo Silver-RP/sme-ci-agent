@@ -1,4 +1,5 @@
 {
   "old": {"prompt_ref": "79f0970", "model": "sonnet", "note": "reviewer.md trước #104"},
-  "new": {"prompt_ref": null, "model": "sonnet", "note": "reviewer.md hiện tại (sau #104: 4 câu hỏi bắt buộc)"}
+  "new": {"prompt_ref": null, "model": "sonnet", "note": "reviewer.md hiện tại (sau #104: 4 câu hỏi bắt buộc)"},
+  "new2": {"prompt_path": ".autodev/bench/reviewer-candidate.md", "model": "sonnet", "note": "ứng viên: (a) liệt kê trạng thái chỉ trong bộ nhớ; (d) thử bỏ hẳn trường của kiểm tra mới. Sửa chỉ dựa trên p2, p3"}
 }
