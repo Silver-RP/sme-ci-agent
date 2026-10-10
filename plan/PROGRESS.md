@@ -269,3 +269,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 7ae4057. Review: .autodev/reviews/R10a-dev-06-r1.json (PASS).
 - T-041: `GET /runs/{id}/export` (định dạng fixture, lọc traceback/sim/key), `scripts/record_run.py`, kiểm định dạng dùng chung với 8 fixture. 498 pytest.
 - Non-blocking: record_run.py chưa test qua httpx thật; steps chỉ trong bộ nhớ (H-15).
+
+### R10a/dev-07: DONE
+- Vòng: 1. Commit: 15cc785. Review: .autodev/reviews/R10a-dev-07-r1.json (PASS).
+- H-26: `scripts/check_run.py` + `demo.sh --check [--repeat N]` đi hết một run qua HTTP tới learning_saved, gọi 5 API GET, in p95. 504 pytest, smoke sạch.
+- Non-blocking: p95 chưa nói gì về LLM thật (run ~0,4 s với LLM giả).
