@@ -239,3 +239,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 3467282. Review: .autodev/reviews/R9ih-dev-01-r1.json (PASS).
 - Prompt Improve có khối "Existing SOPs" (id, version hiệu lực gồm sop_versions, title, nội dung cắt theo config); ProposalError cho sop_id lạ nêu id hợp lệ. 448 pytest, smoke sạch.
 - Non-blocking: chưa test riêng fallback config khi DB trống.
+
+### R10a/dev-01: DONE
+- Vòng: 1. Commit: a474722. Review: .autodev/reviews/R10a-dev-01-r1.json (PASS).
+- `GET /runs`, `GET /audit`, `GET /sop/{id}/versions` chỉ đọc; hàm đọc `repo.recent_actions`, `repo.list_sop_versions` (tên "list_audit" bị test_db cấm). 455 pytest, smoke sạch.
+- Non-blocking: nhánh session mới (không ctx_factory) chưa có test; giới hạn audit 500 hard-code; chưa có test đối chiếu khoá với ví dụ payloads.md.

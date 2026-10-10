@@ -1,22 +1,57 @@
 {
-  "milestone": "R9ih",
-  "current_task": null,
+  "milestone": "R10a",
+  "current_task": "dev-02",
   "tasks": {
     "dev-01": {
       "status": "DONE",
       "round": 1,
-      "base": "82cc65e15346ed593b47c718862302bfba1e9f38",
-      "commit": "3467282"
+      "base": "be2ee57451cb49d2d11604bece3c6b5e148ab895",
+      "commit": "a474722"
+    },
+    "dev-02": {
+      "status": "IN_PROGRESS",
+      "round": 1,
+      "base": "a474722"
+    },
+    "dev-03": {
+      "status": "TODO",
+      "round": 0
+    },
+    "dev-04": {
+      "status": "TODO",
+      "round": 0
+    },
+    "dev-05": {
+      "status": "TODO",
+      "round": 0
+    },
+    "dev-06": {
+      "status": "TODO",
+      "round": 0
+    },
+    "dev-07": {
+      "status": "TODO",
+      "round": 0
     }
   },
   "verify": {
     "consecutive_blocks": 0,
     "last_status": "PASS",
-    "hook_runs": 38,
-    "last_hook_at": "2026-10-09T14:34:24Z",
+    "hook_runs": 39,
+    "last_hook_at": "2026-10-10T02:01:52Z",
     "last_hook_agent": "developer"
   },
   "history": {
+    "R9ih": {
+      "tasks": {
+        "dev-01": {
+          "status": "DONE",
+          "round": 1,
+          "base": "82cc65e15346ed593b47c718862302bfba1e9f38",
+          "commit": "3467282"
+        }
+      }
+    },
     "R9i": {
       "tasks": {
         "dev-01": {
