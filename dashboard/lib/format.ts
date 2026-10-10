@@ -41,9 +41,21 @@ export function deltaPts(before: unknown, after: unknown): string {
   return `${d < 0 ? "−" : "+"}${s} điểm %`;
 }
 
-/** Local plant time (no zone in the data contract): "2026-03-10T22:00:00" -> "10/03/2026 22:00". */
+const HAS_ZONE = /(?:Z|[+-]\d{2}:?\d{2})$/;
+
+/**
+ * Plant time in events has no zone and is shown as written: "2026-03-10T22:00:00" -> "10/03/2026 22:00".
+ * Server stamps (runs, audit) carry a zone ("...+00:00") and are shown in the viewer's local time.
+ */
 export function dateTime(v: unknown): string {
   const s = str(v);
+  if (HAS_ZONE.test(s)) {
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) {
+      const p = (n: number) => String(n).padStart(2, "0");
+      return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+  }
   const m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/.exec(s);
   if (!m) return s || t.common.none;
   const date = `${m[3]}/${m[2]}/${m[1]}`;

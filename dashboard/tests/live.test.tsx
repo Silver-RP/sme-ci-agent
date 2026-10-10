@@ -4,7 +4,10 @@ import { LiveRun } from "@/components/LiveRun";
 import { ReplayRun } from "@/components/ReplayRun";
 import { answerRun, ApiError, decideApproval, fetchApprovers, startRun, type RunStatus } from "@/lib/api";
 import type { EventSourceLike } from "@/lib/sources";
-import { resp, stepStatus } from "./helpers";
+import { chooseOption, resp, stepStatus } from "./helpers";
+
+/** The approver field is a free text box until GET /config/approvers answers, then a select (a button). */
+const approverListLoaded = () => waitFor(() => expect(screen.getByLabelText("Người duyệt").tagName).toBe("BUTTON"));
 
 const BASE = "http://api.test";
 const finished: RunStatus = { run_id: "run_1", state: "finished", status: "completed", pending: null };
@@ -80,8 +83,8 @@ describe("live run", () => {
     await act(async () => {});
     expect(f).toHaveBeenCalledTimes(2); // nothing sent without a click
 
-    await waitFor(() => expect(screen.getByRole("option", { name: "alice" })).toBeInTheDocument());
-    fireEvent.change(screen.getByLabelText("Người duyệt"), { target: { value: "alice" } });
+    await approverListLoaded();
+    chooseOption("Người duyệt", "alice");
     fireEvent.click(screen.getByTestId("decide-approved"));
     await waitFor(() => expect(f).toHaveBeenCalledTimes(3));
     const [url, init] = f.mock.calls[2];
@@ -99,8 +102,8 @@ describe("live run", () => {
     render(<LiveRun api={{ baseUrl: BASE, fetchFn: f }} ctor={FakeES} />);
     fireEvent.click(screen.getByTestId("start-button"));
     await screen.findByTestId("decision-panel");
-    await waitFor(() => expect(screen.getByRole("option", { name: "alice" })).toBeInTheDocument());
-    fireEvent.change(screen.getByLabelText("Người duyệt"), { target: { value: "alice" } });
+    await approverListLoaded();
+    chooseOption("Người duyệt", "alice");
     fireEvent.click(screen.getByTestId("decide-approved"));
     expect(await screen.findByTestId("api-error")).toHaveTextContent("409: now waiting for rollback");
     expect(f.mock.calls[2][0]).toBe(`${BASE}/runs/run_1`);
@@ -111,7 +114,8 @@ describe("live run", () => {
     const f = vi.fn().mockResolvedValueOnce(resp(201, errored)).mockResolvedValueOnce(resp(200, waitingApproval));
     render(<LiveRun api={{ baseUrl: BASE, fetchFn: f }} ctor={FakeES} />);
     fireEvent.click(screen.getByTestId("start-button"));
-    expect(await screen.findByTestId("run-error-message")).toHaveTextContent("RuntimeError: 529 overloaded");
+    expect(await screen.findByTestId("run-error-message")).toHaveTextContent("Dịch vụ AI đang quá tải.");
+    expect(screen.getByTestId("run-error-raw")).toHaveTextContent("RuntimeError: 529 overloaded");
     await waitFor(() => expect(FakeES.urls).toHaveLength(1));
     fireEvent.click(screen.getByTestId("retry-button"));
     await screen.findByTestId("decision-panel");
@@ -150,7 +154,7 @@ describe("replay (FR-07)", () => {
     tick(1000);
     expect(screen.getByTestId("proposal-card")).toHaveAttribute("data-kind", "proposal");
 
-    fireEvent.change(screen.getByLabelText("Người duyệt"), { target: { value: "alice" } });
+    chooseOption("Người duyệt", "alice");
     fireEvent.click(screen.getByTestId("decide-approved"));
     tick(1000);
     expect(screen.getByTestId("outcome-stage")).toHaveAttribute("data-phase", "completed");
@@ -161,7 +165,7 @@ describe("replay (FR-07)", () => {
   it("error recording: error screen, Retry continues, the past error stays visible", () => {
     render(<ReplayRun file="run-error-retry" intervalMs={10} />);
     tick(1000);
-    expect(screen.getByTestId("run-error-message")).toHaveTextContent("529 overloaded");
+    expect(screen.getByTestId("run-error-raw")).toHaveTextContent("529 overloaded");
     fireEvent.click(screen.getByTestId("retry-button"));
     tick(2000);
     expect(screen.getByTestId("proposal-card")).toBeInTheDocument();

@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FastForward, Pause, Play, RotateCcw, Wand2 } from "lucide-react";
 import { RunScreen } from "@/components/run/RunScreen";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip } from "@/components/ui/tooltip";
 import type { RunActions } from "@/components/run/types";
 import type { RunStatus } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -66,6 +68,18 @@ export function ReplayRun({
     setCursor(0);
   };
 
+  // Space pauses / resumes, like a video player; ignored while typing or when a control has focus
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (e.key !== " " || (target && ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(target.tagName))) return;
+      e.preventDefault();
+      setPlaying((p) => !p);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   useEffect(() => {
     if (!auto || !waiting || !playing) return;
     const id = setTimeout(advance, AUTO_WAIT_MS / speed);
@@ -97,31 +111,32 @@ export function ReplayRun({
   const toolbar = (
     <div className="flex flex-wrap items-center gap-2" data-testid="replay-controls">
       {extra}
-      <label className="sr-only" htmlFor="replay-file">
-        {t.replay.file}
-      </label>
-      <select
-        id="replay-file"
-        className="h-9 max-w-[22rem] rounded-lg border border-border bg-surface px-2 text-sm"
-        value={recording.name}
-        onChange={(e) => router.push(`/?source=fixture&file=${encodeURIComponent(e.target.value)}`)}
+      <Select value={recording.name} onValueChange={(name) => router.push(`/?source=fixture&file=${encodeURIComponent(name)}`)}>
+        <SelectTrigger size="sm" className="w-80" aria-label={t.replay.file} data-testid="replay-file">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent align="end">
+          {RECORDINGS.map((r) => (
+            <SelectItem key={r.name} value={r.name}>
+              {t.replay.files[r.name] ?? r.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <ToolButton
+        onClick={() => setPlaying(!playing)}
+        label={`${playing ? t.replay.pause : t.replay.play} (Space)`}
+        text={playing ? t.replay.pause : t.replay.play}
+        testId="replay-play"
       >
-        {RECORDINGS.map((r) => (
-          <option key={r.name} value={r.name}>
-            {t.replay.files[r.name] ?? r.name}
-          </option>
-        ))}
-      </select>
-      <ToolButton onClick={() => setPlaying(!playing)} label={playing ? t.replay.pause : t.replay.play} testId="replay-play">
         {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
       </ToolButton>
-      <ToolButton onClick={() => setSpeed(speed === 1 ? 2 : 1)} label={`${t.replay.speed} ${speed}×`} active={speed === 2} testId="replay-speed">
+      <ToolButton onClick={() => setSpeed(speed === 1 ? 2 : 1)} label={t.replay.speedHint} active={speed === 2} testId="replay-speed">
         <FastForward className="size-4" />
         <span className="text-xs font-bold">{speed}×</span>
       </ToolButton>
-      <ToolButton onClick={() => setAuto(!auto)} label="Tự động qua các bước chờ" active={auto} testId="replay-auto">
+      <ToolButton onClick={() => setAuto(!auto)} label={t.replay.autoHint} text={t.replay.auto} active={auto} testId="replay-auto">
         <Wand2 className="size-4" />
-        <span className="text-xs font-bold">Auto</span>
       </ToolButton>
       <ToolButton onClick={restart} label={t.replay.restart} testId="replay-restart">
         <RotateCcw className="size-4" />
@@ -144,38 +159,45 @@ export function ReplayRun({
         actions={actions}
         toolbar={toolbar}
         notice={hint}
+        defaultApprover={str(current?.next?.body?.decided_by) || undefined}
       />
     </>
   );
 }
 
+/** Presenter control: icon (+ short word on wide screens), the full meaning in a tooltip. */
 function ToolButton({
   children,
   onClick,
   label,
+  text,
   active,
   testId,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   label: string;
+  /** visible word next to the icon from xl; the icon alone was ambiguous (Auto, 2×, ⟲) */
+  text?: string;
   active?: boolean;
   testId?: string;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      aria-pressed={active}
-      data-testid={testId}
-      className={cn(
-        "flex h-9 items-center gap-1 rounded-lg border px-2.5 transition",
-        active ? "border-accent bg-accent-soft text-accent" : "border-border bg-surface text-muted hover:text-fg",
-      )}
-    >
-      {children}
-    </button>
+    <Tooltip content={label} side="bottom">
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={label}
+        aria-pressed={active}
+        data-testid={testId}
+        className={cn(
+          "flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-sm font-medium transition active:scale-[0.97]",
+          active ? "border-accent bg-accent-soft text-accent" : "border-border bg-surface text-muted hover:text-fg active:bg-surface-2",
+        )}
+      >
+        {children}
+        {text && <span className="hidden xl:inline">{text}</span>}
+      </button>
+    </Tooltip>
   );
 }

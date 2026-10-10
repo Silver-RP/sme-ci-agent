@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { RunScreen } from "@/components/run/RunScreen";
 import type { RunActions } from "@/components/run/types";
-import { answerRun, ApiError, decideApproval, fetchApprovers, getRun, retryRun, startRun, type ApiOptions, type RunStatus } from "@/lib/api";
+import { answerRun, ApiError, closeRun, decideApproval, fetchApprovers, getRun, retryRun, startRun, type ApiOptions, type RunStatus } from "@/lib/api";
 import { createSseSource, type EventSourceCtor } from "@/lib/sources";
 import { t } from "@/lib/strings";
 import { useRunEvents } from "@/lib/useRunEvents";
@@ -121,6 +121,7 @@ export function LiveRun({
           setGeneration((g) => g + 1);
         },
       ),
+    close: (closedBy, reason) => runId && void run(() => closeRun(runId, closedBy, reason, api), setStatus),
     reset: () => {
       setStatus(null);
       setApiError(null);

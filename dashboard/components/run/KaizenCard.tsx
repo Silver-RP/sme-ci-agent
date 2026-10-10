@@ -21,10 +21,10 @@ export function KaizenCard({ content, outcome, compact }: { content: Obj; outcom
   const cause = isObj(content.root_cause) ? content.root_cause : {};
   const ok = outcome === "success";
   return (
-    <Card className="p-5 md:p-6" data-testid="kaizen-card">
+    <Card className="p-5" data-testid="kaizen-card">
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <BookOpenCheck className="size-6 text-accent" />
-        <h3 className="text-xl font-semibold">{t.kaizen.title}</h3>
+        <BookOpenCheck className="size-5 text-accent" />
+        <h3 className="text-lg font-semibold">{t.kaizen.title}</h3>
         <Badge tone={ok ? "ok" : "neutral"} className="ml-auto" data-testid="kaizen-outcome">
           {t.kaizen.outcome[outcome] ?? outcome}
         </Badge>

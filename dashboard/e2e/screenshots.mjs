@@ -1,7 +1,8 @@
 // Screenshots of every main state at 1920x1080 (brief DoD: one per state in the PR), from the replay so no
 // backend is needed. Usage: yarn build && yarn start -p 3100, then
 //   BASE=http://localhost:3100 yarn shots            (writes to dashboard/screenshots/, gitignored)
-// Set THEME=dark for the dark theme. Chromium: PLAYWRIGHT_BROWSERS_PATH or a local `npx playwright install chromium`.
+// Set THEME=dark for the dark theme. Chromium: PLAYWRIGHT_BROWSERS_PATH or a local `npx playwright install chromium`;
+// or PW_CHANNEL=chrome to use the installed Google Chrome instead of downloading one.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -12,7 +13,7 @@ const OUT = path.resolve(import.meta.dirname, "../screenshots");
 const THEME = process.env.THEME === "dark" ? "dark" : "light";
 fs.mkdirSync(OUT, { recursive: true });
 
-const browser = await chromium.launch();
+const browser = await chromium.launch(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {});
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
 await page.addInitScript((theme) => localStorage.setItem("sme.theme", theme), THEME);
 
@@ -30,7 +31,8 @@ async function replay(file, speedUp = true) {
 }
 
 const approve = async (label = "Duyệt") => {
-  await page.getByLabel("Người duyệt").selectOption("alice");
+  await page.getByLabel("Người duyệt").click();
+  await page.getByRole("option", { name: "alice" }).click();
   await page.getByRole("button", { name: label, exact: true }).click();
 };
 

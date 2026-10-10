@@ -9,6 +9,7 @@ import { Badge, Card, CardTitle, ConfidenceBar } from "@/components/ui/primitive
 import { DecisionPanel } from "@/components/run/DecisionPanel";
 import { MeasurementCard } from "@/components/run/MeasurementCard";
 import { SopDiff } from "@/components/run/SopDiff";
+import { TechDetail } from "@/components/run/TechDetail";
 import type { DecisionInput } from "@/components/run/types";
 
 /** Long text: 3 lines, then "Xem thêm" (FR-01.6). */
@@ -34,17 +35,20 @@ export function ActionSentence({ action }: { action: Obj }) {
   const { label, unit } = paramLabel(action.parameter);
   const value = num(action.value);
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xl" data-testid="proposal-action">
-      <span className="inline-flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-1.5 font-semibold">
-        <Factory className="size-5 text-muted" />
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-lg" data-testid="proposal-action">
+      <span className="inline-flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-1 font-semibold">
+        <Factory className="size-4 text-muted" />
         {t.proposal.machineAction} {str(action.machine_id)}
       </span>
       <span className="font-medium">{label}</span>
-      <code className="rounded bg-surface-2 px-1.5 py-0.5 text-sm text-muted">{str(action.parameter)}</code>
+      {/* the parameter code is part of the required sentence (FR-01.1: "Máy M02: `zone3_setpoint_c` → 180") */}
+      <code className="rounded bg-surface-2 px-1.5 py-0.5 text-sm text-muted" data-testid="proposal-parameter">
+        {str(action.parameter)}
+      </code>
       <span className="text-muted">→</span>
-      <span className="rounded-lg bg-accent-soft px-3 py-1 text-2xl font-bold tabular-nums text-accent">
+      <span className="rounded-lg bg-accent-soft px-3 py-0.5 text-xl font-bold tabular-nums text-accent">
         {value === null ? str(action.value) : value}
-        {unit && <span className="ml-1 text-lg">{unit}</span>}
+        {unit && <span className="ml-1 text-base">{unit}</span>}
       </span>
     </div>
   );
@@ -54,7 +58,7 @@ function ExpectedKpi({ kpi }: { kpi: Obj }) {
   const decrease = str(kpi.direction) !== "increase";
   const target = num(kpi.target);
   return (
-    <p className="text-lg" data-testid="proposal-kpi">
+    <p data-testid="proposal-kpi">
       <span className="font-semibold">{kpiLabel(kpi.kpi)}</span>{" "}
       <span className="text-muted">{decrease ? t.proposal.kpiDecrease : t.proposal.kpiIncrease}</span>{" "}
       <span className="font-bold text-ok">{target !== null && target <= 1 ? pct(target) : str(kpi.target)}</span>
@@ -71,6 +75,8 @@ export function ProposalStage({
   approvers,
   busy,
   lastMeasurement,
+  restoreVersion = null,
+  defaultApprover,
   onDecide,
   simulated,
 }: {
@@ -78,6 +84,9 @@ export function ProposalStage({
   approvers: string[];
   busy: boolean;
   lastMeasurement: Obj | null;
+  /** rollback: the SOP version whose content comes back (`previous_version` of the run's sop_applied) */
+  restoreVersion?: number | null;
+  defaultApprover?: string;
   onDecide: (d: DecisionInput) => void;
   simulated?: boolean;
 }) {
@@ -97,11 +106,9 @@ export function ProposalStage({
   return (
     <div className="animate-fade-up space-y-5" data-testid="proposal-card" data-kind={rollback ? "rollback" : "proposal"}>
       <div>
-        <Badge tone={rollback ? "bad" : "wait"} className="mb-2">
-          {rollback ? <RotateCcw className="size-4" /> : null}
-          {rollback ? t.status.waitRollback : t.status.waitApproval}
-        </Badge>
-        <h2 className="text-[1.75rem] font-semibold leading-tight tracking-tight" data-testid="approval-title">
+        {/* the status pill next to the page title already says "waiting for you": no second badge here */}
+        <h2 className="flex items-center gap-2 text-2xl font-semibold leading-tight tracking-tight" data-testid="approval-title">
+          {rollback && <RotateCcw className="size-6 shrink-0 text-bad" />}
           {rollback ? t.rollback.title : t.proposal.title}
         </h2>
         {rollback && (
@@ -129,10 +136,9 @@ export function ProposalStage({
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-xl font-semibold leading-snug" data-testid="proposal-hypothesis">
+                  <p className="text-lg font-semibold leading-snug" data-testid="proposal-hypothesis" title={translated !== description ? description : undefined}>
                     {translated}
                   </p>
-                  {translated !== description && <code className="text-sm text-muted">{description}</code>}
                 </div>
                 <div>
                   <div className="mb-1 text-sm text-muted">{t.hypotheses.confidence}</div>
@@ -170,10 +176,14 @@ export function ProposalStage({
         </div>
       )}
 
-      {rollback && str(proposal.change) && (
-        <p className="text-lg" data-testid="proposal-change">
-          {str(proposal.change)}
-        </p>
+      {rollback && (
+        <div>
+          {/* built from fields: the backend's `change` is a fixed English sentence ("Roll back SOP … to version N") */}
+          <p className="text-lg" data-testid="proposal-change">
+            {sop ? t.rollback.sentence(str(sop.sop_id), restoreVersion) : t.rollback.sentenceNoSop}
+          </p>
+          {str(proposal.change) && <TechDetail className="mt-1">{str(proposal.change)}</TechDetail>}
+        </div>
       )}
 
       {sop && (
@@ -188,6 +198,7 @@ export function ProposalStage({
               newContent={str(sop.new_content)}
               fromLabel={rollback ? t.rollback.inForce : t.proposal.sopCurrent}
               toLabel={rollback ? t.rollback.restore : t.proposal.sopNew}
+              toText={rollback && restoreVersion !== null ? t.rollback.restoreText(restoreVersion, fromVersion !== null ? fromVersion + 1 : null) : undefined}
             />
           </div>
         </Card>
@@ -198,6 +209,7 @@ export function ProposalStage({
         kind={rollback ? "rollback" : "proposal"}
         proposalId={proposalId}
         approvers={approvers}
+        defaultApprover={defaultApprover}
         busy={busy}
         onDecide={onDecide}
         simulated={simulated}

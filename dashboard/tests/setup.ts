@@ -3,7 +3,16 @@ import { cleanup } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { afterEach, vi } from "vitest";
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  // the decision panel remembers the last approver per tab; tests start from a blank one
+  sessionStorage.clear();
+});
+
+// Radix Select calls browser APIs that jsdom does not implement
+Element.prototype.scrollIntoView ??= () => {};
+Element.prototype.hasPointerCapture ??= () => false;
+Element.prototype.releasePointerCapture ??= () => {};
 
 // Components render outside the Next.js app router in tests: plain anchors and a no-op router.
 vi.mock("next/link", () => ({

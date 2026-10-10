@@ -2,6 +2,8 @@
 
 /* Dark mode follows the `.dark` class on <html> (toggle in the topbar). */
 @custom-variant dark (&:where(.dark, .dark *));
+/* Presentation mode (key F, data-present on <html>): `present:hidden` drops developer details on the projector. */
+@custom-variant present (&:where([data-present="true"] *));
 
 /*
  * Design tokens. Colors carry meaning (brief NFR-2), the same everywhere:
@@ -19,13 +21,14 @@
   --accent: #4f46e5;
   --accent-fg: #ffffff;
   --accent-soft: #eef0ff;
-  --ok: #0f9d58;
+  /* status colors are also text on their -soft background (badges): each pair is >= 4.5:1 (WCAG AA) */
+  --ok: #0a7d45;
   --ok-soft: #e6f6ee;
-  --bad: #e5531a;
+  --bad: #c2410c;
   --bad-soft: #fdeee7;
-  --wait: #c98a00;
+  --wait: #8a5d00;
   --wait-soft: #fdf5e1;
-  --run: #64748b;
+  --run: #556274;
   --run-soft: #eef1f5;
   --diff-add: #e3f7ea;
   --diff-del: #fde8e4;
@@ -124,12 +127,22 @@
   }
 }
 
-/* Body text >= 18px on the projector (NFR-1): Tailwind sizes are rem-based, so scale the root. */
+/*
+ * Tailwind sizes are rem-based, so the root sets the scale of the whole UI. Normal use: the standard 16px.
+ * Presentation mode (key F) is what goes on the projector: 125% gives body text 20px and titles ~30px (NFR-1).
+ */
 html {
-  font-size: 112.5%;
+  font-size: 100%;
 }
 html[data-present="true"] {
   font-size: 125%;
+}
+
+/* Taps on touch screens give no grey flash and no double-tap zoom delay; :active styles give the feedback. */
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 body {

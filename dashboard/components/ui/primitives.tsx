@@ -1,7 +1,7 @@
 // Small shadcn-style primitives on Tailwind (no extra runtime). Variants follow the admin UI standard:
 // solid = primary action, outline = secondary, danger = destructive.
 
-import type { ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes, LabelHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes, LabelHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
 type ButtonVariant = "solid" | "outline" | "ghost" | "danger" | "ok";
@@ -16,14 +16,17 @@ const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
 };
 const BUTTON_SIZES: Record<ButtonSize, string> = {
   sm: "h-8 px-3 text-sm gap-1.5",
-  md: "h-10 px-4 text-base gap-2",
-  lg: "h-12 px-6 text-lg gap-2",
+  md: "h-9 px-4 text-sm gap-2",
+  lg: "h-11 px-5 text-base gap-2",
 };
+
+// visible press state for touch screens, where :hover never fires
+const BUTTON_BASE = "inline-flex select-none items-center justify-center rounded-lg font-semibold transition active:scale-[0.97] active:brightness-95";
 
 /** Button look for a Link (an <a> must not wrap a <button>). */
 export function buttonClasses(variant: ButtonVariant = "solid", size: ButtonSize = "md", className?: string): string {
   return cn(
-    "inline-flex select-none items-center justify-center rounded-lg font-semibold transition",
+    BUTTON_BASE,
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
     BUTTON_VARIANTS[variant],
     BUTTON_SIZES[size],
@@ -42,9 +45,9 @@ export function Button({
     <button
       type={type}
       className={cn(
-        "inline-flex select-none items-center justify-center rounded-lg font-semibold transition",
+        BUTTON_BASE,
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
-        "disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:hover:brightness-100",
+        "disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:hover:brightness-100 disabled:active:scale-100",
         BUTTON_VARIANTS[variant],
         BUTTON_SIZES[size],
         className,
@@ -55,15 +58,18 @@ export function Button({
 }
 
 export function Card({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("rounded-2xl border border-border bg-surface shadow-card", className)} {...rest} />;
+  return <div className={cn("rounded-xl border border-border bg-surface shadow-card", className)} {...rest} />;
 }
 
 /** Card header: short verb-like title ("Vì sao", "Làm gì") with an optional icon and right slot. */
 export function CardTitle({ icon, children, right, className }: { icon?: ReactNode; children: ReactNode; right?: ReactNode; className?: string }) {
   return (
-    <div className={cn("flex items-center gap-2", className)}>
-      {icon && <span className="text-muted [&>svg]:size-5">{icon}</span>}
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">{children}</h3>
+    // wraps: in a narrow card the right slot (a badge) moves to its own line instead of overflowing
+    <div className={cn("flex flex-wrap items-center gap-x-2 gap-y-1", className)}>
+      <span className="flex min-w-0 items-start gap-2">
+        {icon && <span className="shrink-0 text-muted [&>svg]:size-5">{icon}</span>}
+        <h3 className="min-w-0 text-sm font-semibold uppercase tracking-wide text-muted">{children}</h3>
+      </span>
       {right && <div className="ml-auto">{right}</div>}
     </div>
   );
@@ -97,24 +103,17 @@ export function Label({ className, ...rest }: LabelHTMLAttributes<HTMLLabelEleme
   return <label className={cn("mb-1.5 block text-sm font-semibold text-fg", className)} {...rest} />;
 }
 
+// 16px text on phones (iOS Safari zooms into smaller inputs), the standard 14px from md, like shadcn
 const FIELD =
-  "w-full rounded-lg border border-border bg-surface px-3 text-base text-fg placeholder:text-muted/70 " +
+  "w-full rounded-lg border border-border bg-surface px-3 text-base text-fg placeholder:text-muted/70 md:text-sm " +
   "focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25 disabled:opacity-60";
 
 export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={cn(FIELD, "h-10", className)} {...rest} />;
+  return <input className={cn(FIELD, "h-9", className)} {...rest} />;
 }
 
 export function Textarea({ className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return <textarea className={cn(FIELD, "min-h-24 py-2 leading-relaxed", className)} {...rest} />;
-}
-
-export function Select({ className, children, ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select className={cn(FIELD, "h-10 cursor-pointer pr-8", className)} {...rest}>
-      {children}
-    </select>
-  );
 }
 
 /** Confidence 0..1 as a bar; color follows the ask threshold idea: low = wait, high = ok. */

@@ -1,10 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { AlertTriangle, Radio, Wifi, WifiOff } from "lucide-react";
 import type { RunStatus } from "@/lib/api";
 import type { AgentEvent } from "@/lib/events";
-import { shortError, str } from "@/lib/format";
+import { num, shortError, str } from "@/lib/format";
 import { buildRunModel, phaseOf, stepStates, type Phase } from "@/lib/runModel";
 import type { ConnectionStatus } from "@/lib/sources";
 import { t } from "@/lib/strings";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/cn";
 import { Badge, type Tone } from "@/components/ui/primitives";
 import { LoopStepper } from "@/components/run/LoopStepper";
 import { ProposalStage } from "@/components/run/ProposalStage";
-import { ActivityFeed, AnomalyCard, EventLog, HypothesisBoard } from "@/components/run/SidePanels";
+import { ActivityFeed, AnomalyCard, ContextStrip, EventLog, HypothesisBoard } from "@/components/run/SidePanels";
 import { ErrorStage, HaltStage, OutcomeStage, QuestionStage, StartStage, ThinkingStage } from "@/components/run/Stages";
 import type { RunActions, RunMode } from "@/components/run/types";
 
@@ -70,6 +70,7 @@ export function RunScreen({
   actions,
   toolbar,
   notice,
+  defaultApprover,
 }: {
   mode: RunMode;
   runId: string | null;
@@ -86,9 +87,15 @@ export function RunScreen({
   toolbar?: ReactNode;
   /** replay: what the recording does next, shown in the replay banner */
   notice?: string;
+  /** replay: the approver the recording uses next, pre-selected in the decision panel */
+  defaultApprover?: string;
 }) {
+  // null = automatic: open while the agent investigates (S3: tool cards and hypotheses must be visible, FR-02),
+  // folded once a person has to act so the stage leads; a click by the person overrides it
+  const [contextChoice, setContextChoice] = useState<boolean | null>(null);
   const model = buildRunModel(events);
   const phase = phaseOf(status, model, { started, busy });
+  const contextOpen = contextChoice ?? phase === "thinking";
   const states = stepStates(phase, model);
   const pending = status?.pending ?? null;
   const simulated = mode === "replay";
@@ -96,6 +103,17 @@ export function RunScreen({
     actions.decide(str(pending?.proposal_id), kind, d);
   const errorMsg = status?.state === "error" ? str(status.error) : str(model.finished?.error);
   const retryable = status?.state === "error" ? status.retryable !== false : model.finished?.retryable !== false;
+  // Right column from 2xl. Below that the same panels open side by side under the context strip, shortened so a
+  // long run (many hypotheses or tool calls) never pushes the stage below the fold; the event log has everything.
+  const sidePanels = (short: boolean) => (
+    <>
+      <AnomalyCard anomaly={model.anomaly} />
+      <HypothesisBoard hypotheses={model.hypotheses} insufficient={model.insufficient} limit={short ? 2 : undefined} />
+      <ActivityFeed tools={model.tools} limit={short ? 3 : undefined} />
+    </>
+  );
+  // rollback restores the content the run's first change replaced (sop_applied.previous_version, H-19)
+  const restoreVersion = num(model.applied[0]?.previous_version);
 
   let stage: ReactNode;
   switch (phase) {
@@ -127,26 +145,30 @@ export function RunScreen({
           approvers={approvers}
           busy={busy}
           lastMeasurement={model.lastMeasurement}
+          restoreVersion={restoreVersion}
+          defaultApprover={defaultApprover}
           onDecide={decide(phase)}
           simulated={simulated}
         />
       );
       break;
     case "halt":
-      stage = <HaltStage pending={pending ?? {}} approvers={approvers} busy={busy} onDecide={decide("halt")} simulated={simulated} />;
+      stage = (
+        <HaltStage pending={pending ?? {}} approvers={approvers} defaultApprover={defaultApprover} busy={busy} onDecide={decide("halt")} simulated={simulated} />
+      );
       break;
     case "error":
-      stage = <ErrorStage message={errorMsg} retryable={retryable} busy={busy} onRetry={actions.retry} />;
+      stage = <ErrorStage message={errorMsg} retryable={retryable} busy={busy} onRetry={actions.retry} onClose={actions.close} approvers={approvers} />;
       break;
     default:
-      stage = <OutcomeStage phase={phase} model={model} onNewRun={actions.reset} />;
+      stage = <OutcomeStage phase={phase} model={model} runId={runId} onNewRun={actions.reset} />;
   }
 
   return (
     <main className="mx-auto w-full max-w-[1800px] px-4 py-5 md:px-8" data-testid="run-screen">
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <h1 className="text-[1.75rem] font-semibold tracking-tight">{t.nav.run}</h1>
-        {runId && <code className="rounded-md bg-surface-2 px-2 py-0.5 text-sm text-muted">{runId}</code>}
+        <h1 className="text-2xl font-semibold tracking-tight">{t.nav.run}</h1>
+        {runId && <code className="rounded-md bg-surface-2 px-2 py-0.5 text-sm text-muted present:hidden">{runId}</code>}
         <RunStatusPill phase={phase} learned={model.learning !== null} />
         <div className="ml-auto flex items-center gap-2">
           {toolbar}
@@ -188,20 +210,47 @@ export function RunScreen({
         </div>
       )}
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(22rem,1fr)]">
+      {/* Two columns only from 2xl (1536px): below that (laptops, the projector at 125%) the right column squeezed
+          the stage, so it becomes a one-line strip that opens the full panels on demand. Before a run starts
+          the panels would all be empty, so they are not shown. */}
+      {phase !== "start" && (
+        <div className="mt-5 2xl:hidden">
+          <ContextStrip
+            anomaly={model.anomaly}
+            hypotheses={model.hypotheses}
+            tools={model.tools}
+            open={contextOpen}
+            onToggle={() => setContextChoice(!contextOpen)}
+          />
+          {/* opens right under the strip that was clicked, not further down where the right column used to be */}
+          {contextOpen && (
+            // Measured with a long fake run: three columns from md and a height cap per card keep the stage title on
+            // a 1366x768 screen. min-w-0 lets a column shrink below an unbreakable string (ids, codes).
+            <div
+              className="mt-3 grid animate-fade-up items-start gap-4 md:grid-cols-3 *:max-h-72 *:min-w-0 *:overflow-y-auto"
+              data-testid="context-panels"
+            >
+              {sidePanels(true)}
+            </div>
+          )}
+        </div>
+      )}
+      <div className={cn("mt-5 grid gap-5", phase !== "start" && "2xl:grid-cols-[minmax(0,1.65fr)_minmax(22rem,1fr)]")}>
         <section aria-label="Sân khấu" className="min-w-0" data-testid="stage">
           {stage}
         </section>
-        <aside className="space-y-5" aria-label={t.activity.title}>
-          <AnomalyCard anomaly={model.anomaly} />
-          <HypothesisBoard hypotheses={model.hypotheses} insufficient={model.insufficient} />
-          <ActivityFeed tools={model.tools} />
-        </aside>
+        {phase !== "start" && (
+          <aside className="hidden space-y-5 2xl:block" aria-label={t.activity.title} data-testid="side-panels">
+            {sidePanels(false)}
+          </aside>
+        )}
       </div>
 
-      <div className="mt-5">
-        <EventLog events={events} />
-      </div>
+      {phase !== "start" && (
+        <div className="mt-5 present:hidden">
+          <EventLog events={events} />
+        </div>
+      )}
     </main>
   );
 }

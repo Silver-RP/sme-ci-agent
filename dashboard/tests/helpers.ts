@@ -1,3 +1,4 @@
+import { fireEvent, screen } from "@testing-library/react";
 import type { RunStatus } from "@/lib/api";
 import type { AgentEvent } from "@/lib/events";
 import { findRecording } from "@/lib/recordings";
@@ -20,6 +21,12 @@ export function eventsUntilStep(name: string, i: number): AgentEvent[] {
   const last = r.steps![i].last_event as AgentEvent;
   const idx = r.events.findIndex((e) => e.event_id === last.event_id && e.type === last.type);
   return idx >= 0 ? r.events.slice(0, idx + 1) : [...r.events];
+}
+
+/** Picks an option of a Radix Select (components/ui/select.tsx): open it from the keyboard, click the option. */
+export function chooseOption(label: string, option: string) {
+  fireEvent.keyDown(screen.getByLabelText(label), { key: "Enter" });
+  fireEvent.click(screen.getByRole("option", { name: option }));
 }
 
 export function resp(status: number, body: unknown): Response {

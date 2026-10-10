@@ -17,7 +17,7 @@ export function toolArgChips(args: Record<string, unknown>): string[] {
     let value = Array.isArray(v) ? v.map(str).join(", ") : str(v);
     if (k === "kpi") value = kpiLabel(v);
     if (k === "shift") value = shiftLabel(v);
-    if ((k === "start" || k === "end") && value.length > 10) value = value.slice(0, 16).replace("T", " ");
+    if ((k === "start" || k === "end" || k === "change_time") && value.length > 10) value = value.slice(0, 16).replace("T", " ");
     if (value) out.push(`${label}: ${value}`);
   }
   return out;
@@ -74,5 +74,86 @@ export function describeEvent(e: AgentEvent): string {
       )[str(p.status)] ?? str(p.status);
     default:
       return "";
+  }
+}
+
+/**
+ * Plain words for a backend error ("RuntimeError: 529 overloaded"). The raw line stays available in
+ * "Chi tiết kỹ thuật"; the audience only needs to know what kind of problem it is.
+ */
+export function friendlyError(raw: unknown): string {
+  const s = str(raw);
+  if (/\b529\b|overload/i.test(s)) return t.error.kinds.overloaded;
+  if (/\b429\b|rate.?limit/i.test(s)) return t.error.kinds.rateLimited;
+  if (/time.?out|timed out/i.test(s)) return t.error.kinds.timeout;
+  if (/connect|network|unreachable/i.test(s)) return t.error.kinds.connection;
+  return t.error.kinds.other;
+}
+
+// ---------- audit_log rows (GET /audit) ----------
+
+export type AuditTone = "ok" | "bad" | "wait" | "run" | "accent" | "neutral";
+/** read = read-only tool call (many per run, hidden by default); the rest are decisions, changes, checks */
+export type AuditGroup = "decision" | "change" | "check" | "read";
+export type AuditIcon = "approve" | "reject" | "decide" | "answer" | "sop" | "learn" | "measure" | "halt" | "close" | "read";
+
+export interface AuditView {
+  label: string;
+  detail: string;
+  tone: AuditTone;
+  group: AuditGroup;
+  icon: AuditIcon;
+}
+
+const capitalize = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+const quoted = (v: unknown) => (str(v) ? `“${str(v)}”` : "");
+
+/** One readable line per audit row; action names follow backend/tools and backend/agent/nodes. */
+export function describeAudit(action: string, params: Record<string, unknown>): AuditView {
+  const p = params ?? {};
+  switch (action) {
+    case "approval_decided": {
+      const decision = str(p.decision);
+      if (decision === "sop_conflict") return { label: t.auditActions.sopConflict, detail: str(p.message), tone: "bad", group: "decision", icon: "reject" };
+      const what = p.kind === "rollback" ? t.auditActions.rollback : t.auditActions.proposal;
+      const tone: AuditTone = decision === "approved" ? "ok" : decision === "rejected" ? "bad" : "wait";
+      const icon: AuditIcon = decision === "approved" ? "approve" : decision === "rejected" ? "reject" : "decide";
+      return { label: `${capitalize(t.decisions[decision] ?? decision)} ${what}`, detail: quoted(p.reason), tone, group: "decision", icon };
+    }
+    case "halt_decided":
+      return { label: capitalize(t.decisions[str(p.decision)] ?? str(p.decision)), detail: quoted(p.reason), tone: "wait", group: "decision", icon: "decide" };
+    case "answer_received":
+      return { label: t.auditActions.answer, detail: quoted(p.answer), tone: "neutral", group: "decision", icon: "answer" };
+    case "run_closed":
+      return { label: t.auditActions.closed, detail: quoted(p.reason), tone: "run", group: "decision", icon: "close" };
+    case "halt_raised":
+      return { label: t.status.halted, detail: t.halt.reasons[str(p.reason)] ?? str(p.reason), tone: "wait", group: "check", icon: "halt" };
+    case "propose_sop":
+      return { label: t.auditActions.proposeSop(str(p.sop_id)), detail: str(p.rationale), tone: "accent", group: "change", icon: "sop" };
+    case "apply_sop":
+      return { label: t.auditActions.applySop(str(p.sop_id)), detail: num(p.base_version) !== null ? t.auditActions.fromVersion(num(p.base_version)!) : "", tone: "accent", group: "change", icon: "sop" };
+    case "save_learning":
+      return { label: t.auditActions.learn, detail: "", tone: "ok", group: "change", icon: "learn" };
+    case "measure":
+      return { label: t.auditActions.measure, detail: toolArgChips(p).join(" · "), tone: "neutral", group: "check", icon: "measure" };
+    case "kpi_threshold_check":
+      return {
+        label: p.passed === true ? t.measure.passed : t.measure.failed,
+        detail: t.auditActions.threshold(kpiLabel(p.kpi), pct(p.after), pct(p.target)),
+        tone: p.passed === true ? "ok" : "bad",
+        group: "check",
+        icon: "measure",
+      };
+    case "kpi_not_measured":
+      return {
+        label: t.auditActions.notMeasured,
+        detail: p.status === "insufficient_evidence" ? t.measure.insufficient : str(p.reason),
+        tone: "wait",
+        group: "check",
+        icon: "measure",
+      };
+    default:
+      if (t.tools[action]) return { label: toolLabel(action), detail: toolArgChips(p).join(" · "), tone: "neutral", group: "read", icon: "read" };
+      return { label: action, detail: "", tone: "neutral", group: "check", icon: "read" };
   }
 }

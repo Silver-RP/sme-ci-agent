@@ -5,14 +5,12 @@ import { MeasurementCard } from "@/components/run/MeasurementCard";
 import { ProposalStage } from "@/components/run/ProposalStage";
 import { ErrorStage, HaltStage, OutcomeStage, QuestionStage } from "@/components/run/Stages";
 import { buildRunModel } from "@/lib/runModel";
-import { eventsUntilStep, recording, stepStatus } from "./helpers";
+import { chooseOption, eventsUntilStep, recording, stepStatus } from "./helpers";
 
 const APPROVERS = ["alice", "bob", "qa_lead"];
 const happyPending = stepStatus("run-happy", 1).pending!;
 
-function choose(name: string) {
-  fireEvent.change(screen.getByLabelText("Người duyệt"), { target: { value: name } });
-}
+const choose = (name: string) => chooseOption("Người duyệt", name);
 
 describe("ProposalStage (S5, FR-01) with the real R9i payload", () => {
   it("shows the five blocks: why, what, SOP old -> new, expected KPI, decision", () => {
@@ -161,7 +159,9 @@ describe("ErrorStage and OutcomeStage (FR-04)", () => {
   it("Retry only when retryable; short message without traceback", () => {
     const onRetry = vi.fn();
     const { unmount } = render(<ErrorStage message={"RuntimeError: 529 overloaded\nTraceback..."} retryable busy={false} onRetry={onRetry} />);
-    expect(screen.getByTestId("run-error-message")).toHaveTextContent(/^RuntimeError: 529 overloaded$/);
+    // plain words on screen; the raw first line (no traceback) only under "Chi tiết kỹ thuật"
+    expect(screen.getByTestId("run-error-message")).toHaveTextContent("Dịch vụ AI đang quá tải.");
+    expect(screen.getByTestId("run-error-raw")).toHaveTextContent(/^RuntimeError: 529 overloaded$/);
     fireEvent.click(screen.getByTestId("retry-button"));
     expect(onRetry).toHaveBeenCalled();
     unmount();

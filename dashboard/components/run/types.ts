@@ -8,6 +8,8 @@ export interface RunActions {
   answer: (text: string) => void;
   decide: (proposalId: string, kind: Decision["kind"], d: DecisionInput) => void;
   retry: () => void;
+  /** close a run whose error can no longer be retried (live only, POST /runs/{id}/close, H-48) */
+  close?: (closedBy: string, reason: string) => void;
   reset?: () => void;
 }
 

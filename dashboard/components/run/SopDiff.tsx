@@ -13,6 +13,7 @@ export function SopDiff({
   newContent,
   fromLabel = t.proposal.sopCurrent,
   toLabel = t.proposal.sopNew,
+  toText,
 }: {
   sopId: string;
   fromVersion: number | null;
@@ -21,6 +22,8 @@ export function SopDiff({
   newContent: string;
   fromLabel?: string;
   toLabel?: string;
+  /** replaces "<toLabel> v<toVersion>" when the target needs more words (rollback: which content comes back) */
+  toText?: string;
 }) {
   const lines = diffLines(oldContent ?? "", newContent);
   const stats = diffStats(lines);
@@ -33,7 +36,7 @@ export function SopDiff({
           {sopId}
         </span>
         <span className="text-muted" data-testid="sop-versions">
-          {fromLabel} {fromVersion !== null ? `v${fromVersion}` : ""} → {toLabel} {toVersion !== null ? `v${toVersion}` : ""}
+          {fromLabel} {fromVersion !== null ? `v${fromVersion}` : ""} → {toText ?? `${toLabel} ${toVersion !== null ? `v${toVersion}` : ""}`}
         </span>
         <span className="ml-auto flex gap-1.5">
           {unchanged ? (
@@ -49,7 +52,7 @@ export function SopDiff({
         </span>
       </div>
       {oldContent === null && <p className="mb-2 text-sm text-muted">{t.proposal.sopNotAvailable}</p>}
-      <ol className="overflow-hidden rounded-xl border border-border font-mono text-[0.9rem] leading-relaxed" data-testid="sop-lines">
+      <ol className="overflow-hidden rounded-xl border border-border font-mono text-sm leading-relaxed" data-testid="sop-lines">
         {lines.map((l, i) => (
           <li
             key={i}
