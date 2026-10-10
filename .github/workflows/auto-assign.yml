@@ -1,0 +1,40 @@
+# Gán issue vai cho thành viên ngay khi họ nhận lời mời collaborator.
+# GitHub bỏ qua lệnh gán người chưa là collaborator mà không báo lỗi,
+# nên chỉ cần thử gán rồi đọc lại. Gán xong hết thì leader gỡ workflow này.
+name: auto-assign
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  auto-assign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assign role issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          # issue:login
+          PAIRS: "64:Finnng1104 67:Finnng1104 65:daivonpham"
+        run: |
+          assigned() {
+            gh issue view "$1" --json assignees --jq '.assignees[].login' | grep -qx "$2"
+          }
+          for pair in $PAIRS; do
+            issue=${pair%%:*}; user=${pair#*:}
+            if assigned "$issue" "$user"; then
+              echo "#$issue đã gán $user."
+              continue
+            fi
+            gh issue edit "$issue" --add-assignee "$user" >/dev/null || true
+            if assigned "$issue" "$user"; then
+              echo "#$issue: vừa gán $user."
+            else
+              echo "#$issue: $user chưa nhận lời mời, thử lại lần sau."
+            fi
+          done
