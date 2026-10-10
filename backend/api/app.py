@@ -37,6 +37,7 @@ from backend.agent.llm import LLM, AnthropicLLM
 from backend.agent.nodes.act import DecisionError, parse_decision
 from backend.agent.nodes.improve import ProposalError
 from backend.agent.state import new_state
+from backend.api.kpi_series import SeriesError, kpi_series
 from backend.db import repo
 from backend.db.session import make_engine
 from backend.domain_config import DomainConfig, load_domain_config
@@ -371,6 +372,21 @@ def create_app(
                     "created_at": r.created_at.isoformat(), "content": r.content,
                 }
         return {"sop_id": sop_id, "versions": [found[v] for v in sorted(found)]}
+
+    @app.get("/kpi/series")
+    def kpi_series_api(
+        kpi: str,
+        machine: str | None = None,
+        shift: str | None = None,
+        start: str | None = None,
+        end: str | None = None,
+    ) -> dict[str, Any]:
+        """KPI over time from the app's sandbox data (read only, no DB)."""
+        tables = make_ctx("api_read").tables if ctx_factory is not None else _default_tables()
+        try:
+            return kpi_series(tables, cfg_domain, kpi, machine, shift, start, end)
+        except SeriesError as e:
+            raise HTTPException(status_code=422, detail=str(e)) from e
 
     @app.get("/runs/{run_id}")
     def run_status(run_id: str) -> dict[str, Any]:

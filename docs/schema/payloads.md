@@ -139,6 +139,18 @@ Có hai dạng; phân biệt bằng `kind`.
 | GET | `/runs` | | `{runs: [RunSummary]}`, mới nhất trước (R10a) |
 | GET | `/audit?run_id=&limit=` | | `{rows: [AuditRow]}`, mới nhất trước. `limit` 1..500 (mặc định 100), ngoài khoảng thì 422 |
 | GET | `/sop/{sop_id}/versions` | | `{sop_id, versions: [SopVersion]}`, cũ nhất trước; 404 nếu `sop_id` không có trong config |
+| GET | `/kpi/series?kpi=&machine=&shift=&start=&end=` | `kpi` bắt buộc | chuỗi KPI từ dữ liệu sandbox của app (R10b1 đổi nguồn sang `production_log`). `kpi`, `machine`, `shift` lạ hoặc `start`/`end` sai định dạng thì 422. `start <= ts < end`; khoảng rỗng thì `points: []` |
+
+Ví dụ phản hồi `GET /kpi/series`:
+
+```json
+{"kpi": "defect_rate", "machine": "M02", "shift": null,
+ "points": [{"ts": "2026-01-01T06:00:00", "value": 0.019283}],
+ "baseline": 0.019544, "upper_limit": 0.030544,
+ "anomalies": [{"start": "2026-03-10T22:00:00", "end": "2026-06-30T22:00:00", "machine": "M02", "shift": "night"}]}
+```
+
+`baseline` và `upper_limit` là số của Detect cho (máy, KPI), bằng giá trị trong event `anomaly_detected`; là `null` khi không chọn `machine` (khi đó nhiều máy cùng thời điểm được lấy trung bình). Quá 1000 điểm thì gộp theo ngày (`ts` là 00:00 của ngày). `anomalies` lọc theo `machine`/`shift`/khoảng thời gian.
 
 Ba API đọc trên (R10a) chỉ đọc, không ghi DB. `GET /runs` đọc từ bộ nhớ của app nên mất khi backend khởi động lại (H-15, sửa ở R10c).
 

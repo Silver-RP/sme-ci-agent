@@ -23,7 +23,7 @@ def rollback_run(db_session):
 
 
 def audits(db_session, action):
-    return [a.params for a in db_session.scalars(select(AuditLog).where(AuditLog.action == action))]
+    return [a.params for a in db_session.scalars(select(AuditLog).where(AuditLog.action == action).order_by(AuditLog.id))]
 
 
 def test_pending_approval_has_proposal_id_kind_and_hash(db_session):
