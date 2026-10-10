@@ -5,7 +5,15 @@
 
 Sources (read only): docs/autodev/state.json (goals, open gaps, plugin milestones, outlook, merged runs),
 .autodev/metrics.py (milestones, audits) and the last lines of .autodev/runs/run.log (runner).
-Refresh the page: /session-end step "Trang trạng thái". Stdlib only (python3.9).
+Stdlib only (python3.9).
+
+The page (https://claude.ai/artifact/X6TLNZGZmzraP36WKgBKxF, private) is a snapshot, refreshed ONLY when the leader
+asks (leader choice 2026-10-10, not part of /session-end):
+  1. run this script;
+  2. upload each of the 7 files as an asset of the page (Artifact publish, url, asset: true, one file_path per call);
+  3. ArtifactData batch: for each datasets/<name>, update source = {kind: "file", name: "<name>.json", url: <blob url>}
+     and updated = {at: <ISO time>, by: "Claude (.autodev/export_status.py)"}, pinned to the version just read.
+Old assets stay unless the leader approves deleting them.
 """
 
 from __future__ import annotations
