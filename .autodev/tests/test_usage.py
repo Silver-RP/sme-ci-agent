@@ -47,6 +47,28 @@ class Usage(unittest.TestCase):
         self.latest.write_text(json.dumps({"five_hour": 12.5, "seven_day": 3.0}), encoding="utf-8")
         self.assertEqual(usage.read_latest(self.latest)["five_hour"], 12.5)
 
+    def test_age_note_flags_stale_snapshot(self):
+        now = 1_000_000
+        self.assertIn("5 phút trước", usage.age_note({"at": now - 300}, now))
+        self.assertNotIn("/usage", usage.age_note({"at": now - 300}, now))
+        stale = usage.age_note({"at": now - 3600}, now)
+        self.assertIn("60 phút trước", stale)
+        self.assertIn("/usage", stale)
+        self.assertIn("/usage", usage.age_note(None, now))
+        self.assertIn("/usage", usage.age_note({"five_hour": 1.0}, now))
+
+    def test_show_prints_current_and_last_rows(self):
+        self.assertIn("chưa có lịch sử", usage.show({"five_hour": 7.0, "seven_day": 9.0, "at": 0}, self.log, 0))
+        for t in ("a", "b", "c"):
+            usage.start(t, "", {"five_hour": 1.0, "seven_day": 1.0}, self.open)
+            usage.end({"five_hour": 2.0, "seven_day": 1.0}, self.open, self.log)
+        out = usage.show({"five_hour": 7.0, "seven_day": 9.0, "at": 0}, self.log, 0, last=2)
+        self.assertIn("5h 7%, tuần 9%", out)
+        self.assertIn("| b |", out)
+        self.assertIn("| c |", out)
+        self.assertNotIn("| a |", out)
+        self.assertIn(str(self.log), out)
+
 
 if __name__ == "__main__":
     unittest.main()
