@@ -30,6 +30,7 @@ Cần Docker (Postgres), `uv`, Node ≥ 22.13 và `yarn` (chạy `yarn install` 
 ```bash
 scripts/demo.sh --check         # kiểm tra cài đặt: bật hết, thử từng phần, tự tắt, in CHECK PASSED
 scripts/demo.sh                 # bật db, migration, backend :8000, dashboard :3000; Ctrl+C để dừng
+scripts/demo.sh --fresh-db      # như trên nhưng chạy trên DB riêng sme_ci_demo, tạo lại sạch mỗi lần (DB chính giữ nguyên)
 # mở http://localhost:3000/?source=live, bấm Start run (để trống change time), trả lời câu hỏi,
 # chọn tên người duyệt trong danh sách rồi Approve
 uv run python scripts/run_scenario.py   # hoặc chạy một vòng từ dòng lệnh, in tóm tắt event, thoát 0 nếu xong
