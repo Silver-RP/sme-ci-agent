@@ -1,4 +1,6 @@
-# Hợp đồng dữ liệu đầu vào v0.1 (leader đã duyệt 2026-10-10)
+# Hợp đồng dữ liệu đầu vào v0.1 (bản đề xuất)
+
+> **Trạng thái:** leader đã duyệt **3 hướng lớn** ở mục 6 ngày 2026-10-10. **Chi tiết** (cột, kiểu, đơn vị, ràng buộc, lý do thực tế, ví dụ đạt/vi phạm cho V01–V09) do vai A chốt ở D1 (#66), vai Q và leader review. Backend (R10b1) chỉ code sau khi D1 merge.
 
 Tài liệu này mô tả dữ liệu mà một SME cần đưa vào để SME CI Agent phát hiện, điều tra và đo cải tiến. Simulator (sandbox) phải sinh dữ liệu **đúng hợp đồng này**; kịch bản mới (khó hơn, nhiều nguyên nhân) cũng được dựng trên hợp đồng này. MVP chỉ dùng dữ liệu synthetic; không nhận dữ liệu thật hay dữ liệu cá nhân (CLAUDE.md).
 
