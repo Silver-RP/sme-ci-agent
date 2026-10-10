@@ -294,3 +294,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 7a0c4eb. Review: .autodev/reviews/dev-04-r1.json (PASS).
 - H-14: apply_sop so base_version, SopConflict (kể cả IntegrityError ghi đồng thời); act đề xuất lại có giới hạn rồi halt; rollback chỉ hoàn tác bản của chính run. Không thêm migration (ràng buộc đã có ở 0001). 524 pytest.
 - Non-blocking: đề xuất dựng tay không có base_version không bị kiểm; event mới decision sop_conflict, rollback_done có conflict (báo vai D).
+
+### R10c/dev-05: DONE
+- Vòng: 1. Commit: 97c4805. Review: .autodev/reviews/dev-05-r1.json (PASS).
+- H-20: pending của câu hỏi có question_id và attempt; POST /answer nhận question_id tuỳ chọn, cũ thì 409; payloads.md cập nhật (cả sop_conflict, conflict của dev-04). 527 pytest.
+- Báo vai D: pending.question_id/attempt mới; dashboard mới nên gửi lại question_id và xử lý 409 bằng GET /runs/{id}.
