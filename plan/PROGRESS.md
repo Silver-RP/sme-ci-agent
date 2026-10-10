@@ -304,3 +304,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: f8a1193. Review: .autodev/reviews/dev-06-r1.json (PASS).
 - H-38: audit_log cho answer_received (human), halt_raised, kpi_not_measured (not_applied/insufficient_evidence); halt_decided thêm options; khôi phục sau restart không ghi trùng. 536 pytest.
 - Non-blocking: audit_answer có thể lặp khi /retry sau lỗi (rủi ro thấp, dev-07 phủ); action mới chưa ghi vào tài liệu payload.
+
+### R10c/dev-07: DONE
+- Vòng: 1. Commit: cada99a. Review: .autodev/reviews/dev-07-r1.json (PASS).
+- A6: tests/test_invariants.py, 60 chuỗi (seed 20261010+i), 22 nhánh, 995 thao tác sai thứ tự bị từ chối, 0 vi phạm. 553 pytest, 1 xfailed (claude- trong backend/, H-39 chờ R10b2).
+- Non-blocking: lệnh mutation trên app thật ghi vào báo cáo mốc.

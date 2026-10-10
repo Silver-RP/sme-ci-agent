@@ -50,7 +50,7 @@ Chi tiết, pre-mortem và thứ tự cắt: `docs/autodev/ROADMAP.md` mục "K�
 
 - [x] R10a (10–11/10): API storyboard (FR-09..12), T-041 record/replay; H-13, H-16, H-26. [A5 LLM giả, A8 `--repeat`]
 - [ ] Đo nền LLM thật sau R10a (leader cho phép, ≤ 2 USD): A1 + chi phí mỗi run vào `docs/token-cost.md`
-- [ ] R10c (11–12/10, ngay sau R10a): lưu run/event/checkpointer vào Postgres (H-15), H-14, H-19, H-20, H-37, H-38. [A6 `test_invariants.py`]
+- [x] R10c (11–12/10, ngay sau R10a): lưu run/event/checkpointer vào Postgres (H-15), H-14, H-19, H-20, H-37, H-38. [A6 `test_invariants.py`]
 - [ ] Audit 3 (tự chạy sau R10c) [B1 ≤ 0,5]
 - [ ] R10b1 (12/10, **sau khi D1 #66 của vai A merge**; vai A review phần dữ liệu): dữ liệu theo hợp đồng D1 (`production_log`, `material_batches`, simulator nhị thức, `import_data.py` + V01–V09, dùng file mẫu/file sai của D2). D1 chưa merge sáng 12/10 thì leader quyết.
 - [ ] R10b2 (12–13/10): điều 3 (H-11, T-042, `/metrics` thật, `scripts/metrics_report.py` có đối chứng; giả định lấy nguồn từ D3); H-31, H-33, H-39. [A7, A4]
