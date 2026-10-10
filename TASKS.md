@@ -38,7 +38,7 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 ## M4: v0.1-e2e (13/10)
 
 - [x] T-040 [Core] 3 cạnh quay lại: bác bỏ/bổ sung thông tin, từ chối đề xuất, rollback. Due 12/10
-- [ ] T-041 [Core] Temperature thấp + record/replay một lần chạy tốt. Due 12/10. Owner: auto-dev R10a. (Temperature đã thay bằng `LLM_EFFORT` ở R9h; còn phần record/replay, phục vụ FR-07.)
+- [x] T-041 [Core] Temperature thấp + record/replay một lần chạy tốt. Due 12/10. Owner: auto-dev R10a. (Temperature đã thay bằng `LLM_EFFORT` ở R9h; còn phần record/replay, phục vụ FR-07.)
 - [ ] T-042 [Data] Lấy số liệu 3 chỉ số (defect %, MTTD/MTTR, tỷ lệ tái diễn). Due 12/10. Owner: auto-dev R10b2 (hợp đồng dữ liệu v0.1 đã duyệt 10/10, không chờ D1).
 - [ ] T-043 [Demo] Số liệu lên dashboard; kịch bản 4 phút v1 (docs/demoscript.md). Due 12/10. Owner: vai D (#64). Kịch bản v1 nay là `docs/demo-storyboard.md`.
 - [ ] T-044 [Tools] Sổ chi phí token docs/token-cost.md (cập nhật hằng ngày). Due 13/10. Owner: vai Q (#65, Q6).
@@ -48,7 +48,7 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 
 Chi tiết, pre-mortem và thứ tự cắt: `docs/autodev/ROADMAP.md` mục "Kế hoạch hai luồng"; bảng mốc: `docs/autodev/PROJECT_STATE.md` mục "Tầm nhìn". Ngày là đề xuất. Chỉ số [A..] theo `docs/eval/criteria.md`: mốc xong khi chỉ số của nó **đo được** (có lệnh và số), không chỉ khi test xanh.
 
-- [ ] R10a (10–11/10): API storyboard (FR-09..12), T-041 record/replay; H-13, H-16, H-26. [A5 LLM giả, A8 `--repeat`]
+- [x] R10a (10–11/10): API storyboard (FR-09..12), T-041 record/replay; H-13, H-16, H-26. [A5 LLM giả, A8 `--repeat`]
 - [ ] Đo nền LLM thật sau R10a (leader cho phép, ≤ 2 USD): A1 + chi phí mỗi run vào `docs/token-cost.md`
 - [ ] R10b1 (11/10): dữ liệu theo hợp đồng v0.1 (`production_log`, `material_batches`, simulator nhị thức, `import_data.py` + V01–V09)
 - [ ] R10b2 (12/10): điều 3 (H-11, T-042, `/metrics` thật, `scripts/metrics_report.py` có đối chứng); H-31, H-33, H-39. [A7, A4]
