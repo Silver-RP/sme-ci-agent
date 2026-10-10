@@ -35,6 +35,13 @@ Lệch giữa HANDOFF và thực tế (PR đã merge, issue đã đóng, lời m
 ## Lệch so với bàn giao
 - ... (bỏ mục này nếu không có)
 ```
-Kết thúc bằng một câu hỏi ngắn kiểu "Trả lời: ...", liệt kê đúng các từ leader cần gõ (ví dụ "bắt đầu R10a", "duyệt fresh-db").
+Kết thúc bằng danh sách lựa chọn **đánh số, kèm nội dung**, để leader chỉ cần gõ số (một hoặc nhiều số, ví dụ "1, 3"); vẫn chấp nhận gõ chữ. Mục cần tham số thì ghi rõ, ví dụ:
+```
+Chọn:
+1. bắt đầu R10a: merge plan rồi chạy runner (~4 USD)
+2. duyệt fresh-db: DB demo sạch mỗi lần chạy
+3. kickoff <giờ>: chốt giờ họp team
+```
+Số chỉ có nghĩa trong tin đó.
 
 Nếu có $ARGUMENTS thì sau báo cáo, đọc thêm tài liệu liên quan chủ đề đó (plan, brief, issue) và nói bước đầu tiên bạn sẽ làm.
