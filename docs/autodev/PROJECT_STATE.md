@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-10 · Nguồn: audit `docs/audits/2026-10-09_2.md` + R9i merge #55 + R9ih merge #58 + quyết định team 10/10.
+Cập nhật: 2026-10-10 · Nguồn: audit `docs/audits/2026-10-09_2.md` + R9i merge #55 + R9ih merge #58 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10).
 
 ## Mốc
 
@@ -13,9 +13,10 @@ Cập nhật: 2026-10-10 · Nguồn: audit `docs/audits/2026-10-09_2.md` + R9i m
 | Dự án | M4 | 🔄 1/6 | T-040 xong; T-041..T-045 mở; tag v0.1-e2e 13/10 |
 | Chạy | R4–R9, R9h, R9i, R9ih | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55, #58 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 / ~0,64 (worker) USD |
 | Plugin | P1–P3 | ✅ | |
-| Plugin | P4 | 🔄 | chưa gặp hạn mức thật |
-| Plugin | P5 | 🔄 | audit + trạng thái (file này) |
-| Plugin | P6–P8 | ⏳ | kế hoạch dài hạn; Telegram + API trạng thái; đóng gói |
+| Plugin | P4 | 🔄 | chờ reset hạn mức phiên đã chạy thật (R9); còn kiểm hạn mức trước mốc, hạn mức tuần mới thử bằng test giả |
+| Plugin | P5 | 🔄 | audit + trạng thái (file này); còn trang trạng thái Artifact |
+| Plugin | P6 | 🔄 | kế hoạch hai luồng duyệt 10/10 (ROADMAP mục "Kế hoạch hai luồng"); còn P6a, P6b |
+| Plugin | P7, P8, P9 | ⏳ | Telegram + API trạng thái; đóng gói; reviewer cho PR của team |
 
 ## Mục tiêu và 3 điều cần kiểm chứng
 
@@ -87,6 +88,7 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 
 ## Quyết định gần đây
 
+- 2026-10-10: leader duyệt kế hoạch P6 hai luồng đến Demo Day (ROADMAP). R10b không còn chờ D1 (hợp đồng v0.1 đã duyệt); R10c (H-15, H-14, H-19, H-20, H-37, H-38) làm trước v0.1; R11 tách R11a (cơ chế eval, không chờ team) và R11b (nhập D4/D5). Cổng UI 13/10: chưa có PR FR-01 thì hỏi leader. P9 (reviewer cho PR của team, chỉ comment) sau v0.1.
 - 2026-10-10: mở/đóng phiên bằng lệnh của leader `/session-start`, `/session-end` (bàn giao qua HANDOFF + file này, PR, merge sau check).
 - 2026-10-10: team 4 người theo vai: A dữ liệu (#63), D giao diện (#64), Q kiểm chứng (#65); backend do leader + auto-dev. Từ nay auto-dev không sửa phần trình bày `dashboard/`; dữ liệu mới chờ D1 (#66). `main` bắt buộc qua PR + check `plugin-guard` (chỉ leader sửa file plugin).
 - 2026-10-10: leader duyệt hợp đồng dữ liệu v0.1 (`docs/schema/data_contract.md`): nhập số đếm `production_log`; `material_batches` thay `inventory` + `supplier`; `environment_log` + `training_level` sang R11.
@@ -109,16 +111,17 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 
 ## Tầm nhìn 3–5 mốc tới
 
-P6 điền chi tiết (đường găng, thứ tự cắt, pre-mortem). Hướng đã duyệt:
+Kế hoạch P6 (duyệt 10/10; đầy đủ, kèm luồng plugin, pre-mortem, thứ tự cắt: `docs/autodev/ROADMAP.md` mục "Kế hoạch hai luồng"). Ngày là đề xuất.
 
-| Mốc | Mục tiêu | Lỗ hổng / task |
-|---|---|---|
-| R9 | ✅ merge #44 | đóng H-06, H-07, H-08, H-09, H-10, H-12, H-17, H-21, H-23 |
-| R9h | ✅ merge #49 | bỏ `temperature` → `output_config.effort` (`LLM_EFFORT`); script `--llm real` tự nạp `.env`, thiếu key báo rõ |
-| R9i | ✅ merge #55 | đóng H-27, H-30, H-41, H-42 |
-| R9ih | ✅ merge #58 | đóng H-43 (danh mục SOP trong prompt Improve) |
-| T-030 | ✅ 10/10 vòng LLM thật khép kín | lỗi trong `docs/decisions.md`; H-44 giao vai D |
-| R10a | API cho storyboard + dự phòng sân khấu (không chờ D1) | 4 API (FR-09..12), T-041, H-13, H-16, H-26 |
-| R10b | Dữ liệu theo hợp đồng + điều 3 (sau D1 #66) | `production_log`, import CSV + validator V01–V09, simulator số đếm; H-11, T-042, H-31, H-33, H-39 |
-| R11 | Điều 1 thành thật (sau D4 + D5 của vai A) | H-28, H-29, H-32, H-36, H-18; kịch bản khó; eval chấm theo mã |
-| Audit 3 | Rà sau R10 | rồi tag v0.1-e2e (người dùng duyệt) |
+| Mốc | Ngày | Mục tiêu | Lỗ hổng / task | Chờ team? |
+|---|---|---|---|---|
+| R10a | 10–11/10 | API storyboard + dự phòng sân khấu | `GET /runs`, `/kpi/series`, `/audit`, `/sop/{id}/versions`, `/metrics` (khung); T-041; H-13, H-16, H-26 | không |
+| R10b1 | 11/10 | Dữ liệu theo hợp đồng v0.1 | `production_log`, `material_batches`, simulator nhị thức, `import_data.py` + V01–V09, `gen_data --out-dir` | không (D2 kiểm thêm sau) |
+| R10b2 | 12/10 | Điều 3 | H-11, T-042, `/metrics` thật, Measure từ `production_log`; H-31, H-33, H-39, mục nhỏ treo | không |
+| R10c | 12/10 | Bền cho demo | H-15, H-14, H-19, H-20, H-37, H-38, `test_invariants.py` | không |
+| Audit 3 | 12/10 | Rà sau R10 | rồi tag v0.1-e2e 13/10 (leader duyệt; cổng UI FR-01..05) | UI: vai D |
+| R11a | 13–14/10 | Điều 1: cơ chế eval trung thực | H-28, H-29, H-32, H-36, H-18; 1 kịch bản khó do backend soạn; `environment_log`, `training_level` | không |
+| R11b | 15–17/10 | Điều 1: đề độc lập | nhập D4/D5; eval nhiều seed LLM thật; ghi run tốt để phát lại | vai A |
+| R12 | 18–19/10 | Gom lỗi bug bash 2, audit 4, bộ dữ liệu demo (D6) | | vai Q, A |
+
+Ước tính làm một mình tối đa (không team): điều 1 ≈ 60%, điều 2 ≈ 90%, điều 3 ≈ 75%.

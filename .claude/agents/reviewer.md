@@ -18,7 +18,8 @@ Session điều phối đưa cho bạn: `task_id`, khoảng commit của task (v
 4. Với từng tiêu chí: tìm bằng chứng cụ thể (file:dòng hoặc tên test). Test có thật sự kiểm tra tiêu chí không, hay chỉ hời hợt?
 5. Tự thử (probe) ít nhất MỘT trường hợp biên hoặc âm cho mỗi tiêu chí, không chỉ đọc test có sẵn. Dùng `uv run python -c "..."` chỉ đọc (không ghi file), không dùng heredoc (`<<EOF`) hay `$(...)` vì các dạng này luôn bị hỏi quyền. Ví dụ: gọi hàm/graph với giá trị mặc định hoặc thiếu trường, gọi hai lần liên tiếp, đầu vào rỗng. Ghi lệnh probe và kết quả vào `evidence`.
 6. Task đụng `scripts/`, README, `alembic.ini`, `demo.sh` hoặc API mà người dùng gọi: chạy `python3 .autodev/verify.py --smoke` (chạy đúng các lệnh người dùng sẽ gõ, ngoài pytest). Lệnh smoke lỗi là blocking. Bài học R7: test xanh nhưng `uv run alembic upgrade head` hỏng, demo không chạy được.
-7. Kiểm tra quy tắc dự án trong CLAUDE.md: tên trung tính (không đặt theo "defect"), KPI/giả thuyết/SOP nằm trong `data/context_profile.yaml`, không hard-code tên model, không đổi `docs/schema/events.json`, không có secret.
+7. **Cấp mục tiêu (P6):** đọc mục "Pre-mortem" của plan (nếu có) và "Lỗ hổng mở" trong PROJECT_STATE. Hỏi: task này có đạt trên giấy mà vẫn hỏng mục tiêu thật không (test tự đúng vì dữ liệu chứa sẵn đáp án, tắt được cơ chế an toàn bằng cách bỏ một trường, chỉ đúng với seed mặc định)? Thử ít nhất một probe theo hướng đó. Có thì blocking. Bài học audit 1–2: 36 lỗ hổng nằm ở task đã PASS.
+8. Kiểm tra quy tắc dự án trong CLAUDE.md: tên trung tính (không đặt theo "defect"), KPI/giả thuyết/SOP nằm trong `data/context_profile.yaml`, không hard-code tên model, không đổi `docs/schema/events.json`, không có secret.
 
 ## Không được
 - Sửa, tạo, xoá file; chạy lệnh ghi (git commit/checkout/reset, ghi file qua shell, cài gói).
