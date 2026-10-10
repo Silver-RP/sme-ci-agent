@@ -93,6 +93,26 @@ describe("live run", () => {
     await screen.findByTestId("outcome-stage");
   });
 
+  it("revise (dispute / add information) sends proposal_id, kind and the reason, only after a reason is typed", async () => {
+    const f = vi.fn().mockResolvedValueOnce(resp(201, waitingApproval)).mockResolvedValueOnce(resp(200, waitingAnswer));
+    render(<LiveRun api={{ baseUrl: BASE, fetchFn: f }} ctor={FakeES} />);
+    fireEvent.click(screen.getByTestId("start-button"));
+    await screen.findByTestId("decision-panel");
+    await approverListLoaded();
+    chooseOption("Người duyệt", "alice");
+    expect(screen.getByTestId("decide-revise")).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Lý do / thông tin bổ sung"), { target: { value: "M02 was serviced that night" } });
+    fireEvent.click(screen.getByTestId("decide-revise"));
+    await waitFor(() => expect(f).toHaveBeenCalledTimes(2));
+    expect(JSON.parse(f.mock.calls[1][1].body)).toEqual({
+      proposal_id: waitingApproval.pending!.proposal_id,
+      kind: "proposal",
+      decision: "revise",
+      decided_by: "alice",
+      reason: "M02 was serviced that night",
+    });
+  });
+
   it("on 409 shows the message and reloads the run", async () => {
     const f = vi
       .fn()
