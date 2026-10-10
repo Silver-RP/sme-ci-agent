@@ -48,7 +48,7 @@ Chỉ số đẩy: A5 (đo lại theo cách không đạt theo cấu tạo). Sau
   2. Test H-31: lỗi LLM ở lần gọi đầu sau rollback → nội dung SOP hiệu lực là bản đã khôi phục. Đỏ trên main.
   3. Thêm vào `tests/test_invariants.py`: sau mỗi `sop_applied` / `rollback_done(rolled_back=true)`, `(sop_id, version)` trong event có trong `sop_versions` đọc bằng session khác, kể cả nhánh có lỗi sau Act.
 - **Phụ thuộc:** không
-- **Trạng thái:** TODO · **Số vòng:** 0
+- **Trạng thái:** DONE · **Số vòng:** 1
 
 ### dev-02: Kiểm `change_time` lúc bắt đầu; đóng run lỗi (H-48)
 - **Mô tả:** `POST /runs` kiểm `change_time` trước khi gọi LLM: sai định dạng, có múi giờ không chuẩn hoá được, ở tương lai, hoặc trước anomaly → 422. Thêm `POST /runs/{id}/close` (lý do bắt buộc, người đóng thuộc danh sách người duyệt) cho run ở trạng thái `error` không retry được: ghi audit, phát `run_finished` với trạng thái đóng bởi người. Cập nhật `payloads.md`.
