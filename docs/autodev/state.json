@@ -1,6 +1,6 @@
 {
   "updated": "2026-10-10",
-  "source": "audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10)",
+  "source": "audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10)",
   "milestones": {
     "project": [
       {
@@ -380,9 +380,103 @@
       "severity": "vừa",
       "summary": "Dashboard không hiện thẻ đề xuất khi pending approval (LLM thật, payload R9i)",
       "audit": "2026-10-09_2"
+    },
+    {
+      "id": "H-45",
+      "severity": "cao",
+      "summary": "Bản SOP Act ghi chưa commit khi checkpoint đã lưu applied: lỗi trước Measure thì SOP mất, retry vẫn success",
+      "audit": "2026-10-10"
+    },
+    {
+      "id": "H-46",
+      "severity": "cao",
+      "summary": "Dashboard đóng SSE ở run_finished lỗi đầu tiên; sau Retry timeline chết (team frontend)",
+      "audit": "2026-10-10"
+    },
+    {
+      "id": "H-47",
+      "severity": "vừa",
+      "summary": "Run bị kill giữa step không tiếp tục được sau restart (running, mọi endpoint 409)",
+      "audit": "2026-10-10"
+    },
+    {
+      "id": "H-48",
+      "severity": "vừa",
+      "summary": "change_time kiểm muộn; giá trị có múi giờ ném TypeError, run kẹt không đóng được",
+      "audit": "2026-10-10"
+    },
+    {
+      "id": "H-49",
+      "severity": "vừa",
+      "summary": "question_id của /answer tuỳ chọn, dashboard không gửi",
+      "audit": "2026-10-10"
+    },
+    {
+      "id": "H-50",
+      "severity": "vừa",
+      "summary": "Sau restart retries về 0: retryable:false nhưng /retry vẫn 200",
+      "audit": "2026-10-10"
+    },
+    {
+      "id": "H-51",
+      "severity": "vừa",
+      "summary": "Khôi phục run cần dựng LLM: thiếu cấu hình LLM thì backend không khởi động",
+      "audit": "2026-10-10"
+    },
+    {
+      "id": "H-52",
+      "severity": "vừa",
+      "summary": "Rollback bị SopConflict vẫn chạy tiếp như đã rollback; sop_conflict thiếu audit và trường",
+      "audit": "2026-10-10"
+    },
+    {
+      "id": "H-53",
+      "severity": "vừa",
+      "summary": "applied bị ghi đè khi đổi SOP khác sau halt",
+      "audit": "2026-10-10"
+    },
+    {
+      "id": "H-54",
+      "severity": "vừa",
+      "summary": "A4/A5 đạt nhờ mô hình simulator; A5(b) đếm learning_saved không phải passed",
+      "audit": "2026-10-10"
+    },
+    {
+      "id": "H-55",
+      "severity": "vừa",
+      "summary": "test_invariants thiếu: run song song, lỗi DB/kill, audit apply_sop, nội dung SOP sau rollback",
+      "audit": "2026-10-10"
+    },
+    {
+      "id": "H-56",
+      "severity": "vừa",
+      "summary": "Sau rollback/revise/halt, điều tra không gọi tool vẫn không hỏi người (bằng chứng mới của H-18)",
+      "audit": "2026-10-10"
+    },
+    {
+      "id": "H-57",
+      "severity": "thấp",
+      "summary": "/kpi/series 500 với múi giờ; tham số rỗng không 422",
+      "audit": "2026-10-10"
+    },
+    {
+      "id": "H-58",
+      "severity": "thấp",
+      "summary": "demo.sh: cổng bận không phát hiện, --check ép scripted, không phủ SSE/rollback, không CI",
+      "audit": "2026-10-10"
+    },
+    {
+      "id": "H-59",
+      "severity": "thấp",
+      "summary": "Gom: cache Run nhiều tiến trình, /export sau retry, /audit không giới hạn, NaN trong Measure, v.v.",
+      "audit": "2026-10-10"
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-10",
+      "text": "audit 3 (sau R9i, R9ih, R10a, R10c): 15 lỗ hổng mới H-45..H-59 (2 cao), 0 đóng, 31 mở. A5/A6 tái hiện (1,00; 60 chuỗi, 0 vi phạm). % đạt 0/50/0 giữ nguyên; điều 2: criteria.md cho A5 LLM giả = 1,0 (67%), PROJECT_STATE dùng 0,5, leader chốt. Đề xuất đưa H-45, H-48, H-54 vào R10b2; H-47, H-49, H-50, H-51 trước tag; H-46 giao vai D."
+    },
     {
       "date": "2026-10-10",
       "text": "R10a merge #82: API storyboard, record_run, demo.sh --check --repeat, LLM giả mọi nhánh + chế độ rollback. Đóng H-13, H-16, H-26. A5 v0.1 đạt (LLM giả), A8 10/10 p95 0,4 s. Supervisor tự quyết A5 tính 0,5 (phần LLM thật chưa đo) nên điều 2 = 17%."

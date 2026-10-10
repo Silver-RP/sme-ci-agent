@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-10 · Nguồn: audit `docs/audits/2026-10-09_2.md` + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10).
+Cập nhật: 2026-10-10 · Nguồn: audit `docs/audits/2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10).
 
 ## Mốc
 
@@ -78,9 +78,25 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 | H-25 | thấp | Payload event chưa có tài liệu |
 | H-39 | thấp | Tên model hard-code (`claude-haiku-4-5`); `MODEL_CHEAP` không dùng |
 | H-40 | thấp | Ví dụ `docs/schema/examples` không qua test dashboard; `payloads.md` sai chỗ |
+| H-45 | cao | Bản SOP Act ghi chưa commit khi checkpoint đã lưu `applied`: lỗi trước Measure thì SOP mất, retry vẫn success |
+| H-46 | cao | Dashboard đóng SSE ở `run_finished` lỗi đầu tiên; sau Retry timeline chết (team frontend) |
+| H-47 | vừa | Run bị kill giữa step không tiếp tục được sau restart (`running`, mọi endpoint 409) |
+| H-48 | vừa | `change_time` kiểm muộn; có múi giờ → `TypeError`, run kẹt không đóng được |
+| H-49 | vừa | `question_id` của `/answer` tuỳ chọn, dashboard không gửi |
+| H-50 | vừa | Sau restart `retries` về 0: `retryable:false` nhưng `/retry` vẫn 200 |
+| H-51 | vừa | Khôi phục run cần dựng LLM: thiếu cấu hình LLM thì backend không khởi động |
+| H-52 | vừa | Rollback bị `SopConflict` vẫn chạy tiếp như đã rollback; `sop_conflict` thiếu audit và trường |
+| H-53 | vừa | `applied` bị ghi đè khi đổi SOP khác sau halt |
+| H-54 | vừa | A4/A5 đạt nhờ mô hình simulator; A5(b) đếm `learning_saved`, không phải `passed` |
+| H-55 | vừa | `test_invariants` thiếu: run song song, lỗi DB/kill, audit `apply_sop`, nội dung SOP sau rollback |
+| H-56 | vừa | Sau rollback/revise/halt, điều tra không gọi tool vẫn không hỏi người (bằng chứng mới của H-18) |
+| H-57 | thấp | `/kpi/series` 500 với múi giờ; tham số rỗng không 422 |
+| H-58 | thấp | `demo.sh`: cổng bận không phát hiện, `--check` ép scripted, không phủ SSE/rollback, không CI |
+| H-59 | thấp | Gom: cache `Run` nhiều tiến trình, `/export` sau retry, `/audit` không giới hạn, NaN trong Measure |
 
 ## Quyết định gần đây
 
+- 2026-10-10: audit 3 (sau R9i, R9ih, R10a, R10c): 15 lỗ hổng mới H-45..H-59 (2 cao), 0 đóng, 31 mở. A5 và A6 tái hiện (A5 1,00/1,00; A6 60 chuỗi, 0 vi phạm). % đạt 0/50/0 giữ nguyên; điều 2: `criteria.md` cho A5 LLM giả = 1,0 (67%) còn bảng trên dùng 0,5, leader chốt. Đề xuất H-45, H-48, H-54 vào R10b2; H-47, H-49, H-50, H-51 trước tag; H-46 giao vai D.
 - 2026-10-10: R10c merge #84: Postgres cho run/event/checkpoint (sống qua restart, kiểm bằng 2 tiến trình uvicorn), khoá SOP theo `base_version`, `question_id` (cũ → 409), audit cho trả lời/halt/Measure không kết quả, `tests/test_invariants.py`. Đóng H-14, H-15, H-19, H-20, H-37, H-38 (supervisor tự chạy test đỏ trên main). A6 = 0 → điều 2 = 50%. Bất biến "không có `claude-`" xfail strict tới R10b2 (H-39, gỡ xfail khi đóng).
 - 2026-10-10: R10a merge #82: API storyboard (`/runs`, `/runs/{id}/export`, `/kpi/series`, `/audit`, `/sop/{id}/versions`, `/metrics` khung trung thực), record_run, `demo.sh --check --repeat`, LLM giả mọi nhánh + chế độ rollback. Đóng H-13, H-16, H-26. A5 v0.1 đạt (LLM giả), A8 10/10 p95 0,4 s. Supervisor tự quyết: A5 tính 0,5 vào % điều 2 (phần LLM thật của ngưỡng freeze chưa đo) → điều 2 = 17%.
 - 2026-10-10: % đạt tính bằng công thức từ chỉ số đo được (`docs/eval/criteria.md`: A1–A8, cổng 13/10 và 20/10); ước lượng audit chỉ tham khảo. Ngưỡng A1 freeze trên tập giữ lại ≥ 0,7. Chỉ số plugin B1–B6 (ROADMAP bảng B, `.autodev/metrics.py`). Đo nền LLM thật sau R10a, ≤ 2 USD.
