@@ -1,6 +1,6 @@
 {
   "milestone": "R10c",
-  "current_task": "dev-03",
+  "current_task": "dev-04",
   "tasks": {
     "dev-01": {
       "status": "DONE",
@@ -15,13 +15,15 @@
       "commit": "64a729c"
     },
     "dev-03": {
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "round": 1,
-      "base": "64a729c"
+      "base": "f7cb822",
+      "commit": "89b5a19"
     },
     "dev-04": {
-      "status": "TODO",
-      "round": 0
+      "status": "IN_PROGRESS",
+      "round": 1,
+      "base": "89b5a19"
     },
     "dev-05": {
       "status": "TODO",
@@ -39,8 +41,8 @@
   "verify": {
     "consecutive_blocks": 0,
     "last_status": "PASS",
-    "hook_runs": 47,
-    "last_hook_at": "2026-10-10T03:38:08Z",
+    "hook_runs": 48,
+    "last_hook_at": "2026-10-10T03:55:14Z",
     "last_hook_agent": "developer"
   },
   "history": {
