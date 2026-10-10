@@ -64,6 +64,8 @@ class AnswerBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     answer: str = Field(min_length=1)
+    # optional (H-20): the question the person saw; a stale one is 409. Absent = accepted as before.
+    question_id: str | None = Field(default=None, min_length=1)
 
 
 class ApprovalBody(BaseModel):
@@ -371,8 +373,17 @@ def create_app(
         run = get_run(run_id)
         with run.lock:
             require_waiting(run, "answer")
+            current = _status(run)["pending"].get("question_id")
+            if body.question_id is not None and body.question_id != current:
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        f"run {run_id!r} is now waiting for question {current!r}, not {body.question_id!r}; "
+                        "reload the run"
+                    ),
+                )
             advance(run, Command(resume=body.answer), resumed=True)
-            return record_step(run, "POST /runs/{run_id}/answer", {"answer": body.answer}, 200)
+            return record_step(run, "POST /runs/{run_id}/answer", body.model_dump(exclude_none=True), 200)
 
     @app.post("/runs/{run_id}/approval")
     def approval(run_id: str, body: ApprovalBody) -> dict[str, Any]:

@@ -27,7 +27,7 @@ import pandas as pd
 from langgraph.types import interrupt
 
 from backend.agent.events import make_event
-from backend.agent.nodes.ask import halt_options, halt_payload
+from backend.agent.nodes.ask import halt_options, halt_payload, open_question
 from backend.agent.state import AgentState
 from backend.db import repo
 from backend.domain_config import DomainConfig, load_domain_config
@@ -437,10 +437,7 @@ def make_ask_evidence_node(config: DomainConfig):
 
 def make_wait_evidence_node(config: DomainConfig):
     def wait_evidence(state: AgentState) -> dict[str, Any]:
-        question = next(
-            (e["payload"]["question"] for e in reversed(state.get("events", [])) if e["type"] == "question_asked"), ""
-        )
-        answer = interrupt({"question": question, "run_id": state.get("run_id", "")})
+        answer = interrupt(open_question(state))
         emit = _Emitter(state, config)
         emit("answer_received", "quality", {"answer": answer})
         return {"evidence": [*state.get("evidence", []), {"source": "human_answer", "answer": answer}], "events": emit.events}

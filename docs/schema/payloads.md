@@ -89,6 +89,7 @@ Có hai dạng; phân biệt bằng `kind`.
 ### approval_decided (system)
 - **Đề xuất / rollback:** `{kind: "proposal" | "rollback", proposal_id, proposal_hash, decision, decided_by, reason, change}`.
   - `decision` là một trong: `approved | rejected | revise`. `revise` chỉ có với `kind: "proposal"` (bác bỏ giả thuyết hoặc bổ sung thông tin; quay lại Investigate).
+  - `sop_conflict` (R10c, H-14, giá trị `decision` mới): lúc áp dụng, phiên bản SOP hiện hành đã khác phiên bản người duyệt đã xem (run khác đã đổi SOP). Không ghi SOP. Payload có thêm `message` và thông tin phiên bản (`sop_id`, `current_version`...); người phải duyệt lại đề xuất mới.
   - Từ chối rollback có thêm `{sop_still_in_force: true, sop_id, sop_version}`, nghĩa là SOP đã áp dụng vẫn đang hiệu lực.
 - **Dừng chờ người:** `{kind: "halt", proposal_id: "halt_<n>", halt_reason, decision: "investigate" | "finish", decided_by, reason, sop_still_in_force?, sop_id?, sop_version?}`. Không có `proposal_hash`.
 
@@ -108,7 +109,9 @@ Có hai dạng; phân biệt bằng `kind`.
 `mttd_hours` và `mttr_hours` hiện luôn là `null` trong vòng lặp (H-11).
 
 ### rollback_done (improvement)
-`{rolled_back: bool, approved_by, sop_id?, version?, restored_from_version?, failed_version?}`
+`{rolled_back: bool, approved_by, sop_id?, version?, restored_from_version?, failed_version?, conflict?, current_version?}`
+
+`conflict` (chuỗi, R10c, H-14) chỉ có khi rollback không thực hiện được vì SOP đã bị run khác đổi (`rolled_back: false`, kèm `current_version`).
 
 ### learning_saved (improvement)
 `{learning_id, domain, content: {anomaly, root_cause, change, rationale, sop_id, sop_version, kpi, kpi_before, kpi_after, outcome}}`
@@ -132,7 +135,7 @@ Có hai dạng; phân biệt bằng `kind`.
 | POST | `/runs` | `{change_time?}` | 201 + trạng thái run |
 | GET | `/runs/{id}` | | trạng thái run; 404 nếu backend đã khởi động lại (H-15) |
 | GET | `/runs/{id}/events?follow=true&after=N` | | SSE. `id` = số thứ tự (bắt đầu từ 1), `event` = type, `data` = event JSON. Hỗ trợ `Last-Event-ID` |
-| POST | `/runs/{id}/answer` | `{answer}` (không rỗng) | 409 nếu run không chờ câu trả lời |
+| POST | `/runs/{id}/answer` | `{answer, question_id?}` (`answer` không rỗng) | 409 nếu run không chờ câu trả lời, hoặc `question_id` không khớp câu đang chờ (câu cũ, H-20): gọi lại `GET /runs/{id}`, câu hiện tại không bị trả lời. Không gửi `question_id` thì nhận như trước (R10c) |
 | POST | `/runs/{id}/approval` | `{proposal_id, kind, decision, decided_by, reason?}` | 409 nếu sai `kind` hoặc `proposal_id` (đề xuất đã cũ, hoặc bấm hai lần): gọi lại `GET /runs/{id}`. 422 nếu tên không có trong danh sách người duyệt, hoặc `revise` mà thiếu `reason` |
 | POST | `/runs/{id}/retry` | | 409 nếu không có bước lỗi, hoặc đã Retry liên tiếp quá `loop.max_retries` lần (khi đó `retryable: false`) |
 | GET | `/config/approvers` | | `{approvers: [str]}` |
@@ -188,7 +191,7 @@ Trạng thái run:
 `error` và `retryable` chỉ có khi `state: "error"` (`retryable` giống trường trong event `run_finished` lỗi). Trạng thái `error` có `status: "error"` và `pending: null`.
 
 Hai dạng `pending`:
-- **Trả lời:** `{type: "answer", question, run_id}`. Có hai nguồn: Investigate chưa chắc, hoặc Measure thiếu mẫu (R9). Cùng dạng, cùng `POST /answer`.
+- **Trả lời:** `{type: "answer", question, question_id, attempt, run_id}`. `question_id` (chuỗi, là `event_id` của event `question_asked` tương ứng) và `attempt` (số lần hỏi, từ 1) là trường mới của R10c (H-20); dashboard nên gửi lại `question_id` trong `POST /answer`. Có hai nguồn: Investigate chưa chắc, hoặc Measure thiếu mẫu (R9). Cùng dạng, cùng `POST /answer`.
 - **Duyệt:** `{type: "approval", kind, proposal_id, proposal_hash?, run_id, ...}`.
   - `kind: "proposal"` hoặc `"rollback"`: có thêm `proposal` (như event `proposal_created`) và `current_sop: {sop_id, version, content}`. Màn "SOP cũ → mới" so `current_sop.content` với `proposal.sop_proposal.new_content`.
   - `kind: "halt"`: `{reason, question, options, sop_still_in_force, sop_id, sop_version}`.

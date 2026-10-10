@@ -74,13 +74,22 @@ def make_ask_node(config: DomainConfig):
     return ask
 
 
+def open_question(state: AgentState) -> dict[str, Any]:
+    """The question now waiting for a person: text, id (the event_id of its question_asked) and attempt (H-20)."""
+    ev = next((e for e in reversed(state.get("events", [])) if e["type"] == "question_asked"), None)
+    if ev is None:
+        return {"question": "", "question_id": "", "attempt": 0, "run_id": state.get("run_id", "")}
+    return {
+        "question": ev["payload"]["question"],
+        "question_id": ev["event_id"],
+        "attempt": ev["payload"].get("attempt", 0),
+        "run_id": state.get("run_id", ""),
+    }
+
+
 def make_wait_answer_node(config: DomainConfig):
     def wait_answer(state: AgentState) -> dict[str, Any]:
-        question = next(
-            (e["payload"]["question"] for e in reversed(state.get("events", [])) if e["type"] == "question_asked"),
-            "",
-        )
-        answer = interrupt({"question": question, "run_id": state.get("run_id", "")})
+        answer = interrupt(open_question(state))
         ev = make_event(
             state, "answer_received", AGENT, {"answer": answer}, len(state.get("events", [])) + 1, config.domain
         )
