@@ -14,10 +14,11 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import threading
 import uuid
 from collections.abc import Callable
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import ExitStack, asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from functools import cache
@@ -93,11 +94,14 @@ class Run:
     finished_at: str | None = None
     llm_kind: str = "giả"  # for the export note: "thật" only for the real Anthropic client
     steps: list[dict[str, Any]] = field(default_factory=list)  # successful HTTP steps, for GET /runs/{id}/export
+    persisted_ids: set[str] = field(default_factory=set)  # event ids already in the events table (H-15)
 
 
 def _now() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
 
+
+_ERR_ID = re.compile(r"_err\d+$")  # ids of the run_finished(error) events made by advance()
 
 AUDIT_DEFAULT_LIMIT = 100
 AUDIT_MAX_LIMIT = 500
@@ -160,14 +164,46 @@ def create_app(
 
     make_llm = llm_factory or env_llm_factory
     make_ctx = ctx_factory or _default_ctx_factory
-    if checkpointer is None:
+    # H-15: with DATABASE_URL set and nothing injected, runs, events and checkpoints live in Postgres
+    persist = checkpointer is None and ctx_factory is None and bool(os.environ.get("DATABASE_URL"))
+    if checkpointer is None and not persist:
         from backend.agent.checkpoint import memory_checkpointer
 
         checkpointer = memory_checkpointer()  # one saver for all runs; thread_id isolates them
+    pg: dict[str, Any] = {"stack": None, "saver": None}
+    pg_lock = threading.Lock()
+    load_lock = threading.Lock()
+    starting: set[str] = set()  # runs being started right now: in DB already, not yet registered
     runs: dict[str, Run] = {}
+
+    def get_checkpointer() -> Any:
+        if not persist:
+            return checkpointer
+        with pg_lock:
+            if pg["saver"] is None:
+                from backend.agent.checkpoint import postgres_checkpointer
+
+                stack = ExitStack()
+                pg["saver"] = stack.enter_context(postgres_checkpointer())
+                pg["stack"] = stack
+            return pg["saver"]
+
+    def close_checkpointer() -> None:
+        with pg_lock:
+            if pg["stack"] is not None:
+                pg["stack"].close()
+            pg["stack"] = pg["saver"] = None
+
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
+        if persist:  # bring back the runs that are not finished
+            with Session(get_shared_engine()) as s:
+                todo = [r.run_id for r in repo.list_runs(s) if r.status != "finished"]
+            for rid in todo:
+                get_run_or_none(rid)
         yield
+        if persist:
+            close_checkpointer()
         if ctx_factory is None:  # the shared engine belongs to the default context factory
             dispose_shared_engines()
 
@@ -181,11 +217,73 @@ def create_app(
         allow_headers=["*"],
     )
 
-    def get_run(run_id: str) -> Run:
+    def build_run(run_id: str) -> Run:
+        """A Run with its own LLM, tool context and graph (on the shared checkpointer)."""
+        ctx = make_ctx(run_id)
+        llm = make_llm(run_id)
+        graph = build_graph(cfg_domain, checkpointer=get_checkpointer(), llm=llm, tool_ctx=ctx, full_loop=True)
+        run = Run(run_id=run_id, graph=graph, cfg={"configurable": {"thread_id": run_id}}, ctx=ctx)
+        run.llm_kind = "thật" if isinstance(llm, AnthropicLLM) else "giả"
+        return run
+
+    def load_run(run_id: str) -> Run | None:
+        """Rebuild a run saved in Postgres (graph state from the checkpointer, error events from the events table)."""
+        with Session(get_shared_engine()) as s:
+            row = s.get(repo.Run, run_id)
+            if row is None:
+                return None
+            db_events = repo.list_run_events(s, run_id)
+            started_at, finished_at, db_status = row.started_at, row.finished_at, row.status
+        run = build_run(run_id)
+        run.started_at = started_at.astimezone(UTC).isoformat(timespec="seconds")
+        run.finished_at = finished_at.astimezone(UTC).isoformat(timespec="seconds") if finished_at else None
+        run.persisted_ids = {e["event_id"] for e in db_events}
+        run.events = list(run.graph.get_state(run.cfg).values.get("events", []))
+        errs = [e for e in db_events if _ERR_ID.search(e["event_id"])]
+        for k, ev in enumerate(errs):
+            pos = sum(1 for g in run.events if datetime.fromisoformat(g["ts"]) <= datetime.fromisoformat(ev["ts"]))
+            pos = min(pos, len(run.events))
+            run.error_events.append((pos, ev))
+            run.events.insert(pos, ev)
+        if db_status == "error" and errs:
+            run.error = errs[-1]["payload"].get("error")
+            run.retryable = bool(errs[-1]["payload"].get("retryable", True))
+        return run
+
+    def get_run_or_none(run_id: str) -> Run | None:
         run = runs.get(run_id)
+        if run is None and persist and run_id not in starting:
+            with load_lock:
+                run = runs.get(run_id)
+                if run is None and run_id not in starting:
+                    run = load_run(run_id)
+                    if run is not None:
+                        runs[run_id] = run
+        return run
+
+    def get_run(run_id: str) -> Run:
+        run = get_run_or_none(run_id)
         if run is None:
             raise HTTPException(status_code=404, detail=f"run {run_id!r} not found")
         return run
+
+    def persist_run(run: Run) -> None:
+        """Write the run row and its new events to Postgres (H-15). Own short session: it never shares the
+        transaction of the tool context."""
+        if not persist:
+            return
+        state = _status(run)["state"]
+        with Session(get_shared_engine()) as s:
+            if s.get(repo.Run, run.run_id) is None:
+                repo.create_run(s, run.run_id, cfg_domain.domain)
+            new_ids = []
+            for ev in run.events:
+                if ev["event_id"] not in run.persisted_ids:
+                    repo.record_event(s, ev)
+                    new_ids.append(ev["event_id"])
+            repo.update_run(s, run.run_id, state, run.finished_at)
+            s.commit()
+        run.persisted_ids.update(new_ids)
 
     def advance(run: Run, payload: Any, resumed: bool = False) -> None:
         """Run the graph until the next interrupt or the end; refresh the stored events.
@@ -231,6 +329,7 @@ def create_app(
                 err_ev["event_id"] = f"evt_{run.run_id}_err{len(run.error_events) + 1:02d}"  # never collides
                 run.error_events.append((len(run.events), err_ev))
                 run.events.append(err_ev)
+        persist_run(run)  # skipped when the start was refused with 422 (HTTPException above)
 
     def require_waiting(run: Run, kind: str) -> None:
         st = _status(run)
@@ -254,18 +353,18 @@ def create_app(
     @app.post("/runs", status_code=201)
     def start_run(body: StartRun) -> dict[str, Any]:
         run_id = f"run_{uuid.uuid4().hex[:8]}"
-        ctx = make_ctx(run_id)
-        llm = make_llm(run_id)
-        graph = build_graph(cfg_domain, checkpointer=checkpointer, llm=llm, tool_ctx=ctx, full_loop=True)
-        run = Run(run_id=run_id, graph=graph, cfg={"configurable": {"thread_id": run_id}}, ctx=ctx)
-        run.llm_kind = "thật" if isinstance(llm, AnthropicLLM) else "giả"
+        run = build_run(run_id)
         state = new_state(run_id, cfg_domain.domain)
         if body.change_time is not None:
             state["change_time"] = body.change_time
-        with run.lock:
-            advance(run, state)  # on failure the run is not registered
-            runs[run_id] = run
-            return record_step(run, "POST /runs", body.model_dump(exclude_none=True), 201)
+        starting.add(run_id)
+        try:
+            with run.lock:
+                advance(run, state)  # on failure the run is not registered
+                runs[run_id] = run
+                return record_step(run, "POST /runs", body.model_dump(exclude_none=True), 201)
+        finally:
+            starting.discard(run_id)
 
     @app.post("/runs/{run_id}/answer")
     def answer(run_id: str, body: AnswerBody) -> dict[str, Any]:
@@ -348,9 +447,16 @@ def create_app(
 
     @app.get("/runs")
     def list_runs() -> dict[str, Any]:
-        """Runs held by this app, newest first. In memory only (lost on restart, H-15)."""
+        """Runs, newest first. With Postgres the list comes from the runs table (survives a restart, H-15);
+        otherwise only the runs held in memory."""
+        if persist:
+            with Session(get_shared_engine()) as s:
+                ids = [r.run_id for r in repo.list_runs(s)]
+            found = [r for r in (get_run_or_none(i) for i in ids) if r is not None]
+        else:
+            found = list(reversed(list(runs.values())))
         out = []
-        for run in reversed(list(runs.values())):
+        for run in found:
             with run.lock:
                 st = _status(run)
                 finished = [e for e in run.events if e["type"] == "run_finished"]

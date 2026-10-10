@@ -31,6 +31,33 @@ def create_run(session: Session, run_id: str, domain: str) -> Run:
     return run
 
 
+def update_run(session: Session, run_id: str, status: str, finished_at: str | datetime | None) -> None:
+    """Keep runs.status / finished_at in step with the run (H-15)."""
+    row = session.get(Run, run_id)
+    if row is None:
+        raise ValueError(f"run {run_id!r} not found")
+    row.status = status
+    row.finished_at = _parse_ts(finished_at) if finished_at else None
+    session.flush()
+
+
+def list_runs(session: Session) -> list[Run]:
+    """All runs, newest first."""
+    return list(session.scalars(select(Run).order_by(Run.started_at.desc(), Run.run_id.desc())))
+
+
+def list_run_events(session: Session, run_id: str) -> list[dict]:
+    """Events of one run as dicts, oldest first."""
+    rows = session.scalars(select(Event).where(Event.run_id == run_id).order_by(Event.ts, Event.event_id))
+    return [
+        {
+            "event_id": r.event_id, "run_id": r.run_id, "ts": r.ts.isoformat(), "type": r.type,
+            "agent": r.agent, "domain": r.domain, "payload": r.payload,
+        }
+        for r in rows
+    ]
+
+
 def record_event(session: Session, event: dict) -> Event:
     """Kiểm tra theo events.json trước khi ghi; sai thì ValueError."""
     missing = [f for f in EVENT_FIELDS if f not in event]
