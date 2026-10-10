@@ -18,6 +18,7 @@ Không tin bàn giao một mình. So với thực tế:
 - Team: `gh api repos/{owner}/{repo}/invitations --jq '.[].invitee.login'` và `.../collaborators --jq '.[].login'`. Ai đã nhận lời mà chưa được gán issue thì đề xuất gán (theo bảng vai trong HANDOFF).
 - Runner: `tail -5 .autodev/runs/run.log`, `ls -t .autodev/runs/STOPPED-* | head -1`; tiến trình `pgrep -fl autodev-run`.
 - Demo: `lsof -iTCP:8000 -iTCP:3000 -sTCP:LISTEN`.
+- Hạn mức: `python3 .autodev/usage.py show --last 3` (% 5 giờ, % tuần, tuổi số liệu, 3 nhiệm vụ cuối). Số liệu cũ (status line chỉ chạy trong terminal, không chạy trong VS Code) thì xin leader 2 số từ `/usage`.
 
 Lệch giữa HANDOFF và thực tế (PR đã merge, issue đã đóng, lời mời đã nhận, mốc đã chạy xong) thì tin thực tế và ghi lại để `/session-end` sửa.
 
@@ -25,6 +26,7 @@ Lệch giữa HANDOFF và thực tế (PR đã merge, issue đã đóng, lời m
 ```
 ## Trạng thái <ngày>
 <2–3 dòng: mốc hiện tại, % đạt 3 điều, điều gì đổi kể từ bàn giao (PR/issue mới của team)>
+Hạn mức: 5h <x>%, tuần <y>% (số liệu <n> phút trước)
 
 ## Cần bạn quyết / làm (theo thứ tự)
 1. ... (mỗi mục một dòng, nêu vì sao chặn việc khác)
