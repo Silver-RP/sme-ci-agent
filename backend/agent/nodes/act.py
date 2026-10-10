@@ -320,7 +320,8 @@ def make_act_node(config: DomainConfig, ctx: ToolContext):
             )
         except SopConflict as exc:
             return _sop_conflict_update(state, emit, proposal, exc)
-        previous = repo.get_sop_version(ctx.session, sop["sop_id"], res["version"] - 1)
+        ctx.session.commit()  # H-45: the version and its audit row are durable before the checkpoint says "applied"
+        previous =repo.get_sop_version(ctx.session, sop["sop_id"], res["version"] - 1)
         prev_version = previous.version if previous else None
         prev_content = previous.content if previous else None
         earlier = state.get("applied")
@@ -569,6 +570,7 @@ def make_rollback_apply_node(config: DomainConfig, ctx: ToolContext):
                     approval={"decision": APPROVED, "approved_by": approval.get("decided_by"), "sop_id": applied["sop_id"]},
                     base_version=applied["version"],  # H-14: only roll back the version this run applied itself
                 )  # a NEW version holding the old content; the failed version stays in sop_versions
+                ctx.session.commit()  # H-31: durable before the checkpoint says the rollback is done
                 payload.update(
                     rolled_back=True, sop_id=applied["sop_id"], version=res["version"],
                     restored_from_version=applied["previous_version"], failed_version=applied["version"],
