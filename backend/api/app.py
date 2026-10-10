@@ -35,13 +35,14 @@ from backend.agent.demo_llm import llm_from_env
 from backend.agent.events import make_event
 from backend.agent.graph import build_graph
 from backend.agent.llm import LLM, AnthropicLLM
-from backend.agent.nodes.act import DecisionError, parse_decision
+from backend.agent.nodes.act import DecisionError, parse_decision, validate_change_time
 from backend.agent.nodes.improve import ProposalError
 from backend.agent.state import new_state
 from backend.api.kpi_series import SeriesError, kpi_series
 from backend.api.run_export import build_export
 from backend.db import repo
 from backend.db.session import dispose_shared_engines, get_shared_engine
+from backend.detect.statistical import detect as run_detect
 from backend.domain_config import DomainConfig, load_domain_config
 from backend.sandbox import generate_dataset
 from backend.tools.readonly import ToolContext
@@ -58,6 +59,13 @@ class StartRun(BaseModel):
 
     # when the fix takes effect; Measure compares windows around it. Optional: default = end of the anomaly
     change_time: str | None = Field(default=None, min_length=1)
+
+
+class CloseBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(min_length=1)
+    closed_by: str = Field(min_length=1)  # must be on the approvers list
 
 
 class AnswerBody(BaseModel):
@@ -97,13 +105,14 @@ class Run:
     llm_kind: str = "giả"  # for the export note: "thật" only for the real Anthropic client
     steps: list[dict[str, Any]] = field(default_factory=list)  # successful HTTP steps, for GET /runs/{id}/export
     persisted_ids: set[str] = field(default_factory=set)  # event ids already in the events table (H-15)
+    closed: bool = False  # closed by a person after a non-retryable error (H-48)
 
 
 def _now() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
 
 
-_ERR_ID = re.compile(r"_err\d+$")  # ids of the run_finished(error) events made by advance()
+_ERR_ID = re.compile(r"_(?:err|close)\d+$")  # ids of the run_finished events made by advance() and close
 
 AUDIT_DEFAULT_LIMIT = 100
 AUDIT_MAX_LIMIT = 500
@@ -124,6 +133,8 @@ def _default_llm_factory(run_id: str) -> LLM:
 
 def _status(run: Run) -> dict[str, Any]:
     """Where the run is, derived from the graph state (not stored separately); a failed run is "error"."""
+    if run.closed:
+        return {"run_id": run.run_id, "state": "finished", "status": "closed", "pending": None}
     if run.error is not None:
         return {
             "run_id": run.run_id, "state": "error", "status": "error", "pending": None, "error": run.error,
@@ -247,7 +258,10 @@ def create_app(
             pos = min(pos, len(run.events))
             run.error_events.append((pos, ev))
             run.events.insert(pos, ev)
-        if db_status == "error" and errs:
+        if errs and errs[-1]["payload"].get("status") == "closed":
+            run.closed = True
+            run.retryable = False
+        elif db_status == "error" and errs:
             run.error = errs[-1]["payload"].get("error")
             run.retryable = bool(errs[-1]["payload"].get("retryable", True))
         return run
@@ -358,6 +372,13 @@ def create_app(
         run = build_run(run_id)
         state = new_state(run_id, cfg_domain.domain)
         if body.change_time is not None:
+            try:  # H-48: refuse a bad value now, before any LLM call (needs only the data, no LLM)
+                found = run_detect(run.ctx.tables, cfg_domain, run_id=run_id)
+                validate_change_time(body.change_time, run.ctx, found[0]["payload"] if found else None)
+            except ValueError as e:
+                if ctx_factory is None:
+                    run.ctx.session.close()
+                raise HTTPException(status_code=422, detail=str(e)) from e
             state["change_time"] = body.change_time
         starting.add(run_id)
         try:
@@ -423,6 +444,43 @@ def create_app(
             run.retries += 1
             advance(run, None, resumed=True)  # continue from the last checkpoint: the failed node runs again
             return record_step(run, "POST /runs/{run_id}/retry", None, 200)
+
+    @app.post("/runs/{run_id}/close")
+    def close_run(run_id: str, body: CloseBody) -> dict[str, Any]:
+        """A person gives up a run whose error can no longer be retried (H-48). It never touches an SOP."""
+        run = get_run(run_id)
+        with run.lock:
+            if run.closed or run.error is None or run.retries < cfg_domain.loop.max_retries:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"run {run_id!r} is not in a failed state that can no longer be retried; only such a run can be closed",
+                )
+            closer = cfg_domain.resolve_approver(body.closed_by)
+            if closer is None:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"closed_by {body.closed_by!r} is not a valid approver; allowed: {', '.join(cfg_domain.approvers)}",
+                )
+            repo.append_audit(
+                run.ctx.session, actor=closer, action="run_closed",
+                params={"reason": body.reason, "error": run.error, "retries": run.retries}, run_id=run_id,
+            )
+            run.ctx.session.commit()
+            ev = make_event(
+                {"run_id": run_id, "domain": cfg_domain.domain}, "run_finished", "system",
+                {"status": "closed", "reason": "closed_by_human", "closed_by": closer, "close_reason": body.reason,
+                 "error": run.error},
+                len(run.events) + 1, cfg_domain.domain,
+            )
+            ev["event_id"] = f"evt_{run_id}_close{len(run.error_events) + 1:02d}"
+            run.error_events.append((len(run.events), ev))
+            run.events.append(ev)
+            run.closed, run.retryable = True, False
+            run.finished_at = _now()
+            if ctx_factory is None:
+                run.ctx.session.close()
+            persist_run(run)
+            return record_step(run, "POST /runs/{run_id}/close", body.model_dump(), 200)
 
     @app.get("/runs/{run_id}/export")
     def export_run(run_id: str) -> dict[str, Any]:

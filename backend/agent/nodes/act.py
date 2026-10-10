@@ -151,7 +151,14 @@ def _expected(state: AgentState) -> dict[str, Any]:
 
 def validate_change_time(change_time: str, ctx: ToolContext, anomaly: dict[str, Any] | None) -> None:
     """``change_time`` must not be in the future of the data, nor before the anomaly started."""
-    t = pd.Timestamp(change_time)
+    try:
+        t = pd.Timestamp(change_time)
+    except (ValueError, TypeError) as e:
+        raise ValueError(f"change_time {change_time!r} is not a valid timestamp") from e
+    if pd.isna(t):
+        raise ValueError(f"change_time {change_time!r} is not a valid timestamp")
+    if t.tzinfo is not None:  # sandbox time is naive: a zone cannot be compared with it (H-48)
+        raise ValueError(f"change_time {change_time} has a time zone; give sandbox time without one (e.g. 2026-03-20T00:00:00)")
     last = ctx.tables["kpi_log"]["timestamp"].max()
     if pd.notna(last) and t > last:
         raise ValueError(f"change_time {change_time} is in the future: the data ends at {last.isoformat()}")
