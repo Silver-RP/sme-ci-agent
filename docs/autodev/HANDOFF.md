@@ -15,6 +15,13 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
   Không viết code dự án (developer/reviewer trong worker làm). Quyền: thiết kế mục 6.15, `.claude/commands/supervise.md`.
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao". Hỏi "tiếp theo làm gì" thì trả lời bằng danh sách ưu tiên: việc của người dùng trước, việc Claude làm song song sau.
 
+## Cập nhật sau R10ch (2026-10-10 tối, supervisor `--review-only`)
+- **R10ch merge (PR #91):** bản SOP của Act/rollback commit trước checkpoint; `change_time` kiểm lúc `POST /runs` (422, không gọi LLM); `POST /runs/{id}/close` cho run lỗi hết retry; khôi phục sau restart không kẹt, giữ số retry, dựng LLM lỗi chỉ hỏng run đó; A5(b) đọc `kpi_measured.passed` + đối chứng. Đóng H-31, H-45, H-47, H-48, H-50, H-51, H-54. 583 pytest + 1 xfail. Worker 4/4 PASS vòng 1, 111 phút (ước 40–60, B3 1,85), 3,51 USD.
+- Supervisor tự kiểm 3 tiêu chí cấp mốc (bảng trong PROGRESS): 21 test mới đỏ trên code main; A5 LLM giả đúng (a) 1,00 (b) 1,00, luôn sai (b) 0, không áp dụng gì không `passed` → **điều 2 = 50%**.
+- **Cho vai D (#64):** `POST /runs/{id}/close` (`reason`, `closed_by` thuộc người duyệt; 409 nếu run chưa hết retry hoặc đang chờ), `run_finished` có `status: closed`; `change_time` có múi giờ → 422. Ghi trong `docs/schema/payloads.md`.
+- **Treo (đề xuất R11a):** kill giữa commit `apply_sop` và checkpoint `applied` có thể tạo bản SOP trùng khi retry; số retry suy từ hậu tố `event_id`; `change_time` = mốc cuối dữ liệu qua kiểm lúc bắt đầu (Measure trả `insufficient_evidence`, không kẹt).
+- **Việc kế tiếp:** R10b1 (sau D1 #66) → R10b2 (nhớ gỡ xfail H-39) → tag v0.1-e2e 13/10 (leader duyệt). Cột USD R10ch trong `metrics.py` = 0: phiên sau chạy lại `python3 .autodev/metrics.py --write`.
+
 ## Cập nhật sau R10c (2026-10-10 chiều, supervisor `--review-only`)
 - **R10c merge (PR #84):** run/event/checkpoint vào Postgres (sống qua restart), khoá SOP theo `base_version`, `question_id` cho câu hỏi, audit mọi quyết định, `tests/test_invariants.py`. Đóng H-14, H-15, H-19, H-20, H-37, H-38. 553 pytest + 1 xfail. Worker 7/7 PASS vòng 1, ~115 phút, 5,81 USD (trong ước tính: B3 ≈ 1,0).
 - Supervisor tự kiểm 4 tiêu chí cấp mốc (bảng trong PROGRESS), tự tắt luật duyệt để chứng minh test bất biến bắt được, chạy test mới trên code main (đỏ), và 3 ca biên qua API (xung đột SOP, restart lúc đang hỏi, duyệt lại run đã xong): đều đúng. A6 = 0 vi phạm → điều 2 = 50%.
