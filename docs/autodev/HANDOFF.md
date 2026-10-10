@@ -58,6 +58,17 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
   - Script xuất `.autodev/export_status.py` (7 file JSON). **Chỉ làm mới khi leader yêu cầu** (leader chọn 10/10), không làm ở `/session-end`; cách làm trong docstring của script.
 - **Plugin (phiên đêm 10/10):** `metrics.py` sửa 3 lỗi (– cho mốc chưa chạy; B3 phút so với phút worker; supervisor cộng tạm chi phí của chính nó, đọc `runs/` của worktree chính); ước tính audit 5–6 USD (`/audit`); workflow `auto-assign` đã tắt (`gh workflow disable`, file giữ nguyên), gán #65 bằng tay khi Daivon nhận lời; leader duyệt `demo.sh --fresh-db`.
 
+### ⏸ Tạm dừng việc dự án (leader quyết 2026-10-10 đêm)
+Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại chuyển sang nghiên cứu auto-dev (plugin). Không chạy mốc R nào cho tới khi có tín hiệu dưới đây. Luật ước tính + pre-mortem mới (thiết kế 6.5) đã được leader duyệt.
+
+**Khi team xong thì bắt đầu từ đâu** (`/session-start` kiểm từng dòng):
+| Tín hiệu | Việc đầu tiên |
+|---|---|
+| D1 #66 (Bảo) merge | Đối chiếu `plan/R10b1.md`, `R10b2.md` với `docs/schema/data_contract.md` bản D1 (cột, luật V01–V09); sửa plan theo luật 6.5 (≥ 25 phút/task có Postgres; USD = worker + 2; pre-mortem "kill ở giữa?" và "đạt theo cấu tạo?") qua PR; leader duyệt → chạy `R10b1 R10b2`, `audit.json` đặt audit 4 sau R10b2 (+5–6 USD). Đây là đường găng của cổng 13/10 (A4, A7). |
+| PR của Finn cho #67, #89, #90 | Kiểm với backend: H-44, H-46, H-49 (`question_id` gửi kèm `/answer`), chạy `scripts/demo.sh --fresh-db --check`; đóng lỗ hổng trong PROJECT_STATE khi có test. PR đầu tiên của team: xem `plugin-guard` có chặn đúng không. |
+| Daivon nhận lời mời | Gán #65 bằng tay (`gh issue edit 65 --add-assignee daivonpham`); vai Q chạy đo nền LLM thật (≤ 2 USD, leader cho phép từng lần). |
+| Issue nhãn `api` từ vai D | Backend trả lời trong ngày (không tính là chạy mốc). |
+
 ### Làm tiếp theo thứ tự
 1. **Chờ leader:**
    - (a) nhắc Bảo làm D1 (#66) trước sáng 12/10, và nhắc Daivon nhận lời mời (leader tự gửi vào nhóm chat);

@@ -441,6 +441,10 @@
   "decisions": [
     {
       "date": "2026-10-10",
+      "text": "Đêm: tạm dừng việc dự án, chờ team (D1 #66, FR #67/#89/#90, Daivon #65); điểm bắt đầu lại ở HANDOFF mục 'Tạm dừng'. Duyệt luật ước tính + pre-mortem mới (thiết kế 6.5). Chuyển sang nghiên cứu auto-dev. demo.sh --fresh-db duyệt và merge (#95). Trang trạng thái chỉ làm mới khi leader yêu cầu."
+    },
+    {
+      "date": "2026-10-10",
       "text": "Đóng phiên: thứ tự R10a -> R10c -> R10ch -> R10b1 (sau khi D1 #66 của vai A merge; D1 là việc của vai A, backend không code hợp đồng trước) -> R10b2. Thay quyết định 'R10b không chờ D1'. Audit 3 chạy sau R10c. Trang trạng thái Artifact (P5) đã tạo, làm mới tay. Đề xuất lệnh tiếp theo luôn đánh số."
     },
     {

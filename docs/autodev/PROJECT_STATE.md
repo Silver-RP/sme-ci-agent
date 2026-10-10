@@ -89,6 +89,7 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 
 ## Quyết định gần đây
 
+- 2026-10-10 (đêm): **tạm dừng việc dự án, chờ team** (D1 #66, FR #67/#89/#90, Daivon #65); điểm bắt đầu lại ở HANDOFF mục "Tạm dừng". Duyệt luật ước tính + pre-mortem mới (thiết kế 6.5). Chuyển sang nghiên cứu auto-dev. `demo.sh --fresh-db` duyệt và merge (#95). Trang trạng thái chỉ làm mới khi leader yêu cầu.
 - 2026-10-10 (đóng phiên): thứ tự R10a → R10c → R10ch → R10b1 (**sau khi D1 #66 của vai A merge**; D1 là việc của vai A, backend không code hợp đồng trước) → R10b2. Thay quyết định "R10b không chờ D1". Audit 3 chạy sau R10c (đặt tay `.autodev/runs/audit.json`). Trang trạng thái Artifact (P5) đã tạo, làm mới tay. Đề xuất lệnh tiếp theo luôn đánh số.
 - 2026-10-10: R10ch merge #91: đóng H-31, H-45, H-47, H-48, H-50, H-51, H-54 (21 test mới đỏ trên main, supervisor tự chạy). A5 đo lại không theo cấu tạo: LLM đúng (a) 1,00 (b) 1,00; LLM luôn sai (b) 0; không áp dụng gì không `passed` → điều 2 = 50%. Treo (đề xuất R11a): kill giữa commit `apply_sop` và checkpoint có thể tạo bản SOP trùng khi retry; số retry suy từ hậu tố `event_id`.
 - 2026-10-10: luật chỉ số nhiều phần (`docs/eval/criteria.md`): mỗi phần trọng số bằng nhau, phần chưa đo = 0; phần đo "đạt theo cấu tạo" (audit phát hiện, ví dụ H-54) = 0 đến khi sửa. Điều 2 = 42%. Mốc sửa nhanh R10ch trước tag 13/10 (H-45, H-31, H-47, H-48, H-50, H-51, H-54).
