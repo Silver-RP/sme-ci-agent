@@ -59,4 +59,16 @@ Pilot có n = 4 nên chỉ dùng để kiểm bộ thử chạy đúng. Muốn k
 4. Hỏi leader trước khi chạy pilot thật (khoảng 4 USD, khoảng 1 giờ chạy nền), rồi ghi kết quả vào mục dưới.
 
 ## Kết quả
-(chưa chạy)
+
+### Pilot 2026-10-10 (4 ca × 2 cấu hình, Sonnet, `.autodev/runs/bench/20261010-214110.json`)
+| Cấu hình | Recall | Bắt nhầm | Lỗi chạy | USD | Phút |
+|---|---|---|---|---|---|
+| old (trước #104) | 1/3 | 0/1 | 0 | 0,90 | 20 |
+| new (sau #104) | 1/3 | 0/1 | 0 | 0,82 | 18 |
+
+- **Bộ thử chạy đúng.** Mỗi lượt khoảng 0,2 USD và 3–7 phút, rẻ hơn ước tính 0,4–0,6 USD. Cả 8 output đều có JSON hợp lệ. Đọc tay cả 8: chấm tự động khớp nội dung.
+- **p1 (H-57)** bắt được ở cả hai cấu hình, dù lần review gốc ở R10a đã để lọt. Có hai cách giải thích: reviewer có độ ngẫu nhiên lớn, hoặc chạy headless ở cấp cao nhất khác với chạy dạng subagent. Phải chạy nhiều lần mỗi ca mới tách được hai nguyên nhân này.
+- **p2 (H-50) và p3 (H-49)** lọt ở cả hai cấu hình. Prompt mới có trả lời đủ `risk_checks` và đi đúng vùng lỗi, nhưng thiếu một bước:
+  - p2: câu (a) chỉ xét events và checkpoint, không liệt kê các trường **chỉ nằm trong bộ nhớ** (`retries`) bị mất khi restart;
+  - p3: có thử `question_id=''` nhưng không thử **bỏ hẳn trường**, đúng cách lách kiểm tra 409.
+- **Kết luận:** pilot chưa cho thấy #104 cải thiện recall (n nhỏ). Hai lần suýt bắt cho thấy câu (a) và câu (d) cần cụ thể hơn: (a) liệt kê trạng thái chỉ trong bộ nhớ và hỏi cái gì được khôi phục; (d) với mỗi kiểm tra mới, thử gọi khi **thiếu** trường đó.
