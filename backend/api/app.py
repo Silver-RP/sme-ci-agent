@@ -373,6 +373,39 @@ def create_app(
                 }
         return {"sop_id": sop_id, "versions": [found[v] for v in sorted(found)]}
 
+    @app.get("/metrics")
+    def metrics() -> dict[str, Any]:
+        """The 3 PLAN metrics. Only what has a real source is filled: the KPI before/after of the latest lesson in
+        learning_store for the first configured KPI. MTTD/MTTR and recurrence stay unavailable until R10b2."""
+        kpi = cfg_domain.kpis[0]
+        with read_db() as session:
+            lessons = repo.list_learning(session, cfg_domain.domain)
+        latest = next(
+            (r for r in lessons if r.content.get("kpi") == kpi.name and r.content.get("kpi_before") is not None
+             and r.content.get("kpi_after") is not None),
+            None,
+        )
+        if latest is not None:
+            first = {
+                "name": kpi.name, "unit": kpi.unit, "before": latest.content["kpi_before"],
+                "after": latest.content["kpi_after"], "available": True, "reason": None, "run_id": latest.run_id,
+            }
+        else:
+            first = {
+                "name": kpi.name, "unit": kpi.unit, "before": None, "after": None, "available": False,
+                "reason": "no finished run has saved a lesson with this KPI yet", "run_id": None,
+            }
+        pending = "no real source yet (planned for R10b2)"
+        return {
+            "metrics": [
+                first,
+                {"name": "mttd_mttr", "unit": "hours", "before": None, "after": None, "available": False,
+                 "reason": pending, "run_id": None},
+                {"name": "recurrence_rate", "unit": "ratio", "before": None, "after": None, "available": False,
+                 "reason": pending, "run_id": None},
+            ]
+        }
+
     @app.get("/kpi/series")
     def kpi_series_api(
         kpi: str,

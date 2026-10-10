@@ -139,6 +139,7 @@ Có hai dạng; phân biệt bằng `kind`.
 | GET | `/runs` | | `{runs: [RunSummary]}`, mới nhất trước (R10a) |
 | GET | `/audit?run_id=&limit=` | | `{rows: [AuditRow]}`, mới nhất trước. `limit` 1..500 (mặc định 100), ngoài khoảng thì 422 |
 | GET | `/sop/{sop_id}/versions` | | `{sop_id, versions: [SopVersion]}`, cũ nhất trước; 404 nếu `sop_id` không có trong config |
+| GET | `/metrics` | | `{metrics: [Metric]}`, luôn đúng 3 phần tử theo thứ tự: KPI chính (tên, đơn vị lấy từ config), `mttd_mttr`, `recurrence_rate` (R10a) |
 | GET | `/kpi/series?kpi=&machine=&shift=&start=&end=` | `kpi` bắt buộc | chuỗi KPI từ dữ liệu sandbox của app (R10b1 đổi nguồn sang `production_log`). `kpi`, `machine`, `shift` lạ hoặc `start`/`end` sai định dạng thì 422. `start <= ts < end`; khoảng rỗng thì `points: []` |
 
 Ví dụ phản hồi `GET /kpi/series`:
@@ -151,6 +152,20 @@ Ví dụ phản hồi `GET /kpi/series`:
 ```
 
 `baseline` và `upper_limit` là số của Detect cho (máy, KPI), bằng giá trị trong event `anomaly_detected`; là `null` khi không chọn `machine` (khi đó nhiều máy cùng thời điểm được lấy trung bình). Quá 1000 điểm thì gộp theo ngày (`ts` là 00:00 của ngày). `anomalies` lọc theo `machine`/`shift`/khoảng thời gian.
+
+Ví dụ phản hồi `GET /metrics` (chưa có run nào học xong; mọi chỉ số `available: false`, không có số):
+
+```json
+{"metrics": [
+  {"name": "defect_rate", "unit": "ratio", "before": null, "after": null, "available": false,
+   "reason": "no finished run has saved a lesson with this KPI yet", "run_id": null},
+  {"name": "mttd_mttr", "unit": "hours", "before": null, "after": null, "available": false,
+   "reason": "no real source yet (planned for R10b2)", "run_id": null},
+  {"name": "recurrence_rate", "unit": "ratio", "before": null, "after": null, "available": false,
+   "reason": "no real source yet (planned for R10b2)", "run_id": null}]}
+```
+
+Sau một run học xong, phần tử đầu có `available: true`, `reason: null`, `run_id` của run đó, `before`/`after` bằng `kpi_before`/`kpi_after` trong `learning_saved` (lấy bài học mới nhất của KPI đó trong `learning_store`). Ở R10b2 sẽ có thêm: `mttd_mttr` điền `before`/`after` (giờ, từ `mttd_hours`/`mttr_hours` của `kpi_measured` khi H-11 xong) và `recurrence_rate` điền `before`/`after`; hai phần tử này đổi `available` thành `true`, `reason: null`. Hình dạng không đổi. Tuyệt đối không có số giả khi `available: false`.
 
 Ba API đọc trên (R10a) chỉ đọc, không ghi DB. `GET /runs` đọc từ bộ nhớ của app nên mất khi backend khởi động lại (H-15, sửa ở R10c).
 
