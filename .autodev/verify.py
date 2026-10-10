@@ -6,6 +6,10 @@ Usage:
   python3 .autodev/verify.py --hook       # SubagentStop hook of the developer agent
   python3 .autodev/verify.py --smoke      # run the user-facing commands in config "smoke" (no baseline)
 
+Also runs test_guard (config "test_guard", default on): blocks loosening tests vs the merge-base with main
+(deleted test file/function, added skip/xfail/only, fewer asserts) unless plan/ on main says
+`allow-test-change: <path or test name> <reason>`.
+
 Stdlib only. Errors are compared as keys (ruff: "file:CODE", pytest: test id),
 so a pre-existing error in the baseline never blocks; only new ones do.
 """
@@ -111,6 +115,118 @@ def run_smoke(steps, cwd=ROOT):
     return out
 
 
+TEST_FILE_RE = re.compile(r"(^|/)(test_[^/]*\.py|[^/]*_test\.py|[^/]*\.(test|spec)\.[jt]sx?)$")
+TEST_DEF_RE = re.compile(r"^\s*(?:async\s+)?def\s+(test\w*)|^\s*(?:it|test)\(\s*['\"`](.+?)['\"`]")
+# Anchored at the start of a code line so marker text inside a string (e.g. the guard's own tests) does not count.
+SKIP_RE = re.compile(
+    r"^\s*(?:@pytest\.mark\.(?:skip|skipif|xfail)\b|pytestmark\s*=.*pytest\.mark\.(?:skip|skipif|xfail)\b"
+    r"|pytest\.(?:skip|xfail)\(|self\.skipTest\(|@unittest\.(?:skip|expectedFailure)"
+    r"|(?:it|test|describe)\.(?:skip|only|todo)\(|x(?:it|describe|test)\()"
+)
+ASSERT_RE = re.compile(r"^\s*assert\b|\bself\.assert\w+\(|\bexpect\(|pytest\.raises\(")
+ALLOW_MARK = "allow-test-change:"
+GUARD_HINT = (
+    "Không nới test để xanh. Đổi hành vi theo plan thì thêm vào commit message một dòng\n"
+    f"{ALLOW_MARK} <file test hoặc tên test> <lý do, nêu dev-xx/tiêu chí>  (reviewer sẽ xét lý do)"
+)
+
+
+def weakening(diff, allowed):
+    """Keys for test-loosening changes in a unified diff (`git diff -M` of base vs work tree).
+
+    Flags a deleted test file, a test function removed and not re-added anywhere, an added
+    skip/xfail/only marker, and a net drop in asserts over all test files. `allowed` holds plan
+    tokens (file path or test name) that excuse a change.
+    """
+    files = []  # [path, deleted, removed_lines, added_lines]
+    in_header = False
+    for line in diff.splitlines():
+        if line.startswith("diff --git "):
+            files.append([line.rsplit(" b/", 1)[-1], False, [], []])
+            in_header = True
+        elif not files:
+            continue
+        elif in_header:
+            files[-1][1] |= line.startswith("deleted file mode")
+            in_header = not line.startswith("@@")
+        elif line.startswith("-"):
+            files[-1][2].append(line[1:])
+        elif line.startswith("+"):
+            files[-1][3].append(line[1:])
+
+    def names(lines):
+        return {m.group(1) or m.group(2) for m in map(TEST_DEF_RE.match, lines) if m}
+
+    tests = [f for f in files if TEST_FILE_RE.search(f[0])]
+    added_names = set().union(*(names(f[3]) for f in tests))
+    keys, net, losing = [], 0, []
+    for path, deleted, removed, added in tests:
+        if deleted:
+            if path not in allowed:
+                keys.append(f"deleted-file:{path}")
+            continue
+        gone = names(removed) - added_names
+        keys += [f"removed-test:{path}::{n}" for n in sorted(gone) if path not in allowed and n not in allowed]
+        if gone & allowed:  # an excused removal takes its asserts with it
+            allowed = allowed | {path}
+        if path not in allowed:
+            keys += [f"skip:{path}:{ln.strip()[:60]}" for ln in added if SKIP_RE.search(ln)]
+        diff_asserts = sum(map(bool, map(ASSERT_RE.search, added))) - sum(map(bool, map(ASSERT_RE.search, removed)))
+        net += diff_asserts
+        if diff_asserts < 0 and path not in allowed:
+            losing.append(path)
+    if net < 0 and losing:
+        keys.append(f"fewer-asserts:{net}:{','.join(losing)}")
+    return keys
+
+
+def allow_tokens(text):
+    """Tokens from `allow-test-change: <token> <reason>` lines; a line without a reason does not count."""
+    out = set()
+    for line in text.splitlines():
+        if ALLOW_MARK in line:
+            words = line.split(ALLOW_MARK, 1)[1].split()
+            if len(words) >= 2:
+                out.add(words[0].strip("`"))
+    return out
+
+
+def _git(cwd, *args):
+    return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=False)
+
+
+def _guard(cwd):
+    """(blocked, justified) for the work tree vs its merge-base on origin/main (or main).
+
+    Allowances in plan/ AT THE BASE (leader-approved) excuse a change fully. A developer can justify one in a commit
+    message on the branch: it no longer blocks but is listed as justified so the reviewer judges the reason.
+    Outside git or without main: no check.
+    """
+    for ref in ("origin/main", "main"):
+        mb = _git(cwd, "merge-base", ref, "HEAD")
+        if mb.returncode == 0:
+            base = mb.stdout.strip()
+            break
+    else:
+        return [], []
+    diff = _git(cwd, "diff", "-M", "--no-color", "-U0", base).stdout
+    plan = allow_tokens(_git(cwd, "grep", "-h", "-e", ALLOW_MARK, base, "--", "plan/").stdout)
+    commits = allow_tokens(_git(cwd, "log", "--format=%B", f"{base}..HEAD").stdout)
+    flagged = weakening(diff, plan)
+    blocked = weakening(diff, plan | commits)
+    return blocked, [k for k in flagged if k not in blocked]
+
+
+def test_guard(cwd=ROOT):
+    return _guard(cwd)[0]
+
+
+def guard_result(cwd=ROOT):
+    """test_guard as a verify step; never baselined (it diffs against main, so main itself is always clean)."""
+    keys, justified = _guard(cwd)
+    return {"keys": keys, "tail": GUARD_HINT if keys else "", "justified": justified}
+
+
 def new_errors(results, baseline):
     found = {}
     for name, res in results.items():
@@ -164,10 +280,16 @@ def main():
         print(f"Đã ghi baseline: { {n: len(r['keys']) for n, r in results.items()} }")
         return 0
 
+    if config.get("test_guard", True):
+        results["test_guard"] = guard_result()
     found = new_errors(results, load(BASELINE, {}))
 
+    justified = results.get("test_guard", {}).get("justified", [])
     if "--hook" not in args:
         print(summary(found) if found else "verify: sạch (không có lỗi mới so với baseline)")
+        if justified:
+            print(f"[test_guard] {len(justified)} thay đổi test đã giải trình trong commit (reviewer xét lý do):")
+            print("\n".join(f"  - {k}" for k in justified))
         return 2 if found else 0
 
     state = load(STATE, {})
