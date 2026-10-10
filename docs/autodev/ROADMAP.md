@@ -50,7 +50,7 @@ Ngày là đề xuất; leader chỉnh khi cần. Luồng dự án do runner ch�
 | Ngày | Dự án (runner) | Plugin (phiên chat) | Thử plugin qua |
 |---|---|---|---|
 | 10–11/10 | R10a ✅ merge #82 (10/10) | P6a: mẫu plan + reviewer cấp mục tiêu + supervisor đối chiếu ước tính | R10a là plan đầu theo mẫu mới: 7/7 PASS vòng 1, 73 phút / ước tính 55–75, 4,00 USD worker / 4–5: B3 = 1,0 |
-| 11–12/10 | R10b1 → R10b2 → R10c nối tiếp, audit 3 tự chạy | P4: kiểm hạn mức trước mốc; P6b: số đo phiên vào PROGRESS | chuỗi dài nhất từ trước tới giờ |
+| 10–12/10 | R10c ✅ merge #84 (10/10, chạy trước theo leader) → audit 3 → R10b1 (sau D1 #66) → R10b2 | P4: kiểm hạn mức trước mốc; P6b: số đo phiên vào PROGRESS | R10c: 7/7 PASS vòng 1, ~115 phút / 90–120, 5,81 USD worker / 7–9 gồm supervisor: B3 ≈ 1,0; A6 = 0 vi phạm |
 | 13/10 | demo #1, tag v0.1-e2e (cổng UI: hỏi leader) | đóng P6 (báo cáo ước tính ↔ thực tế R10a–R10c); đóng P5 (trang trạng thái Artifact) | |
 | 13–17/10 | R11a, R11b | P7a: Telegram một chiều + API trạng thái chỉ đọc; P9 | R11 chạy dài |
 | 17–20/10 | R12, freeze 20/10 | P7b: Telegram hai chiều mức xem/nhận/trả lời (điều khiển chỉ khi leader duyệt) | |

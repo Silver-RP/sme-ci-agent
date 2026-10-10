@@ -105,6 +105,15 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
   | 4. Ghi run ra file qua cùng luật kiểm 8 fixture | `scripts/record_run.py --api` (uvicorn thật, run rollback) rồi `tests.test_run_export_r10a.check_fixture_format` | 8 fixture cũ + file ghi (22 event, note "Bản ghi từ run thật, LLM giả") qua kiểm; không có `Traceback`, `"sim"`, `sk-ant` |
   | 5. A5, A8 | `tests/test_demo_llm_branches_r10a.py -k a5 -s`; `demo.sh --check --repeat 10` | A5 (a) = 1,00, (b) = 1,00 trên 5 seed; A8 = 10/10, p95 0,4 s/run (LLM giả) |
   Đỏ trên main (code `backend/` của `origin/main`, test mới): H-13 4/6 test đỏ (`test_api_retry_events_r10a.py`); H-16 lỗi import `SCENARIO_ENV` (cả file đỏ). Thử biên độc lập qua HTTP thật: `/audit?limit=-1` và `limit=100000` → 422 (giới hạn 500); `/sop/NOPE/versions` → 404; `/kpi/series` kpi lạ, máy lạ → 422 kèm danh sách hợp lệ; khoảng 2030 → 200 `points: []`; `/runs/nope/export` → 404; `record_run.py` qua httpx thật (worker chưa có test này) chạy đúng. Ghi chú: `metrics.py` in dòng 0 phút / B3 0,00 cho mốc chưa chạy (R10b1, R10b2, R10c) vì đã có plan; nên in "–" (sửa plugin, không chặn).
+- R10c (bền cho demo; H-14, H-15, H-19, H-20, H-37, H-38, A6): chế độ B, chạy trước R10b1/R10b2 (leader đổi thứ tự 10/10). Worker 7/7 task PASS vòng 1, ~115 phút (12:16–14:11 JST), 5,81 USD worker, 81 lượt, 12 lệnh Bash bị guard chặn (`sed -i`, heredoc python sửa file; worker chuyển sang Edit, không lách). PR #84 merge. Supervisor Opus chạy lại (`--review-only`):
+  | Tiêu chí cấp mốc R10c | Lệnh / test supervisor tự chạy | Kết quả |
+  |---|---|---|
+  | 1. verify + smoke sạch | `python3 .autodev/verify.py`; `--smoke`; `uv run pytest -q` | sạch; smoke 4/4 ok; 553 passed, 1 xfailed |
+  | 2. Hai tiến trình uvicorn thật cùng Postgres: run tới `pending`, tắt, tiến trình 2 thấy run + event, duyệt tới `learning_saved` | `tests/test_persist_r10c.py::test_two_uvicorn_processes_share_runs -v` (đọc test: `Popen uvicorn --factory`, p1 bị SIGKILL) | PASSED |
+  | 3. `test_invariants.py` ≥ 50 chuỗi, 0 vi phạm, in số chuỗi/nhánh | `uv run pytest tests/test_invariants.py -v -s` | `[A6] sequences=60 branches=22 refused_409_422=1007 out_of_order_refused=995 violations=0`; bất biến `claude-` xfail strict (H-39, R10b2) |
+  | 3b. Test không tự đúng (dev-07 tc 3) | tạm sửa `resolve_approver` trả mọi tên, chạy `-k random_sequences`, rồi `git checkout` | FAIL: "decision by 'llm', not an approver", "a call that does not fit the state got 200" |
+  | 4. 100 run không vượt pool | `tests/test_engine_pool_r10c.py::test_100_runs_do_not_exceed_pool` (đếm `pg_stat_activity` của DB test riêng) | PASSED (≤ 10 = pool 5 + overflow 5) |
+  Đỏ trên main (code `backend/` của `origin/main`, test mới): H-19 2/2 đỏ, H-20 2/3 đỏ, H-14 và H-38 lỗi import (`SopConflict`, `max_connections`). Thử biên độc lập (test tạm ở scratchpad, không commit): hai run cùng thấy v1 qua API, duyệt A rồi B → B có `sop_conflict`, quay lại đề xuất trên `base_version` 2, `sop_versions` không trùng số; restart lúc đang chờ trả lời → `question_id` giữ nguyên, trả lời 200, gửi lại cùng id → 409; duyệt lại run đã xong sau restart → 409. Ước tính ↔ thực tế: 7/7 task; 115/90–120 phút (B3 = 1,0); USD 5,81 worker + supervisor ~1–2 / 7–9 (B3 ≈ 1,0); 7/8–10 vòng review (0,9; tốt hơn ước tính). Pre-mortem: 1 chặn bằng test uvicorn thật; 2 bằng `test_hypothesis_state_roundtrips_through_postgres_saver`; 3 bằng đếm nhánh + `out_of_order_refused`; 4 bằng `test_run_rolls_back_its_own_version_is_not_a_conflict`. Ghi chú: cột phút R10c của `metrics.py` = 0 cho tới khi runner ghi xong `run.log` (chạy lại `--write` ở phiên sau).
 
 <!-- metrics:start (tự sinh bởi .autodev/metrics.py, đừng sửa tay) -->
 ## Số đo plugin B1–B5 (định nghĩa: ROADMAP bảng B)
@@ -116,7 +125,7 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
 | 2026-10-09.md | R7, R8 | 15 | 9 | 1,67 |
 | 2026-10-09_2.md | R9, R9h | 14 | 8 | 1,75 |
 
-### B2 Độ chặt review: 2/44 task cần ≥ 2 vòng (5%). Đọc cùng B1: B2 thấp mà B1 cao là reviewer lỏng.
+### B2 Độ chặt review: 2/51 task cần ≥ 2 vòng (4%). Đọc cùng B1: B2 thấp mà B1 cao là reviewer lỏng.
 
 ### B3–B5 theo mốc (B3: thực tế / ước tính, 1,0 = trong khoảng, ngưỡng 0,5–2; B4: số lần runner dừng, ngưỡng 0; B5: chi phí trên task)
 
@@ -125,10 +134,10 @@ Supervisor cập nhật sau mỗi mốc, lấy số liệu từ báo cáo mốc 
 | M1 | 4 | 0 | 0,00 | 0,0 | 0,00 | 0 | – | – | 0 |
 | M2 | 3 | 0 | 0,00 | 0,0 | 0,00 | 0 | – | – | 0 |
 | M3 | 3 | 0 | 0,00 | 0,0 | 0,00 | 0 | – | – | 0 |
-| R10a | 7 | 73 | 4,00 | 10,5 | 0,57 | 77 | 1,00 | 1,00 | 0 |
+| R10a | 7 | 73 | 5,94 | 10,5 | 0,85 | 127 | 1,00 | 1,19 | 0 |
 | R10b1 | 6 | 0 | 0,00 | 0,0 | 0,00 | 0 | 0,00 | 0,00 | 0 |
 | R10b2 | 7 | 0 | 0,00 | 0,0 | 0,00 | 0 | 0,00 | 0,00 | 0 |
-| R10c | 7 | 0 | 0,00 | 0,0 | 0,00 | 0 | 0,00 | 0,00 | 0 |
+| R10c | 7 | 0 | 5,81 | 0,0 | 0,83 | 81 | 0,00 | 0,83 | 0 |
 | R4 | 4 | 21 | 2,59 | 5,3 | 0,65 | 86 | – | – | 1 |
 | R5 | 3 | 21 | 3,01 | 7,1 | 1,00 | 26 | – | – | 0 |
 | R6 | 3 | 23 | 1,81 | 7,8 | 0,60 | 63 | – | – | 0 |

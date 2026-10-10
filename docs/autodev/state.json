@@ -1,6 +1,6 @@
 {
   "updated": "2026-10-10",
-  "source": "audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10)",
+  "source": "audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10)",
   "milestones": {
     "project": [
       {
@@ -106,6 +106,14 @@
         "cost_usd": 4.0,
         "minutes": 73,
         "note": "API storyboard, record_run, demo.sh --check --repeat, LLM giả mọi nhánh + rollback; đóng H-13, H-16, H-26; ước tính 55–75 phút, 4–5 USD (B3 = 1,0); cost chỉ tính worker"
+      },
+      {
+        "id": "R10c",
+        "status": "merged",
+        "pr": 84,
+        "cost_usd": 5.81,
+        "minutes": 115,
+        "note": "Postgres cho run/event/checkpoint, khoá SOP, question_id, audit mọi quyết định, test_invariants (A6 = 0 vi phạm, 60 chuỗi, 22 nhánh); đóng H-14, H-15, H-19, H-20, H-37, H-38; ước tính 90–120 phút, 7–9 USD (B3 = 1,0); cost chỉ tính worker"
       }
     ],
     "plugin": [
@@ -169,9 +177,9 @@
     {
       "id": 2,
       "text": "Đề xuất được duyệt làm KPI cải thiện; nếu không thì rollback và điều tra lại",
-      "percent": 17,
-      "evidence": "R10a: A5 (a) 1,0, (b) 1,0 LLM giả 5 seed (đạt ngưỡng v0.1; freeze cần thêm LLM thật 3 seed nên A5 = 0,5); A4, A6 chưa đo",
-      "missing": "H-31, H-32, H-36, H-19; LLM thật (T-030 lần 2)",
+      "percent": 50,
+      "evidence": "R10a: A5 (a) 1,0, (b) 1,0 LLM giả 5 seed (A5 = 0,5 vì freeze cần LLM thật); R10c: A6 = 0 vi phạm qua tests/test_invariants.py (60 chuỗi, 22 nhánh) → 1; A4 chưa đo",
+      "missing": "A4 (R10b2); A5 LLM thật; H-31, H-32, H-36",
       "estimate_old": 65,
       "metrics": [
         "A4",
@@ -195,7 +203,7 @@
   ],
   "architecture": [
     "Một agent LangGraph (backend/agent/graph.py): Detect (thống kê) → Investigate → Ask (interrupt) → Improve → duyệt (interrupt) → Act → Measure → Learn; cạnh quay lại T-040",
-    "Checkpointer InMemorySaver; run và event chỉ ở bộ nhớ của backend/api/app.py (bảng runs/events trống)",
+    "Checkpointer PostgresSaver khi có DATABASE_URL (serde ALLOWED_MSGPACK_MODULES); run và event ghi bảng runs/events, khôi phục khi khởi động (R10c). Test vẫn tiêm InMemorySaver",
     "Postgres: audit_log, sop_versions, learning_store (alembic 0001)",
     "Sandbox: simulator + injector + post_change (dữ liệu sau thay đổi riêng cho run)",
     "API FastAPI + SSE; dashboard Next.js (một trang); LLM giả mặc định, SME_LLM=real dùng Anthropic"
@@ -284,33 +292,9 @@
       "audit": "2026-10-09, 2026-10-09_2"
     },
     {
-      "id": "H-14",
-      "severity": "vừa",
-      "summary": "Hai run song song ghi đè SOP",
-      "audit": "2026-10-09, 2026-10-09_2"
-    },
-    {
-      "id": "H-15",
-      "severity": "vừa",
-      "summary": "Run/event/checkpointer chỉ ở bộ nhớ",
-      "audit": "2026-10-09, 2026-10-09_2"
-    },
-    {
       "id": "H-18",
       "severity": "vừa",
       "summary": "has_tool_evidence tính tool của cả run",
-      "audit": "2026-10-09, 2026-10-09_2"
-    },
-    {
-      "id": "H-19",
-      "severity": "vừa",
-      "summary": "Halt → điều tra lại quên SOP đang hiệu lực; rollback sai bản",
-      "audit": "2026-10-09, 2026-10-09_2"
-    },
-    {
-      "id": "H-20",
-      "severity": "vừa",
-      "summary": "Trả lời không kèm id câu hỏi, gửi lặp trả lời nhầm",
       "audit": "2026-10-09, 2026-10-09_2"
     },
     {
@@ -377,18 +361,6 @@
       "id": "H-36",
       "severity": "vừa",
       "summary": "Điều tra lại sau rollback không biết action đã thất bại",
-      "audit": "2026-10-09_2"
-    },
-    {
-      "id": "H-37",
-      "severity": "vừa",
-      "summary": "Mỗi run một Engine DB mới, không dispose",
-      "audit": "2026-10-09_2"
-    },
-    {
-      "id": "H-38",
-      "severity": "thấp",
-      "summary": "Thiếu audit_log cho trả lời, halt, Measure không kết quả",
       "audit": "2026-10-09_2"
     },
     {
@@ -490,6 +462,10 @@
     {
       "date": "2026-10-09",
       "text": "R9ih merge #58: đóng H-43; T-030 lần 3 (LLM thật) là việc kế tiếp của người dùng"
+    },
+    {
+      "date": "2026-10-10",
+      "text": "R10c merge #84: đóng H-14, H-15, H-19, H-20, H-37, H-38 (test đỏ trên main, xanh trên nhánh; supervisor tự chạy). A6 = 0 vi phạm → điều 2 = 50%. Bất biến 'không có claude- trong backend/' xfail strict tới R10b2 (H-39). (b) worker: không thêm migration vì uq_sop_versions_sop_version đã có từ 0001."
     }
   ],
   "outlook": [
