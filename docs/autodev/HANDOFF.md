@@ -16,7 +16,7 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao" hay "là gì". Cuối mỗi báo cáo có câu hỏi "làm gì tiếp": danh sách **đánh số kèm nội dung**, leader trả lời bằng số.
 - **Đo bằng số, không ước lượng:** % đạt 3 điều tính theo `docs/eval/criteria.md` (A1–A8, luật chỉ số nhiều phần); chỉ số plugin B1–B6 bằng `python3 .autodev/metrics.py`.
 
-## Bước tiếp theo (cập nhật 2026-10-10 đêm, đóng phiên)
+## Bước tiếp theo (cập nhật 2026-10-11 rạng sáng, đóng phiên)
 
 ### Bối cảnh
 - **Team 4 người** (`docs/PLAN.md` mục 4). Ranh giới: auto-dev không làm thay việc của vai A/D/Q, kể cả khi không đụng file của họ (**trùng việc** khác **trùng file**).
@@ -31,25 +31,23 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Mốc tham khảo:** kickoff 11/10 (giờ chưa chốt); cổng go/no-go + tag v0.1-e2e 13/10; Đợt 2 UI 17/10; freeze 20/10; Pitch 24/10.
 - **Kế hoạch P6 hai luồng** (dự án + plugin) đã duyệt: `ROADMAP.md` mục "Kế hoạch hai luồng"; bảng mốc ở PROJECT_STATE mục "Tầm nhìn".
 
-### Đã xong trong phiên 2026-10-10 đêm (PR #94–#101, đều merge)
-- **Plugin P5, P6 đóng:**
-  - `metrics.py` sửa 3 lỗi; đoạn R10ch trong PROGRESS từng bị `--write` xoá, đã khôi phục (#94);
-  - `export_status.py`; trang trạng thái **chỉ làm mới khi leader yêu cầu** (#94, #96);
-  - báo cáo đối chiếu ước tính R10a–R10ch trong PROGRESS. Luật mới ở thiết kế 6.5, **leader duyệt**: ≥ 25 phút/task có Postgres; USD = worker + 2; audit +5–6 USD; pre-mortem "kill ở giữa?", "đạt theo cấu tạo?" (#97).
-- **Dự án:** `demo.sh --fresh-db` chạy trên DB `sme_ci_demo`, tạo lại sạch mỗi lần (#95). Sau đó **tạm dừng việc dự án chờ team** (#98, mục ⏸ dưới).
-- **Quy tắc mới:**
-  - `CLAUDE.md`: ước tính thời gian khi bắt đầu nhiệm vụ (#99);
-  - ghi % hạn mức 5 giờ và tuần trước/sau nhiệm vụ bằng `.autodev/usage.py` + status line (#101, mục Môi trường).
-- **Nghiên cứu:** `docs/autodev/research/2026-10-10-so-sanh-ben-ngoai.md` (#100), 10 nguồn bên ngoài. 7 đề xuất chưa vào ROADMAP:
-  - 1: cổng "không nới test" trong `verify.py`;
-  - 2: reviewer dùng model khác developer;
-  - 3: câu hỏi bắt buộc theo 4 loại lỗi đã lọt;
-  - 4: bộ thử reviewer (= hướng 1);
-  - 5: review 3 lần cho task rủi ro;
-  - 6: thử đột biến;
-  - 7: không làm.
-- **GitHub:** workflow `auto-assign` đã tắt (`gh workflow disable`, file giữ nguyên).
-- **Hạn mức lúc đóng phiên:** 5 giờ 11% (reset 00:20 11/10), tuần 60% (reset 13:00 14/10). R10b1 + R10b2 + audit 4 (~20–25 USD) có thể chạm hạn mức tuần trước 14/10: cân nhắc khi D1 xong.
+### Đã xong trong phiên 2026-10-10 khuya → 11/10 rạng sáng (PR #103–#108, đều merge; chỉ plugin, không đụng code dự án)
+- **Hạn mức (#103):**
+  - `usage.py` báo tuổi số liệu; lệnh mới `show [--last N]`;
+  - `/session-start` in dòng hạn mức.
+  - Status line không chạy trong VS Code, nên số liệu cũ thì hỏi leader `/usage`. Leader dán số dạng "32(5h)/63w"; Claude ghi vào `~/.claude/usage-latest.json` (`five_hour`, `seven_day`, `at` = bây giờ).
+- **Đề xuất 1 + 3 (#104):**
+  - Cổng `test_guard` trong `verify.py`: chặn khi xoá file/hàm test, thêm `skip`/`xfail`/`.only`, hay giảm tổng số assert so với merge-base trên main.
+  - Developer giải trình bằng dòng `allow-test-change: <test> <lý do>` trong commit: không bị chặn, nhưng reviewer phải xét lý do. Dòng đó nằm trong `plan/` trên main thì miễn hẳn.
+  - Vì sao có đường giải trình: chạy thử trên 12 PR mốc cũ thì 5 bị gắn cờ, cả 5 đều là đổi hành vi hợp lệ.
+  - `reviewer.md` bước 8: 4 câu hỏi bắt buộc, trả lời ở trường `risk_checks`.
+- **Đề xuất 4, bộ thử reviewer (#105–#108):**
+  - `.autodev/bench_reviewer.py`; 11 ca trong `.autodev/bench/cases.json` (9 lỗi đã lọt + 2 sạch), tách `dev` (p2, p3) và `holdout`.
+  - Kết quả và cách đọc: `docs/autodev/research/2026-10-10-bo-thu-reviewer.md`. Tổng 6,60 USD.
+  - Reviewer hiện tại **chặn 2/9**, **thấy 5/9** (đọc tay), bắt nhầm 0/3. Tức là reviewer thấy lỗi nhưng xếp nhẹ ("hướng an toàn", "chấp nhận được").
+  - Bản sửa (a)(d) (`new2`, `.autodev/bench/reviewer-candidate.md`) không cải thiện trên holdout, nên **không** đưa vào `reviewer.md` (luật leader đặt trước khi đo).
+  - Nhiễu giữa các lần chạy lớn: muốn kết luận thì cần ≥ 3 lần mỗi ca.
+- **Hạn mức lúc đóng phiên** (leader dán khoảng 23:00 10/10): 5 giờ 32%, tuần 63% (reset 13:00 14/10).
 
 ### ⏸ Tạm dừng việc dự án (leader quyết 2026-10-10 đêm)
 Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại chuyển sang nghiên cứu auto-dev (plugin). Không chạy mốc R nào cho tới khi có tín hiệu dưới đây. Luật ước tính + pre-mortem mới (thiết kế 6.5) đã được leader duyệt.
@@ -64,18 +62,14 @@ Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại
 
 ### Làm tiếp theo thứ tự
 1. **Chờ leader:**
-   - (a) nhắc Bảo làm D1 (#66) trước sáng 12/10, và nhắc Daivon nhận lời mời (leader tự gửi vào nhóm chat);
-   - (b) chốt giờ kickoff 11/10;
-   - (c) cho phép đo nền LLM thật: `eval_rootcause.py --llm real --seeds 3`, ≤ 2 USD, ghi `docs/token-cost.md`;
-   - (d) D1 chưa merge sáng 12/10 thì leader quyết R10b1;
-   - (e) đưa 7 đề xuất của báo cáo nghiên cứu vào ROADMAP hay không.
-2. **Plugin, phiên sau bắt đầu ở đây (leader chọn):**
-   - Đề xuất 1 + 3 của `docs/autodev/research/2026-10-10-so-sanh-ben-ngoai.md`, ước tính ~1,5 giờ, 1–2 USD:
-     - (1) cổng "không nới test" trong `verify.py`: so với baseline, chặn khi số test giảm, test mới bị `skip`/`xfail`, hay assert bị xoá mà plan không ghi lý do. Viết test trong `.autodev/tests/test_verify.py` trước;
-     - (3) câu hỏi bắt buộc trong `.claude/agents/reviewer.md`: kill/restart giữa hai bước; chỉ số "đạt theo cấu tạo"; test chỉ chạy TestClient hay mock; luồng trạng thái xuyên file ngoài diff. Chỉ chặn lỗi ảnh hưởng đúng đắn, tránh làm thừa.
-   - Tuỳ chọn (~10 phút): `usage.py` báo tuổi số liệu, và hỏi leader `/usage` khi số đã quá cũ (status line chỉ cập nhật khi Claude Code chạy trong terminal).
-   - Sau đó: đề xuất 4 (bộ thử reviewer từ lỗi đã lọt, 15–20 USD, hỏi leader trước mỗi lượt đo).
-   - Khi Daivon nhận lời: gán #65 bằng tay. Plan R10b1/R10b2 khi sửa sau D1: áp luật 6.5.
+   - (a) **để sau**, leader tự làm khi cần: đo nền LLM thật (`eval_rootcause.py --llm real --seeds 3`, ≤ 2 USD); quyết R10b1 nếu D1 chưa merge sáng 12/10.
+   - Leader đã nói **không nhắc lại** trong báo cáo: nhắc Bảo/Daivon, giờ kickoff, đưa đề xuất nghiên cứu vào ROADMAP (bộ nhớ `skip-team-reminders`).
+   - Phiên sau không còn việc nào chặn bởi leader. Việc đầu tiên: `/session-start` kiểm bảng "Tín hiệu" ở mục ⏸.
+2. **Plugin, chỉ làm khi chưa có tín hiệu từ team và hạn mức tuần còn đủ cho R10b** (giữ ~25 USD cho R10b1 + R10b2 + audit 4):
+   - Luật xếp mức cho reviewer: ghi chú mô tả hành vi sai so với tiêu chí hoặc quy tắc thì là blocking, kể cả khi hậu quả "đi về hướng an toàn"; ngoại lệ là khi plan ghi rõ chấp nhận.
+   - Chỉ đo luật này trên **ca mới chưa xem** (≥ 5 ca lỗi lấy từ audit 4), mỗi ca 3 lần. Không đo trên 11 ca hiện có, vì đã xem output của chúng.
+   - Hỏi leader trước mỗi lượt đo.
+   - Khi Daivon nhận lời mời: gán #65 bằng tay. Plan R10b1/R10b2 khi sửa sau D1: áp luật 6.5.
 3. **R10b1 khi D1 merge:** đối chiếu `plan/R10b1.md` với bản D1 (cột, luật V01–V09), sửa plan qua PR, rồi chạy `R10b1 R10b2` nối tiếp. Đặt `audit.json` sao cho audit 4 chạy sau R10b2.
 4. **Cổng 13/10:** theo `criteria.md` mục 3. Đang có A6 = 0; A5 phần LLM giả; A8 (LLM giả). A4, A7 cần R10b2; UI FR-01..05 cần vai D. Leader duyệt tag.
 5. **R11a** (13–14/10): H-28, H-29, H-56 (gộp H-18), H-32, H-36, H-52, H-53, H-55; kịch bản `ask` và `none`; treo từ R10ch: bản SOP trùng nếu kill giữa commit và checkpoint.
@@ -92,7 +86,7 @@ Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại
 - **Claude của thành viên không có quyền tự merge** (quyền đó nằm trong `settings.local.json` của máy leader).
 - **`plugin-guard`** chưa thử nhánh chặn (PR của thành viên): kiểm ở PR đầu tiên của team.
 
-## Trạng thái hiện tại (2026-10-10 đêm)
+## Trạng thái hiện tại (2026-10-11 rạng sáng)
 - **Dự án (⏸ tạm dừng chờ team):**
   - M0–M3 xong; M4: T-040, T-041 xong, T-042..T-045 mở;
   - 587 pytest + 1 xfail (`test_no_model_name_in_backend`, gỡ khi đóng H-39 ở R10b2);
@@ -100,7 +94,8 @@ Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại
 - **Plugin:**
   - P1–P3, P5, P6 xong; P4 đang làm (còn kiểm hạn mức trước mốc);
   - P7–P9 chưa làm.
-  - Chi phí cả ngày 10/10 (worker + supervisor + audit): R10a 5,94; R10c 7,88; audit 3 5,55; R10ch 4,77 USD.
+  - Chi phí cả ngày 10/10 (worker + supervisor + audit): R10a 5,94; R10c 7,88; audit 3 5,55; R10ch 4,77 USD; bộ thử reviewer 6,60 USD.
+  - Mới trong phiên: cổng `test_guard` (bật mặc định), `reviewer.md` có `risk_checks`. Cả hai **chưa chạy trong mốc R thật**: kiểm ở R10b1 xem reviewer có trả `risk_checks` không, và `test_guard` có chặn nhầm không.
 - **Runner:** rảnh. `.autodev/runs/audit.json` `pending = []`.
 - **Demo:** tắt. Bật bằng `scripts/demo.sh`; tắt bằng `lsof -ti tcp:8000,3000 -sTCP:LISTEN | xargs kill`. Phải tắt trước khi chạy mốc R mới (smoke cần cổng 8000/3000).
 - **Không có PR mở.**
@@ -124,6 +119,7 @@ Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại
 - **Phạm vi audit:** runner đọc `.autodev/runs/audit.json` (`pending`, không commit) đúng lúc quyết định có chạy audit hay không. Sửa danh sách này để chọn audit chạy sau mốc nào.
 - **Theo dõi:** `.autodev/watch.sh` (terminal) hoặc trang trạng thái Artifact (ảnh chụp).
 - **Hạn mức theo nhiệm vụ (leader yêu cầu 10/10):** status line `~/.claude/statusline-usage.sh` (cài trong `~/.claude/settings.json`) ghi % 5 giờ và % tuần vào `~/.claude/usage-latest.json`. Đầu và cuối mỗi nhiệm vụ Claude chạy `python3 .autodev/usage.py start "<việc>" --est "<ước tính>"` / `end`, báo một dòng trước → sau. Lịch sử ở `.autodev/runs/usage-log.md` (không commit); xem nhanh bằng `python3 .autodev/usage.py show [--last N]`. Status line **chỉ chạy trong CLI terminal**, không chạy trong extension VS Code: số liệu cũ hơn 30 phút thì `usage.py` báo, và Claude hỏi leader 2 số từ `/usage`. `/session-start` in dòng hạn mức.
+- **Bộ thử reviewer:** `python3 .autodev/bench_reviewer.py run --cases <id,...> --configs <tên> [--dry-run] [--max-usd N]`, chạy nền, chỉ khi runner rảnh. Worktree cố định `../sme-ci-agent-bench` (không xoá). Kết quả ở `.autodev/runs/bench/` (không commit). Cấu hình ở `.autodev/bench/configs.json` (`prompt_ref` / `prompt_path` / hiện tại). **Tốn tiền: hỏi leader trước mỗi lượt.**
 - **Chế độ Auto** đôi khi lỗi "classifier no verdict" ở phía máy chủ. Khi đó người dùng tạm chuyển chế độ quyền.
 
 ## Quyền và quy tắc đang áp dụng
@@ -141,7 +137,7 @@ Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại
 
 ## Việc mở / cần để ý
 - **Lỗ hổng dự án:** PROJECT_STATE mục "Lỗ hổng mở" (nguồn `docs/audits/2026-10-10.md`).
-- **B1 = 0,71 > 0,5:** reviewer vẫn lỏng ở mức mục tiêu (audit 3 tìm H-54 "đạt theo cấu tạo"). Theo dõi ở audit 4.
+- **B1 = 0,71 > 0,5:** reviewer vẫn lỏng ở mức mục tiêu (audit 3 tìm H-54 "đạt theo cấu tạo"). Bộ thử xác nhận: reviewer một lần chặn khoảng 2/9 lỗi đã biết, nên **giữ audit 4 sau R10b2**. Theo dõi ở audit 4.
 - **pytest chập chờn:** đỏ 1/4 lần trên main, không bắt được tên test. Gặp lại thì ghi tên test.
 - **Để sau** (người dùng chốt): đo chất lượng theo thời gian; hook trước khi nén ngữ cảnh.
 
@@ -152,4 +148,5 @@ Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại
 - 2026-10-10 sáng: tạm dừng tính năng; hợp đồng dữ liệu, storyboard, brief A/D/Q, issue #63–#67, onboarding, bảo vệ `main` + `plugin-guard`; dọn thư mục cũ; lệnh `/session-start`, `/session-end`.
 - 2026-10-10 chiều–tối: kế hoạch P6 + tiêu chí đo được (#76, #78, #87); R10a (#82), R10c (#84), audit 3 (#86, B1 = 0,71), R10ch (#91); R10b1 chờ D1; trang trạng thái Artifact.
 - 2026-10-10 đêm: P5, P6 đóng; `--fresh-db`; tạm dừng dự án chờ team; quy tắc ước tính + ghi % hạn mức; báo cáo so sánh bên ngoài (#94–#101).
+- 2026-10-10 khuya → 11/10: `usage.py show`; cổng `test_guard` + `risk_checks` (đề xuất 1 + 3); bộ thử reviewer 11 ca: chặn 2/9, thấy 5/9 (#103–#108).
 - Chi tiết trong `PROGRESS.md`.

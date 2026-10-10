@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-10 · Nguồn: audit `docs/audits/2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10).
+Cập nhật: 2026-10-11 · Nguồn: audit `docs/audits/2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10) + bộ thử reviewer (#105–#108).
 
 ## Mốc
 
@@ -89,6 +89,7 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 
 ## Quyết định gần đây
 
+- 2026-10-11 (đóng phiên rạng sáng): làm đề xuất 1 + 3 (cổng `test_guard`, `risk_checks` của reviewer) và 4 (bộ thử reviewer, 6,60 USD). Bộ thử: reviewer chặn 2/9 lỗi đã lọt, thấy 5/9. Luật leader đặt trước khi đo: chỉ giữ thay đổi prompt nếu recall trên holdout tăng → bản sửa (a)(d) **không** vào `reviewer.md`. Giữ audit 4 sau R10b2. Đo lại luật xếp mức chỉ trên ca mới (audit 4), mỗi ca 3 lần. Không nhắc lại trong báo cáo: nhắc team, giờ kickoff, ROADMAP nghiên cứu.
 - 2026-10-10 (đóng phiên đêm): quy tắc ước tính thời gian khi bắt đầu nhiệm vụ (`CLAUDE.md`) + ghi % hạn mức 5 giờ và tuần trước/sau (`.autodev/usage.py`). Báo cáo so sánh bên ngoài (`docs/autodev/research/`): phiên sau làm đề xuất 1 (cổng "không nới test") + 3 (câu hỏi bắt buộc cho reviewer); 7 đề xuất chưa vào ROADMAP. Chỉ đề xuất đóng phiên khi có lý do (việc lớn mới, ngữ cảnh dài, trước auto-dev).
 - 2026-10-10 (đêm): **tạm dừng việc dự án, chờ team** (D1 #66, FR #67/#89/#90, Daivon #65); điểm bắt đầu lại ở HANDOFF mục "Tạm dừng". Duyệt luật ước tính + pre-mortem mới (thiết kế 6.5). Chuyển sang nghiên cứu auto-dev. `demo.sh --fresh-db` duyệt và merge (#95). Trang trạng thái chỉ làm mới khi leader yêu cầu.
 - 2026-10-10 (đóng phiên): thứ tự R10a → R10c → R10ch → R10b1 (**sau khi D1 #66 của vai A merge**; D1 là việc của vai A, backend không code hợp đồng trước) → R10b2. Thay quyết định "R10b không chờ D1". Audit 3 chạy sau R10c (đặt tay `.autodev/runs/audit.json`). Trang trạng thái Artifact (P5) đã tạo, làm mới tay. Đề xuất lệnh tiếp theo luôn đánh số.

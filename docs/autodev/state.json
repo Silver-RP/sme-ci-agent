@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-10",
+  "updated": "2026-10-11",
   "source": "audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10)",
   "milestones": {
     "project": [
@@ -439,6 +439,10 @@
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-11",
+      "text": "Đóng phiên rạng sáng: làm đề xuất 1 + 3 (cổng test_guard, risk_checks của reviewer) và 4 (bộ thử reviewer, 6,60 USD). Bộ thử: reviewer chặn 2/9 lỗi đã lọt, thấy 5/9. Luật leader đặt trước khi đo: chỉ giữ thay đổi prompt nếu recall trên holdout tăng, nên bản sửa (a)(d) không vào reviewer.md. Giữ audit 4 sau R10b2. Đo lại luật xếp mức chỉ trên ca mới (audit 4), mỗi ca 3 lần. Không nhắc lại trong báo cáo: nhắc team, giờ kickoff, ROADMAP nghiên cứu."
+    },
     {
       "date": "2026-10-10",
       "text": "Đóng phiên đêm: quy tắc ước tính thời gian khi bắt đầu nhiệm vụ (CLAUDE.md) + ghi % hạn mức 5 giờ và tuần trước/sau (.autodev/usage.py). Báo cáo so sánh bên ngoài (docs/autodev/research/): phiên sau làm đề xuất 1 (cổng không nới test) + 3 (câu hỏi bắt buộc cho reviewer); 7 đề xuất chưa vào ROADMAP. Chỉ đề xuất đóng phiên khi có lý do."
