@@ -1,0 +1,4 @@
+{
+  "old": {"prompt_ref": "79f0970", "model": "sonnet", "note": "reviewer.md trước #104"},
+  "new": {"prompt_ref": null, "model": "sonnet", "note": "reviewer.md hiện tại (sau #104: 4 câu hỏi bắt buộc)"}
+}
