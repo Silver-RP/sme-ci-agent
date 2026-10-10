@@ -15,6 +15,13 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
   Không viết code dự án (developer/reviewer trong worker làm). Quyền: thiết kế mục 6.15, `.claude/commands/supervise.md`.
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao". Hỏi "tiếp theo làm gì" thì trả lời bằng danh sách ưu tiên: việc của người dùng trước, việc Claude làm song song sau.
 
+## Cập nhật sau R10a (2026-10-10 trưa, supervisor `--review-only`)
+- **R10a merge (PR #82):** `GET /runs`, `/runs/{id}/export`, `/kpi/series`, `/audit`, `/sop/{id}/versions`, `/metrics` (chỉ số chưa có nguồn để `available: false`); `scripts/record_run.py`; `scripts/check_run.py` + `demo.sh --check [--repeat N]` đi hết một run; LLM giả đi mọi nhánh, `SME_DEMO_SCENARIO=rollback` cho S7. Đóng H-13, H-16, H-26; T-041 tick. 504 pytest.
+- Supervisor tự kiểm 5 tiêu chí cấp mốc (bảng trong PROGRESS), kể cả reject/revise/halt/rollback qua uvicorn thật (worker chưa kiểm). A5 (a) 1,00, (b) 1,00 (LLM giả, 5 seed); A8 10/10, p95 0,4 s. Ước tính ↔ thực tế: 73/55–75 phút, 4,00 USD worker, 1,0 vòng/task: B3 = 1,0.
+- Cho vai D: API mới mô tả trong `docs/schema/payloads.md`; báo Finn (#64) có thể nối FR-07, FR-09..12.
+- **Việc kế tiếp:** R10b1 (plan đã merge #80) → R10b2 → R10c → audit 3 → tag v0.1-e2e 13/10 (leader duyệt). Đề xuất của worker (không đổi phạm vi): `/metrics` thêm `outcome` cho lesson `no_change` (R10b2); kiểm reject/revise/halt qua uvicorn trong `demo.sh --check` (tuỳ chọn). Plugin: `metrics.py` nên in "–" thay vì 0 cho mốc chưa chạy.
+- Số liệu `metrics.py` lấy từ `.autodev/runs/` của repo chính (supervisor chép sang worktree supervisor để chạy `--write`; thư mục này bị gitignore).
+
 ## Bước tiếp theo (cập nhật 2026-10-10, đóng phiên)
 
 ### Bối cảnh mới: team 4 người

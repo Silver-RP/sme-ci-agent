@@ -1,6 +1,6 @@
 {
   "updated": "2026-10-10",
-  "source": "audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10)",
+  "source": "audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10)",
   "milestones": {
     "project": [
       {
@@ -27,8 +27,8 @@
       {
         "id": "M4",
         "status": "in_progress",
-        "tasks": "1/6",
-        "note": "T-040 xong; T-041..T-045 mở"
+        "tasks": "2/6",
+        "note": "T-040, T-041 xong; T-042..T-045 mở"
       }
     ],
     "runs": [
@@ -98,6 +98,14 @@
         "cost_usd": 0.64,
         "minutes": 12,
         "note": "sửa nhanh H-43: danh mục SOP trong prompt Improve; cost chỉ tính worker"
+      },
+      {
+        "id": "R10a",
+        "status": "merged",
+        "pr": 82,
+        "cost_usd": 4.0,
+        "minutes": 73,
+        "note": "API storyboard, record_run, demo.sh --check --repeat, LLM giả mọi nhánh + rollback; đóng H-13, H-16, H-26; ước tính 55–75 phút, 4–5 USD (B3 = 1,0); cost chỉ tính worker"
       }
     ],
     "plugin": [
@@ -161,8 +169,8 @@
     {
       "id": 2,
       "text": "Đề xuất được duyệt làm KPI cải thiện; nếu không thì rollback và điều tra lại",
-      "percent": 0,
-      "evidence": "Chưa chỉ số nào đo được theo docs/eval/criteria.md; test_measure_h06, test_e2e_rollback_r9 (1 nhánh, 1 seed); T-030 1 run LLM thật",
+      "percent": 17,
+      "evidence": "R10a: A5 (a) 1,0, (b) 1,0 LLM giả 5 seed (đạt ngưỡng v0.1; freeze cần thêm LLM thật 3 seed nên A5 = 0,5); A4, A6 chưa đo",
       "missing": "H-31, H-32, H-36, H-19; LLM thật (T-030 lần 2)",
       "estimate_old": 65,
       "metrics": [
@@ -276,12 +284,6 @@
       "audit": "2026-10-09, 2026-10-09_2"
     },
     {
-      "id": "H-13",
-      "severity": "vừa",
-      "summary": "Sau retry SSE không mở lại, event_id trùng",
-      "audit": "2026-10-09, 2026-10-09_2"
-    },
-    {
       "id": "H-14",
       "severity": "vừa",
       "summary": "Hai run song song ghi đè SOP",
@@ -291,12 +293,6 @@
       "id": "H-15",
       "severity": "vừa",
       "summary": "Run/event/checkpointer chỉ ở bộ nhớ",
-      "audit": "2026-10-09, 2026-10-09_2"
-    },
-    {
-      "id": "H-16",
-      "severity": "vừa",
-      "summary": "Demo LLM giả: reject/revise/halt-investigate lỗi ScriptExhausted",
       "audit": "2026-10-09, 2026-10-09_2"
     },
     {
@@ -333,12 +329,6 @@
       "id": "H-25",
       "severity": "thấp",
       "summary": "Payload event chưa có tài liệu; nội bộ simulator lọt ra client",
-      "audit": "2026-10-09, 2026-10-09_2"
-    },
-    {
-      "id": "H-26",
-      "severity": "thấp",
-      "summary": "demo.sh --check chỉ kiểm khởi động",
       "audit": "2026-10-09, 2026-10-09_2"
     },
     {
@@ -421,6 +411,10 @@
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-10",
+      "text": "R10a merge #82: API storyboard, record_run, demo.sh --check --repeat, LLM giả mọi nhánh + chế độ rollback. Đóng H-13, H-16, H-26. A5 v0.1 đạt (LLM giả), A8 10/10 p95 0,4 s. Supervisor tự quyết A5 tính 0,5 (phần LLM thật chưa đo) nên điều 2 = 17%."
+    },
     {
       "date": "2026-10-10",
       "text": "% đạt tính bằng công thức từ chỉ số đo được (docs/eval/criteria.md: A1–A8, cổng 13/10 và 20/10); ước lượng audit chỉ tham khảo. Ngưỡng A1 freeze trên tập giữ lại ≥ 0,7. Chỉ số plugin B1–B6 (ROADMAP bảng B, .autodev/metrics.py). Đo nền LLM thật sau R10a, ≤ 2 USD."
@@ -511,7 +505,8 @@
       "tasks": [
         "T-041"
       ],
-      "needs_team": false
+      "needs_team": false,
+      "status": "merged #82"
     },
     {
       "id": "R10b1",

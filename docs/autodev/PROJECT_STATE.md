@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-10 · Nguồn: audit `docs/audits/2026-10-09_2.md` + R9i merge #55 + R9ih merge #58 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10).
+Cập nhật: 2026-10-10 · Nguồn: audit `docs/audits/2026-10-09_2.md` + R9i merge #55 + R9ih merge #58 + R10a merge #82 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10).
 
 ## Mốc
 
@@ -10,8 +10,8 @@ Cập nhật: 2026-10-10 · Nguồn: audit `docs/audits/2026-10-09_2.md` + R9i m
 |---|---|---|---|
 | Dự án | M0–M2 | ✅ 19/19 task | |
 | Dự án | M3 | ✅ 2/2 | T-030 xong 10/10: vòng LLM thật khép kín; dashboard lỗi H-44 |
-| Dự án | M4 | 🔄 1/6 | T-040 xong; T-041..T-045 mở; tag v0.1-e2e 13/10 |
-| Chạy | R4–R9, R9h, R9i, R9ih | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55, #58 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 / ~0,64 (worker) USD |
+| Dự án | M4 | 🔄 2/6 | T-040, T-041 xong; T-042..T-045 mở; tag v0.1-e2e 13/10 |
+| Chạy | R4–R9, R9h, R9i, R9ih, R10a | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55, #58, #82 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 / ~0,64 / 4,00 (worker) USD |
 | Plugin | P1–P3 | ✅ | |
 | Plugin | P4 | 🔄 | chờ reset hạn mức phiên đã chạy thật (R9); còn kiểm hạn mức trước mốc, hạn mức tuần mới thử bằng test giả |
 | Plugin | P5 | 🔄 | audit + trạng thái (file này); còn trang trạng thái Artifact |
@@ -27,10 +27,10 @@ Từ 2026-10-10, **% đạt tính bằng công thức từ chỉ số đo đư�
 | # | Điều cần kiểm chứng | % đo được | Ước lượng cũ | Chỉ số (ngưỡng freeze) | Nền 10/10 | Mốc đo |
 |---|---|---|---|---|---|---|
 | 1 | Tìm đúng nguyên nhân gốc, biết hỏi người khi thiếu bằng chứng | 0 | 30 | A1 top-1 tập giữ lại ≥ 0,7; A2 precision ≥ 0,6, recall ≥ 0,8; A3 = 0 | eval LLM giả chỉ kiểm bộ chấm (right 100%, wrong 0%, unsure hỏi 100%); chấm theo chuỗi (H-28) | đo nền LLM thật sau R10a; R11a, R11b |
-| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 0 | 65 | A4 ≥ 0,9; A5 (a) 1,0, (b) ≥ 0,8; A6 = 0 vi phạm | test_measure_h06, test_e2e_rollback_r9 (1 nhánh, 1 seed); T-030 1 run thật | R10a (A5), R10b2 (A4), R10c (A6) |
+| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 17 | 65 | A4 ≥ 0,9; A5 (a) 1,0, (b) ≥ 0,8; A6 = 0 vi phạm | R10a: A5 (a) 1,0, (b) 1,0 LLM giả 5 seed (đạt v0.1; freeze cần thêm LLM thật 3 seed nên tính A5 = 0,5); T-030 1 run thật | R10b2 (A4), R10c (A6), A5 LLM thật |
 | 3 | 3 chỉ số trước/sau trên 6 tháng mô phỏng | 0 | 5 | A7: 3 chỉ số tính được, tốt hơn đối chứng "không agent" | `measure()` 1 máy, 7 ngày; H-11 | R10b2 |
 
-Cổng go/no-go 13/10 và 20/10: `docs/eval/criteria.md` mục 3. Chỉ số plugin B1–B5: `python3 .autodev/metrics.py` (nền: B1 = 1,67 ở audit 1, 1,75 ở audit 2; B2 = 2/37 task cần ≥ 2 vòng).
+Cổng go/no-go 13/10 và 20/10: `docs/eval/criteria.md` mục 3. Chỉ số plugin B1–B5: `python3 .autodev/metrics.py` (nền: B1 = 1,67 ở audit 1, 1,75 ở audit 2; B2 = 2/44 task cần ≥ 2 vòng sau R10a).
 
 ## Kiến trúc hiện nay
 
@@ -72,10 +72,8 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 | H-35 | vừa | UI chưa theo R9: Retry khi `retryable:false`, halt `options`, thẻ duyệt thiếu `action` (team frontend) |
 | H-36 | vừa | Điều tra lại sau rollback không biết `action` đã thất bại |
 | H-37 | vừa | Mỗi run một Engine DB mới, không dispose |
-| H-13 | vừa | Sau retry SSE không mở lại, `event_id` trùng |
 | H-14 | vừa | Hai run song song ghi đè SOP |
 | H-15 | vừa | Run/event/checkpointer chỉ ở bộ nhớ |
-| H-16 | vừa | Demo LLM giả: reject/revise/halt-investigate lỗi |
 | H-18 | vừa | `has_tool_evidence` tính tool của cả run |
 | H-19 | vừa | Halt → điều tra lại quên SOP đang hiệu lực |
 | H-20 | vừa | Trả lời không kèm id câu hỏi |
@@ -83,13 +81,13 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 | H-22 | thấp | Giá trị miền hard-code ngoài YAML |
 | H-24 | thấp | UI không phân biệt kết quả run (team frontend) |
 | H-25 | thấp | Payload event chưa có tài liệu |
-| H-26 | thấp | `demo.sh --check` chỉ kiểm khởi động |
 | H-38 | thấp | Thiếu audit_log cho trả lời, halt, Measure không kết quả |
 | H-39 | thấp | Tên model hard-code (`claude-haiku-4-5`); `MODEL_CHEAP` không dùng |
 | H-40 | thấp | Ví dụ `docs/schema/examples` không qua test dashboard; `payloads.md` sai chỗ |
 
 ## Quyết định gần đây
 
+- 2026-10-10: R10a merge #82: API storyboard (`/runs`, `/runs/{id}/export`, `/kpi/series`, `/audit`, `/sop/{id}/versions`, `/metrics` khung trung thực), record_run, `demo.sh --check --repeat`, LLM giả mọi nhánh + chế độ rollback. Đóng H-13, H-16, H-26. A5 v0.1 đạt (LLM giả), A8 10/10 p95 0,4 s. Supervisor tự quyết: A5 tính 0,5 vào % điều 2 (phần LLM thật của ngưỡng freeze chưa đo) → điều 2 = 17%.
 - 2026-10-10: % đạt tính bằng công thức từ chỉ số đo được (`docs/eval/criteria.md`: A1–A8, cổng 13/10 và 20/10); ước lượng audit chỉ tham khảo. Ngưỡng A1 freeze trên tập giữ lại ≥ 0,7. Chỉ số plugin B1–B6 (ROADMAP bảng B, `.autodev/metrics.py`). Đo nền LLM thật sau R10a, ≤ 2 USD.
 - 2026-10-10: leader duyệt kế hoạch P6 hai luồng đến Demo Day (ROADMAP). R10b không còn chờ D1 (hợp đồng v0.1 đã duyệt); R10c (H-15, H-14, H-19, H-20, H-37, H-38) làm trước v0.1; R11 tách R11a (cơ chế eval, không chờ team) và R11b (nhập D4/D5). Cổng UI 13/10: chưa có PR FR-01 thì hỏi leader. P9 (reviewer cho PR của team, chỉ comment) sau v0.1.
 - 2026-10-10: mở/đóng phiên bằng lệnh của leader `/session-start`, `/session-end` (bàn giao qua HANDOFF + file này, PR, merge sau check).
