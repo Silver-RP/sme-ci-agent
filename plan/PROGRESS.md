@@ -254,3 +254,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: becbd39. Review: .autodev/reviews/R10a-dev-03-r1.json (PASS).
 - `GET /metrics` 3 phần tử (KPI đầu config, mttd_mttr, recurrence_rate); hai phần tử sau `available:false` đến R10b2. 465 pytest.
 - Non-blocking: lesson `no_change` vẫn hiện available:true (cân nhắc trường outcome ở R10b2); chỉ KPI đầu config.
+
+### R10a/dev-04: DONE
+- Vòng: 1. Commit: 1f3f577. Review: .autodev/reviews/R10a-dev-04-r1.json (PASS).
+- H-13: event lỗi giữ append-only (`Run.error_events`, id `evt_<run>_errNN`), SSE `id` liên tục, `Last-Event-ID` nối lại đúng; `/runs` không trả outcome cũ khi run đang waiting. Sinh lại `run-error-retry.json`. 471 pytest.
+- Non-blocking: chèn lại error event theo vị trí.
