@@ -89,6 +89,12 @@ export interface RunModel {
   rolledBack: boolean;
   /** the latest question came from Measure (too few points after the change), not from Investigate */
   evidenceAsk: boolean;
+  /**
+   * The last decision could not be carried out because another run changed the SOP meanwhile (H-14, R10c):
+   * an approval with decision "sop_conflict" or a rollback_done with `conflict`. Cleared by the next normal
+   * decision, SOP version or successful rollback.
+   */
+  conflict: { kind: "approval" | "rollback"; sopId: string; currentVersion: number | null; message: string } | null;
 }
 
 export function buildRunModel(events: readonly AgentEvent[]): RunModel {
@@ -105,6 +111,7 @@ export function buildRunModel(events: readonly AgentEvent[]): RunModel {
   let current: StepKey | null = null;
   let rolledBack = false;
   let evidenceAsk = false;
+  let conflict: RunModel["conflict"] = null;
 
   for (const e of events) {
     const p = e.payload ?? {};
@@ -150,9 +157,19 @@ export function buildRunModel(events: readonly AgentEvent[]): RunModel {
         break;
       case "sop_applied":
         applied.push(p);
+        conflict = null;
+        break;
+      case "approval_decided":
+        conflict =
+          p.decision === "sop_conflict"
+            ? { kind: "approval", sopId: str(p.sop_id), currentVersion: num(p.current_version), message: str(p.message) }
+            : null;
         break;
       case "rollback_done":
         if (p.rolled_back === true) rolledBack = true;
+        conflict = str(p.conflict)
+          ? { kind: "rollback", sopId: str(p.sop_id), currentVersion: num(p.current_version), message: str(p.conflict) }
+          : null;
         break;
       case "learning_saved":
         learning = p;
@@ -179,6 +196,7 @@ export function buildRunModel(events: readonly AgentEvent[]): RunModel {
     current,
     rolledBack,
     evidenceAsk,
+    conflict,
   };
 }
 

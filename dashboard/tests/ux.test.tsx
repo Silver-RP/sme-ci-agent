@@ -6,7 +6,7 @@ import { ProposalStage } from "@/components/run/ProposalStage";
 import { RunScreen } from "@/components/run/RunScreen";
 import { ActivityFeed, HypothesisBoard } from "@/components/run/SidePanels";
 import { ErrorStage, QuestionStage, ThinkingStage } from "@/components/run/Stages";
-import { friendlyError } from "@/lib/describe";
+import { describeEvent, friendlyError } from "@/lib/describe";
 import { buildRunModel } from "@/lib/runModel";
 import { chooseOption, eventsUntilStep, recording, stepStatus } from "./helpers";
 
@@ -147,6 +147,52 @@ describe("errors (item 8)", () => {
     fireEvent.change(screen.getByPlaceholderText("Lý do đóng (bắt buộc)"), { target: { value: "LLM quota used up" } });
     fireEvent.click(submit);
     expect(onClose).toHaveBeenCalledWith("alice", "LLM quota used up");
+  });
+});
+
+describe("SOP changed by another run (sop_conflict, H-14)", () => {
+  // no bundled recording has a conflict yet (H-40): payloads follow docs/schema/payloads.md (R10c)
+  const happy = recording("run-happy").events;
+  const base = happy.find((e) => e.type === "approval_decided")!;
+  const conflictEvent = {
+    ...base,
+    event_id: `${base.event_id}_c`,
+    payload: { kind: "proposal", decision: "sop_conflict", decided_by: "alice", message: "SOP changed", sop_id: "SOP-RFL-001", current_version: 7 },
+  };
+  const rollbackConflict = { ...base, type: "rollback_done" as const, event_id: `${base.event_id}_r`, payload: { rolled_back: false, approved_by: "bob", sop_id: "SOP-RFL-001", conflict: "changed by run_x", current_version: 8 } };
+
+  it("the model keeps the latest conflict and a later normal decision clears it", () => {
+    const upTo = happy.slice(0, happy.indexOf(base));
+    expect(buildRunModel([...upTo, conflictEvent]).conflict).toMatchObject({ kind: "approval", sopId: "SOP-RFL-001", currentVersion: 7 });
+    expect(buildRunModel([...upTo, conflictEvent, base]).conflict).toBeNull();
+    expect(buildRunModel([...upTo, rollbackConflict]).conflict).toMatchObject({ kind: "rollback", currentVersion: 8 });
+  });
+
+  it("the event log says it in words, not 'alice sop_conflict'", () => {
+    expect(describeEvent(conflictEvent)).toBe("Không áp dụng được: SOP-RFL-001 đã được run khác đổi (đang ở v7)");
+    expect(describeEvent(rollbackConflict)).toBe("Không rollback được: SOP-RFL-001 đã được run khác đổi (đang ở v8)");
+  });
+
+  it("the new proposal after a conflict is announced above the stage", () => {
+    const actions = { answer: vi.fn(), decide: vi.fn(), retry: vi.fn() };
+    const upTo = happy.slice(0, happy.indexOf(base));
+    render(
+      <RunScreen mode="live" runId="run_1" connection="open" busy={false} approvers={APPROVERS} actions={actions} events={[...upTo, conflictEvent]} status={stepStatus("run-happy", 1)} started />,
+    );
+    expect(screen.getByTestId("sop-conflict")).toHaveTextContent("Đề xuất trước chưa được áp dụng");
+    expect(screen.getByTestId("sop-conflict")).toHaveTextContent("SOP-RFL-001 đã được một run khác đổi sang v7");
+  });
+});
+
+describe("evidence → investigation steps (storyboard S5 → S3)", () => {
+  it("the evidence line opens the agent's steps", () => {
+    const actions = { answer: vi.fn(), decide: vi.fn(), retry: vi.fn() };
+    render(
+      <RunScreen mode="live" runId="run_1" connection="open" busy={false} approvers={APPROVERS} actions={actions} events={eventsUntilStep("run-happy", 1)} status={stepStatus("run-happy", 1)} started />,
+    );
+    expect(screen.queryByTestId("context-panels")).toBeNull();
+    fireEvent.click(screen.getByTestId("show-evidence"));
+    expect(screen.getByTestId("context-panels")).toBeInTheDocument();
   });
 });
 

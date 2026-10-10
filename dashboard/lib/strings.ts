@@ -116,6 +116,17 @@ export const vi = {
     planned: "Có kế hoạch",
     none: "Chưa phát hiện bất thường.",
   },
+  // the SOP was changed by another run between the decision and the write (H-14, R10c)
+  conflict: {
+    event: (sop: string, v: number | null) => `Không áp dụng được: ${sop || "SOP"} đã được run khác đổi${v !== null ? ` (đang ở v${v})` : ""}`,
+    rollbackEvent: (sop: string, v: number | null) =>
+      `Không rollback được: ${sop || "SOP"} đã được run khác đổi${v !== null ? ` (đang ở v${v})` : ""}`,
+    noRollback: "Không rollback",
+    approvalTitle: "Đề xuất trước chưa được áp dụng",
+    rollbackTitle: "Rollback trước chưa thực hiện được",
+    lead: (sop: string, v: number | null) =>
+      `${sop || "SOP"} đã được một run khác đổi${v !== null ? ` sang v${v}` : ""} trong lúc chờ. Không có gì bị ghi đè; quyết định dưới đây dựa trên bản hiện hành.`,
+  },
   context: {
     show: (n: number) => `Xem chi tiết (${n} bước agent)`,
     hide: "Ẩn chi tiết",
@@ -205,6 +216,7 @@ export const vi = {
     expect: "Kỳ vọng",
     decide: "Quyết định của bạn",
     evidence: (refs: string) => `Dựa trên bằng chứng ${refs}`,
+    showSteps: "Xem các bước điều tra",
     machineAction: "Máy",
     sopUnchanged: "Nội dung SOP không đổi",
     sopCurrent: "Bản hiện tại",

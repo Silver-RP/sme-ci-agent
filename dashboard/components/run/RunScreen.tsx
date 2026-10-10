@@ -112,6 +112,15 @@ export function RunScreen({
       <ActivityFeed tools={model.tools} limit={short ? 3 : undefined} />
     </>
   );
+  // "Dựa trên bằng chứng #n" → the agent's investigation steps (storyboard S5 → S3). evidence_refs index the
+  // backend's evidence list, which does not map 1:1 to events, so this opens the steps instead of guessing one.
+  const showEvidence = () => {
+    setContextChoice(true);
+    requestAnimationFrame(() => {
+      const feed = [...document.querySelectorAll<HTMLElement>('[data-testid="activity-feed"]')].find((el) => el.offsetParent !== null);
+      feed?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  };
   // rollback restores the content the run's first change replaced (sop_applied.previous_version, H-19)
   const restoreVersion = num(model.applied[0]?.previous_version);
 
@@ -146,6 +155,7 @@ export function RunScreen({
           busy={busy}
           lastMeasurement={model.lastMeasurement}
           restoreVersion={restoreVersion}
+          onShowEvidence={showEvidence}
           defaultApprover={defaultApprover}
           onDecide={decide(phase)}
           simulated={simulated}
@@ -237,6 +247,15 @@ export function RunScreen({
       )}
       <div className={cn("mt-5 grid gap-5", phase !== "start" && "2xl:grid-cols-[minmax(0,1.65fr)_minmax(22rem,1fr)]")}>
         <section aria-label="Sân khấu" className="min-w-0" data-testid="stage">
+          {model.conflict && (phase === "proposal" || phase === "rollback" || phase === "halt" || phase === "thinking") && (
+            <div className="mb-4 flex items-start gap-3 rounded-xl border border-wait/50 bg-wait-soft p-4" role="status" data-testid="sop-conflict">
+              <AlertTriangle className="mt-0.5 size-5 shrink-0 text-wait" />
+              <div>
+                <p className="font-semibold">{model.conflict.kind === "rollback" ? t.conflict.rollbackTitle : t.conflict.approvalTitle}</p>
+                <p className="text-sm text-muted">{t.conflict.lead(model.conflict.sopId, model.conflict.currentVersion)}</p>
+              </div>
+            </div>
+          )}
           {stage}
         </section>
         {phase !== "start" && (

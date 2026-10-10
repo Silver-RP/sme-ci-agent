@@ -77,6 +77,7 @@ export function ProposalStage({
   lastMeasurement,
   restoreVersion = null,
   defaultApprover,
+  onShowEvidence,
   onDecide,
   simulated,
 }: {
@@ -87,6 +88,8 @@ export function ProposalStage({
   /** rollback: the SOP version whose content comes back (`previous_version` of the run's sop_applied) */
   restoreVersion?: number | null;
   defaultApprover?: string;
+  /** opens the agent's investigation steps (storyboard S5: evidence linked to S3) */
+  onShowEvidence?: () => void;
   onDecide: (d: DecisionInput) => void;
   simulated?: boolean;
 }) {
@@ -151,7 +154,21 @@ export function ProposalStage({
                 <Clamp text={str(proposal.rationale)} testId="proposal-rationale" />
               </div>
             )}
-            {refs && <p className="mt-2 text-sm text-muted">{t.proposal.evidence(refs)}</p>}
+            {refs && (
+              <p className="mt-2 flex flex-wrap items-center gap-x-2 text-sm text-muted">
+                {t.proposal.evidence(refs)}
+                {onShowEvidence && (
+                  <button
+                    type="button"
+                    className="rounded font-semibold text-accent hover:underline active:opacity-70"
+                    onClick={onShowEvidence}
+                    data-testid="show-evidence"
+                  >
+                    {t.proposal.showSteps} →
+                  </button>
+                )}
+              </p>
+            )}
           </Card>
 
           <Card className="p-5" data-testid="block-what">

@@ -54,6 +54,7 @@ export function describeEvent(e: AgentEvent): string {
       return str(pr.change);
     }
     case "approval_decided":
+      if (p.decision === "sop_conflict") return t.conflict.event(str(p.sop_id), num(p.current_version));
       return `${str(p.decided_by)} ${t.decisions[str(p.decision)] ?? str(p.decision)}${str(p.reason) ? `: “${str(p.reason)}”` : ""}`;
     case "sop_applied":
       return `${str(p.sop_id)} v${str(p.version)} (từ v${str(p.previous_version)}), duyệt bởi ${str(p.approved_by)}`;
@@ -62,7 +63,8 @@ export function describeEvent(e: AgentEvent): string {
       if (p.status === "insufficient_evidence") return t.measure.insufficient;
       return `${t.measure.notApplied}${str(p.reason) ? `: ${str(p.reason)}` : ""}`;
     case "rollback_done":
-      return p.rolled_back ? t.audit.restored(num(p.version) ?? 0, num(p.restored_from_version) ?? 0) : "Không rollback";
+      if (p.rolled_back) return t.audit.restored(num(p.version) ?? 0, num(p.restored_from_version) ?? 0);
+      return str(p.conflict) ? t.conflict.rollbackEvent(str(p.sop_id), num(p.current_version)) : t.conflict.noRollback;
     case "learning_saved": {
       const c = isObj(p.content) ? p.content : {};
       return `${t.kaizen.outcome[str(c.outcome)] ?? str(c.outcome)}: ${str(c.change)}`;
