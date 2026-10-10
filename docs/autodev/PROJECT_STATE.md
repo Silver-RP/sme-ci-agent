@@ -14,8 +14,8 @@ Cập nhật: 2026-10-10 · Nguồn: audit `docs/audits/2026-10-10.md` (audit 3)
 | Chạy | R4–R9, R9h, R9i, R9ih, R10a, R10c, R10ch | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55, #58, #82, #84, #91 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 / ~0,64 / 4,00 / 5,81 / 3,51 (worker) USD |
 | Plugin | P1–P3 | ✅ | |
 | Plugin | P4 | 🔄 | chờ reset hạn mức phiên đã chạy thật (R9); còn kiểm hạn mức trước mốc, hạn mức tuần mới thử bằng test giả |
-| Plugin | P5 | 🔄 | audit + trạng thái (file này); còn trang trạng thái Artifact |
-| Plugin | P6 | 🔄 | kế hoạch hai luồng duyệt 10/10 (ROADMAP mục "Kế hoạch hai luồng"); còn P6a, P6b |
+| Plugin | P5 | 🔄 | audit + trạng thái (file này); trang trạng thái Artifact đã tạo 10/10 (làm mới tay); còn đưa script xuất vào repo + bước làm mới ở `/session-end` |
+| Plugin | P6 | 🔄 | kế hoạch hai luồng duyệt 10/10; P6a (ước tính + pre-mortem) dùng từ R10a; P6b `metrics.py` có; còn sửa 3 lỗi `metrics.py`/supervisor và báo cáo đối chiếu ước tính R10a–R10ch |
 | Plugin | P7, P8, P9 | ⏳ | Telegram + API trạng thái; đóng gói; reviewer cho PR của team |
 
 ## Mục tiêu và 3 điều cần kiểm chứng
@@ -89,6 +89,7 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 
 ## Quyết định gần đây
 
+- 2026-10-10 (đóng phiên): thứ tự R10a → R10c → R10ch → R10b1 (**sau khi D1 #66 của vai A merge**; D1 là việc của vai A, backend không code hợp đồng trước) → R10b2. Thay quyết định "R10b không chờ D1". Audit 3 chạy sau R10c (đặt tay `.autodev/runs/audit.json`). Trang trạng thái Artifact (P5) đã tạo, làm mới tay. Đề xuất lệnh tiếp theo luôn đánh số.
 - 2026-10-10: R10ch merge #91: đóng H-31, H-45, H-47, H-48, H-50, H-51, H-54 (21 test mới đỏ trên main, supervisor tự chạy). A5 đo lại không theo cấu tạo: LLM đúng (a) 1,00 (b) 1,00; LLM luôn sai (b) 0; không áp dụng gì không `passed` → điều 2 = 50%. Treo (đề xuất R11a): kill giữa commit `apply_sop` và checkpoint có thể tạo bản SOP trùng khi retry; số retry suy từ hậu tố `event_id`.
 - 2026-10-10: luật chỉ số nhiều phần (`docs/eval/criteria.md`): mỗi phần trọng số bằng nhau, phần chưa đo = 0; phần đo "đạt theo cấu tạo" (audit phát hiện, ví dụ H-54) = 0 đến khi sửa. Điều 2 = 42%. Mốc sửa nhanh R10ch trước tag 13/10 (H-45, H-31, H-47, H-48, H-50, H-51, H-54).
 - 2026-10-10: audit 3 (sau R9i, R9ih, R10a, R10c): 15 lỗ hổng mới H-45..H-59 (2 cao), 0 đóng, 31 mở. A5 và A6 tái hiện (A5 1,00/1,00; A6 60 chuỗi, 0 vi phạm). % đạt 0/50/0 giữ nguyên; điều 2: `criteria.md` cho A5 LLM giả = 1,0 (67%) còn bảng trên dùng 0,5, leader chốt. Đề xuất H-45, H-48, H-54 vào R10b2; H-47, H-49, H-50, H-51 trước tag; H-46 giao vai D.
@@ -122,13 +123,15 @@ Kế hoạch P6 (duyệt 10/10; đầy đủ, kèm luồng plugin, pre-mortem, t
 
 | Mốc | Ngày | Mục tiêu | Lỗ hổng / task | Chờ team? |
 |---|---|---|---|---|
-| R10a | 10–11/10 | API storyboard + dự phòng sân khấu | `GET /runs`, `/kpi/series`, `/audit`, `/sop/{id}/versions`, `/metrics` (khung); T-041; H-13, H-16, H-26 | không |
-| R10b1 | 11/10 | Dữ liệu theo hợp đồng v0.1 | `production_log`, `material_batches`, simulator nhị thức, `import_data.py` + V01–V09, `gen_data --out-dir` | không (D2 kiểm thêm sau) |
-| R10b2 | 12/10 | Điều 3 | H-11, T-042, `/metrics` thật, Measure từ `production_log`; H-31, H-33, H-39, mục nhỏ treo | không |
-| R10c | 12/10 | Bền cho demo | H-15, H-14, H-19, H-20, H-37, H-38, `test_invariants.py` | không |
-| Audit 3 | 12/10 | Rà sau R10 | rồi tag v0.1-e2e 13/10 (leader duyệt; cổng UI FR-01..05) | UI: vai D |
+| R10a | ✅ 10/10 #82 | API storyboard + dự phòng sân khấu | T-041; H-13, H-16, H-26 | |
+| R10c | ✅ 10/10 #84 | Bền cho demo | H-14, H-15, H-19, H-20, H-37, H-38; A6 = 0 | |
+| Audit 3 | ✅ 10/10 #86 | Rà R9i, R9ih, R10a, R10c | B1 = 0,71 (ngưỡng ≤ 0,5); H-45..H-59 | |
+| R10ch | ✅ 10/10 #91 | Sửa nhanh sau audit 3 | H-31, H-45, H-47, H-48, H-50, H-51, H-54; A5 LLM giả đo thật | |
+| R10b1 | 12/10 | Dữ liệu theo hợp đồng **D1 đã chốt** | `production_log`, `material_batches`, simulator nhị thức, `import_data.py` + V01–V09 (dùng D2) | **chờ D1 #66 merge** (vai A) |
+| R10b2 | 12–13/10 | Điều 3 | H-11, T-042, `/metrics` thật, `metrics_report.py` có đối chứng; H-33, H-39 | sau R10b1; giả định cần D3 |
+| Cổng 13/10 | 13/10 | tag v0.1-e2e (leader duyệt) | `criteria.md` mục 3; UI FR-01..05 | UI: vai D |
 | R11a | 13–14/10 | Điều 1: cơ chế eval trung thực | H-28, H-29, H-32, H-36, H-18; 1 kịch bản khó do backend soạn; `environment_log`, `training_level` | không |
 | R11b | 15–17/10 | Điều 1: đề độc lập | nhập D4/D5; eval nhiều seed LLM thật; ghi run tốt để phát lại | vai A |
 | R12 | 18–19/10 | Gom lỗi bug bash 2, audit 4, bộ dữ liệu demo (D6) | | vai Q, A |
 
-Chỉ số mỗi mốc phải đo được khi xong: R10a → A5, A8; R10b2 → A4, A7; R10c → A6; R11a → A1–A3 tập dev; R11b → A1 tập giữ lại (`TASKS.md`, `docs/eval/criteria.md`). Plan R10b1/R10b2/R10c duyệt chung một PR ngày 11/10; R10c trễ thì H-15 chuyển vào R10b2.
+Chỉ số mỗi mốc phải đo được khi xong: R10b2 → A4, A7; R11a → A1–A3 tập dev; R11b → A1 tập giữ lại (`TASKS.md`, `docs/eval/criteria.md`). D1 chưa merge sáng 12/10 thì leader quyết; R10b2 trễ thì A7 chuyển sang cổng 20/10.

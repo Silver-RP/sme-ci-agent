@@ -39,7 +39,7 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 
 - [x] T-040 [Core] 3 cạnh quay lại: bác bỏ/bổ sung thông tin, từ chối đề xuất, rollback. Due 12/10
 - [x] T-041 [Core] Temperature thấp + record/replay một lần chạy tốt. Due 12/10. Owner: auto-dev R10a. (Temperature đã thay bằng `LLM_EFFORT` ở R9h; còn phần record/replay, phục vụ FR-07.)
-- [ ] T-042 [Data] Lấy số liệu 3 chỉ số (defect %, MTTD/MTTR, tỷ lệ tái diễn). Due 12/10. Owner: auto-dev R10b2 (hợp đồng dữ liệu v0.1 đã duyệt 10/10, không chờ D1).
+- [ ] T-042 [Data] Lấy số liệu 3 chỉ số (defect %, MTTD/MTTR, tỷ lệ tái diễn). Due 12/10. Owner: auto-dev R10b2 (sau R10b1, tức sau khi D1 #66 của vai A merge).
 - [ ] T-043 [Demo] Số liệu lên dashboard; kịch bản 4 phút v1 (docs/demoscript.md). Due 12/10. Owner: vai D (#64). Kịch bản v1 nay là `docs/demo-storyboard.md`.
 - [ ] T-044 [Tools] Sổ chi phí token docs/token-cost.md (cập nhật hằng ngày). Due 13/10. Owner: vai Q (#65, Q6).
 - [ ] T-045 [All] Bug bash 12/10, tag v0.1-e2e, demo nội bộ #1 13/10. Owner: vai Q chủ trì (#65, Q4); leader tag.
@@ -51,9 +51,10 @@ Chi tiết, pre-mortem và thứ tự cắt: `docs/autodev/ROADMAP.md` mục "K�
 - [x] R10a (10–11/10): API storyboard (FR-09..12), T-041 record/replay; H-13, H-16, H-26. [A5 LLM giả, A8 `--repeat`]
 - [ ] Đo nền LLM thật sau R10a (leader cho phép, ≤ 2 USD): A1 + chi phí mỗi run vào `docs/token-cost.md`
 - [x] R10c (11–12/10, ngay sau R10a): lưu run/event/checkpointer vào Postgres (H-15), H-14, H-19, H-20, H-37, H-38. [A6 `test_invariants.py`]
-- [ ] Audit 3 (tự chạy sau R10c) [B1 ≤ 0,5]
+- [x] Audit 3 (sau R10c, PR #86): B1 = 0,71, chưa đạt ngưỡng ≤ 0,5 [B1]
+- [x] R10ch (sửa nhanh sau audit 3, PR #91): H-31, H-45, H-47, H-48, H-50, H-51, H-54. [A5 LLM giả đo thật: đúng 1,00/1,00, luôn sai (b) = 0]
 - [ ] R10b1 (12/10, **sau khi D1 #66 của vai A merge**; vai A review phần dữ liệu): dữ liệu theo hợp đồng D1 (`production_log`, `material_batches`, simulator nhị thức, `import_data.py` + V01–V09, dùng file mẫu/file sai của D2). D1 chưa merge sáng 12/10 thì leader quyết.
-- [ ] R10b2 (12–13/10): điều 3 (H-11, T-042, `/metrics` thật, `scripts/metrics_report.py` có đối chứng; giả định lấy nguồn từ D3); H-31, H-33, H-39. [A7, A4]
+- [ ] R10b2 (12–13/10): điều 3 (H-11, T-042, `/metrics` thật, `scripts/metrics_report.py` có đối chứng; giả định lấy nguồn từ D3); H-33, H-39 (H-31 đã đóng ở R10ch). [A7, A4]
 - [ ] Cổng 13/10 (`docs/eval/criteria.md` mục 3) → tag v0.1-e2e; cổng UI FR-01..05 (vai D). R10b2 trễ thì A7 không thuộc cổng 13/10, chuyển sang cổng 20/10 (leader quyết).
 - [ ] R11a (13–14/10): chấm theo mã nguyên nhân, `--set dev|holdout`, nhãn `expect` (H-28, H-29, H-32, H-36, H-18), kịch bản khó do backend soạn. [A1–A3 tập dev]
 - [ ] R11b (15–17/10): nhập D4/D5 của vai A làm tập giữ lại, eval nhiều seed LLM thật. [A1 tập giữ lại ≥ 0,7]

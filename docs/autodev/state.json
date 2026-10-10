@@ -145,12 +145,12 @@
       {
         "id": "P5",
         "status": "in_progress",
-        "note": "audit + trạng thái; còn trang trạng thái Artifact"
+        "note": "audit + trạng thái; trang Artifact đã tạo 2026-10-10 (làm mới tay); còn đưa script xuất vào repo + bước làm mới ở /session-end"
       },
       {
         "id": "P6",
         "status": "in_progress",
-        "note": "kế hoạch hai luồng duyệt 2026-10-10; còn P6a, P6b"
+        "note": "kế hoạch duyệt 2026-10-10; P6a dùng từ R10a; P6b metrics.py có; còn sửa 3 lỗi metrics.py/supervisor + báo cáo đối chiếu R10a–R10ch"
       },
       {
         "id": "P7",
@@ -441,6 +441,10 @@
   "decisions": [
     {
       "date": "2026-10-10",
+      "text": "Đóng phiên: thứ tự R10a -> R10c -> R10ch -> R10b1 (sau khi D1 #66 của vai A merge; D1 là việc của vai A, backend không code hợp đồng trước) -> R10b2. Thay quyết định 'R10b không chờ D1'. Audit 3 chạy sau R10c. Trang trạng thái Artifact (P5) đã tạo, làm mới tay. Đề xuất lệnh tiếp theo luôn đánh số."
+    },
+    {
+      "date": "2026-10-10",
       "text": "R10ch merge #91: đóng H-31, H-45, H-47, H-48, H-50, H-51, H-54 (supervisor tự chạy: 21 test mới đỏ trên main). A5 đo lại không theo cấu tạo: LLM đúng (a) 1,00 (b) 1,00; LLM luôn sai (b) 0; không áp dụng gì không passed -> điều 2 = 50%. Thêm POST /runs/{id}/close (chỉ run lỗi hết retry, người duyệt, không đụng SOP)."
     },
     {
@@ -539,7 +543,7 @@
   "outlook": [
     {
       "id": "R10a",
-      "date": "10–11/10",
+      "date": "10/10",
       "goal": "API storyboard + dự phòng sân khấu",
       "gaps": [
         "H-13",
@@ -553,18 +557,56 @@
       "status": "merged #82"
     },
     {
+      "id": "R10c",
+      "date": "10/10",
+      "goal": "Bền cho demo: Postgres, khoá SOP, bất biến (A6 = 0)",
+      "gaps": [
+        "H-14",
+        "H-15",
+        "H-19",
+        "H-20",
+        "H-37",
+        "H-38"
+      ],
+      "needs_team": false,
+      "status": "merged #84"
+    },
+    {
+      "id": "audit-3",
+      "date": "10/10",
+      "goal": "Audit R9i, R9ih, R10a, R10c: B1 = 0,71",
+      "needs_team": false,
+      "status": "merged #86"
+    },
+    {
+      "id": "R10ch",
+      "date": "10/10",
+      "goal": "Sửa nhanh sau audit 3; A5 LLM giả đo thật",
+      "gaps": [
+        "H-31",
+        "H-45",
+        "H-47",
+        "H-48",
+        "H-50",
+        "H-51",
+        "H-54"
+      ],
+      "needs_team": false,
+      "status": "merged #91"
+    },
+    {
       "id": "R10b1",
-      "date": "11/10",
-      "goal": "Dữ liệu theo hợp đồng v0.1: production_log, material_batches, simulator nhị thức, import CSV + V01–V09",
-      "needs_team": false
+      "date": "12/10",
+      "goal": "Dữ liệu theo hợp đồng D1 đã chốt (production_log, material_batches, simulator nhị thức, import CSV + V01–V09, dùng D2)",
+      "needs_team": true,
+      "status": "chờ D1 #66"
     },
     {
       "id": "R10b2",
-      "date": "12/10",
-      "goal": "Điều 3: chỉ số từ production_log, /metrics thật",
+      "date": "12–13/10",
+      "goal": "Điều 3: chỉ số từ production_log, metrics_report.py có đối chứng, /metrics thật",
       "gaps": [
         "H-11",
-        "H-31",
         "H-33",
         "H-39"
       ],
@@ -574,23 +616,9 @@
       "needs_team": false
     },
     {
-      "id": "R10c",
-      "date": "12/10",
-      "goal": "Bền cho demo: lưu run/event/checkpointer, khoá SOP, invariants",
-      "gaps": [
-        "H-15",
-        "H-14",
-        "H-19",
-        "H-20",
-        "H-37",
-        "H-38"
-      ],
-      "needs_team": false
-    },
-    {
-      "id": "audit-3",
-      "date": "12/10",
-      "goal": "Audit sau R10 rồi tag v0.1-e2e 13/10 (leader duyệt; cổng UI FR-01..05)",
+      "id": "gate-13-10",
+      "date": "13/10",
+      "goal": "Cổng go/no-go (criteria.md mục 3) rồi tag v0.1-e2e (leader duyệt; UI FR-01..05)",
       "needs_team": true
     },
     {
