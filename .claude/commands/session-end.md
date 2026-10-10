@@ -30,5 +30,5 @@ Không sửa: brief của team (`docs/briefs/`) trừ khi leader quyết đổi 
 ## 4. Báo leader (không quá 10 dòng)
 - PR số mấy, đã merge chưa.
 - 3–5 dòng: phiên sau sẽ bắt đầu từ đâu.
-- Việc đang chờ leader (đúng như mục 1 của "Làm tiếp theo thứ tự").
+- Việc đang chờ leader (đúng như mục 1 của "Làm tiếp theo thứ tự"), dạng danh sách đánh số kèm nội dung để leader chọn bằng số (như `/session-start` mục 3).
 - Nhắc: phiên mới gõ `/session-start`.
