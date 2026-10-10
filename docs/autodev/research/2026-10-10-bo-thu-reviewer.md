@@ -72,3 +72,38 @@ Pilot có n = 4 nên chỉ dùng để kiểm bộ thử chạy đúng. Muốn k
   - p2: câu (a) chỉ xét events và checkpoint, không liệt kê các trường **chỉ nằm trong bộ nhớ** (`retries`) bị mất khi restart;
   - p3: có thử `question_id=''` nhưng không thử **bỏ hẳn trường**, đúng cách lách kiểm tra 409.
 - **Kết luận:** pilot chưa cho thấy #104 cải thiện recall (n nhỏ). Hai lần suýt bắt cho thấy câu (a) và câu (d) cần cụ thể hơn: (a) liệt kê trạng thái chỉ trong bộ nhớ và hỏi cái gì được khôi phục; (d) với mỗi kiểm tra mới, thử gọi khi **thiếu** trường đó.
+
+### Lượt 2 (2026-10-10 đêm): 11 ca, tách dev/holdout
+- **Ca:** thêm 7 ca (H-21, H-33/H-17, H-52, H-53, H-07/H-08, H-30, ca sạch R10c/dev-01). `dev` = p2, p3, dùng để sửa prompt; `holdout` = 9 ca còn lại, chỉ dùng để đo.
+- **`new2`** (`.autodev/bench/reviewer-candidate.md`) sửa hai câu, soạn chỉ dựa trên p2, p3, **trước khi** xem output holdout:
+  - (a) liệt kê trạng thái chỉ nằm trong bộ nhớ và hỏi cái nào được khôi phục sau restart;
+  - (d) với mỗi kiểm tra mới, thử gọi khi bỏ hẳn trường mà kiểm tra dựa vào.
+- **Sửa bộ thử:**
+  - tách JSON bằng `raw_decode`, vì dấu `{` trong chuỗi làm p5 thành "lỗi chạy" giả;
+  - thêm mức `seen` (lỗi chỉ được nêu trong `non_blocking`);
+  - so file theo tên file;
+  - lưu toàn bộ output.
+
+| Cấu hình | Nhóm | Chặn được | Thấy (máy chấm) | Bắt nhầm | USD |
+|---|---|---|---|---|---|
+| new | dev (p2, p3) | 0/2 | 0/2 | | |
+| new2 | dev (p2, p3) | **1/2** | **2/2** | | |
+| new | holdout (7 ca lỗi) | 1/6 (+1 lỗi chạy) | 2/6 | 0/2 | 2,15 |
+| new2 | holdout (7 ca lỗi) | 1/7 | 2/7 | 0/2 | 2,73 (cả 11 ca) |
+
+**Đọc kết quả:**
+- **Trên dev, `new2` tốt hơn.** p2 nêu đúng `run.retries chỉ nằm trong bộ nhớ, load_run không khôi phục`. Nhưng đây là ca dùng để sửa prompt, nên kết quả này không tính.
+- **Trên holdout, không cải thiện.** Theo luật đã thống nhất trước khi đo, **không đưa `new2` vào `reviewer.md`**; bản này giữ ở `reviewer-candidate.md`.
+- **Phát hiện chính: reviewer thấy lỗi nhưng xếp nhẹ.** Đọc tay ở cấu hình `new` thì 5/9 ca lỗi có lỗi được nêu ra, nhưng chỉ 2 ca bị chặn.
+  - p8 ghi gần như nguyên văn H-53;
+  - p10 probe ra NaN và M99 lọt qua nhưng kết luận "an toàn vì Measure sẽ không đạt";
+  - p6 thấy `revision_count` không giới hạn nhưng cho là "cố ý".
+  - Lý do hạ mức lặp lại: "hướng an toàn", "chấp nhận được", "cố ý theo test".
+- **Nhiễu lớn.** Cùng ca nhưng khác lần chạy cho kết quả khác: p8 `seen` rồi `missed`; H-57 bị lọt ở lần review gốc R10a, còn ở bộ thử thì cả 4 lần đều bắt được. Muốn kết luận một thay đổi thì cần ≥ 3 lần chạy mỗi ca, tức chi phí nhân 3.
+- **Hệ quả cho dự án:** reviewer một lần chỉ chặn khoảng 2/9 lỗi đã biết. Audit sau mốc vẫn là lưới an toàn chính, nên giữ audit 4 sau R10b2.
+
+**Hướng tiếp (chưa làm):**
+- Luật xếp mức: ghi chú mô tả hành vi **sai so với tiêu chí hoặc quy tắc** (nhận đầu vào không hợp lệ, quên trạng thái, không giới hạn) thì là blocking, kể cả khi hậu quả "đi về hướng an toàn". Ngoại lệ: plan ghi rõ là chấp nhận.
+- Luật này phải đo trên **ca mới chưa từng xem** (≥ 5 ca lỗi, từ audit 4), mỗi ca 3 lần.
+
+Tổng chi phí bộ thử đến nay: 1,72 + 2,15 + 2,73 = **6,60 USD**.
