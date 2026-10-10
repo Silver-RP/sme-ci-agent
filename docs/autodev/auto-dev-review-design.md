@@ -345,6 +345,9 @@ CẤU HÌNH TỪNG DỰ ÁN  (nằm trong repo dự án)
 ```
 plan/M1.md
   - Mục tiêu mốc, phạm vi (in/out of scope)
+  - Ước tính (P6): số task, phút, USD, số vòng review dự kiến  ← supervisor đối chiếu với thực tế
+  - Pre-mortem (P6): 2–4 cách mốc "đạt trên giấy mà hỏng thực tế",
+      mỗi cách gắn với một tiêu chí cấp mốc hoặc task chặn nó
   - Tiêu chí chấp nhận cấp mốc            ← chỉ người dùng được sửa (R8-c)
   - Danh sách task:
       dev-01: tiêu đề | mô tả | tiêu chí chấp nhận | phụ thuộc | trạng thái | số vòng

@@ -39,10 +39,23 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 
 - [x] T-040 [Core] 3 cạnh quay lại: bác bỏ/bổ sung thông tin, từ chối đề xuất, rollback. Due 12/10
 - [ ] T-041 [Core] Temperature thấp + record/replay một lần chạy tốt. Due 12/10. Owner: auto-dev R10a. (Temperature đã thay bằng `LLM_EFFORT` ở R9h; còn phần record/replay, phục vụ FR-07.)
-- [ ] T-042 [Data] Lấy số liệu 3 chỉ số (defect %, MTTD/MTTR, tỷ lệ tái diễn). Due 12/10. Owner: auto-dev R10b, sau D1 (#66).
+- [ ] T-042 [Data] Lấy số liệu 3 chỉ số (defect %, MTTD/MTTR, tỷ lệ tái diễn). Due 12/10. Owner: auto-dev R10b2 (hợp đồng dữ liệu v0.1 đã duyệt 10/10, không chờ D1).
 - [ ] T-043 [Demo] Số liệu lên dashboard; kịch bản 4 phút v1 (docs/demoscript.md). Due 12/10. Owner: vai D (#64). Kịch bản v1 nay là `docs/demo-storyboard.md`.
 - [ ] T-044 [Tools] Sổ chi phí token docs/token-cost.md (cập nhật hằng ngày). Due 13/10. Owner: vai Q (#65, Q6).
 - [ ] T-045 [All] Bug bash 12/10, tag v0.1-e2e, demo nội bộ #1 13/10. Owner: vai Q chủ trì (#65, Q4); leader tag.
+
+## Mốc backend auto-dev đến freeze (leader duyệt 10/10)
+
+Chi tiết, pre-mortem và thứ tự cắt: `docs/autodev/ROADMAP.md` mục "Kế hoạch hai luồng"; bảng mốc: `docs/autodev/PROJECT_STATE.md` mục "Tầm nhìn". Ngày là đề xuất.
+
+- [ ] R10a (10–11/10): API storyboard (FR-09..12), T-041 record/replay; H-13, H-16, H-26
+- [ ] R10b1 (11/10): dữ liệu theo hợp đồng v0.1 (`production_log`, `material_batches`, simulator nhị thức, `import_data.py` + V01–V09)
+- [ ] R10b2 (12/10): điều 3 (H-11, T-042, `/metrics` thật); H-31, H-33, H-39
+- [ ] R10c (12/10): lưu run/event/checkpointer vào Postgres (H-15), H-14, H-19, H-20, H-37, H-38
+- [ ] Audit 3 (12/10) → tag v0.1-e2e 13/10; cổng UI FR-01..05 (vai D)
+- [ ] R11a (13–14/10): eval trung thực (H-28, H-29, H-32, H-36, H-18), kịch bản khó do backend soạn
+- [ ] R11b (15–17/10): nhập D4/D5 của vai A, eval nhiều seed LLM thật
+- [ ] R12 (18–19/10): gom lỗi bug bash 2, audit 4, bộ dữ liệu demo (D6) → freeze 20/10
 
 ## Backlog sau 13/10 (G6 → G8)
 
