@@ -1,25 +1,66 @@
 [
   {
-    "id": "p1", "hole": "H-57", "family": "test chỉ qua TestClient",
+    "id": "p1", "hole": "H-57", "family": "test chỉ qua TestClient", "split": "holdout",
     "task_id": "R10a/dev-02", "base": "5534331", "head": "f736861", "plan": "plan/R10a.md",
     "files": ["backend/api/kpi_series.py"],
     "keywords": "múi giờ|timezone|tz|TypeError|NaT"
   },
   {
-    "id": "p2", "hole": "H-50", "family": "kill/restart",
+    "id": "p2", "hole": "H-50", "family": "kill/restart", "split": "dev",
     "task_id": "R10c/dev-02", "base": "7864ed3", "head": "64a729c", "plan": "plan/R10c.md",
     "files": ["backend/api/app.py"],
     "keywords": "retries|max_retries|retryable"
   },
   {
-    "id": "p3", "hole": "H-49", "family": "đạt trên giấy / xuyên file",
+    "id": "p3", "hole": "H-49", "family": "đạt trên giấy / xuyên file", "split": "dev",
     "task_id": "R10c/dev-05", "base": "aa02c58", "head": "97c4805", "plan": "plan/R10c.md",
     "files": ["backend/api/app.py", "scripts/check_run.py", "dashboard/"],
     "keywords": "question_id.{0,80}(tuỳ chọn|tùy chọn|optional|None|không gửi|thiếu|bỏ qua|omit)|(tuỳ chọn|tùy chọn|optional|không gửi|thiếu|omit).{0,80}question_id"
   },
   {
-    "id": "p4", "hole": null, "family": "sạch",
+    "id": "p4", "hole": null, "family": "sạch", "split": "holdout",
     "task_id": "R10a/dev-03", "base": "a00a387", "head": "becbd39", "plan": "plan/R10a.md",
+    "files": [], "keywords": ""
+  },
+  {
+    "id": "p5", "hole": "H-21", "family": "đầu vào biên", "split": "holdout",
+    "task_id": "R8/dev-03", "base": "e0c3c2e", "head": "2a5a4af", "plan": "plan/R8.md",
+    "files": ["backend/agent/jsonutil.py"],
+    "keywords": "đầu tiên|first|cuối|last|parse_bool|rỗng|empty"
+  },
+  {
+    "id": "p6", "hole": "H-33/H-17", "family": "luồng trạng thái xuyên bước", "split": "holdout",
+    "task_id": "R8/dev-05", "base": "f3eea36", "head": "edd2f38", "plan": "plan/R8.md",
+    "files": ["backend/agent/nodes/act.py", "backend/api/app.py"],
+    "keywords": "revision_count|rollback_count|vô hạn|không giới hạn|unbounded|infinite|đặt lại|reset"
+  },
+  {
+    "id": "p7", "hole": "H-52", "family": "đường lỗi", "split": "holdout",
+    "task_id": "R10c/dev-04", "base": "040d2ff", "head": "7a0c4eb", "plan": "plan/R10c.md",
+    "files": ["backend/agent/nodes/act.py", "backend/tools/actions.py"],
+    "keywords": "SopConflict|xung đột|conflict"
+  },
+  {
+    "id": "p8", "hole": "H-53", "family": "luồng trạng thái xuyên bước", "split": "holdout",
+    "task_id": "R10c/dev-03", "base": "f7cb822", "head": "89b5a19", "plan": "plan/R10c.md",
+    "files": ["backend/agent/nodes/act.py"],
+    "keywords": "ghi đè|overwrit|sop_id khác|SOP khác|different sop|another sop"
+  },
+  {
+    "id": "p9", "hole": "H-07/H-08", "family": "kill/lỗi giữa hai lần ghi", "split": "holdout",
+    "task_id": "R8/dev-02", "base": "ef9edf2", "head": "6da4ff0", "plan": "plan/R8.md",
+    "files": ["backend/api/app.py", "backend/db/repo.py", "backend/agent/nodes/act.py"],
+    "keywords": "flush|chưa commit|not committed|rollback\\(\\)|mất|lost|ValueError.{0,60}422|422.{0,60}ValueError"
+  },
+  {
+    "id": "p10", "hole": "H-30", "family": "đầu vào biên", "split": "holdout",
+    "task_id": "R9/dev-02", "base": "a0155ef", "head": "d3b6f5f", "plan": "plan/R9.md",
+    "files": ["backend/agent/nodes/improve.py", "backend/agent/nodes/act.py", "backend/sandbox/post_change.py"],
+    "keywords": "NaN|khoảng giá trị|range|âm|negative|1e9|machine_id|M99|miền giá trị|bounds"
+  },
+  {
+    "id": "p11", "hole": null, "family": "sạch", "split": "holdout",
+    "task_id": "R10c/dev-01", "base": "8b4c4f2", "head": "785b68c", "plan": "plan/R10c.md",
     "files": [], "keywords": ""
   }
 ]
