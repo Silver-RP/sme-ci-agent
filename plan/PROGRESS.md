@@ -259,3 +259,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 1f3f577. Review: .autodev/reviews/R10a-dev-04-r1.json (PASS).
 - H-13: event lỗi giữ append-only (`Run.error_events`, id `evt_<run>_errNN`), SSE `id` liên tục, `Last-Event-ID` nối lại đúng; `/runs` không trả outcome cũ khi run đang waiting. Sinh lại `run-error-retry.json`. 471 pytest.
 - Non-blocking: chèn lại error event theo vị trí.
+
+### R10a/dev-05: DONE
+- Vòng: 1. Commit: 582887a. Review: .autodev/reviews/R10a-dev-05-r1.json (PASS).
+- H-16: `DemoLLM` trả lời theo bước (mỗi run một instance); reject/revise/halt → điều tra lại không hết script; `SME_DEMO_SCENARIO=rollback` cho rollback S7. A5 (a)=1,00, (b)=1,00 trên 5 seed. 481 pytest.
+- Non-blocking: chưa có test halt/revise trong kịch bản rollback.
