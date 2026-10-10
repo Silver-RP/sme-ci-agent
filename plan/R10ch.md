@@ -69,7 +69,7 @@ Chỉ số đẩy: A5 (đo lại theo cách không đạt theo cấu tạo). Sau
   2. Test: run hết lượt retry → restart → `/retry` 409 và `retryable=false` khớp nhau.
   3. Test: `llm_factory` ném lỗi khi khôi phục → app lên, `GET /runs` 200, run lỗi có lý do, run khác đọc được.
 - **Phụ thuộc:** không
-- **Trạng thái:** TODO · **Số vòng:** 0
+- **Trạng thái:** DONE · **Số vòng:** 1
 
 ### dev-04: A5 đo được thật, có đối chứng (H-54)
 - **Mô tả:** phép đo A5 trong `tests/test_demo_llm_branches_r10a.py` (và hàm in chỉ số nếu có): (b) = tỷ lệ run có `kpi_measured.passed == true` ở lần Measure cuối, không đếm `learning_saved`. Thêm đối chứng: không áp dụng `action` nào thì KPI sau thay đổi không cải thiện (Measure không `passed`); LLM giả luôn đề xuất `action` sai thì (b) = 0. Không đổi công thức sinh anomaly; nếu dữ liệu sau thay đổi cần sửa để đối chứng đúng thì chỉ sửa ở `post_change`.
