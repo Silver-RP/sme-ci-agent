@@ -25,7 +25,7 @@ Ký hiệu: `?` = có thể vắng; `|` = một trong các giá trị.
 ```
 
 - `agent`: `quality | investigation | improvement | system`.
-- `event_id` = `evt_<run_id>_<số thứ tự 4 chữ số>`. Dedupe theo trường này. Lưu ý: sau retry có thể trùng (H-13).
+- `event_id` = `evt_<run_id>_<số thứ tự 4 chữ số>`. Dedupe theo trường này. Event lỗi (`run_finished` status `error`) có dạng `evt_<run_id>_errNN`. Sau retry không có `event_id` trùng (H-13).
 
 ## 2. Payload từng loại
 
@@ -123,7 +123,7 @@ Có hai dạng; phân biệt bằng `kind`.
 - `error` (+ `error: "<Loại>: <thông điệp>"`, `retryable: bool`). Lỗi xảy ra cả sau khi người đã quyết định (duyệt, từ chối, revise, trả lời): quyết định đó đã ghi `audit_log` và không ghi lại khi Retry (R9, H-07, H-08).
   - `retryable: true`: đừng đóng hẳn luồng theo dõi, người có thể bấm Retry (H-13).
   - `retryable: false` (R9): đã Retry liên tiếp `loop.max_retries` lần mà vẫn lỗi. `POST /runs/{id}/retry` trả 409. Dashboard ẩn nút Retry và chỉ báo lỗi.
-  - Sau Retry thành công, luồng event được dựng lại từ checkpoint nên event `error` cũ biến mất. Muốn hiện lỗi đã qua thì lưu ở phía dashboard (xem `last_event` của bước đầu trong `run-error-retry.json`).
+  - Danh sách event của run chỉ nối thêm (H-13): sau Retry, event `error` cũ vẫn nằm ở vị trí cũ, chỉ số SSE (`id`) tiếp tục tăng, nối lại bằng `Last-Event-ID` nhận event thật kế tiếp. Luồng cuối có thể có `run_finished` lỗi rồi `run_finished` completed (xem `run-error-retry.json`).
 
 ## 3. API
 

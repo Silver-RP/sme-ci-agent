@@ -84,6 +84,7 @@ class Run:
     ctx: ToolContext
     lock: threading.Lock = field(default_factory=threading.Lock)
     events: list[dict[str, Any]] = field(default_factory=list)
+    error_events: list[tuple[int, dict[str, Any]]] = field(default_factory=list)  # (index in events, event), append-only
     error: str | None = None
     retries: int = 0  # consecutive /retry calls since the last successful step
     retryable: bool = True
@@ -202,20 +203,23 @@ def create_app(
             run.error = f"{type(e).__name__}: {e}"
         finally:
             run.events = list(run.graph.get_state(run.cfg).values.get("events", []))
+            for pos, ev in run.error_events:  # H-13: error events stay where the client saw them
+                run.events.insert(pos, ev)
             run.retryable = run.retries < cfg_domain.loop.max_retries
             if run.error is None and run.finished_at is None and _status(run)["state"] == "finished":
                 run.finished_at = _now()
             if run.error is not None:
-                run.events.append(
-                    make_event(
-                        {"run_id": run.run_id, "domain": cfg_domain.domain},
-                        "run_finished",
-                        "system",
-                        {"status": "error", "error": run.error, "retryable": run.retryable},
-                        len(run.events) + 1,
-                        cfg_domain.domain,
-                    )
+                err_ev = make_event(
+                    {"run_id": run.run_id, "domain": cfg_domain.domain},
+                    "run_finished",
+                    "system",
+                    {"status": "error", "error": run.error, "retryable": run.retryable},
+                    len(run.events) + 1,
+                    cfg_domain.domain,
                 )
+                err_ev["event_id"] = f"evt_{run.run_id}_err{len(run.error_events) + 1:02d}"  # never collides
+                run.error_events.append((len(run.events), err_ev))
+                run.events.append(err_ev)
 
     def require_waiting(run: Run, kind: str) -> None:
         st = _status(run)
@@ -326,7 +330,11 @@ def create_app(
                         "state": st["state"],
                         "started_at": run.started_at,
                         "finished_at": run.finished_at,
-                        "outcome": finished[-1]["payload"].get("status") if finished else None,
+                        "outcome": (
+                            finished[-1]["payload"].get("status")
+                            if finished and st["state"] in ("finished", "error")
+                            else None
+                        ),
                         "pending": (
                             {k: pending.get(k) for k in ("type", "kind", "proposal_id") if k in pending}
                             if pending
