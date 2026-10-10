@@ -136,6 +136,21 @@ Có hai dạng; phân biệt bằng `kind`.
 | POST | `/runs/{id}/approval` | `{proposal_id, kind, decision, decided_by, reason?}` | 409 nếu sai `kind` hoặc `proposal_id` (đề xuất đã cũ, hoặc bấm hai lần): gọi lại `GET /runs/{id}`. 422 nếu tên không có trong danh sách người duyệt, hoặc `revise` mà thiếu `reason` |
 | POST | `/runs/{id}/retry` | | 409 nếu không có bước lỗi, hoặc đã Retry liên tiếp quá `loop.max_retries` lần (khi đó `retryable: false`) |
 | GET | `/config/approvers` | | `{approvers: [str]}` |
+| GET | `/runs` | | `{runs: [RunSummary]}`, mới nhất trước (R10a) |
+| GET | `/audit?run_id=&limit=` | | `{rows: [AuditRow]}`, mới nhất trước. `limit` 1..500 (mặc định 100), ngoài khoảng thì 422 |
+| GET | `/sop/{sop_id}/versions` | | `{sop_id, versions: [SopVersion]}`, cũ nhất trước; 404 nếu `sop_id` không có trong config |
+
+Ba API đọc trên (R10a) chỉ đọc, không ghi DB. `GET /runs` đọc từ bộ nhớ của app nên mất khi backend khởi động lại (H-15, sửa ở R10c).
+
+```json
+RunSummary: {"run_id": "run_ff5de085", "state": "waiting | running | finished | error", "started_at": "2026-10-10T09:00:00+00:00",
+  "finished_at": null | "2026-10-10T09:00:05+00:00", "outcome": null | "completed | closed | no_anomaly | error",
+  "pending": null | {"type": "answer | approval", "kind?": "proposal | rollback | halt", "proposal_id?": "..."}}
+AuditRow: {"id": 12, "ts": "2026-10-10T09:00:03+00:00", "run_id": "run_ff5de085" | null, "actor": "alice", "action": "approval_decided", "params": {...}}
+SopVersion: {"version": 2, "created_by": "config | <người duyệt>", "run_id": "run_ff5de085" | null, "created_at": "..." | null, "content": "..."}
+```
+
+`outcome` là `status` của event `run_finished` cuối (null khi chưa có). Bản gốc từ config có `created_by: "config"`, `run_id` và `created_at` là null; khi run đầu tiên sửa SOP, bản 1 trong DB là bản sao của bản gốc nên chỉ hiện một lần.
 
 Trạng thái run:
 

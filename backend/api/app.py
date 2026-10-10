@@ -17,11 +17,13 @@ import os
 import threading
 import uuid
 from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from functools import cache
 from typing import Any, Literal
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from langgraph.types import Command
 from pydantic import BaseModel, ConfigDict, Field
@@ -35,6 +37,7 @@ from backend.agent.llm import LLM, AnthropicLLM
 from backend.agent.nodes.act import DecisionError, parse_decision
 from backend.agent.nodes.improve import ProposalError
 from backend.agent.state import new_state
+from backend.db import repo
 from backend.db.session import make_engine
 from backend.domain_config import DomainConfig, load_domain_config
 from backend.sandbox import generate_dataset
@@ -83,6 +86,16 @@ class Run:
     error: str | None = None
     retries: int = 0  # consecutive /retry calls since the last successful step
     retryable: bool = True
+    started_at: str = field(default_factory=lambda: _now())
+    finished_at: str | None = None
+
+
+def _now() -> str:
+    return datetime.now(UTC).isoformat(timespec="seconds")
+
+
+AUDIT_DEFAULT_LIMIT = 100
+AUDIT_MAX_LIMIT = 500
 
 
 @cache
@@ -189,6 +202,8 @@ def create_app(
         finally:
             run.events = list(run.graph.get_state(run.cfg).values.get("events", []))
             run.retryable = run.retries < cfg_domain.loop.max_retries
+            if run.error is None and run.finished_at is None and _status(run)["state"] == "finished":
+                run.finished_at = _now()
             if run.error is not None:
                 run.events.append(
                     make_event(
@@ -274,6 +289,88 @@ def create_app(
     @app.get("/config/approvers")
     def approvers() -> dict[str, Any]:
         return {"approvers": list(cfg_domain.approvers)}
+
+    read_lock = threading.Lock()
+    shared_read: dict[str, Session] = {}
+
+    @contextmanager
+    def read_db():
+        """A session for read-only endpoints (audit, SOP versions). With an injected ctx_factory (tests) reuse its
+        session; otherwise open one per request on the default engine and close it."""
+        if ctx_factory is not None:
+            with read_lock:
+                if "s" not in shared_read:
+                    shared_read["s"] = ctx_factory("api_read").session
+                yield shared_read["s"]
+            return
+        session = Session(make_engine())
+        try:
+            yield session
+        finally:
+            session.close()
+            session.get_bind().dispose()
+
+    @app.get("/runs")
+    def list_runs() -> dict[str, Any]:
+        """Runs held by this app, newest first. In memory only (lost on restart, H-15)."""
+        out = []
+        for run in reversed(list(runs.values())):
+            with run.lock:
+                st = _status(run)
+                finished = [e for e in run.events if e["type"] == "run_finished"]
+                pending = st["pending"]
+                out.append(
+                    {
+                        "run_id": run.run_id,
+                        "state": st["state"],
+                        "started_at": run.started_at,
+                        "finished_at": run.finished_at,
+                        "outcome": finished[-1]["payload"].get("status") if finished else None,
+                        "pending": (
+                            {k: pending.get(k) for k in ("type", "kind", "proposal_id") if k in pending}
+                            if pending
+                            else None
+                        ),
+                    }
+                )
+        return {"runs": out}
+
+    @app.get("/audit")
+    def audit(
+        run_id: str | None = None,
+        limit: int = Query(AUDIT_DEFAULT_LIMIT, ge=1, le=AUDIT_MAX_LIMIT),
+    ) -> dict[str, Any]:
+        """Read audit_log, newest first (read only)."""
+        with read_db() as session:
+            rows = repo.recent_actions(session, run_id=run_id, limit=limit)
+            return {
+                "rows": [
+                    {"id": r.id, "ts": r.ts.isoformat(), "run_id": r.run_id, "actor": r.actor, "action": r.action, "params": r.params}
+                    for r in rows
+                ]
+            }
+
+    @app.get("/sop/{sop_id}/versions")
+    def sop_versions(sop_id: str) -> dict[str, Any]:
+        """The config version plus the versions in sop_versions, oldest first. On the same version number the DB row
+        wins (the first DB row is a copy of the config version)."""
+        base = [s for s in cfg_domain.sop if s.id == sop_id]
+        if not base:
+            raise HTTPException(status_code=404, detail=f"sop {sop_id!r} not found")
+        found: dict[int, dict[str, Any]] = {
+            s.version: {
+                "version": s.version, "created_by": "config", "run_id": None, "created_at": None,
+                "content": "\n".join(s.steps),
+            }
+            for s in base
+        }
+        with read_db() as session:
+            for r in repo.list_sop_versions(session, sop_id):
+                found[r.version] = {
+                    "version": r.version, "created_by": r.created_by, "run_id": r.run_id,
+                    "created_at": r.created_at.isoformat(), "content": r.content,
+                }
+        return {"sop_id": sop_id, "versions": [found[v] for v in sorted(found)]}
 
     @app.get("/runs/{run_id}")
     def run_status(run_id: str) -> dict[str, Any]:
