@@ -1,10 +1,10 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LiveRun } from "@/components/LiveRun";
 import { ReplayRun } from "@/components/ReplayRun";
 import { answerRun, ApiError, decideApproval, fetchApprovers, startRun, type RunStatus } from "@/lib/api";
 import type { EventSourceLike } from "@/lib/sources";
-import { chooseOption, resp, stepStatus } from "./helpers";
+import { chooseOption, recording, resp, stepStatus } from "./helpers";
 
 /** The approver field is a free text box until GET /config/approvers answers, then a select (a button). */
 const approverListLoaded = () => waitFor(() => expect(screen.getByLabelText("Người duyệt").tagName).toBe("BUTTON"));
@@ -17,14 +17,26 @@ const errored: RunStatus = { run_id: "run_1", state: "error", status: "error", p
 
 class FakeES implements EventSourceLike {
   static urls: string[] = [];
+  static last: FakeES;
   readyState = 0;
-  onopen = null;
-  onerror = null;
+  onopen: ((ev: unknown) => void) | null = null;
+  onerror: ((ev: unknown) => void) | null = null;
+  closed = false;
+  listeners: Record<string, ((ev: { data: unknown }) => void)[]> = {};
   constructor(url: string) {
     FakeES.urls.push(url);
+    FakeES.last = this;
   }
-  addEventListener() {}
-  close() {}
+  addEventListener(t: string, l: (ev: { data: unknown }) => void) {
+    (this.listeners[t] ??= []).push(l);
+  }
+  close() {
+    this.closed = true;
+    this.readyState = 2;
+  }
+  emit(ev: { type: string }) {
+    this.listeners[ev.type]?.forEach((l) => l({ data: JSON.stringify(ev) }));
+  }
 }
 
 beforeEach(() => {
@@ -130,17 +142,28 @@ describe("live run", () => {
     await waitFor(() => expect(screen.getByTestId("approval-title")).toHaveTextContent("KPI không đạt"));
   });
 
-  it("error -> Retry calls /retry and reopens the event stream (H-13)", async () => {
-    const f = vi.fn().mockResolvedValueOnce(resp(201, errored)).mockResolvedValueOnce(resp(200, waitingApproval));
+  it("error -> Retry: the same stream carries on with the next events, none lost or doubled (H-46, run-error-retry)", async () => {
+    const rec = recording("run-error-retry");
+    const errorAt = rec.events.findIndex((e) => e.type === "run_finished");
+    const status = (i: number) => ({ ...stepStatus("run-error-retry", i), run_id: "run_1" });
+    const f = vi.fn().mockResolvedValueOnce(resp(201, status(0))).mockResolvedValueOnce(resp(200, status(1)));
     render(<LiveRun api={{ baseUrl: BASE, fetchFn: f }} ctor={FakeES} />);
     fireEvent.click(screen.getByTestId("start-button"));
     expect(await screen.findByTestId("run-error-message")).toHaveTextContent("Dịch vụ AI đang quá tải.");
-    expect(screen.getByTestId("run-error-raw")).toHaveTextContent("RuntimeError: 529 overloaded");
     await waitFor(() => expect(FakeES.urls).toHaveLength(1));
+    const es = FakeES.last;
+    act(() => rec.events.slice(0, errorAt + 1).forEach((e) => es.emit(e)));
+    expect(es.closed).toBe(false); // retryable error: the stream is kept
+
     fireEvent.click(screen.getByTestId("retry-button"));
     await screen.findByTestId("decision-panel");
     expect(f.mock.calls[1][0]).toBe(`${BASE}/runs/run_1/retry`);
-    await waitFor(() => expect(FakeES.urls).toHaveLength(2));
+    // events after the retry arrive on the same stream; a resent one (reconnect overlap) is ignored
+    act(() => [rec.events[errorAt], ...rec.events.slice(errorAt + 1)].forEach((e) => es.emit(e)));
+    expect(FakeES.urls).toHaveLength(1);
+    expect(es.closed).toBe(true); // closed by the final run_finished (completed)
+    fireEvent.click(within(screen.getByTestId("event-log")).getAllByRole("button")[0]);
+    expect(screen.getAllByTestId("timeline-item")).toHaveLength(rec.events.length);
     expect(screen.getByTestId("past-error")).toHaveTextContent("RuntimeError: 529 overloaded");
   });
 

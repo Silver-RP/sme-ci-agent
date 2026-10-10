@@ -40,7 +40,8 @@ export function LiveRun({
   const [busy, setBusy] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [pastError, setPastError] = useState<string | null>(null);
-  // a new stream after Retry: the backend rebuilds the event list from the checkpoint (H-13)
+  // Bumped only when the stream was really lost: normally it stays open across a retryable error and carries on
+  // after Retry by itself (lib/sources.ts, H-46), so the timeline is never cleared.
   const [generation, setGeneration] = useState(0);
   const runId = status?.run_id ?? null;
   const baseUrl = api?.baseUrl;
@@ -118,7 +119,7 @@ export function LiveRun({
         (s) => {
           setPastError(status?.error ?? null);
           setStatus(s);
-          setGeneration((g) => g + 1);
+          if (connection === "disconnected" || connection === "closed") setGeneration((g) => g + 1);
         },
       ),
     close: (closedBy, reason) => runId && void run(() => closeRun(runId, closedBy, reason, api), setStatus),
