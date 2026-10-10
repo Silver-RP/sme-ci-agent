@@ -289,3 +289,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 89b5a19. Review: .autodev/reviews/dev-03-r1.json (PASS).
 - H-19: wait_halt không xoá applied; act giữ previous_* của lần áp dụng đầu cùng sop_id nên rollback khôi phục SOP trước run. 518 pytest.
 - Non-blocking: learn có thể dùng applied cũ qua halt (theo dõi ở dev-06/07).
+
+### R10c/dev-04: DONE
+- Vòng: 1. Commit: 7a0c4eb. Review: .autodev/reviews/dev-04-r1.json (PASS).
+- H-14: apply_sop so base_version, SopConflict (kể cả IntegrityError ghi đồng thời); act đề xuất lại có giới hạn rồi halt; rollback chỉ hoàn tác bản của chính run. Không thêm migration (ràng buộc đã có ở 0001). 524 pytest.
+- Non-blocking: đề xuất dựng tay không có base_version không bị kiểm; event mới decision sop_conflict, rollback_done có conflict (báo vai D).
