@@ -324,3 +324,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: b562d22. Review: .autodev/reviews/R10ch-dev-03-r1.json (PASS).
 - H-47, H-50, H-51: run bị kill giữa bước → error retryable; retries suy ra từ chuỗi event lỗi; LLM lỗi khi khôi phục chỉ làm run đó error (stub). Sửa thứ tự event lỗi theo hậu tố id (run đóng không còn thành running). 578 pytest.
 - Non-blocking: cửa sổ kill giữa commit apply_sop và checkpoint chưa có test (đề xuất R11a); PROJECT_STATE còn ghi "retries về 0".
+
+### R10ch/dev-04: DONE
+- Vòng: 1. Commit: 2eec698, f500ce1. Review: .autodev/reviews/R10ch-dev-04-r1.json (PASS).
+- H-54: A5(b) đọc kpi_measured.passed. 5 seed 42..46: LLM đúng (a)=1,00 (b)=1,00; LLM luôn sai (b)=0,00; không áp dụng gì: passed không bao giờ true. Chỉ sửa test. 583 pytest.
+- Điều chỉnh (a): tiêu chí "đỏ trên main" không áp dụng cho code (code đã đúng, chỉ phép đo cũ sai).

@@ -78,8 +78,10 @@ Chỉ số đẩy: A5 (đo lại theo cách không đạt theo cấu tạo). Sau
   2. Test đối chứng "không áp dụng gì" → `passed` không bao giờ true trên 5 seed.
   3. Seed thay đổi dữ liệu thật (kết quả KPI khác nhau giữa các seed), in ra để chứng minh.
 - **Phụ thuộc:** dev-01
-- **Trạng thái:** TODO · **Số vòng:** 0
+- **Trạng thái:** DONE · **Số vòng:** 1
 
 ## Ghi chú điều chỉnh (Claude ghi khi làm (a)/(b))
+- (a) dev-04: tiêu chí 1 "đỏ trên main" không áp dụng cho phần code: `action_level` + Measure đã đúng, lỗi H-54 chỉ nằm ở phép đo của test (đếm `learning_saved`, không đối chứng). Test mới xanh ngay; phép đo cũ đã được thay.
+- (a) dev-02: `change_time` có múi giờ bị từ chối hẳn (giờ sandbox không múi giờ), không chuẩn hoá.
 
 ## Đề xuất chờ duyệt
