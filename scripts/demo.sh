@@ -6,6 +6,8 @@
 #                              answers, approves, reaches learning_saved, calls the 5 read APIs), probe the dashboard
 #                              page, stop; prints CHECK PASSED, or CHECK FAILED: <step> and exits 1
 #   scripts/demo.sh --check --repeat N   # N runs in a row; prints time per run, passes and p95
+#   scripts/demo.sh --fresh-db # run on database <name>_demo, dropped and created empty first (scripts/fresh_db.py);
+#                              the main database is not touched. Combines with --check.
 # Env: API_PORT (default 8000), DASH_PORT (default 3000), DB_PORT (default 5432),
 #      DATABASE_URL (default built from DB_PORT; if it already connects, no new container is started),
 #      SME_CORS_ORIGINS (default built from DASH_PORT), DB_WAIT (seconds to wait for Postgres, default 30).
@@ -18,10 +20,12 @@ DASH_PORT="${DASH_PORT:-3000}"
 DB_PORT="${DB_PORT:-5432}"
 DB_WAIT="${DB_WAIT:-30}"
 CHECK=0
+FRESH_DB=0
 REPEAT=1
 while [ $# -gt 0 ]; do
   case "$1" in
     --check) CHECK=1 ;;
+    --fresh-db) FRESH_DB=1 ;;
     --repeat) shift; REPEAT="${1:-}" ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
@@ -84,6 +88,11 @@ else
     echo "ERROR: Postgres did not come up within ${DB_WAIT}s (DATABASE_URL port: ${DB_PORT}). Check 'docker compose logs db' or set DB_PORT/DATABASE_URL." >&2
     exit 1
   fi
+fi
+if [ "$FRESH_DB" = "1" ]; then
+  DATABASE_URL="$(uv run python scripts/fresh_db.py "$DATABASE_URL")"
+  export DATABASE_URL
+  echo "Fresh demo database: ${DATABASE_URL##*/}"
 fi
 uv run alembic upgrade head
 
