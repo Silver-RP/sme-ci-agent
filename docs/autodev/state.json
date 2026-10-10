@@ -177,8 +177,8 @@
     {
       "id": 2,
       "text": "Đề xuất được duyệt làm KPI cải thiện; nếu không thì rollback và điều tra lại",
-      "percent": 50,
-      "evidence": "R10a: A5 (a) 1,0, (b) 1,0 LLM giả 5 seed (A5 = 0,5 vì freeze cần LLM thật); R10c: A6 = 0 vi phạm qua tests/test_invariants.py (60 chuỗi, 22 nhánh) → 1; A4 chưa đo",
+      "percent": 42,
+      "evidence": "Luật chỉ số nhiều phần (criteria.md, 2026-10-10): A5 = trung bình (LLM giả, LLM thật); LLM giả = trung bình((a) 1,0; (b) 0 vì đạt theo cấu tạo, H-54) = 0,5; LLM thật chưa đo -> A5 = 0,25. A6 = 0 vi phạm qua tests/test_invariants.py (60 chuỗi, 22 nhánh) -> 1. A4 chưa có lệnh -> 0. (0+0,25+1)/3 = 42",
       "missing": "A4 (R10b2); A5 LLM thật; H-31, H-32, H-36",
       "estimate_old": 65,
       "metrics": [
@@ -473,6 +473,10 @@
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-10",
+      "text": "Luật chỉ số nhiều phần: mỗi phần trọng số bằng nhau, phần chưa đo = 0; phần đo 'đạt theo cấu tạo' (audit phát hiện, ví dụ H-54) = 0 đến khi sửa. Điều 2 = 42%. Mốc sửa nhanh R10ch trước tag 13/10."
+    },
     {
       "date": "2026-10-10",
       "text": "audit 3 (sau R9i, R9ih, R10a, R10c): 15 lỗ hổng mới H-45..H-59 (2 cao), 0 đóng, 31 mở. A5/A6 tái hiện (1,00; 60 chuỗi, 0 vi phạm). % đạt 0/50/0 giữ nguyên; điều 2: criteria.md cho A5 LLM giả = 1,0 (67%), PROJECT_STATE dùng 0,5, leader chốt. Đề xuất đưa H-45, H-48, H-54 vào R10b2; H-47, H-49, H-50, H-51 trước tag; H-46 giao vai D."
