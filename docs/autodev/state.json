@@ -145,7 +145,7 @@
       {
         "id": "P5",
         "status": "done",
-        "note": "audit + trạng thái; trang Artifact làm mới bằng .autodev/export_status.py ở /session-end (đóng 2026-10-10)"
+        "note": "audit + trạng thái; trang Artifact làm mới bằng .autodev/export_status.py khi leader yêu cầu (đóng 2026-10-10)"
       },
       {
         "id": "P6",

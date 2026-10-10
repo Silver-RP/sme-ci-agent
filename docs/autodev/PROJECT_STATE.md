@@ -14,7 +14,7 @@ Cập nhật: 2026-10-10 · Nguồn: audit `docs/audits/2026-10-10.md` (audit 3)
 | Chạy | R4–R9, R9h, R9i, R9ih, R10a, R10c, R10ch | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55, #58, #82, #84, #91 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 / ~0,64 / 4,00 / 5,81 / 3,51 (worker) USD |
 | Plugin | P1–P3 | ✅ | |
 | Plugin | P4 | 🔄 | chờ reset hạn mức phiên đã chạy thật (R9); còn kiểm hạn mức trước mốc, hạn mức tuần mới thử bằng test giả |
-| Plugin | P5 | ✅ | audit + trạng thái (file này); trang trạng thái Artifact làm mới bằng `.autodev/export_status.py` ở `/session-end` (đóng 10/10) |
+| Plugin | P5 | ✅ | audit + trạng thái (file này); trang trạng thái Artifact làm mới bằng `.autodev/export_status.py` khi leader yêu cầu (đóng 10/10) |
 | Plugin | P6 | 🔄 | kế hoạch hai luồng duyệt 10/10; P6a (ước tính + pre-mortem) dùng từ R10a; P6b `metrics.py` có, 3 lỗi đã sửa 10/10; còn báo cáo đối chiếu ước tính R10a–R10ch |
 | Plugin | P7, P8, P9 | ⏳ | Telegram + API trạng thái; đóng gói; reviewer cho PR của team |
 

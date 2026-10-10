@@ -55,7 +55,7 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
   - issue #89, #90 cho Finn;
   - lệnh `/session-start`, `/session-end` đánh số lựa chọn (#79).
 - **P5 (đóng):** trang trạng thái Artifact https://claude.ai/artifact/X6TLNZGZmzraP36WKgBKxF (loại Dashboard, riêng tư, làm mới 18:54 10/10).
-  - Script xuất `.autodev/export_status.py` (7 file JSON); làm mới ở `/session-end` mục 2a.
+  - Script xuất `.autodev/export_status.py` (7 file JSON). **Chỉ làm mới khi leader yêu cầu** (leader chọn 10/10), không làm ở `/session-end`; cách làm trong docstring của script.
 - **Plugin (phiên đêm 10/10):** `metrics.py` sửa 3 lỗi (– cho mốc chưa chạy; B3 phút so với phút worker; supervisor cộng tạm chi phí của chính nó, đọc `runs/` của worktree chính); ước tính audit 5–6 USD (`/audit`); workflow `auto-assign` đã tắt (`gh workflow disable`, file giữ nguyên), gán #65 bằng tay khi Daivon nhận lời; leader duyệt `demo.sh --fresh-db`.
 
 ### Làm tiếp theo thứ tự
