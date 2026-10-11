@@ -1,0 +1,7 @@
+timestamp,machine_id,event_type,old_value,new_value,operator_id,note
+2026-03-10T07:10:00,M03,calibration,,,OP-008,kiểm cảm biến nhiệt vùng 1-5
+2026-03-10T15:20:00,M01,maintenance,,,OP-011,vệ sinh băng tải theo lịch
+2026-03-10T22:05:00,M02,setpoint_change,180,195,OP-SUB01,
+2026-03-11T02:40:00,M03,note,,,OP-021,dừng 10 phút để nạp kem hàn
+2026-03-12T07:30:00,M02,program_change,,,OP-017,PRG-B12
+2026-03-12T09:14:00,M01,alarm,,188.4,,nhiệt vùng 3 lệch tạm thời
