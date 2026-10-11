@@ -338,3 +338,7 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: e7c3096. Review: .autodev/reviews/R10d-dev-02-r1.json (PASS).
 - #113: params audit_log là object JSON (repo.to_jsonable trong append_audit); approval có decided_by. 598 pytest.
 - Non-blocking: rollback_apply chưa có test riêng cho decided_by; payloads.md bị tách khối json.
+
+### R10d/dev-03: DONE
+- Vòng: 1. Commit: cd00a51. Review: .autodev/reviews/R10d-dev-03-r1.json (PASS).
+- #115: GET /learnings chỉ đọc, theo domain, limit 1..500. 605 pytest.
