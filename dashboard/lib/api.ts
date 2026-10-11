@@ -102,8 +102,13 @@ export async function fetchApprovers(o: ApiOptions = {}): Promise<string[]> {
   }
 }
 
-export const answerRun = (runId: string, answer: string, o: ApiOptions = {}) =>
-  post(`/runs/${encodeURIComponent(runId)}/answer`, { answer }, o);
+/**
+ * `questionId` is `pending.question_id` of the question the person saw (R10c, H-20/H-49): when another tab already
+ * answered it, the backend answers 409 instead of applying this answer to the next question. Omitted only for a
+ * backend older than R10c that has no question_id.
+ */
+export const answerRun = (runId: string, answer: string, questionId: string | null, o: ApiOptions = {}) =>
+  post(`/runs/${encodeURIComponent(runId)}/answer`, questionId ? { answer, question_id: questionId } : { answer }, o);
 
 export const decideApproval = (runId: string, d: Decision, o: ApiOptions = {}) =>
   post(`/runs/${encodeURIComponent(runId)}/approval`, { reason: "", ...d }, o);
