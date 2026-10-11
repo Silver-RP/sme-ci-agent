@@ -57,6 +57,7 @@ measure:
   window_days: 7            # cửa sổ before/after khi đo KPI sau khi áp dụng
   min_samples_after: 6      # chỉ khi không có production_log (đo từ kpi_log): ít điểm hơn thế -> "chưa đủ bằng chứng"
   min_units_after: 6000     # ít đơn vị (tổng mẫu số KPI) hơn thế sau thay đổi -> "chưa đủ bằng chứng" (hỏi người, không rollback); ~6 ca
+  source_may_grow: false    # sandbox: dữ liệu sau thay đổi cố định theo run_id; chờ thêm không có điểm mới -> báo một lần, chỉ cho kết thúc. Nguồn thật có thể tăng: true (giữ hành vi hỏi rồi đo lại)
   tolerance: 0.25          # đạt khi KPI trong 25% so với target (đúng phía tốt); không đạt -> đề xuất rollback
 loop:
   max_rejections: 3         # số đề xuất bị từ chối tối đa trước khi dừng chờ người
@@ -102,6 +103,7 @@ messages:                   # câu hiện cho người dùng (template {placehol
     max_rejections_reached: "đã đạt số lần từ chối đề xuất tối đa"
     max_questions_reached: "đã đạt số câu hỏi tối đa"
   evidence_wait_question: "Chưa đủ bằng chứng: sau thay đổi mới có {n_after} {n_unit} cho {kpi} (cần {needed}). Chờ thêm dữ liệu rồi xác nhận để đo lại."
+  evidence_final_question: "Chưa đủ bằng chứng: sau thay đổi chỉ có {n_after} {n_unit} cho {kpi} (cần {needed}) và nguồn dữ liệu không còn thêm điểm nào, nên chờ cũng không đo lại được. Kết thúc phiên chạy."
   rollback_change_sop: "Hoàn tác SOP {sop_id} về phiên bản {previous_version}"
   rollback_change_no_sop: "Hoàn tác thay đổi (không có phiên bản SOP để khôi phục)"
   rollback_rationale: "{kpi} sau thay đổi là {after}, ngoài giới hạn (mục tiêu {target}, dung sai {tolerance})."

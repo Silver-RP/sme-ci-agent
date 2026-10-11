@@ -4,6 +4,7 @@ restores the SOP as it was before the run (not the wrong version applied earlier
 from langgraph.types import Command
 
 from tests.test_act import (
+    GROWING,
     HUMAN,
     SOP_ID,
     _tables,
@@ -39,7 +40,8 @@ def test_decline_rollback_investigate_again_wrong_fix_rollback_restores_sop_befo
 
 def test_halt_after_insufficient_evidence_then_investigate_still_knows_sop_in_force(db_session):
     late = "2026-06-29T22:00:00"
-    graph, c, _ = run_to_measure(db_session, [*script_with("wrong_setpoint"), *script_with("wrong_setpoint")], change_time=late)
+    graph, c, _ = run_to_measure(db_session, [*script_with("wrong_setpoint"), *script_with("wrong_setpoint")],
+                                change_time=late, cfg=GROWING)
     for _ in range(3):
         if graph.get_state(c).next != ("wait_evidence",):
             break

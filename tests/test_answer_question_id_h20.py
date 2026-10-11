@@ -2,13 +2,13 @@
 and a stale one is 409 without answering the current question. Without question_id: old behaviour."""
 
 from backend.agent.llm import ScriptedLLM
-from tests.test_act import HUMAN, _tables, approve, improve_answer, investigate_script
+from tests.test_act import GROWING, HUMAN, _tables, approve, improve_answer, investigate_script
 from tests.test_api import sse_events, start
 from tests.test_api_limits_r9 import LATE, client_with
 
 
 def _waiting_run(db_session):
-    client = client_with(db_session, ScriptedLLM([*investigate_script(), improve_answer()]), tables=_tables())
+    client = client_with(db_session, ScriptedLLM([*investigate_script(), improve_answer()]), GROWING, tables=_tables())
     rid = start(client, change_time=LATE)["run_id"]
     got = approve(client, rid, HUMAN).json()
     assert got["pending"]["type"] == "answer"

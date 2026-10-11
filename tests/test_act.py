@@ -25,6 +25,8 @@ from backend.sandbox import generate_dataset
 from backend.tools.readonly import ToolContext
 
 CFG = load_domain_config()
+# a live source that may still get points after the change: Measure asks to wait and measures again (R10e/dev-03)
+GROWING = CFG.model_copy(update={"measure": CFG.measure.model_copy(update={"source_may_grow": True})})
 KPI = CFG.kpis[0].name
 SOP_ID = CFG.sop[0].id
 CHANGE = "2026-03-20"

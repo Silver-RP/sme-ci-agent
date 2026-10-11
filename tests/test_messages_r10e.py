@@ -23,6 +23,7 @@ from backend.domain_config import (
 )
 from tests.test_act import (
     CFG,
+    GROWING,
     HUMAN,
     KPI,
     SOP_ID,
@@ -80,9 +81,9 @@ def test_halt_payload_unknown_code_falls_back_to_the_code():
 
 def test_insufficient_evidence_question_and_halt(db_session):
     late = "2026-06-29T22:00:00"
-    graph, c, out = run_to_measure(db_session, script_with("wrong_setpoint"), change_time=late)
+    graph, c, out = run_to_measure(db_session, script_with("wrong_setpoint"), change_time=late, cfg=GROWING)
     m = out["measurement"]
-    q = _event(out, "question_asked")[-1]["payload"]["question"]
+    q =_event(out, "question_asked")[-1]["payload"]["question"]
     assert q == MSG.render(
         "evidence_wait_question", n_after=m["n_after"], n_unit=m["n_unit"], kpi=m["kpi"], needed=m["min_units_after"]
     )

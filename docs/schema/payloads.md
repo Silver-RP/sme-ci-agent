@@ -105,7 +105,7 @@ Có hai dạng; phân biệt bằng `kind`.
 
 `status` có ba giá trị:
 - `measured`: `passed` là `true` hoặc `false`.
-- `insufficient_evidence`: `passed: null`, có thêm `min_units_after` (khi `n_unit` là `"units"`) hoặc `min_samples_after` (khi `"points"`). Run hỏi người: `pending` là `{type: "answer", question, run_id}` (R9, H-09). Trả lời bằng `POST /runs/{id}/answer` (ví dụ "chờ thêm dữ liệu") thì Measure chạy lại; hết số lần cho phép thì dừng với `reason: "insufficient_evidence"`. Xem `run-insufficient-evidence.json`.
+- `insufficient_evidence`: có thêm `more_data_possible` (bool, R10e). `false` trên sandbox (config `measure.source_may_grow: false`, dữ liệu sau thay đổi là hàm của `run_id` nên chờ cũng không có điểm mới): Measure không hỏi chờ, chỉ báo một lần bằng event `question_asked` dạng halt (`reason: "insufficient_evidence"`, `options: ["finish"]`, `question` từ `messages.evidence_final_question`); chọn `finish` thì `run_finished` `status: "closed"`, `reason: "closed_by_human"`; gửi `investigate` bị từ chối. Không rollback, không tính là KPI thất bại. Phần mô tả tiếp theo (hỏi `answer`, đo lại) chỉ áp dụng khi `more_data_possible` là `true` (nguồn có thể có thêm điểm). `passed: null`, có thêm `min_units_after` (khi `n_unit` là `"units"`) hoặc `min_samples_after` (khi `"points"`). Run hỏi người: `pending` là `{type: "answer", question, run_id}` (R9, H-09). Trả lời bằng `POST /runs/{id}/answer` (ví dụ "chờ thêm dữ liệu") thì Measure chạy lại; hết số lần cho phép thì dừng với `reason: "insufficient_evidence"`. Xem `run-insufficient-evidence.json`.
 - `not_applied`: `passed: null`, có thêm `reason`.
 
 `mttd_hours` và `mttr_hours` hiện luôn là `null` trong vòng lặp (H-11).

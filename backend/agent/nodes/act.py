@@ -222,6 +222,8 @@ def route_after_measure(state: AgentState, config: DomainConfig) -> str:
     if m.get("status") == NOT_APPLIED:
         return "learn"  # nothing was changed: nothing to roll back, and nothing to call a success
     if m.get("status") == INSUFFICIENT:
+        if not m.get("more_data_possible", True):
+            return "halt"  # asking to wait cannot help: say so once, offer only finish
         if state.get("measure_wait_count", 0) >= config.ask.max_questions:
             return "halt"
         return "ask_evidence"
@@ -442,6 +444,8 @@ def make_measure_node(config: DomainConfig, ctx: ToolContext):
                 **res, **base, "status": INSUFFICIENT, "passed": None,
                 "min_samples_after": config.measure.min_samples_after,
                 "min_units_after": config.measure.min_units_after,
+                # sandbox data after the change is a function of run_id: waiting never adds a point (H-34, #111)
+                "more_data_possible": sim is None or config.measure.source_may_grow,
             }
             _audit_not_measured(ctx, measurement)
             emit("kpi_measured", "quality", measurement)
@@ -654,7 +658,15 @@ def make_loop_halt_node(config: DomainConfig, ctx: ToolContext | None = None):
         if applied:  # an SOP version is in force (e.g. the rollback was declined): say which
             extra = {"sop_still_in_force": True, "sop_id": applied.get("sop_id"), "sop_version": applied.get("version")}
         emit = _Emitter(state, config)
-        payload = halt_payload(config, reason, options=halt_options(state, config), **extra)
+        options = halt_options(state, config)
+        m = state.get("measurement") or {}
+        if reason == "insufficient_evidence" and not m.get("more_data_possible", True):
+            options = ["finish"]  # nothing to wait for and the same data would measure the same again
+            extra["question"] = config.messages.render(
+                "evidence_final_question", n_after=m.get("n_after"), n_unit=m.get("n_unit", "unit"), kpi=m.get("kpi"),
+                needed=m.get("min_units_after") if m.get("n_unit") == "units" else m.get("min_samples_after"),
+            )
+        payload = halt_payload(config, reason, options=options, **extra)
         audit_halt_raised(ctx, payload)
         emit("question_asked", "system", payload)
         return {"status": "awaiting_human", "events": emit.events}

@@ -82,6 +82,7 @@ class Branch:
     steps: list[tuple[str, Any]]  # ("answer", text) | ("decide", body) | ("retry", None)
     start: dict[str, Any] = field(default_factory=dict)
     tables: Callable[[], dict[str, Any]] = _tables
+    source_may_grow: bool = False  # a live source: Measure asks to wait and measures again (not the sandbox default)
 
 
 def _wrong_then_right(cfg: DomainConfig) -> LLM:
@@ -116,6 +117,7 @@ BRANCHES: dict[str, Branch] = {
         lambda cfg: scripted_demo_llm(cfg, ask_first=False),
         [("decide", APPROVE)],
         start={"change_time": TOO_LATE},
+        source_may_grow=True,
     ),
     "revise": Branch(
         "A person sends the first proposal back with information (revise): Investigate runs again, the second proposal is approved.",
@@ -153,6 +155,8 @@ def _read_events(client: TestClient, run_id: str) -> list[dict[str, Any]]:
 
 def run_branch(name: str, branch: Branch, config: DomainConfig, session: Session) -> dict[str, Any]:
     tables = branch.tables()
+    if branch.source_may_grow:
+        config = config.model_copy(update={"measure": config.measure.model_copy(update={"source_may_grow": True})})
     app = create_app(
         config,
         llm_factory=lambda rid: branch.llm(config),

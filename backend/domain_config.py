@@ -118,6 +118,9 @@ class MeasureParams(_Strict):
     tolerance: float = Field(default=0.25, ge=0.0)
     min_samples_after: int = Field(default=6, ge=1)  # kpi_log fallback (no production_log): fewer points -> "not enough evidence"
     min_units_after: int = Field(default=6000, ge=1)  # units after the change (sum of the KPI denominator) below this -> "not enough evidence"
+    # True when the source may get more points after the change (a live source). The sandbox is a function of
+    # run_id: waiting adds nothing, so Measure reports once and offers only "finish" (H-34, #111).
+    source_may_grow: bool = False
 
 
 class LoopParams(_Strict):
@@ -251,6 +254,7 @@ _MESSAGE_PLACEHOLDERS: dict[str, set[str]] = {
     "halt_question_finish": {"reason"},
     "halt_question_investigate": {"reason"},
     "evidence_wait_question": {"n_after", "n_unit", "kpi", "needed"},
+    "evidence_final_question": {"n_after", "n_unit", "kpi", "needed"},
     "rollback_change_sop": {"sop_id", "previous_version"},
     "rollback_change_no_sop": set(),
     "rollback_rationale": {"kpi", "after", "target", "tolerance"},
@@ -272,6 +276,7 @@ class Messages(_Strict):
     halt_question_investigate: str
     halt_reasons: dict[str, str]
     evidence_wait_question: str
+    evidence_final_question: str
     rollback_change_sop: str
     rollback_change_no_sop: str
     rollback_rationale: str
