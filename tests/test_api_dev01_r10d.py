@@ -37,3 +37,13 @@ def test_config_sop_version_has_null_run_id_and_created_at_after_a_run(db_sessio
     assert config and all(v["run_id"] is None and v["created_at"] is None for v in config)
     made = [v for v in versions if v["created_by"] != "config"]
     assert made and all(v["run_id"] == run["run_id"] and v["created_at"] for v in made)
+
+
+def test_payloads_doc_kpi_series_row_states_time_zone_rule_and_422():
+    from pathlib import Path
+
+    doc = Path(__file__).resolve().parents[1] / "docs" / "schema" / "payloads.md"
+    rows = [ln for ln in doc.read_text(encoding="utf-8").splitlines() if ln.startswith("|") and "/kpi/series" in ln]
+    assert len(rows) == 1
+    assert "múi giờ" in rows[0] and "422" in rows[0]
+    assert "Z" in rows[0] and "+09:00" in rows[0]
