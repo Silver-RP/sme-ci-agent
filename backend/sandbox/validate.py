@@ -156,11 +156,14 @@ def read_directory(path: str | Path) -> tuple[dict[str, TableData], list[str]]:
     """Read exactly the 5 contract files. Returns ``(tables, extra_file_names)``."""
     root = Path(path)
     tables: dict[str, TableData] = {}
+    # Exact (case-sensitive) comparison against real directory entries, so it also holds on
+    # case-insensitive filesystems where root / "sop.csv" would open "Sop.csv".
+    present = {p.name for p in root.iterdir() if p.is_file()}
     for name in TABLE_COLUMNS:
-        f = root / file_name(name)
-        tables[name] = parse_table(name, f.read_bytes()) if f.is_file() else TableData(name, "missing")
+        fn = file_name(name)
+        tables[name] = parse_table(name, (root / fn).read_bytes()) if fn in present else TableData(name, "missing")
     known = {file_name(n) for n in TABLE_COLUMNS}
-    extras = sorted(p.name for p in root.iterdir() if p.is_file() and p.name not in known)
+    extras = sorted(present - known)
     return tables, extras
 
 

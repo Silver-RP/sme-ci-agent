@@ -194,6 +194,21 @@ def test_table_level_v01_skips_all_other_rules_on_that_table(tmp_path):
     assert_scope(run(d), [("V01", E, "sop", None, None, "*")])
 
 
+def test_file_names_are_case_sensitive_even_on_case_insensitive_fs(tmp_path):
+    d = make_dir(tmp_path, **{"sop.csv": None, "production_log.csv": None})
+    (d / "Sop.csv").write_text("sop_id,version,title,step_no,step_text\n", encoding="utf-8")
+    (d / "Production_Log.csv").write_text(PL_HEADER + "\n" + PL_ROW + "\n", encoding="utf-8")
+    assert_scope(
+        run(d),
+        [
+            ("V01", E, "sop", None, None, "sop.csv"),
+            ("V01", E, "production_log", None, None, "production_log.csv"),
+            ("N01", "*", "Sop.csv", None, None, "*"),
+            ("N01", "*", "Production_Log.csv", None, None, "*"),
+        ],
+    )
+
+
 def test_all_four_required_files_missing(tmp_path):
     empty = tmp_path / "e"
     empty.mkdir()
