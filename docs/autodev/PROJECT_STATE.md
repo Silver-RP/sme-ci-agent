@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-12 · Nguồn: audit `docs/audits/2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10) + bộ thử reviewer (#105–#108) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132.
+Cập nhật: 2026-10-12 · Nguồn: audit `docs/audits/2026-10-12.md` (audit 4) + audit `2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10) + bộ thử reviewer (#105–#108) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132.
 
 ## Mốc
 
@@ -28,7 +28,7 @@ Từ 2026-10-10, **% đạt tính bằng công thức từ chỉ số đo đư�
 |---|---|---|---|---|---|---|
 | 1 | Tìm đúng nguyên nhân gốc, biết hỏi người khi thiếu bằng chứng | 0 | 30 | A1 top-1 tập giữ lại ≥ 0,7; A2 precision ≥ 0,6, recall ≥ 0,8; A3 = 0 | eval LLM giả chỉ kiểm bộ chấm (right 100%, wrong 0%, unsure hỏi 100%); chấm theo chuỗi (H-28) | đo nền LLM thật sau R10a; R11a, R11b |
 | 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 67 | 65 | A4 ≥ 0,9; A5 (a) 1,0, (b) ≥ 0,8; A6 = 0 vi phạm | Luật chỉ số nhiều phần (`criteria.md`). A4: R10b2 `eval_rootcause.py --until learn --seeds 5` LLM giả, `right` 5/5 = 1,0; LLM thật chưa đo → A4 = 0,5 (lưu ý `wrong` cũng 100%: đúng `action`, sai nguyên nhân, H-32). A5: LLM giả 1,0 (R10ch), LLM thật chưa đo → 0,5. A6 = 0 vi phạm → 1. (0,5 + 0,5 + 1)/3 = 67 | A4, A5 LLM thật |
-| 3 | 3 chỉ số trước/sau trên 6 tháng mô phỏng | 100 | 5 | A7: 3 chỉ số tính được, tốt hơn đối chứng "không agent" | R10b2 `metrics_report.py --months 6 --seed 42` (LLM giả, lặp lại cùng số): có agent / không agent: tỷ lệ lỗi `period_rate` 0,0204 / 0,0208; MTTD 8 / 72 giờ, MTTR 24 / 44 giờ; tái diễn 0,25 / 0,5 → cả 3 phần tốt hơn → 100 theo công thức. **Cảnh báo:** 4 giả định đều "chờ D3"; MTTD không agent = giả định, tái diễn theo cấu tạo; lợi thế tỷ lệ lỗi rất nhỏ. Audit 4 xét lại | nguồn D3; R11a (tái diễn theo nguyên nhân) |
+| 3 | 3 chỉ số trước/sau trên 6 tháng mô phỏng | 100 | 5 | A7: 3 chỉ số tính được, tốt hơn đối chứng "không agent" | R10b2 `metrics_report.py --months 6 --seed 42` (LLM giả, lặp lại cùng số): có agent / không agent: tỷ lệ lỗi `period_rate` 0,0204 / 0,0208; MTTD 8 / 72 giờ, MTTR 24 / 44 giờ; tái diễn 0,25 / 0,5 → cả 3 phần tốt hơn → 100 theo công thức. **Cảnh báo:** 4 giả định đều "chờ D3"; MTTD không agent = giả định, tái diễn theo cấu tạo; lợi thế tỷ lệ lỗi rất nhỏ. **Audit 4 (12/10):** đề nghị ≤ 67 (33 nếu chặt): tái diễn đạt theo cấu tạo, độ nhạy chung đảo chiều (H-64); leader chốt | nguồn D3; R11a (tái diễn theo nguyên nhân) |
 
 Cổng go/no-go 13/10 và 20/10: `docs/eval/criteria.md` mục 3. Chỉ số plugin B1–B5: `python3 .autodev/metrics.py` (nền: B1 = 1,67 ở audit 1, 1,75 ở audit 2; B2 = 2/44 task cần ≥ 2 vòng sau R10a).
 
@@ -58,7 +58,7 @@ Cổng go/no-go 13/10 và 20/10: `docs/eval/criteria.md` mục 3. Chỉ số plu
 
 ## Lỗ hổng mở
 
-Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có để đóng). Đóng khi có test chứng minh. H-06..H-23 đóng ở R9 (ghi trong audit 1).
+Từ `docs/audits/2026-10-12.md` (mới) và `2026-10-10.md`, `2026-10-09_2.md` (chi tiết, bằng chứng, test cần có để đóng). Đóng khi có test chứng minh. H-06..H-23 đóng ở R9 (ghi trong audit 1).
 
 | Mã | Mức | Tóm tắt |
 |---|---|---|
@@ -66,24 +66,31 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 | H-29 | cao | Bài toán quá dễ: `correlate` trả nhãn r≈0,98, anomaly ~10σ, hỏi người chỉ do script |
 | H-32 | vừa | Chẩn đoán sai + hành động đúng → Learn lưu nguyên nhân sai là success |
 | H-34 | vừa | Câu hỏi "chưa đủ bằng chứng" của Measure không trả lời được |
-| H-35 | vừa | UI chưa theo R9: Retry khi `retryable:false`, halt `options`, thẻ duyệt thiếu `action` (team frontend) |
 | H-36 | vừa | Điều tra lại sau rollback không biết `action` đã thất bại |
 | H-18 | vừa | `has_tool_evidence` tính tool của cả run |
-| H-44 | vừa | Dashboard không hiện thẻ đề xuất khi chờ duyệt (team frontend) |
 | H-22 | thấp | Giá trị miền hard-code ngoài YAML |
 | H-24 | thấp | UI không phân biệt kết quả run (team frontend) |
 | H-25 | thấp | Payload event chưa có tài liệu |
 | H-40 | thấp | Ví dụ `docs/schema/examples` không qua test dashboard; `payloads.md` sai chỗ |
-| H-46 | cao | Dashboard đóng SSE ở `run_finished` lỗi đầu tiên; sau Retry timeline chết (team frontend) |
 | H-52 | vừa | Rollback bị `SopConflict` vẫn chạy tiếp như đã rollback; `sop_conflict` thiếu audit và trường |
 | H-53 | vừa | `applied` bị ghi đè khi đổi SOP khác sau halt |
 | H-55 | vừa | `test_invariants` thiếu: run song song, lỗi DB/kill, audit `apply_sop`, nội dung SOP sau rollback |
 | H-56 | vừa | Sau rollback/revise/halt, điều tra không gọi tool vẫn không hỏi người (bằng chứng mới của H-18) |
 | H-58 | thấp | `demo.sh`: cổng bận không phát hiện, `--check` ép scripted, không phủ SSE/rollback, không CI |
-| H-59 | thấp | Gom: cache `Run` nhiều tiến trình, `/export` sau retry, `/audit` không giới hạn, NaN trong Measure |
-
+| H-59 | thấp | Gom: cache `Run` nhiều tiến trình, `/export` sau retry, `GET /runs` nạp hết, `POST /runs` không body (audit 4 đã bỏ `/audit`, NaN) |
+| H-64 | cao | Điều 3: đối chứng dựa 4 giả định chưa có nguồn D3; tái diễn đạt theo cấu tạo (agent luôn sai vẫn 0,0); độ nhạy chung đảo chiều |
+| H-65 | vừa | `/metrics`: bỏ `llm`/`limits`, NaN → 500, `months` không kiểm, báo cáo bị gitignore nên demo máy mới trống |
+| H-60 | vừa | `POST /runs` kiểm `change_time` theo anomaly đầu, graph chọn anomaly chưa xử lý (H-48 tái phát) |
+| H-61 | vừa | `SME_DATASET`: Measure vẫn dùng dữ liệu sau thay đổi mô phỏng từ scenario1.yaml |
+| H-62 | vừa | V09 (PII) chỉ quét tên cột, không quét giá trị `note`/`step_text` |
+| H-63 | vừa | Kết quả tool rỗng (`no_data`, `count:0`) vẫn tính là bằng chứng, không hỏi người |
+| H-66 | vừa | Ví dụ `docs/schema/examples` + `payloads.md` cũ so với code (thiếu `n_unit`, `action`) |
+| H-67, H-68, H-69 | vừa | UI (team frontend): thẻ Measure đơn vị sai; kẹt sau Close; kẹt khi tải lại run 404 |
+| H-70 | vừa | Khoá lesson không có dataset/seed; `no_change` tính là đã xử lý |
+| H-71, H-72, H-73, H-74 | thấp | Learn chưa commit; Learn chỉ khi pass; target NaN; gom nhỏ (xem audit 2026-10-12) |
 ## Quyết định gần đây
 
+- 2026-10-12: audit 4 (sau R10d, R10b1, R10b2): 15 lỗ hổng mới H-60..H-74 (1 cao: H-64), đóng H-35, H-44, H-46 (auditor chạy vitest, 49 passed), còn 31 mở. Điều 3 đề nghị hạ 100 → ≤ 67 (33 nếu đọc chặt): tái diễn đạt theo cấu tạo, 4 giả định chưa có nguồn D3, độ nhạy một chiều không đảo chiều. % đạt công thức giữ 0/67/100 đến khi leader chốt.
 - 2026-10-12: R10b2 merge #132 (điều 3: Measure trọng số sản lượng, Detect theo dòng thời gian, run chọn anomaly chưa xử lý + đọc bài học, `metrics_report.py` có đối chứng + độ nhạy, eval `--until learn`, `/metrics` thật). Supervisor tự kiểm: 4/4 tiêu chí cấp mốc đạt (936 passed, smoke 4/4). Đóng H-11, H-33, H-39 (H-33, H-39 đỏ trên main). % đạt 0/67/100; điều 3 dựa trên giả định chưa có nguồn D3. 6 đề xuất (c) của worker chờ leader (PR #132).
 - 2026-10-11: R10b1 merge #130 (dữ liệu theo hợp đồng D1: `production_log` số đếm, `material_batches`, `sop`, simulator nhị thức, `kpi_log` dẫn xuất, `import_data.py` + V01–V09, `SME_DATASET`). Supervisor tự kiểm: 4/4 tiêu chí cấp mốc đạt; 31/31 bộ D2 đúng mã; nhập seed 7 thì app đọc đúng bảng nhập; A1 ≈ 9,6σ (chưa nhỏ đi, H-29 cần D4). Không đóng H-xx. 7 đề xuất (c) của worker chờ leader/vai A (PR #130). Fixture + 2 test dashboard đổi số mong đợi: báo vai D.
 - 2026-10-11 (đóng phiên chiều): hết tạm dừng: UI của vai D (#116–#118) và D1, D2 của vai A (#122, #123) merge sau khi Claude kiểm phía backend; leader merge D1 **không chờ vai Q**. API của vai D: #110 có múi giờ → 422 (không quy đổi, giống `change_time`); #114 `/config/domain` để sau R10b1; #111 vào R11a. Plan R10b1 đối chiếu D1 (#124), chạy `R10b1 R10b2` với audit 4 sau R10b2 (20–26 USD). Không merge PR draft của thành viên. Guard chặn mọi lệnh xoá: leader tự chạy lệnh Claude đưa.
