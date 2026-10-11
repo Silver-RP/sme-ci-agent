@@ -347,3 +347,7 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 8627626. Review: .autodev/reviews/R10d-dev-04-r1.json (PASS).
 - H-49: question_id bắt buộc ở /answer; check_run, export_fixtures, test cập nhật; smoke + demo --check xanh. 608 pytest.
 - Non-blocking: dashboard api.ts còn gửi không question_id; fixtures mẫu chưa export lại.
+
+### R10d/dev-05: DONE
+- Vòng: 1. Commit: 30dd52f. Review: .autodev/reviews/dev-05-r1.json (PASS).
+- payloads.md ghi quy tắc múi giờ + 422 của /kpi/series, kèm test tài liệu. Hook không chạy, verify chạy tay sạch.

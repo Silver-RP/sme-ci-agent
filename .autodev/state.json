@@ -25,6 +25,12 @@
       "round": 1,
       "base": "c4d8bcf",
       "commit": "8627626"
+    },
+    "dev-05": {
+      "status": "DONE",
+      "round": 1,
+      "base": "f0f74e6",
+      "commit": "30dd52f"
     }
   },
   "verify": {
