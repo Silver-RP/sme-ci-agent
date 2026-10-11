@@ -1,6 +1,6 @@
 {
-  "updated": "2026-10-11",
-  "source": "audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130",
+  "updated": "2026-10-12",
+  "source": "audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132",
   "milestones": {
     "project": [
       {
@@ -138,6 +138,14 @@
         "cost_usd": 9.1,
         "minutes": 267,
         "note": "dữ liệu theo hợp đồng D1: production_log số đếm, material_batches, sop, simulator nhị thức, kpi_log dẫn xuất, import_data.py + V01–V09, SME_DATASET; 31/31 bộ D2 đúng mã; ước tính 175–240 phút, 7–10 USD (B3 phút 1,11, USD ~1,01); 8 vòng review; cost chỉ tính worker"
+      },
+      {
+        "id": "R10b2",
+        "status": "merged",
+        "pr": 132,
+        "cost_usd": 8.76,
+        "minutes": 350,
+        "note": "điều 3: measure trọng số sản lượng, Detect theo dòng thời gian, chọn anomaly chưa xử lý + đọc bài học, metrics_report.py có đối chứng + độ nhạy, eval --until learn (A4 right 5/5), /metrics thật; đóng H-11, H-33, H-39; 37 bộ D2; ước tính 195–255 phút, 8,5–10,5 USD (B3 phút 1,37, USD ~1,00); 8 vòng review; cost chỉ tính worker"
       }
     ],
     "plugin": [
@@ -201,9 +209,9 @@
     {
       "id": 2,
       "text": "Đề xuất được duyệt làm KPI cải thiện; nếu không thì rollback và điều tra lại",
-      "percent": 50,
-      "evidence": "Luật chỉ số nhiều phần (criteria.md): A5 = trung bình (LLM giả, LLM thật). Sau R10ch (H-54 đóng) A5 LLM giả đo thật: (a) 1,00, (b) 1,00 đọc kpi_measured.passed; đối chứng LLM luôn sai (b) = 0, không áp dụng gì không passed -> LLM giả = 1,0; LLM thật chưa đo -> A5 = 0,5. A6 = 0 vi phạm -> 1. A4 chưa có lệnh -> 0. (0+0,5+1)/3 = 50",
-      "missing": "A4 (R10b2); A5 LLM thật; H-32, H-36",
+      "percent": 67,
+      "evidence": "Luật chỉ số nhiều phần (criteria.md). A4: R10b2 eval --until learn --seeds 5 LLM giả, kịch bản right 5/5 = 1,0 (supervisor chạy lại 2026-10-12); LLM thật chưa đo -> A4 = 0,5. A5 LLM giả 1,0, LLM thật chưa đo -> 0,5. A6 = 0 vi phạm -> 1. (0,5+0,5+1)/3 = 67. Lưu ý: kịch bản wrong cũng passed 100% (đúng action, sai nguyên nhân; H-32)",
+      "missing": "A4, A5 LLM thật; H-32, H-36",
       "estimate_old": 65,
       "metrics": [
         "A4",
@@ -215,9 +223,9 @@
     {
       "id": 3,
       "text": "Đo 3 chỉ số trước/sau trên 6 tháng dữ liệu mô phỏng: defect %, MTTD/MTTR, tỷ lệ tái diễn",
-      "percent": 0,
-      "evidence": "Chưa chỉ số nào đo được theo docs/eval/criteria.md; measure() 1 máy 7 ngày; H-11",
-      "missing": "H-11 (kể cả MTTD ≈ 0 do Detect nhìn lại); T-042, T-043",
+      "percent": 100,
+      "evidence": "R10b2: scripts/metrics_report.py --months 6 --seed 42 (LLM giả, supervisor chạy 2 lần cùng số; seed 7 cũng đủ): có agent / không agent: tỷ lệ lỗi period_rate 0,0204 / 0,0208; MTTD 8 / 72 giờ, MTTR 24 / 44 giờ; tái diễn 0,25 / 0,5 -> cả 3 phần A7 tốt hơn đối chứng -> 100 theo công thức. CẢNH BÁO: 4 giả định đều 'giả định, chờ D3'; MTTD không agent = giả định, tái diễn = (1 - sop_prevention_efficacy) theo cấu tạo; lợi thế tỷ lệ lỗi rất nhỏ. Audit 4 xét lại",
+      "missing": "Nguồn D3 cho 4 giả định; tái diễn theo nguyên nhân + kịch bản A2 khác A1 (R11a); T-043 (vai D); A7 với LLM thật",
       "estimate_old": 5,
       "metrics": [
         "A7"
@@ -296,8 +304,11 @@
     },
     {
       "rule": "Tên model không hard-code",
-      "tests": [],
-      "note": "đang vi phạm: backend/agent/llm.py:33 NO_EFFORT_MODEL_PREFIXES (H-39)"
+      "tests": [
+        "tests/test_small_fixes_r10b2.py::test_h39_no_model_name_in_backend",
+        "tests/test_invariants.py"
+      ],
+      "note": "H-39 đóng ở R10b2: model không hỗ trợ effort khai qua LLM_NO_EFFORT_MODELS (env), MODEL_CHEAP bỏ khỏi .env.example"
     },
     {
       "rule": "Số lần retry/hỏi/rollback có giới hạn",
@@ -305,16 +316,10 @@
         "tests/test_ask.py::test_ask_is_bounded_then_awaits_human",
         "tests/test_act.py::test_max_rollbacks_halts"
       ],
-      "note": "revise/retry/tổng rollback có giới hạn từ R9 (H-17 đóng); revision_count không đặt lại sau halt (H-33)"
+      "note": "revise/retry/tổng rollback có giới hạn từ R9 (H-17 đóng); revision_count đặt lại khi điều tra lại sau halt (H-33 đóng R10b2: test_small_fixes_r10b2::test_h33_investigate_after_revise_halt_resets_revision_count)"
     }
   ],
   "open_gaps": [
-    {
-      "id": "H-11",
-      "severity": "cao",
-      "summary": "Chỉ số 3 chưa có đường code; MTTD ≈ 0 theo cấu tạo (Detect nhìn lại cả 6 tháng)",
-      "audit": "2026-10-09, 2026-10-09_2"
-    },
     {
       "id": "H-18",
       "severity": "vừa",
@@ -358,12 +363,6 @@
       "audit": "2026-10-09_2"
     },
     {
-      "id": "H-33",
-      "severity": "vừa",
-      "summary": "revision_count không đặt lại sau halt → investigate",
-      "audit": "2026-10-09_2"
-    },
-    {
       "id": "H-34",
       "severity": "vừa",
       "summary": "Câu hỏi chưa đủ bằng chứng của Measure không trả lời được, luôn halt",
@@ -379,12 +378,6 @@
       "id": "H-36",
       "severity": "vừa",
       "summary": "Điều tra lại sau rollback không biết action đã thất bại",
-      "audit": "2026-10-09_2"
-    },
-    {
-      "id": "H-39",
-      "severity": "thấp",
-      "summary": "Tên model hard-code claude-haiku-4-5; MODEL_CHEAP không dùng",
       "audit": "2026-10-09_2"
     },
     {
@@ -443,6 +436,10 @@
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-12",
+      "text": "R10b2 merge #132: 4/4 tiêu chí cấp mốc đạt (supervisor tự kiểm: 936 passed, smoke 4/4, metrics_report seed 42 lặp lại cùng số, A4 right 5/5). Đóng H-11, H-33, H-39 (H-33, H-39 đỏ trên main). % đạt 0/67/100 theo công thức; điều 3 = 100 dựa trên 4 giả định chưa có nguồn D3, audit 4 xét lại. Supervisor tick TASKS.md (T-042, R10b1, R10b2) trên nhánh mốc trước khi merge. 6 đề xuất (c) của worker chờ leader."
+    },
     {
       "date": "2026-10-11",
       "text": "R10b1 merge #130: 4/4 tiêu chí cấp mốc đạt (supervisor tự kiểm); 31/31 bộ D2 đúng mã; nhập seed 7 thì app đọc đúng bảng nhập; A1 ≈ 9,6σ. Không đóng H-xx. 7 đề xuất (c) của worker chờ leader/vai A. Fixture + test dashboard đổi số mong đợi: báo vai D."
@@ -642,7 +639,7 @@
         "T-042"
       ],
       "needs_team": false,
-      "status": "nối sau R10b1; audit 4 sau mốc này (--audit-every 3)"
+      "status": "merged #132; audit 4 sau mốc này (--audit-every 3)"
     },
     {
       "id": "gate-13-10",
