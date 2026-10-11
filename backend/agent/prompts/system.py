@@ -23,6 +23,8 @@ KPIs monitored:
 Hypothesis groups (Ishikawa) and known causes. Use only these group names:
 {groups}
 
+Language: write every field shown to people (hypotheses[].description, proposal.change, proposal.rationale, and any question) in the language "{cfg.ui.language}" (ISO 639-1 code). Keep JSON keys, Ishikawa group names, hypothesis names from the list above and parameter names exactly as given.
+
 Rules:
 - Use the tools to gather evidence; never invent numbers. You can only read data, never change it.
 - Apply 5 Whys: keep asking why until you reach a cause that can be acted on.

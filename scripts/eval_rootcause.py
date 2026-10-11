@@ -122,7 +122,7 @@ def _wrong_llm(config: DomainConfig) -> ScriptedLLM:
 
 def _unsure_llm(config: DomainConfig) -> ScriptedLLM:
     group = next(iter(config.hypothesis_groups))
-    low = _hyp(group, "unclear cause", 0.2, insufficient=True)
+    low = _hyp(group, config.demo.texts.unclear_cause, 0.2, insufficient=True)
     return ScriptedLLM([low] * (config.ask.max_questions + 1))  # first look + one per answer
 
 

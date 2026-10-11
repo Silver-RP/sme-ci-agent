@@ -81,6 +81,12 @@ signals:                    # tên miền mà tool correlate và nhật ký máy
 default_period: ["2026-10-01", "2026-10-07"]  # khoảng ngày của bản mock (không có tool thật)
 demo:
   machine_id: M02           # máy mà kịch bản LLM giả (demo) điều tra
+  texts:                    # câu hiển thị của LLM giả (tiếng Việt)
+    unclear_cause: "Chưa rõ nguyên nhân"
+    change: "Khôi phục setpoint và thêm bước kiểm tra setpoint vào SOP"
+    rationale: "Bằng chứng 0 cho thấy tỷ lệ lỗi thay đổi theo setpoint"
+ui:
+  language: vi              # ngôn ngữ LLM dùng cho các trường hiển thị (mã ISO)
 messages:                   # câu hiện cho người dùng (template {placeholder}); mã, khoá, tên trường giữ tiếng Anh
   question_no_hypothesis: "Chưa đủ bằng chứng để đưa ra giả thuyết. Anh/chị biết thêm điều gì về bất thường này?"
   question_unsupported_hypothesis: "Giả thuyết đứng đầu ({group}: {description}) có độ tin cậy {confidence:.2f} nhưng chưa có kết quả công cụ nào hỗ trợ. Anh/chị xác nhận giúp hoặc cho biết bằng chứng đang có?"

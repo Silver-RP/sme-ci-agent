@@ -142,12 +142,31 @@ class SignalNames(_Strict):
     batch_change: str = Field(min_length=1)
 
 
+class DemoTexts(_Strict):
+    """Display strings of the scripted demo LLM (YAML key ``demo.texts:``)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    unclear_cause: str = Field(min_length=1)  # hypothesis description of the unsure first answer
+    change: str = Field(min_length=1)  # proposal.change
+    rationale: str = Field(min_length=1)  # proposal.rationale
+
+
+class UiParams(_Strict):
+    """Display settings (YAML key ``ui:``)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    language: str = Field(min_length=1)  # language the LLM writes display fields in (e.g. an ISO code)
+
+
 class DemoParams(_Strict):
     """What the scripted demo LLM investigates (YAML key ``demo:``)."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     machine_id: str = Field(min_length=1)
+    texts: DemoTexts
 
 
 class PlantParams(_Strict):
@@ -306,6 +325,7 @@ class DomainConfig(_Strict):
     signals: SignalNames
     demo: DemoParams
     messages: Messages
+    ui: UiParams
     default_period: tuple[str, str]
     actions: ActionParams = Field(default_factory=ActionParams)
     ask: AskParams = Field(default_factory=AskParams)
