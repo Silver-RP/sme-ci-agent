@@ -361,3 +361,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 77a8013. Review: .autodev/reviews/dev-02-r1.json (PASS).
 - Simulator nhị thức, `material_batches`, `sop`, sự kiện máy bình thường; 8 bảng. Anomaly A1 ≈ 9,2σ (trước ≈ 10σ). 645 pytest.
 - Non-blocking: assert M03 ở `test_correlate_explicit_hypotheses_and_empty` yếu hơn (có lý do), nên siết ở dev-03; `_setpoint_deviation` lấy max theo tham số, giữ khi sửa `correlate`.
+
+### R10b1/dev-03: DONE
+- Vòng: 1. Commit: 27538fb. Review: .autodev/reviews/dev-03-r1.json (PASS).
+- `correlate` đọc `material_batches`, `query_logs` nhận `production_log`, `post_change` sinh lại số đếm rồi dẫn xuất `kpi_log`; assert M03 đã siết. 656 pytest.
+- Non-blocking: thiếu test "không dòng kpi_log nào bị bỏ sót" ở post_change.
