@@ -1,6 +1,6 @@
 {
   "milestone": "R10b2",
-  "current_task": "dev-03",
+  "current_task": null,
   "tasks": {
     "dev-01": {
       "status": "DONE",
@@ -33,9 +33,10 @@
       "commit": "4b831d5"
     },
     "dev-06": {
-      "status": "IN_PROGRESS",
-      "round": 0,
-      "base": "4b831d5"
+      "status": "DONE",
+      "round": 1,
+      "base": "20242b1",
+      "commit": "750ba44"
     },
     "dev-07": {
       "status": "DONE",

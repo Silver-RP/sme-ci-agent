@@ -386,3 +386,33 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: cfee6d8. Review: .autodev/reviews/dev-07-r1.json (PASS).
 - `gen_data.py --out-dir` xuất 5 bảng hợp đồng, ground truth ở `<thư mục>_ground_truth.json`; test vòng tròn gen → import → `SME_DATASET` → `learning_saved`; 8 fixture sinh lại (kèm bản sao `dashboard/fixtures/examples/` và 2 test dashboard đổi giá trị mong đợi).
 - Non-blocking: vòng tròn seed 42 trùng simulator mặc định; số phiên bản fixture phụ thuộc DB dùng chung.
+
+### R10b2/dev-01: DONE
+- Vòng: 1. Commit: 573c984. Review: .autodev/reviews/dev-01-r1.json (PASS).
+- `measure` gộp tử số/mẫu số trên `production_log` (n theo đơn vị, `n_unit`), ngưỡng `measure.min_units_after` trong YAML; quay về `kpi_log` khi thiếu `production_log`.
+- Non-blocking: `payloads.md` chưa mô tả `n_unit` (dev-06 đã làm).
+
+### R10b2/dev-07: DONE
+- Vòng: 1. Commit: d410cd3, fa7ace7. Review: .autodev/reviews/dev-07-r1.json (PASS). Làm trước dev-02 vì 2 test D2 (#126) đỏ chặn verify.
+- Test tham số hoá 37 bộ D2 (khớp README, không sửa validator); H-33 (`revision_count` đặt lại sau halt); H-39 (không còn `claude-` trong `backend/`, `LLM_NO_EFFORT_MODELS` qua env); bỏ `fix_addresses_cause` (3 test xoá, có `allow-test-change`), `M02` trong `fake_metrics.py`. Fixture trùng bộ D2: không có.
+- Lưu ý: `.env` thật cần `LLM_NO_EFFORT_MODELS=claude-haiku-4-5` nếu giữ Haiku (việc của leader).
+
+### R10b2/dev-02: DONE
+- Vòng: 1. Commit: e65035c. Review: .autodev/reviews/dev-02-r1.json (PASS).
+- `detect_anomalies(as_of=t)` và `replay_detect` (thời điểm phát hiện đầu tiên); seed 42: A1, A2 phát hiện sau 1 ca. `detect.max_detect_delay_shifts` trong YAML.
+
+### R10b2/dev-03: DONE
+- Vòng: 2. Commit: 49d04d7, a2d82e4. Review: .autodev/reviews/dev-03-r1.json (FAIL), dev-03-r2.json (PASS).
+- Run chọn anomaly chưa có `learning_saved`; Investigate nhận bài học cùng KPI (`backend/agent/lessons.py`, `investigate.max_lessons`). Vòng 1 FAIL: smoke đỏ (run_scenario, demo.sh --check) khi DB bền đã có bài học; test suite che lỗi bằng conftest autouse. Vòng 2: script LLM giả và demo.sh đặt `SME_SKIP_HANDLED=0`, thêm test subprocess chạy 2 lần.
+
+### R10b2/dev-04: DONE
+- Vòng: 1. Commit: 8a40bd7. Review: .autodev/reviews/dev-04-r1.json (PASS).
+- `scripts/metrics_report.py`: phát lại theo ca, nhánh có agent (graph thật, DB tạm) vs không agent (độ trễ giả định), giả định có `source` + độ nhạy. Seed 42: MTTD 8/72 giờ, MTTR 24/44, tái diễn 0,25/0,5, `period_rate` 0,0204/0,0208.
+
+### R10b2/dev-05: DONE
+- Vòng: 1. Commit: 4b831d5. Review: .autodev/reviews/dev-05-r1.json (PASS).
+- `eval_rootcause.py --until learn`: `passed_rate` 5 seed = 1,0 (kịch bản `right`); đối chứng `action` sai = 0.
+
+### R10b2/dev-06: DONE
+- Vòng: 1. Commit: 750ba44. Review: .autodev/reviews/dev-06-r1.json (PASS).
+- `/metrics` đọc `data/reports/metrics_<dataset>_seed<seed>.json`, khác dataset/seed hoặc thiếu → `available:false` kèm `reason`; probe thật khớp báo cáo.
