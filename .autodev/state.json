@@ -9,8 +9,10 @@
       "commit": "be13f18"
     },
     "dev-02": {
-      "status": "TODO",
-      "round": 0
+      "status": "DONE",
+      "round": 1,
+      "base": "810876f",
+      "commit": "aa674aa"
     },
     "dev-03": {
       "status": "TODO",
