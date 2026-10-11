@@ -9,7 +9,6 @@ modified, and the result is a pure function of its inputs (so Measure can rebuil
 
 from __future__ import annotations
 
-import re
 import zlib
 from collections.abc import Mapping
 from typing import Any
@@ -22,12 +21,6 @@ from backend.sandbox.injector import load_scenario
 from backend.sandbox.kpi_derive import derive_kpi_log
 from backend.sandbox.simulator import DEFAULT_SCENARIO_PATH, expected_kpi_value
 
-_GENERIC_WORDS = {"wrong", "incorrect", "bad", "unexpected"}
-
-
-def _norm(text: str) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", str(text).lower()).strip()
-
 
 def mechanism_causes(scenario: Mapping[str, Any] | None = None) -> list[str]:
     """Root causes the sandbox models as a fixable mechanism (from the scenario file, not visible to the agent)."""
@@ -39,24 +32,6 @@ def mechanism_causes(scenario: Mapping[str, Any] | None = None) -> list[str]:
             if a.get("ground_truth", {}).get("root_cause")
         }
     )
-
-
-def fix_addresses_cause(hypothesis: Mapping[str, Any] | None, scenario: Mapping[str, Any] | None = None) -> bool:
-    """True when the hypothesis the change is based on names the modelled cause (e.g. a setpoint problem).
-
-    Only the hypothesis text counts; the LLM's own claims about direction or KPI are never used.
-    """
-    text = _norm((hypothesis or {}).get("description", ""))
-    if not text:
-        return False
-    compact = text.replace(" ", "")  # "set point" / "set-point" / "setpoints" still contain "setpoint"
-    for cause in mechanism_causes(scenario):
-        if _norm(cause) in text:
-            return True
-        words = [w for w in _norm(cause).split() if w not in _GENERIC_WORDS]
-        if words and all(w in compact for w in words):
-            return True
-    return False
 
 
 def action_level(

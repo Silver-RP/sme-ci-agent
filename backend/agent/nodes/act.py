@@ -702,6 +702,7 @@ def make_wait_halt_node(config: DomainConfig, ctx: ToolContext | None = None):
         return {
             "approval": None, "status": "", "events": emit.events, "evidence": evidence,
             "question_count": 0, "rejection_count": 0, "rollback_count": 0, "measure_wait_count": 0,
+            "revision_count": 0,  # H-33: the person chose to continue, so revisions restart too
             "evidence_gap": False, "proposal": None, "measurement": None,
             # "applied" is kept on purpose (H-19): the SOP in force stays known while investigating again
         }

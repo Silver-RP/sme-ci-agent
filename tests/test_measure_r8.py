@@ -11,7 +11,7 @@ from backend.agent.nodes.act import make_act_node, make_measure_node, resolve_ch
 from backend.agent.state import new_state
 from backend.db.models import LearningEntry
 from backend.domain_config import MeasureParams
-from backend.sandbox.post_change import build_post_change_tables, fix_addresses_cause
+from backend.sandbox.post_change import build_post_change_tables
 from tests.test_act import (
     CFG,
     CHANGE,
@@ -71,14 +71,6 @@ def test_fix_for_the_wrong_cause_does_not_pass(db_session):
     assert m["passed"] is False and m["after"] > 0.04
     assert graph.get_state(c).next == ("wait_rollback",)
     assert "learning_saved" not in types(out)
-
-
-def test_fix_addresses_cause_uses_hypothesis_text_only():
-    assert fix_addresses_cause({"description": "wrong_setpoint"})
-    assert fix_addresses_cause({"description": "Operator set the zone 3 setpoint to 195C"})
-    assert not fix_addresses_cause({"description": "calibration drift"})
-    assert not fix_addresses_cause({})
-    assert not fix_addresses_cause(None)
 
 
 def test_same_inputs_give_same_post_change_data():

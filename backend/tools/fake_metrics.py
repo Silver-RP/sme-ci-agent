@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-_FIXED_BREAKDOWN = {"machine": "M02", "shift": "night"}
+_FIXED_BREAKDOWN = {"machine": "mock-machine", "shift": "mock-shift"}  # neutral placeholders, not tied to the sandbox data
 
 
 def fetch_kpi_breakdown(kpi: str, start: str, end: str) -> dict[str, Any]:
