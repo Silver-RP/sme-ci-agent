@@ -1,6 +1,6 @@
 {
   "updated": "2026-10-11",
-  "source": "audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120",
+  "source": "audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130",
   "milestones": {
     "project": [
       {
@@ -130,6 +130,14 @@
         "cost_usd": 3.63,
         "minutes": 161,
         "note": "API cho dashboard #110, #112, #113, #115; question_id bắt buộc ở /answer; /kpi/series 422 với múi giờ/tham số rỗng; đóng H-49, H-57; lượt 1 chưa đạt tiêu chí 3 -> dev-05 (b); ước tính 100–130 phút, 4–6 USD (B3 phút 1,24, USD ~0,91); cost chỉ tính worker"
+      },
+      {
+        "id": "R10b1",
+        "status": "merged",
+        "pr": 130,
+        "cost_usd": 9.1,
+        "minutes": 267,
+        "note": "dữ liệu theo hợp đồng D1: production_log số đếm, material_batches, sop, simulator nhị thức, kpi_log dẫn xuất, import_data.py + V01–V09, SME_DATASET; 31/31 bộ D2 đúng mã; ước tính 175–240 phút, 7–10 USD (B3 phút 1,11, USD ~1,01); 8 vòng review; cost chỉ tính worker"
       }
     ],
     "plugin": [
@@ -437,6 +445,10 @@
   "decisions": [
     {
       "date": "2026-10-11",
+      "text": "R10b1 merge #130: 4/4 tiêu chí cấp mốc đạt (supervisor tự kiểm); 31/31 bộ D2 đúng mã; nhập seed 7 thì app đọc đúng bảng nhập; A1 ≈ 9,6σ. Không đóng H-xx. 7 đề xuất (c) của worker chờ leader/vai A. Fixture + test dashboard đổi số mong đợi: báo vai D."
+    },
+    {
+      "date": "2026-10-11",
       "text": "Đóng phiên chiều: hết tạm dừng: UI vai D (#116–#118) và D1, D2 vai A (#122, #123) merge sau khi Claude kiểm phía backend; leader merge D1 không chờ vai Q. API vai D: #110 có múi giờ -> 422 (không quy đổi); #114 /config/domain để sau R10b1; #111 vào R11a. Plan R10b1 đối chiếu D1 (#124), chạy R10b1 R10b2 với audit 4 sau R10b2 (20–26 USD). Không merge PR draft của thành viên. Guard chặn mọi lệnh xoá: leader tự chạy lệnh Claude đưa."
     },
     {
@@ -615,7 +627,7 @@
       "date": "11/10",
       "goal": "Dữ liệu theo hợp đồng D1 đã chốt #122 (production_log, material_batches, sop, simulator nhị thức, import CSV + V01–V09, dùng D2 #123); plan #124",
       "needs_team": false,
-      "status": "đang chạy từ 13:44 11/10"
+      "status": "merged #130"
     },
     {
       "id": "R10b2",

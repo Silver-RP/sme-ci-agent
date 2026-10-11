@@ -16,7 +16,7 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao" hay "là gì". Cuối mỗi báo cáo có câu hỏi "làm gì tiếp": danh sách **đánh số kèm nội dung**, leader trả lời bằng số.
 - **Đo bằng số, không ước lượng:** % đạt 3 điều tính theo `docs/eval/criteria.md` (A1–A8, luật chỉ số nhiều phần); chỉ số plugin B1–B6 bằng `python3 .autodev/metrics.py`.
 
-## Bước tiếp theo (cập nhật 2026-10-11 chiều, đóng phiên; runner R10b1 → R10b2 đang chạy)
+## Bước tiếp theo (cập nhật 2026-10-11 tối: R10b1 merge #130; runner chuyển sang R10b2)
 
 ### Bối cảnh
 - **Team 4 người** (`docs/PLAN.md` mục 4). Ranh giới: auto-dev không làm thay việc của vai A/D/Q, kể cả khi không đụng file của họ (**trùng việc** khác **trùng file**).
@@ -41,7 +41,12 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Dọn nhánh:** leader duyệt và **tự chạy** (guard chặn mọi lệnh xoá của Claude): xoá 56 nhánh remote + 89 local đã merge; xoá worktree review.
 - **Hạn mức** (leader dán 13:45 11/10): 5 giờ 1%, tuần 71% (reset 13:00 14/10). Ước tính sau R10b + audit 4: tuần ~84–87%.
 
-### Runner đang chạy (khởi động 13:44 11/10)
+### R10b1 ✅ merge #130 (supervisor `--review-only`, tối 11/10)
+- Worker 7/7 DONE, 8 vòng (dev-04 2 vòng). Supervisor tự chạy: verify sạch; 839 passed + 1 xfail; smoke 4/4; `demo.sh --fresh-db --check` → `CHECK PASSED`; A1 bắt ở ca đầu, FP1 im, A1 ≈ 9,6σ; 31/31 bộ D2 đúng mã; vòng nhập **seed 7** → app đọc đúng bảng nhập; dataset thiếu `_COMPLETE` → lỗi rõ. **4/4 tiêu chí cấp mốc đạt.** Bảng + ước tính ↔ thực tế + pre-mortem: `PROGRESS.md` mục R10b1. 267 phút / 175–240 (B3 1,11); 9,10 + ~1,04 USD / 7–10; không đóng H-xx.
+- **Việc mở:** 7 đề xuất (c) trong PR #130 chờ leader/vai A (đáng làm sớm: fixture phụ thuộc DB dùng chung; `data_report.py`, `eval_rootcause.py`, `export_fixtures.py` chưa đọc `SME_DATASET`). **Báo vai D:** fixture sinh lại, `dashboard/tests/stages.test.tsx`, `ux.test.tsx` đổi số mong đợi. Nhỏ: thông báo "Import it again" của dataset dở dang mâu thuẫn luật không ghi đè tên. #114 `/config/domain` nay mở được (`plant.*` đã ở domain config).
+- **Plugin:** `test_guard` có hiệu lực (4 commit khai `allow-test-change`, reviewer xét); file review **không có `risk_checks`** (reviewer.md bước 8 chưa được tuân) → xem ở audit 4.
+
+### Runner (khởi động 13:44 11/10; R10b1 xong, R10b2 kế tiếp)
 - Lệnh: `.autodev/autodev-run.sh --audit-every 3 R10b1 R10b2`. `audit.json` có `pending = [R10d]`, nên **audit 4 chạy sau R10b2** và phủ R10d, R10b1, R10b2.
 - Vòng chờ nền của phiên cũ mất khi đóng phiên. Phiên sau: `tail -15 .autodev/runs/run.log`, `ls -t .autodev/runs/STOPPED-* | head -1`, `gh pr list`. Gặp STOP thì đọc báo cáo trong PR mốc trước khi chạy tiếp.
 - Ước tính: ~7–8 giờ worker + supervisor + audit, tức xong khoảng 22:00–23:00 11/10.
@@ -91,9 +96,10 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Plugin:**
   - P1–P3, P5, P6 xong; P4 đang làm (chạy tiếp mốc có PR mở, kiểm hạn mức trước mốc);
   - P7–P9 chưa làm.
-  - Chi phí 11/10: R10d ~4,70 USD (2 lượt). R10b đang chạy.
-  - `test_guard` và `risk_checks` **chưa thấy trong mốc thật**: R10d có chạy nhưng chưa kiểm; kiểm ở báo cáo R10b1.
-- **Runner:** đang chạy `R10b1 R10b2` (`--audit-every 3`), từ 13:44 11/10.
+  - Chi phí 11/10: R10d ~4,70 USD (2 lượt); R10b1 9,10 + ~1,04 USD.
+  - `test_guard` chạy trong R10b1 (4 commit `allow-test-change`); `risk_checks` **không có** trong file review R10b1.
+- **Dự án sau R10b1:** 839 passed + 1 xfail trên main.
+- **Runner:** `R10b1 R10b2` (`--audit-every 3`), từ 13:44 11/10; R10b1 merge #130, tiếp R10b2.
 - **Demo:** tắt. Bật bằng `scripts/demo.sh`; tắt bằng `lsof -ti tcp:8000,3000 -sTCP:LISTEN | xargs kill`. Phải tắt khi runner chạy (smoke cần cổng 8000/3000).
 - **PR mở:** không có (runner sẽ mở PR mốc R10b1, R10b2 và PR hồ sơ).
 - **Worktree:** chính, `-autodev` (worker), `-supervisor`, `-bench` (cố định), `-d2` (chờ leader xoá).
