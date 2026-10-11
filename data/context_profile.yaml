@@ -64,6 +64,12 @@ loop:
   max_total_rollbacks: 4    # tổng rollback của cả run (không đặt lại); vượt thì chỉ còn lựa chọn kết thúc
   max_revisions: 3          # số lần người chọn revise tối đa; thêm một lần nữa thì dừng chờ người
   max_retries: 3            # số lần /retry liên tiếp thất bại tối đa mỗi run; vượt thì 409, retryable=false
+assumptions:                # tham số dữ liệu không sinh ra; metrics_report in danh sách này và chạy độ nhạy với `alternatives`
+  # source để trống = "giả định, chờ D3" (docs/research/reflow_domain.md của vai A)
+  manual_detect_delay_hours: {value: 72, unit: hours, source: "", alternatives: [24, 168]}  # không agent: từ start tới lúc người phát hiện
+  manual_fix_delay_hours: {value: 24, unit: hours, source: "", alternatives: [8, 72]}       # không agent: từ lúc phát hiện tới lúc sửa có hiệu lực
+  approval_delay_hours: {value: 4, unit: hours, source: "", alternatives: [1, 24]}          # có agent: từ lúc agent đề xuất tới lúc người duyệt, thay đổi có hiệu lực
+  sop_prevention_efficacy: {value: 0.5, unit: ratio, source: "", alternatives: [0.25, 0.75]}  # có agent: phần tái diễn được SOP mới chặn lại
 approvers:                  # người được duyệt/từ chối (allow-list, tên synthetic)
   - alice                   # trưởng ca
   - bob                     # QA

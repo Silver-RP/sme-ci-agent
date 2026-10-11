@@ -213,8 +213,27 @@ class ValidateParams(_Strict):
         return v
 
 
+UNSOURCED = "giả định, chờ D3"
+
+
+class Assumption(_Strict):
+    """A parameter the data does not produce (YAML key ``assumptions:``). ``alternatives`` feed the sensitivity table."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    value: float
+    unit: str = ""
+    source: str = ""  # empty = not sourced yet; shown as UNSOURCED
+    alternatives: list[float] = Field(default_factory=list)  # other values tried for sensitivity (two)
+
+    @property
+    def source_label(self) -> str:
+        return self.source.strip() or UNSOURCED
+
+
 class DomainConfig(_Strict):
     domain: str = Field(min_length=1)
+    assumptions: dict[str, Assumption] = Field(default_factory=dict)
     plant: PlantParams
     machine_log: MachineLogParams = Field(default_factory=MachineLogParams)
     validate_: ValidateParams = Field(default_factory=ValidateParams, alias="validate")
