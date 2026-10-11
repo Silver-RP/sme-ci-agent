@@ -424,3 +424,7 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 ### R10e/dev-02: DONE
 - Vòng: 1. Commit: aa674aa. Review: .autodev/reviews/R10e-dev-02-r1.json (PASS).
 - `ui.language: vi` + `demo.texts` trong config; system prompt có chỉ dẫn ngôn ngữ; DemoLLM lấy chuỗi từ config. Phần LLM thật chỉ kiểm khi leader cho chạy. 976 test pass.
+
+### R10e/dev-03: DONE
+- Vòng: 1. Commit: 2e7ec50. Review: .autodev/reviews/R10e-dev-03-r1.json (PASS).
+- Thêm `measure.source_may_grow` (config); sandbox hết dữ liệu thì Measure hỏi một lần, chỉ `finish`. 6 test cũ thêm cfg GROWING (cờ allow-test-change, assert giữ nguyên). Chưa có fixture cho dạng halt `insufficient_evidence` options [finish] (đề xuất (a), việc vai D). 982 test pass.

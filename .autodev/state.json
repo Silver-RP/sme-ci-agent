@@ -15,8 +15,10 @@
       "commit": "aa674aa"
     },
     "dev-03": {
-      "status": "TODO",
-      "round": 0
+      "status": "DONE",
+      "round": 1,
+      "base": "63c5eb2",
+      "commit": "2e7ec50"
     },
     "dev-04": {
       "status": "TODO",
