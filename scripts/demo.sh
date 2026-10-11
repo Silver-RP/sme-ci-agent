@@ -38,6 +38,8 @@ if [ "${SME_LLM:-scripted}" = "real" ] && [ "$CHECK" = "0" ]; then
   if [ -f .env ]; then set -a; . ./.env; set +a; fi   # loaded by the shell only; this script never prints it
 else
   export SME_LLM=scripted
+  # The scripted LLM is written for the first detected anomaly; keep repeat demos/checks on one DB runnable.
+  export SME_SKIP_HANDLED="${SME_SKIP_HANDLED:-0}"
 fi
 
 export DATABASE_URL="${DATABASE_URL:-postgresql+psycopg://${POSTGRES_USER:-sme}:${POSTGRES_PASSWORD:-sme}@localhost:${DB_PORT}/${POSTGRES_DB:-sme_ci}}"

@@ -16,6 +16,7 @@ allow-list, default: the first one). Needs Postgres (DATABASE_URL) with migratio
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import uuid
 from collections import Counter
@@ -104,6 +105,9 @@ def main(argv: list[str] | None = None) -> int:
         if problem:
             print(problem, file=sys.stderr)
             return 2
+    if args.llm == "scripted":
+        # The scripted LLM is written for the first detected anomaly: repeat runs on one DB must not skip it.
+        os.environ.setdefault("SME_SKIP_HANDLED", "0")
     config = load_domain_config()
     llm: LLM = scripted_demo_llm(config, then=SEND_BACK_SCRIPT[args.on_proposal]) if args.llm == "scripted" else AnthropicLLM()
     with Session(make_engine()) as session:
