@@ -16,7 +16,7 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao" hay "là gì". Cuối mỗi báo cáo có câu hỏi "làm gì tiếp": danh sách **đánh số kèm nội dung**, leader trả lời bằng số.
 - **Đo bằng số, không ước lượng:** % đạt 3 điều tính theo `docs/eval/criteria.md` (A1–A8, luật chỉ số nhiều phần); chỉ số plugin B1–B6 bằng `python3 .autodev/metrics.py`.
 
-## Bước tiếp theo (cập nhật 2026-10-11 tối: R10b1 merge #130; runner chuyển sang R10b2)
+## Bước tiếp theo (cập nhật 2026-10-12 sáng: R10b2 merge #132; runner chuyển sang audit 4)
 
 ### Bối cảnh
 - **Team 4 người** (`docs/PLAN.md` mục 4). Ranh giới: auto-dev không làm thay việc của vai A/D/Q, kể cả khi không đụng file của họ (**trùng việc** khác **trùng file**).
@@ -46,7 +46,13 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Việc mở:** 7 đề xuất (c) trong PR #130 chờ leader/vai A (đáng làm sớm: fixture phụ thuộc DB dùng chung; `data_report.py`, `eval_rootcause.py`, `export_fixtures.py` chưa đọc `SME_DATASET`). **Báo vai D:** fixture sinh lại, `dashboard/tests/stages.test.tsx`, `ux.test.tsx` đổi số mong đợi. Nhỏ: thông báo "Import it again" của dataset dở dang mâu thuẫn luật không ghi đè tên. #114 `/config/domain` nay mở được (`plant.*` đã ở domain config).
 - **Plugin:** `test_guard` có hiệu lực (4 commit khai `allow-test-change`, reviewer xét); file review **không có `risk_checks`** (reviewer.md bước 8 chưa được tuân) → xem ở audit 4.
 
-### Runner (khởi động 13:44 11/10; R10b1 xong, R10b2 kế tiếp)
+### R10b2 ✅ merge #132 (supervisor `--review-only`, 12/10 sáng)
+- Worker 7/7 DONE, 8 vòng (dev-03 2 vòng). Supervisor tự chạy: verify sạch; **936 passed**; smoke 4/4; `metrics_report.py --months 6 --seed 42` hai lần cùng số; A4 `right` 5/5. **4/4 tiêu chí cấp mốc đạt.** Bảng + ước tính ↔ thực tế + pre-mortem: `PROGRESS.md` mục R10b2. 350 phút / 195–255 (B3 1,37); 8,76 + ~1,11 USD / 8,5–10,5.
+- Đóng **H-11, H-33, H-39** (H-33, H-39 đỏ trên main qua `git archive`). Bảng audit 3 sửa cùng PR hồ sơ (bài học #125). Supervisor tick TASKS.md T-042, R10b1, R10b2 trên nhánh mốc trước merge (worker quên).
+- **% đạt 0 / 67 / 100.** Điều 3 = 100 theo công thức, nhưng 4 giả định đều "chờ D3"; MTTD không agent = giả định, tái diễn theo cấu tạo, lợi thế tỷ lệ lỗi rất nhỏ (0,0204 / 0,0208). Audit 4 xét; khi báo pitch không nói quá.
+- **Việc mở:** 6 đề xuất (c) trong PR #132 (đáng làm sớm: `eval_rootcause.py` mặc định crash `ScriptExhaustedError` khi DB chính đã có `learning_saved`; `/metrics` chưa kiểm `months`, `mttd_mttr` gộp một số → báo vai D). Pre-mortem 3 (thời gian tới đề xuất ở A2 có/không bài học) chưa đo → R11a. **Leader:** `.env` thật đặt `LLM_NO_EFFORT_MODELS` nếu dùng Haiku; `/metrics` có số chỉ sau khi chạy `metrics_report.py` một lần.
+
+### Runner (khởi động 13:44 11/10; R10b1, R10b2 xong; audit 4 kế tiếp)
 - Lệnh: `.autodev/autodev-run.sh --audit-every 3 R10b1 R10b2`. `audit.json` có `pending = [R10d]`, nên **audit 4 chạy sau R10b2** và phủ R10d, R10b1, R10b2.
 - Vòng chờ nền của phiên cũ mất khi đóng phiên. Phiên sau: `tail -15 .autodev/runs/run.log`, `ls -t .autodev/runs/STOPPED-* | head -1`, `gh pr list`. Gặp STOP thì đọc báo cáo trong PR mốc trước khi chạy tiếp.
 - Ước tính: ~7–8 giờ worker + supervisor + audit, tức xong khoảng 22:00–23:00 11/10.
@@ -57,7 +63,7 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
    - (b) Xoá worktree `../sme-ci-agent-d2` (tạo để review D2): leader tự chạy `git worktree remove ../sme-ci-agent-d2`.
    - (c) **Để sau**, leader tự làm khi cần: đo nền LLM thật (`eval_rootcause.py --llm real --seeds 3`, ≤ 2 USD).
    - Không nhắc trong báo cáo: nhắc Bảo/Daivon, giờ kickoff, ROADMAP nghiên cứu (bộ nhớ `skip-team-reminders`).
-2. **Khi runner xong:** kiểm R10b1, R10b2 đã merge và PR hồ sơ đã merge; đọc audit 4 (`docs/audits/2026-10-1x.md`); cập nhật % đạt (A4, A7) và lỗ hổng theo audit; xem reviewer có trả `risk_checks` và `test_guard` có chặn nhầm không (lần đầu chạy trong mốc thật).
+2. **Khi runner xong (audit 4):** R10b1 (#130), R10b2 (#132) đã merge; kiểm PR hồ sơ R10b2 đã merge; đọc audit 4 (`docs/audits/2026-10-1x.md`); cập nhật % đạt (A4, A7) và lỗ hổng theo audit; xem reviewer có trả `risk_checks` và `test_guard` có chặn nhầm không (lần đầu chạy trong mốc thật).
 3. **Cổng 13/10:** `criteria.md` mục 3; leader duyệt tag v0.1-e2e.
 4. **#114 `GET /config/domain`:** sau R10b1 (nguồn `plant.*` trong domain config). Gộp vào R11a hoặc mốc nhỏ; trả lời Finn ở #114.
 5. **Sửa plugin (giữa hai mốc, sau R10b; P4):**
