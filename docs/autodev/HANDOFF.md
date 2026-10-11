@@ -16,6 +16,26 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao" hay "là gì". Cuối mỗi báo cáo có câu hỏi "làm gì tiếp": danh sách **đánh số kèm nội dung**, leader trả lời bằng số.
 - **Đo bằng số, không ước lượng:** % đạt 3 điều tính theo `docs/eval/criteria.md` (A1–A8, luật chỉ số nhiều phần); chỉ số plugin B1–B6 bằng `python3 .autodev/metrics.py`.
 
+## R10d ✅ MERGE #120 (2026-10-11, supervisor `--review-only` lần 2)
+- Worker chạy lại chỉ dev-05: `payloads.md` thêm quy tắc múi giờ `/kpi/series` + test tài liệu (`test_payloads_doc_kpi_series_row_states_time_zone_rule_and_422`). Supervisor tự chạy: verify sạch; 609 passed + 1 xfail; smoke 4/4; test tài liệu đỏ với `payloads.md` của main, xanh trên nhánh; `TestClient`: `+09:00`/`Z` → 422 nêu tên tham số, rỗng → 422, không múi giờ → 200. **Cả 3 tiêu chí cấp mốc đạt.** Bảng đầy đủ + ước tính ↔ thực tế: `PROGRESS.md` mục R10d.
+- Đóng **H-49, H-57** (PROJECT_STATE, `state.json`). 161 phút / 100–130 (B3 1,24); ~3,63 USD / 4–6; B4 = 1 (lượt 1 trả về).
+- **Việc mở:** chạy `export_fixtures.py` làm mới `docs/schema/examples/` và `dashboard/fixtures/examples/` (ví dụ `/answer` cũ thiếu `question_id`); việc nhỏ, có thể đưa vào R10b1. Non-blocking từ review: `rollback_apply` chưa có test riêng cho `decided_by`.
+- **Mốc kế tiếp:** R10b1 (chờ D1 #66; PR #122 của Bảo đang mở → đối chiếu `plan/R10b1.md`, `R10b2.md` theo bảng "Khi team xong" dưới đây).
+
+### Lượt duyệt 1 (giữ để tham khảo): CHƯA MERGE
+- **PR #120** (`milestone/R10d`): worker 4/4 task PASS vòng 1, ~104 phút (ước 100–130). Supervisor tự kiểm:
+
+| Tiêu chí cấp mốc | Lệnh / test supervisor tự chạy | Kết quả |
+|---|---|---|
+| 1. verify, smoke, demo | `python3 .autodev/verify.py`; `uv run pytest -q`; `verify.py --smoke`; `scripts/demo.sh --fresh-db --check` | sạch; 608 passed + 1 xfail; smoke 4/4 ok; `CHECK PASSED` |
+| 2. #110, #112, #113 không tái hiện | 4 file test mới chạy trên code `origin/main` | 19/21 đỏ trên main (đúng), xanh trên nhánh |
+| 3. `payloads.md` đủ 4 mục | `grep` `payloads.md` | `/learnings`, `question_id` bắt buộc, `params` object: có. **Quy tắc múi giờ `/kpi/series`: KHÔNG có** (dòng `GET /kpi/series` không đổi) → **chưa đạt** |
+
+- Ca biên tự thử (đều đúng): `/kpi/series` chỉ ngày `2026-01-01` → 200, chuỗi rác → 422 (không 500); `/learnings?limit=500` → 200, `limit=abc` → 422, DB rỗng → `[]`; `/answer` với `question_id: ""` → 422.
+- Ghi chú worker "dashboard gửi `/answer` không `question_id`" là báo động giả: `dashboard/lib/api.ts` chỉ bỏ trường khi `questionId` null (backend cũ); luồng thật gửi đủ từ #118.
+- **Quyết định:** không merge; thêm **dev-05 (b)** vào `plan/R10d.md` trên nhánh mốc (commit `f0f74e6`): bổ sung quy tắc múi giờ `/kpi/series` vào `payloads.md` kèm test tài liệu. Không đổi tiêu chí hay phạm vi.
+- Đã làm ở lượt 2 (mục trên).
+
 ## Bước tiếp theo (cập nhật 2026-10-11 rạng sáng, đóng phiên)
 
 ### Bối cảnh
