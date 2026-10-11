@@ -1,6 +1,6 @@
 {
   "updated": "2026-10-12",
-  "source": "audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132",
+  "source": "audit 2026-10-12 (sau R10d, R10b1, R10b2) + audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132",
   "milestones": {
     "project": [
       {
@@ -224,7 +224,7 @@
       "id": 3,
       "text": "Đo 3 chỉ số trước/sau trên 6 tháng dữ liệu mô phỏng: defect %, MTTD/MTTR, tỷ lệ tái diễn",
       "percent": 100,
-      "evidence": "R10b2: scripts/metrics_report.py --months 6 --seed 42 (LLM giả, supervisor chạy 2 lần cùng số; seed 7 cũng đủ): có agent / không agent: tỷ lệ lỗi period_rate 0,0204 / 0,0208; MTTD 8 / 72 giờ, MTTR 24 / 44 giờ; tái diễn 0,25 / 0,5 -> cả 3 phần A7 tốt hơn đối chứng -> 100 theo công thức. CẢNH BÁO: 4 giả định đều 'giả định, chờ D3'; MTTD không agent = giả định, tái diễn = (1 - sop_prevention_efficacy) theo cấu tạo; lợi thế tỷ lệ lỗi rất nhỏ. Audit 4 xét lại",
+      "evidence": "R10b2: scripts/metrics_report.py --months 6 --seed 42 (LLM giả, supervisor chạy 2 lần cùng số; seed 7 cũng đủ): có agent / không agent: tỷ lệ lỗi period_rate 0,0204 / 0,0208; MTTD 8 / 72 giờ, MTTR 24 / 44 giờ; tái diễn 0,25 / 0,5 -> cả 3 phần A7 tốt hơn đối chứng -> 100 theo công thức. CẢNH BÁO: 4 giả định đều 'giả định, chờ D3'; MTTD không agent = giả định, tái diễn = (1 - sop_prevention_efficacy) theo cấu tạo; lợi thế tỷ lệ lỗi rất nhỏ. Audit 4 xét lại | Audit 4 (2026-10-12): đề nghị <= 67 (33 nếu đọc chặt): tái diễn đạt theo cấu tạo, độ nhạy chung đảo chiều (H-64); leader chốt cách tính.",
       "missing": "Nguồn D3 cho 4 giả định; tái diễn theo nguyên nhân + kịch bản A2 khác A1 (R11a); T-043 (vai D); A7 với LLM thật",
       "estimate_old": 5,
       "metrics": [
@@ -369,12 +369,6 @@
       "audit": "2026-10-09_2"
     },
     {
-      "id": "H-35",
-      "severity": "vừa",
-      "summary": "UI chưa theo R9: Retry khi retryable false, halt options, thẻ duyệt thiếu action (team frontend)",
-      "audit": "2026-10-09_2"
-    },
-    {
       "id": "H-36",
       "severity": "vừa",
       "summary": "Điều tra lại sau rollback không biết action đã thất bại",
@@ -385,18 +379,6 @@
       "severity": "thấp",
       "summary": "docs/schema/examples không qua test dashboard; payloads.md sai chỗ; SSE after=-1",
       "audit": "2026-10-09_2"
-    },
-    {
-      "id": "H-44",
-      "severity": "vừa",
-      "summary": "Dashboard không hiện thẻ đề xuất khi pending approval (LLM thật, payload R9i)",
-      "audit": "2026-10-09_2"
-    },
-    {
-      "id": "H-46",
-      "severity": "cao",
-      "summary": "Dashboard đóng SSE ở run_finished lỗi đầu tiên; sau Retry timeline chết (team frontend)",
-      "audit": "2026-10-10"
     },
     {
       "id": "H-52",
@@ -433,9 +415,103 @@
       "severity": "thấp",
       "summary": "Gom: cache Run nhiều tiến trình, /export sau retry, /audit không giới hạn, NaN trong Measure, v.v.",
       "audit": "2026-10-10"
+    },
+    {
+      "id": "H-60",
+      "severity": "vừa",
+      "summary": "POST /runs kiểm change_time theo anomaly đầu, graph chọn anomaly chưa xử lý (H-48 tái phát)",
+      "audit": "2026-10-12"
+    },
+    {
+      "id": "H-61",
+      "severity": "vừa",
+      "summary": "SME_DATASET: Measure vẫn dùng dữ liệu sau thay đổi mô phỏng từ scenario1.yaml",
+      "audit": "2026-10-12"
+    },
+    {
+      "id": "H-62",
+      "severity": "vừa",
+      "summary": "V09 (PII) chỉ quét tên cột, không quét giá trị note/step_text",
+      "audit": "2026-10-12"
+    },
+    {
+      "id": "H-63",
+      "severity": "vừa",
+      "summary": "Kết quả tool rỗng (no_data, count:0) vẫn tính là bằng chứng, không hỏi người",
+      "audit": "2026-10-12"
+    },
+    {
+      "id": "H-64",
+      "severity": "cao",
+      "summary": "Điều 3: đối chứng dựa 4 giả định chưa có nguồn D3; tái diễn đạt theo cấu tạo; độ nhạy chung đảo chiều",
+      "audit": "2026-10-12"
+    },
+    {
+      "id": "H-65",
+      "severity": "vừa",
+      "summary": "/metrics: bỏ llm/limits, NaN -> 500, months không kiểm, báo cáo gitignore nên demo máy mới trống",
+      "audit": "2026-10-12"
+    },
+    {
+      "id": "H-66",
+      "severity": "vừa",
+      "summary": "Ví dụ docs/schema/examples và payloads.md cũ so với code (thiếu n_unit, action)",
+      "audit": "2026-10-12"
+    },
+    {
+      "id": "H-67",
+      "severity": "vừa",
+      "summary": "UI (team frontend): thẻ Measure đơn vị và ngưỡng sai",
+      "audit": "2026-10-12"
+    },
+    {
+      "id": "H-68",
+      "severity": "vừa",
+      "summary": "UI (team frontend): kẹt ở màn lỗi sau Close",
+      "audit": "2026-10-12"
+    },
+    {
+      "id": "H-69",
+      "severity": "vừa",
+      "summary": "UI (team frontend): tải lại run 404 kẹt ở thinking",
+      "audit": "2026-10-12"
+    },
+    {
+      "id": "H-70",
+      "severity": "vừa",
+      "summary": "Khoá lesson không có dataset/seed; no_change tính là đã xử lý",
+      "audit": "2026-10-12"
+    },
+    {
+      "id": "H-71",
+      "severity": "thấp",
+      "summary": "Learn không commit trong node (cùng khuôn H-45)",
+      "audit": "2026-10-12"
+    },
+    {
+      "id": "H-72",
+      "severity": "thấp",
+      "summary": "Learn chỉ chạy khi pass; rollback không để lại lesson",
+      "audit": "2026-10-12"
+    },
+    {
+      "id": "H-73",
+      "severity": "thấp",
+      "summary": "ExpectedKpi.target không chặn NaN/Inf",
+      "audit": "2026-10-12"
+    },
+    {
+      "id": "H-74",
+      "severity": "thấp",
+      "summary": "Gom nhỏ: eval nuốt lỗi, repeat không đối xứng, SSE after=-1, answerRun null, demo.sh...",
+      "audit": "2026-10-12"
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-12",
+      "text": "Audit 4 (sau R10d, R10b1, R10b2): 15 lỗ hổng mới H-60..H-74 (1 cao: H-64), đóng H-35, H-44, H-46 (auditor chạy vitest, 49 passed), còn 31 mở. Điều 3 đề nghị hạ 100 -> <= 67 (33 nếu đọc chặt). % đạt công thức giữ 0/67/100 đến khi leader chốt."
+    },
     {
       "date": "2026-10-12",
       "text": "R10b2 merge #132: 4/4 tiêu chí cấp mốc đạt (supervisor tự kiểm: 936 passed, smoke 4/4, metrics_report seed 42 lặp lại cùng số, A4 right 5/5). Đóng H-11, H-33, H-39 (H-33, H-39 đỏ trên main). % đạt 0/67/100 theo công thức; điều 3 = 100 dựa trên 4 giả định chưa có nguồn D3, audit 4 xét lại. Supervisor tick TASKS.md (T-042, R10b1, R10b2) trên nhánh mốc trước khi merge. 6 đề xuất (c) của worker chờ leader."
