@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-11 · Nguồn: audit `docs/audits/2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10) + bộ thử reviewer (#105–#108).
+Cập nhật: 2026-10-11 · Nguồn: audit `docs/audits/2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10) + bộ thử reviewer (#105–#108) + R10d merge #120.
 
 ## Mốc
 
@@ -11,7 +11,7 @@ Cập nhật: 2026-10-11 · Nguồn: audit `docs/audits/2026-10-10.md` (audit 3)
 | Dự án | M0–M2 | ✅ 19/19 task | |
 | Dự án | M3 | ✅ 2/2 | T-030 xong 10/10: vòng LLM thật khép kín; dashboard lỗi H-44 |
 | Dự án | M4 | 🔄 2/6 | T-040, T-041 xong; T-042..T-045 mở; tag v0.1-e2e 13/10 |
-| Chạy | R4–R9, R9h, R9i, R9ih, R10a, R10c, R10ch | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55, #58, #82, #84, #91 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 / ~0,64 / 4,00 / 5,81 / 3,51 (worker) USD |
+| Chạy | R4–R9, R9h, R9i, R9ih, R10a, R10c, R10ch, R10d | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55, #58, #82, #84, #91, #120 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 / ~0,64 / 4,00 / 5,81 / 3,51 / ~3,63 (worker) USD |
 | Plugin | P1–P3 | ✅ | |
 | Plugin | P4 | 🔄 | chờ reset hạn mức phiên đã chạy thật (R9); còn kiểm hạn mức trước mốc, hạn mức tuần mới thử bằng test giả |
 | Plugin | P5 | ✅ | audit + trạng thái (file này); trang trạng thái Artifact làm mới bằng `.autodev/export_status.py` khi leader yêu cầu (đóng 10/10) |
@@ -78,17 +78,16 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 | H-39 | thấp | Tên model hard-code (`claude-haiku-4-5`); `MODEL_CHEAP` không dùng |
 | H-40 | thấp | Ví dụ `docs/schema/examples` không qua test dashboard; `payloads.md` sai chỗ |
 | H-46 | cao | Dashboard đóng SSE ở `run_finished` lỗi đầu tiên; sau Retry timeline chết (team frontend) |
-| H-49 | vừa | `question_id` của `/answer` tuỳ chọn, dashboard không gửi |
 | H-52 | vừa | Rollback bị `SopConflict` vẫn chạy tiếp như đã rollback; `sop_conflict` thiếu audit và trường |
 | H-53 | vừa | `applied` bị ghi đè khi đổi SOP khác sau halt |
 | H-55 | vừa | `test_invariants` thiếu: run song song, lỗi DB/kill, audit `apply_sop`, nội dung SOP sau rollback |
 | H-56 | vừa | Sau rollback/revise/halt, điều tra không gọi tool vẫn không hỏi người (bằng chứng mới của H-18) |
-| H-57 | thấp | `/kpi/series` 500 với múi giờ; tham số rỗng không 422 |
 | H-58 | thấp | `demo.sh`: cổng bận không phát hiện, `--check` ép scripted, không phủ SSE/rollback, không CI |
 | H-59 | thấp | Gom: cache `Run` nhiều tiến trình, `/export` sau retry, `/audit` không giới hạn, NaN trong Measure |
 
 ## Quyết định gần đây
 
+- 2026-10-11: R10d merge #120 (API cho dashboard: #110, #112, #113, #115). Đóng H-49 (`question_id` bắt buộc ở `/answer`, thiếu → 422) và H-57 (`/kpi/series` múi giờ hoặc tham số rỗng → 422, không 500). Lượt duyệt đầu chưa đạt tiêu chí 3 (tài liệu múi giờ) → dev-05 (b), lượt 2 đạt. Treo: `export_fixtures.py` làm mới `docs/schema/examples/`.
 - 2026-10-11 (đóng phiên rạng sáng): làm đề xuất 1 + 3 (cổng `test_guard`, `risk_checks` của reviewer) và 4 (bộ thử reviewer, 6,60 USD). Bộ thử: reviewer chặn 2/9 lỗi đã lọt, thấy 5/9. Luật leader đặt trước khi đo: chỉ giữ thay đổi prompt nếu recall trên holdout tăng → bản sửa (a)(d) **không** vào `reviewer.md`. Giữ audit 4 sau R10b2. Đo lại luật xếp mức chỉ trên ca mới (audit 4), mỗi ca 3 lần. Không nhắc lại trong báo cáo: nhắc team, giờ kickoff, ROADMAP nghiên cứu.
 - 2026-10-10 (đóng phiên đêm): quy tắc ước tính thời gian khi bắt đầu nhiệm vụ (`CLAUDE.md`) + ghi % hạn mức 5 giờ và tuần trước/sau (`.autodev/usage.py`). Báo cáo so sánh bên ngoài (`docs/autodev/research/`): phiên sau làm đề xuất 1 (cổng "không nới test") + 3 (câu hỏi bắt buộc cho reviewer); 7 đề xuất chưa vào ROADMAP. Chỉ đề xuất đóng phiên khi có lý do (việc lớn mới, ngữ cảnh dài, trước auto-dev).
 - 2026-10-10 (đêm): **tạm dừng việc dự án, chờ team** (D1 #66, FR #67/#89/#90, Daivon #65); điểm bắt đầu lại ở HANDOFF mục "Tạm dừng". Duyệt luật ước tính + pre-mortem mới (thiết kế 6.5). Chuyển sang nghiên cứu auto-dev. `demo.sh --fresh-db` duyệt và merge (#95). Trang trạng thái chỉ làm mới khi leader yêu cầu.
@@ -130,6 +129,7 @@ Kế hoạch P6 (duyệt 10/10; đầy đủ, kèm luồng plugin, pre-mortem, t
 | R10c | ✅ 10/10 #84 | Bền cho demo | H-14, H-15, H-19, H-20, H-37, H-38; A6 = 0 | |
 | Audit 3 | ✅ 10/10 #86 | Rà R9i, R9ih, R10a, R10c | B1 = 0,71 (ngưỡng ≤ 0,5); H-45..H-59 | |
 | R10ch | ✅ 10/10 #91 | Sửa nhanh sau audit 3 | H-31, H-45, H-47, H-48, H-50, H-51, H-54; A5 LLM giả đo thật | |
+| R10d | ✅ 11/10 #120 | API cho dashboard | #110, #112, #113, #115; H-49, H-57 | |
 | R10b1 | 12/10 | Dữ liệu theo hợp đồng **D1 đã chốt** | `production_log`, `material_batches`, simulator nhị thức, `import_data.py` + V01–V09 (dùng D2) | **chờ D1 #66 merge** (vai A) |
 | R10b2 | 12–13/10 | Điều 3 | H-11, T-042, `/metrics` thật, `metrics_report.py` có đối chứng; H-33, H-39 | sau R10b1; giả định cần D3 |
 | Cổng 13/10 | 13/10 | tag v0.1-e2e (leader duyệt) | `criteria.md` mục 3; UI FR-01..05 | UI: vai D |
