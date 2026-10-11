@@ -178,6 +178,11 @@ RunSummary: {"run_id": "run_ff5de085", "state": "waiting | running | finished | 
   "finished_at": null | "2026-10-10T09:00:05+00:00", "outcome": null | "completed | closed | no_anomaly | error",
   "pending": null | {"type": "answer | approval", "kind?": "proposal | rollback | halt", "proposal_id?": "..."}}
 AuditRow: {"id": 12, "ts": "2026-10-10T09:00:03+00:00", "run_id": "run_ff5de085" | null, "actor": "alice", "action": "approval_decided", "params": {...}}
+```
+
+`params` là object JSON (khoá nào cũng giữ cấu trúc: `save_learning.content`, `apply_sop.approval` là object, không phải chuỗi `repr`). Từ R10d. Dòng ghi trước R10d có thể còn `params` là chuỗi; audit append-only nên không sửa, dashboard đọc nguyên văn.
+
+```json
 SopVersion: {"version": 2, "created_by": "config | <người duyệt>", "run_id": "run_ff5de085" | null, "created_at": "..." | null, "content": "..."}
 ```
 

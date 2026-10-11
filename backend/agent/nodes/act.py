@@ -322,7 +322,10 @@ def make_act_node(config: DomainConfig, ctx: ToolContext):
                 ctx,
                 sop_id=sop["sop_id"],
                 new_content=sop["new_content"],
-                approval={"decision": APPROVED, "approved_by": approval.get("decided_by"), "sop_id": sop["sop_id"]},
+                approval={
+                    "decision": APPROVED, "approved_by": approval.get("decided_by"),
+                    "decided_by": approval.get("decided_by"), "sop_id": sop["sop_id"],
+                },
                 **lock,
             )
         except SopConflict as exc:
@@ -574,7 +577,10 @@ def make_rollback_apply_node(config: DomainConfig, ctx: ToolContext):
                     ctx,
                     sop_id=applied["sop_id"],
                     new_content=applied["previous_content"],
-                    approval={"decision": APPROVED, "approved_by": approval.get("decided_by"), "sop_id": applied["sop_id"]},
+                    approval={
+                        "decision": APPROVED, "approved_by": approval.get("decided_by"),
+                        "decided_by": approval.get("decided_by"), "sop_id": applied["sop_id"],
+                    },
                     base_version=applied["version"],  # H-14: only roll back the version this run applied itself
                 )  # a NEW version holding the old content; the failed version stays in sop_versions
                 ctx.session.commit()  # H-31: durable before the checkpoint says the rollback is done

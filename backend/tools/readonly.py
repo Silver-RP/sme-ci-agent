@@ -56,11 +56,7 @@ def _audited(fn: Callable[..., dict]) -> Callable[..., dict]:
 
 
 def _jsonable(v: Any) -> Any:
-    if isinstance(v, (list, tuple)):
-        return [_jsonable(x) for x in v]
-    if v is None or isinstance(v, (str, int, float, bool)):
-        return v
-    return str(v)
+    return repo.to_jsonable(v)  # keeps dict structure (#113); was str(dict)
 
 
 def _check_kpi(ctx: ToolContext, kpi: str) -> None:
