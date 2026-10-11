@@ -134,20 +134,31 @@ def detect_anomalies(
     kpi: str | None = None,
     params: DetectParams | None = None,
     threshold_sd: float | None = None,
+    as_of: pd.Timestamp | str | None = None,
 ) -> list[Anomaly]:
     """Detect anomalies in ``tables['kpi_log']``.
+
+    ``as_of``: timeline mode. Only rows with ``timestamp <= as_of`` (``kpi_log`` and ``machine_log``) are
+    used, so the result at t equals the result on data cut after t (no future leakage). ``None`` keeps the
+    old look-back mode over the whole data (single runs).
 
     ``kpi``: KPI name (default: every KPI in the config). ``threshold_sd`` overrides the config
     ``alert_threshold_sd`` (for experiments only; the default comes from the config).
     """
     params = params or config.detect  # defaults come from the domain config (YAML `detect:`)
     kpi_log = tables.get("kpi_log")
+    machine_log = tables.get("machine_log")
+    if as_of is not None:
+        cut = pd.Timestamp(as_of)
+        if kpi_log is not None and not kpi_log.empty:
+            kpi_log = kpi_log[pd.to_datetime(kpi_log["timestamp"]) <= cut]
+        if machine_log is not None and not machine_log.empty:
+            machine_log = machine_log[pd.to_datetime(machine_log["timestamp"]) <= cut]
     if kpi_log is None or kpi_log.empty:
         return []
     kpis = [k for k in config.kpis if kpi is None or k.name == kpi]
     if kpi is not None and not kpis:
         raise ValueError(f"unknown KPI: {kpi}")
-    machine_log = tables.get("machine_log")
     horizon_end = pd.to_datetime(kpi_log["timestamp"]).max() + pd.Timedelta(hours=1)
     windows = planned_maintenance_windows(machine_log, horizon_end)
     t0 = pd.to_datetime(kpi_log["timestamp"]).min().normalize()
@@ -188,6 +199,42 @@ def detect_anomalies(
                     )
                 )
     return sorted(found, key=lambda a: (a.start, a.machine_id, a.kpi))
+
+
+@dataclass(frozen=True)
+class DetectedAnomaly:
+    """An anomaly together with the first moment the timeline replay could see it."""
+
+    anomaly: Anomaly
+    detected_at: pd.Timestamp
+
+
+def replay_detect(
+    tables: dict[str, pd.DataFrame],
+    config: DomainConfig,
+    kpi: str | None = None,
+    params: DetectParams | None = None,
+    threshold_sd: float | None = None,
+) -> list[DetectedAnomaly]:
+    """Replay shift by shift: at each shift time t run ``detect_anomalies(as_of=t)`` and record the first
+    t at which each anomaly (kpi, machine, start) appears. ``detected_at`` >= ``anomaly.start`` always.
+
+    Reads only ``kpi_log`` and ``machine_log``; never ground truth.
+    """
+    kpi_log = tables.get("kpi_log")
+    if kpi_log is None or kpi_log.empty:
+        return []
+    params = params or config.detect
+    times = sorted(pd.to_datetime(kpi_log["timestamp"]).unique())
+    ref_end = pd.Timestamp(times[0]).normalize() + pd.Timedelta(days=params.reference_days)
+    first_seen: dict[tuple[str, str, pd.Timestamp], DetectedAnomaly] = {}
+    for t in times:
+        t = pd.Timestamp(t)
+        if t < ref_end:
+            continue  # nothing can be an alarm inside the reference period
+        for a in detect_anomalies(tables, config, kpi, params, threshold_sd, as_of=t):
+            first_seen.setdefault((a.kpi, a.machine_id, a.start), DetectedAnomaly(a, t))
+    return sorted(first_seen.values(), key=lambda d: (d.detected_at, d.anomaly.machine_id, d.anomaly.kpi))
 
 
 def anomaly_events(

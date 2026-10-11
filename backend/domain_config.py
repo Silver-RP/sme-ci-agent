@@ -44,6 +44,7 @@ class DetectParams(_Strict):
     rule_window: int = Field(default=3, ge=1)
     rule_hits: int = Field(default=2, ge=1)
     max_gap: int = Field(default=3, ge=0)  # points (shifts) of normal data that keep one anomaly open
+    max_detect_delay_shifts: int = Field(default=3, ge=0)  # timeline replay: detection at most this many shifts after start
 
 
 class InvestigateParams(_Strict):

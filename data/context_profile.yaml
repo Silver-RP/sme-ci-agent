@@ -33,6 +33,7 @@ detect:                     # tham số detect (mặc định = giá trị cũ t
   rule_window: 3            # luật k trên n: n điểm
   rule_hits: 2              # luật k trên n: k điểm vượt ngưỡng
   max_gap: 3                # khoảng gộp tối đa (điểm) giữa hai điểm xác nhận
+  max_detect_delay_shifts: 3  # phát hiện theo dòng thời gian: muộn nhất bao nhiêu ca sau start
 investigate:
   max_tool_steps: 6         # số vòng gọi LLM tối đa khi điều tra
   max_log_rows: 50          # số dòng tối đa một tool đọc log trả về; nhiều hơn thì cắt và báo truncated
