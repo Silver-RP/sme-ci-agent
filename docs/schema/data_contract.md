@@ -181,6 +181,7 @@ Gồm **lỗi** (chặn nhập), **cảnh báo** (cho qua, ghi báo cáo) và **
 - **Chạy hết, không dừng sớm:** validator luôn chạy mọi luật trên mọi bảng có mặt và báo **mọi** vi phạm; không dừng ở lỗi đầu tiên. Ngoại lệ, để không báo trùng:
   - bảng bị V01 ở mức bảng (thiếu file, không có tiêu đề, không có dòng dữ liệu) thì không kiểm luật nào khác trên bảng đó;
   - cột bị thiếu (V01) thì bỏ qua mọi luật cần cột đó;
+  - cột trùng tên (V01e): một mục V01 cho mỗi tên trùng, không sinh N02, và bỏ qua mọi luật cần cột đó (như cột thiếu);
   - ô đã bị V02 hoặc V09 thì không kiểm V03–V07 trên ô đó, và dòng có ô khoá bị V02 thì không tham gia V04;
   - dòng có `shift_start` bị V02 thì không tham gia V06, V08;
   - dòng có `shift` không có trong `plant.shifts` (V05) thì không kiểm giờ ca (V03) và không tham gia V06; dòng có `parameter` không có trong `actions.parameters` thì không kiểm `limits` (V03).
@@ -334,4 +335,4 @@ Ví dụ dưới đây giả định config mặc định: máy `M01–M03`; ca 
 | 11 | Nhập CSV | Mẫu 3–5 dòng | Mẫu 5–10 dòng (khớp D2); có lỗi thì không nạp, mã thoát khác 0; chấp nhận BOM; thêm `--name` |
 | 12 | V01–V09 | Mô tả một dòng | Định nghĩa đủ để viết test, mỗi luật có ví dụ đạt và vi phạm; thứ tự kiểm; định nghĩa "dòng" trong báo cáo. Mở rộng: V03 thêm luật SOP, `expiry_date`, giờ ca; V04 thêm khoá của `shift_schedule`, `material_batches`, `sop`; V07 thêm `batch_id` → `material_batches`; V09 thêm kiểm giá trị `operator_id` và danh sách từ khoá trong config |
 | 13 | Dữ liệu cá nhân | Rải rác | Thêm mục 7 riêng |
-| 14 | Quy tắc chung của validator | Không có | Mục 4.0 (sau review theo góc nhìn vai Q): cắt khoảng trắng, phân biệt hoa thường, đọc CSV theo RFC 4180, chạy hết mọi luật, khi nào bỏ qua để không báo trùng, định dạng mục báo cáo (test không so `fix`), mã N01–N04 cho file/cột thừa và ghi chú. Chốt biên: V04 báo mọi dòng trùng sau dòng đầu; V06 chỉ xét máy có dữ liệu, `value` có định dạng cố định; V08 đếm ngày lịch tính cả hai đầu, bằng ngưỡng là đạt; V09 tách camelCase và chặn cả cột thừa; `sop.csv` bắt buộc khi nhập CSV |
+| 14 | Quy tắc chung của validator | Không có | Mục 4.0 (sau review theo góc nhìn vai Q): cắt khoảng trắng, phân biệt hoa thường, đọc CSV theo RFC 4180, chạy hết mọi luật, khi nào bỏ qua để không báo trùng, định dạng mục báo cáo (test không so `fix`), mã N01–N04 cho file/cột thừa và ghi chú. Chốt biên: V04 báo mọi dòng trùng sau dòng đầu; V06 chỉ xét máy có dữ liệu, `value` có định dạng cố định; V08 đếm ngày lịch tính cả hai đầu, bằng ngưỡng là đạt; V09 tách camelCase và chặn cả cột thừa; `sop.csv` bắt buộc khi nhập CSV; cột trùng tên (V01e) chỉ sinh một mục V01 mỗi tên, không N02, các luật cần cột đó bị bỏ qua |
