@@ -381,3 +381,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 6f2bc43. Review: .autodev/reviews/dev-06-r1.json (PASS).
 - `scripts/import_data.py` + `backend/dataset_store.py`: kiểm, ghi thư mục tạm + `_COMPLETE` + rename một lần, `SME_DATASET` nối vào app, `run_scenario`, domain config; SOP gốc `created_by: "import"`. Hook không chạy, verify tay: ruff + pytest sạch, 1 test vitest dashboard rớt do tải (đạt khi chạy riêng).
 - Non-blocking: `data_report`, `eval_rootcause`, `export_fixtures` chưa đọc `SME_DATASET`.
+
+### R10b1/dev-07: DONE
+- Vòng: 1. Commit: cfee6d8. Review: .autodev/reviews/dev-07-r1.json (PASS).
+- `gen_data.py --out-dir` xuất 5 bảng hợp đồng, ground truth ở `<thư mục>_ground_truth.json`; test vòng tròn gen → import → `SME_DATASET` → `learning_saved`; 8 fixture sinh lại (kèm bản sao `dashboard/fixtures/examples/` và 2 test dashboard đổi giá trị mong đợi).
+- Non-blocking: vòng tròn seed 42 trùng simulator mặc định; số phiên bản fixture phụ thuộc DB dùng chung.
