@@ -1,6 +1,7 @@
 """API ghi/đọc. audit_log chỉ có append_audit (không có hàm sửa/xoá)."""
 
-from datetime import datetime
+import math
+from datetime import date, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -123,6 +124,28 @@ def get_sop_version(session: Session, sop_id: str, version: int | None = None):
     return session.scalars(q.limit(1)).first()
 
 
+def to_jsonable(v):
+    """Equivalent JSON value: dict/list keep their structure (never ``str(dict)``), datetime -> ISO string,
+    numpy scalars/arrays -> Python values, NaN/inf -> None. Anything else unknown falls back to ``str``."""
+    if v is None or isinstance(v, (str, bool)):
+        return v
+    if isinstance(v, int):
+        return int(v)
+    if isinstance(v, float):
+        return v if math.isfinite(v) else None
+    if isinstance(v, dict):
+        return {str(k): to_jsonable(x) for k, x in v.items()}
+    if isinstance(v, (list, tuple, set, frozenset)):
+        return [to_jsonable(x) for x in v]
+    if isinstance(v, (datetime, date)):
+        return v.isoformat()
+    if hasattr(v, "tolist"):  # numpy scalar or array
+        return to_jsonable(v.tolist())
+    if hasattr(v, "isoformat"):  # pandas Timestamp and similar
+        return v.isoformat()
+    return str(v)
+
+
 def append_audit(
     session: Session,
     actor: str,
@@ -130,7 +153,7 @@ def append_audit(
     params: dict | None = None,
     run_id: str | None = None,
 ) -> AuditLog:
-    row = AuditLog(actor=actor, action=action, params=params or {}, run_id=run_id)
+    row = AuditLog(actor=actor, action=action, params=to_jsonable(params or {}), run_id=run_id)
     session.add(row)
     session.flush()
     return row
@@ -145,11 +168,12 @@ def save_learning(
     return row
 
 
-def list_learning(session: Session, domain: str) -> list[LearningEntry]:
-    """Read only: lessons of one domain, newest first."""
-    return list(
-        session.scalars(select(LearningEntry).where(LearningEntry.domain == domain).order_by(LearningEntry.id.desc()))
-    )
+def list_learning(session: Session, domain: str, limit: int | None = None) -> list[LearningEntry]:
+    """Read only: lessons of one domain, newest first (at most `limit` when given)."""
+    q = select(LearningEntry).where(LearningEntry.domain == domain).order_by(LearningEntry.id.desc())
+    if limit is not None:
+        q = q.limit(limit)
+    return list(session.scalars(q))
 
 
 def recent_actions(session: Session, run_id: str | None = None, limit: int = 100) -> list[AuditLog]:

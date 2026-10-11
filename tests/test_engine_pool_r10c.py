@@ -71,7 +71,7 @@ def test_100_runs_do_not_exceed_pool(default_app, own_db_url):
     for _ in range(100):
         run = _start(default_app)
         if run["pending"] and run["pending"]["type"] == "answer":  # go on to the steps that use the DB
-            r = default_app.post(f"/runs/{run['run_id']}/answer", json=ANSWER)
+            r = default_app.post(f"/runs/{run['run_id']}/answer", json={**ANSWER, "question_id": run["pending"]["question_id"]})
             assert r.status_code == 200, r.text
     url = make_url(own_db_url)
     admin = create_engine(url.set(database="postgres"), isolation_level="AUTOCOMMIT")
@@ -90,7 +90,7 @@ def test_session_closed_when_run_finishes(default_app):
     run = _start(default_app)
     rid = run["run_id"]
     if run["pending"]["type"] == "answer":
-        run = default_app.post(f"/runs/{rid}/answer", json=ANSWER).json()
+        run = default_app.post(f"/runs/{rid}/answer", json={**ANSWER, "question_id": run["pending"]["question_id"]}).json()
     for _ in range(10):
         p = run["pending"]
         if p is None:

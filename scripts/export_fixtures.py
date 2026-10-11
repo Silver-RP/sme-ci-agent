@@ -180,8 +180,9 @@ def run_branch(name: str, branch: Branch, config: DomainConfig, session: Session
     for kind, arg in branch.steps:
         status = client.get(f"/runs/{run_id}").json()
         if kind == "answer":
-            resp = client.post(f"/runs/{run_id}/answer", json={"answer": arg})
-            record("POST /runs/{run_id}/answer", {"answer": arg}, resp, run_id)
+            qid = status["pending"]["question_id"]
+            resp = client.post(f"/runs/{run_id}/answer", json={"answer": arg, "question_id": qid})
+            record("POST /runs/{run_id}/answer", {"answer": arg, "question_id": qid}, resp, run_id)
         elif kind == "decide":
             pending = status["pending"]
             body = {"proposal_id": pending["proposal_id"], "kind": pending["kind"], **arg}

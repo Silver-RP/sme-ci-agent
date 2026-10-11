@@ -131,7 +131,7 @@ def test_answer_resumes_graph(db_session):
     assert run["state"] == "waiting" and run["pending"]["type"] == "answer" and run["pending"]["question"]
     types = [m["event"] for m in sse_events(client, run["run_id"])]
     assert types[-1] == "question_asked"
-    r = client.post(f"/runs/{run['run_id']}/answer", json={"answer": "Setpoint was changed on M02"})
+    r = client.post(f"/runs/{run['run_id']}/answer", json={"answer": "Setpoint was changed on M02", "question_id": run["pending"]["question_id"]})
     assert r.status_code == 200 and r.json()["pending"]["type"] == "approval"
     types = [m["event"] for m in sse_events(client, run["run_id"])]
     assert "answer_received" in types and types[-1] == "proposal_created"
@@ -145,7 +145,7 @@ def test_unknown_run_is_404(db_session):
     for method, path, body in [
         ("get", "/runs/nope", None),
         ("get", "/runs/nope/events", None),
-        ("post", "/runs/nope/answer", {"answer": "x"}),
+        ("post", "/runs/nope/answer", {"answer": "x", "question_id": "q"}),
         ("post", "/runs/nope/approval", {**HUMAN, "proposal_id": "x", "kind": "proposal"}),
     ]:
         r = client.request(method, path, json=body)
@@ -161,14 +161,14 @@ def test_approval_when_not_waiting_for_it_is_409(db_session):
     approve(client, done['run_id'], HUMAN)
     r = approve(client, done['run_id'], HUMAN)  # already finished: no second approval
     assert r.status_code == 409
-    r = client.post(f"/runs/{done['run_id']}/answer", json={"answer": "x"})
+    r = client.post(f"/runs/{done['run_id']}/answer", json={"answer": "x", "question_id": "q"})
     assert r.status_code == 409 and "answer" in r.json()["detail"]
 
 
 def test_answer_when_waiting_for_approval_is_409(db_session):
     client = make_client(db_session, [[*investigate_script(), improve_answer()]])
     run = start(client)
-    r = client.post(f"/runs/{run['run_id']}/answer", json={"answer": "x"})
+    r = client.post(f"/runs/{run['run_id']}/answer", json={"answer": "x", "question_id": "q"})
     assert r.status_code == 409
 
 
@@ -215,7 +215,7 @@ def test_approval_by_agent_or_llm_is_rejected(db_session):
 def test_empty_answer_is_422(db_session):
     client = make_client(db_session, [[final(0.1, gap=True)]])
     run = start(client)
-    assert client.post(f"/runs/{run['run_id']}/answer", json={"answer": ""}).status_code == 422
+    assert client.post(f"/runs/{run['run_id']}/answer", json={"answer": "", "question_id": run["pending"]["question_id"]}).status_code == 422
 
 
 def test_start_with_empty_change_time_is_422(db_session):
@@ -325,7 +325,7 @@ def test_llm_error_midway_marks_run_failed_and_keeps_audit(db_session):
     valid_event(last["data"])
     assert "correlate" in _audit_actions(db_session, rid)  # the step before the failure is still logged
     # nothing else can be done on a failed run except retry
-    assert client.post(f"/runs/{rid}/answer", json={"answer": "x"}).status_code == 409
+    assert client.post(f"/runs/{rid}/answer", json={"answer": "x", "question_id": "q"}).status_code == 409
 
 
 def test_retry_after_transient_error_continues(db_session):

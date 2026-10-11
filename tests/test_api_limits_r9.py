@@ -120,7 +120,7 @@ def test_missing_samples_after_the_change_is_a_pending_answer_and_answer_continu
     rid = start(client, change_time=LATE)["run_id"]
     got = approve(client, rid, HUMAN).json()
     assert got["state"] == "waiting" and got["pending"]["type"] == "answer" and "not enough" in got["pending"]["question"].lower()
-    r = client.post(f"/runs/{rid}/answer", json={"answer": "wait for more data"})
+    r = client.post(f"/runs/{rid}/answer", json={"answer": "wait for more data", "question_id": got["pending"]["question_id"]})
     assert r.status_code == 200, r.text
 
 

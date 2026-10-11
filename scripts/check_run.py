@@ -71,7 +71,7 @@ def drive(client: Any) -> str:
             return run_id
         pending = st.get("pending") or {}
         if pending.get("type") == "answer":
-            st = call(client, "POST", f"/runs/{run_id}/answer", json={"answer": ANSWER})
+            st = call(client, "POST", f"/runs/{run_id}/answer", json={"answer": ANSWER, "question_id": pending.get("question_id")})
         elif pending.get("type") == "approval":
             kind = pending.get("kind", "proposal")
             decision = "finish" if kind == "halt" else "approved"

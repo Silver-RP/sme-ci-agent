@@ -40,7 +40,10 @@ def test_stale_question_id_is_409_and_current_question_stays_open(db_session):
 
 
 def test_without_question_id_old_behaviour(db_session):
-    client, rid, _ = _waiting_run(db_session)
-    assert client.post(f"/runs/{rid}/answer", json={"answer": "wait"}).status_code == 200
-    again = client.post(f"/runs/{rid}/answer", json={"answer": "wait"})  # repeated call, no id, still accepted
-    assert again.status_code == 200  # a run still waiting on evidence accepts it
+    # R10d/dev-04 (H-49): the old behaviour (no question_id accepted) is gone; the id is required.
+    client, rid, first = _waiting_run(db_session)
+    assert client.post(f"/runs/{rid}/answer", json={"answer": "wait"}).status_code == 422  # negative: no question_id
+    again = client.post(f"/runs/{rid}/answer", json={"answer": "wait"})  # negative: no question_id, repeated
+    assert again.status_code == 422
+    ok = client.post(f"/runs/{rid}/answer", json={"answer": "wait", "question_id": first["question_id"]})
+    assert ok.status_code == 200

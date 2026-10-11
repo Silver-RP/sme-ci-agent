@@ -33,9 +33,14 @@ def _parse(name: str, value: str | None) -> pd.Timestamp | None:
     if value is None:
         return None
     try:
-        return pd.Timestamp(value)
+        t = pd.Timestamp(value)
     except (ValueError, TypeError) as e:
         raise SeriesError(f"{name} is not a date/time: {value!r}") from e
+    if pd.isna(t):
+        raise SeriesError(f"{name} is not a date/time: {value!r}")
+    if t.tzinfo is not None:  # sandbox time is naive: a zone cannot be compared with it (#110)
+        raise SeriesError(f"{name} {value} has a time zone; give sandbox time without one (e.g. 2026-03-20T00:00:00)")
+    return t
 
 
 def kpi_series(

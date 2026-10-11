@@ -39,7 +39,7 @@ def _to_approval(c):
     run = c.post("/runs", json={}).json()
     rid = run["run_id"]
     if run["pending"]["type"] == "answer":
-        run = c.post(f"/runs/{rid}/answer", json=ANSWER).json()
+        run = c.post(f"/runs/{rid}/answer", json={**ANSWER, "question_id": run["pending"]["question_id"]}).json()
     assert run["pending"]["type"] == "approval", run
     return rid, run
 
@@ -184,7 +184,7 @@ def test_two_uvicorn_processes_share_runs(own_db_url):  # noqa: F811
         run = c1.post("/runs", json={}).json()
         rid = run["run_id"]
         if run["pending"]["type"] == "answer":
-            run = c1.post(f"/runs/{rid}/answer", json=ANSWER).json()
+            run = c1.post(f"/runs/{rid}/answer", json={**ANSWER, "question_id": run["pending"]["question_id"]}).json()
         pending = run["pending"]
         assert pending["type"] == "approval"
         events1 = _sse(base1, rid)
