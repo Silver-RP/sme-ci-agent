@@ -38,6 +38,7 @@ investigate:
   max_tool_steps: 6         # số vòng gọi LLM tối đa khi điều tra
   max_log_rows: 50          # số dòng tối đa một tool đọc log trả về; nhiều hơn thì cắt và báo truncated
   max_format_retries: 1     # số lần yêu cầu LLM sửa câu trả lời không parse được, quá thì báo lỗi
+  max_lessons: 5            # số bài học cũ (cùng KPI) đưa vào prompt Investigate làm ngữ cảnh; 0 = tắt
 improve:
   max_evidence_item_chars: 800  # cỡ tối đa (ký tự) mỗi mục evidence đưa vào prompt Improve
   max_format_retries: 1     # số lần yêu cầu LLM sửa đề xuất không parse được, quá thì báo lỗi

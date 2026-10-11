@@ -12,6 +12,7 @@ from langgraph.graph import END, START, StateGraph
 
 from backend.agent.checkpoint import memory_checkpointer
 from backend.agent.events import make_event
+from backend.agent.lessons import pick_unhandled
 from backend.agent.llm import LLM
 from backend.agent.nodes.act import (
     make_act_node,
@@ -85,7 +86,7 @@ def build_graph(
     def observe_real(state: AgentState) -> dict[str, Any]:
         """Real Detect (statistical code, no LLM) over the sandbox tables in ``tool_ctx``."""
         found = run_detect(tool_ctx.tables, config, run_id=state.get("run_id", "run_detect"))
-        first = found[0]["payload"] if found else None
+        first = pick_unhandled(found, tool_ctx)  # skip anomalies that already have a lesson (learning_saved)
         ev = make_event(
             state,
             "tool_called",

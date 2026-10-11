@@ -55,6 +55,7 @@ class InvestigateParams(_Strict):
     max_tool_steps: int = Field(default=6, ge=1)  # max LLM rounds in one investigation
     max_log_rows: int = Field(default=50, ge=1)  # rows a log/schedule tool returns; more -> cut and flagged
     max_format_retries: int = Field(default=1, ge=0)  # times the LLM may be asked to fix an unparsable answer
+    max_lessons: int = Field(default=5, ge=0)  # earlier lessons (same KPI) shown to Investigate as context
 
 
 class ImproveParams(_Strict):

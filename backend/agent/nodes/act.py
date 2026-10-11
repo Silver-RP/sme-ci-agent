@@ -493,6 +493,7 @@ def make_learn_node(config: DomainConfig, ctx: ToolContext):
             "anomaly": state.get("anomaly"),
             "root_cause": proposal.get("hypothesis"),
             "change": proposal.get("change"),
+            "action": proposal.get("action"),
             "rationale": proposal.get("rationale"),
             "sop_id": applied.get("sop_id"),
             "sop_version": applied.get("version"),
