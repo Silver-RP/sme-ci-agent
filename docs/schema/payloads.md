@@ -99,11 +99,13 @@ Có hai dạng; phân biệt bằng `kind`.
   - Không còn trường `sim` (nội bộ simulator, từng lộ `fixed`, H-06, H-25).
 
 ### kpi_measured (quality)
-`{kpi, direction, target, tolerance, status, passed, before, after, machine_id, change_time, window_days, delta, sufficient, n_before, n_after, mttd_hours, mttr_hours}`
+`{kpi, direction, target, tolerance, status, passed, before, after, machine_id, change_time, window_days, delta, sufficient, n_before, n_after, n_unit, mttd_hours, mttr_hours}`
+
+`before`/`after` là tỷ lệ gộp trên `production_log` (tổng tử số / tổng mẫu số của KPI trong cửa sổ, không trung bình tỷ lệ từng ca). `n_before`/`n_after` đếm theo `n_unit`: `"units"` là số đơn vị (tổng mẫu số) khi tính từ `production_log`; `"points"` là số điểm `kpi_log` khi quay về đường cũ. Ngưỡng "chưa đủ bằng chứng" tương ứng: `min_units_after` (đơn vị, config `measure.min_units_after`) hoặc `min_samples_after` (điểm, đường `kpi_log`).
 
 `status` có ba giá trị:
 - `measured`: `passed` là `true` hoặc `false`.
-- `insufficient_evidence`: `passed: null`, có thêm `min_samples_after`. Run hỏi người: `pending` là `{type: "answer", question, run_id}` (R9, H-09). Trả lời bằng `POST /runs/{id}/answer` (ví dụ "chờ thêm dữ liệu") thì Measure chạy lại; hết số lần cho phép thì dừng với `reason: "insufficient_evidence"`. Xem `run-insufficient-evidence.json`.
+- `insufficient_evidence`: `passed: null`, có thêm `min_units_after` (khi `n_unit` là `"units"`) hoặc `min_samples_after` (khi `"points"`). Run hỏi người: `pending` là `{type: "answer", question, run_id}` (R9, H-09). Trả lời bằng `POST /runs/{id}/answer` (ví dụ "chờ thêm dữ liệu") thì Measure chạy lại; hết số lần cho phép thì dừng với `reason: "insufficient_evidence"`. Xem `run-insufficient-evidence.json`.
 - `not_applied`: `passed: null`, có thêm `reason`.
 
 `mttd_hours` và `mttr_hours` hiện luôn là `null` trong vòng lặp (H-11).
@@ -158,19 +160,24 @@ Ví dụ phản hồi `GET /kpi/series`:
 
 `baseline` và `upper_limit` là số của Detect cho (máy, KPI), bằng giá trị trong event `anomaly_detected`; là `null` khi không chọn `machine` (khi đó nhiều máy cùng thời điểm được lấy trung bình). Quá 1000 điểm thì gộp theo ngày (`ts` là 00:00 của ngày). `anomalies` lọc theo `machine`/`shift`/khoảng thời gian.
 
-Ví dụ phản hồi `GET /metrics` (chưa có run nào học xong; mọi chỉ số `available: false`, không có số):
+Ví dụ phản hồi `GET /metrics` (chưa có báo cáo cho dataset + seed hiện tại; mọi chỉ số `available: false`, không có số):
 
 ```json
-{"metrics": [
+{"dataset": "sandbox", "seed": 42, "generated_at": null, "assumptions": [],
+ "metrics": [
   {"name": "defect_rate", "unit": "ratio", "before": null, "after": null, "available": false,
-   "reason": "no finished run has saved a lesson with this KPI yet", "run_id": null},
+   "reason": "no metrics report for dataset 'sandbox', seed 42: run `uv run python scripts/metrics_report.py --months 6 --seed 42` for dataset 'sandbox'", "run_id": null},
   {"name": "mttd_mttr", "unit": "hours", "before": null, "after": null, "available": false,
-   "reason": "no real source yet (planned for R10b2)", "run_id": null},
+   "reason": "no metrics report for dataset 'sandbox', seed 42: run `uv run python scripts/metrics_report.py --months 6 --seed 42` for dataset 'sandbox'", "run_id": null},
   {"name": "recurrence_rate", "unit": "ratio", "before": null, "after": null, "available": false,
-   "reason": "no real source yet (planned for R10b2)", "run_id": null}]}
+   "reason": "no metrics report for dataset 'sandbox', seed 42: run `uv run python scripts/metrics_report.py --months 6 --seed 42` for dataset 'sandbox'", "run_id": null}]}
 ```
 
-Sau một run học xong, phần tử đầu có `available: true`, `reason: null`, `run_id` của run đó, `before`/`after` bằng `kpi_before`/`kpi_after` trong `learning_saved` (lấy bài học mới nhất của KPI đó trong `learning_store`). Ở R10b2 sẽ có thêm: `mttd_mttr` điền `before`/`after` (giờ, từ `mttd_hours`/`mttr_hours` của `kpi_measured` khi H-11 xong) và `recurrence_rate` điền `before`/`after`; hai phần tử này đổi `available` thành `true`, `reason: null`. Hình dạng không đổi. Tuyệt đối không có số giả khi `available: false`.
+Từ R10b2 (dev-06) số lấy từ báo cáo `data/reports/metrics_<dataset>_seed<seed>.json` do `scripts/metrics_report.py` ghi (thư mục đổi bằng env `SME_REPORTS_DIR`); `dataset` là `SME_DATASET` hoặc `sandbox`, `seed` là 42 (seed dữ liệu giả lập của app). API chỉ đọc file, không tính lại (phát lại mất vài phút). Có báo cáo khớp dataset + seed (kể cả bên trong file) thì cả ba phần tử `available: true`, `reason: null`; `generated_at` và `assumptions` (tên, giá trị, `source`) lấy từ báo cáo. Báo cáo của dataset/seed khác, thiếu, hỏng, hoặc thiếu số của một chỉ số thì chỉ số đó `available: false` kèm `reason` (cách chạy lại), `before`/`after` là `null`. `before` = nhánh không agent (đối chứng), `after` = có agent, cùng kỳ:
+- KPI chính: `period_rate` (tỷ lệ gộp theo sản lượng cả kỳ);
+- `mttd_mttr` (giờ): MTTD + MTTR trung bình, tức từ lúc sự cố bắt đầu tới lúc xử lý xong;
+- `recurrence_rate`: tỷ lệ tái diễn.
+`run_id` luôn `null`. Hình dạng phần tử không đổi so với R10a. Tuyệt đối không có số giả khi `available: false`.
 
 Ba API đọc trên (R10a) chỉ đọc, không ghi DB. `GET /runs` đọc từ bộ nhớ của app nên mất khi backend khởi động lại (H-15, sửa ở R10c).
 

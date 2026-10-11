@@ -31,11 +31,13 @@ def demo_low_confidence(config: DomainConfig) -> str:
     )
 
 
-def demo_investigate(config: DomainConfig, description: str | None = None) -> list[LLMResponse | str]:
+def demo_investigate(
+    config: DomainConfig, description: str | None = None, machine_id: str | None = None
+) -> list[LLMResponse | str]:
     """One tool call, then a confident hypothesis. ``description`` defaults to the cause the simulator models."""
     kpi = config.kpis[0]
     return [
-        LLMResponse(tool_calls=[ToolCall(id="t1", name="correlate", arguments={"kpi": kpi.name, "machine_id": config.demo.machine_id})]),
+        LLMResponse(tool_calls=[ToolCall(id="t1", name="correlate", arguments={"kpi": kpi.name, "machine_id": machine_id or config.demo.machine_id})]),
         json.dumps(
             {
                 "hypotheses": [
@@ -47,7 +49,7 @@ def demo_investigate(config: DomainConfig, description: str | None = None) -> li
     ]
 
 
-def demo_improve(config: DomainConfig, parameter: str | None = None) -> str:
+def demo_improve(config: DomainConfig, parameter: str | None = None, machine_id: str | None = None) -> str:
     """A proposal with an SOP change and an action. ``parameter`` defaults to the one the simulator links to the
     anomaly; any other name is a wrong fix (the KPI stays high, so Measure fails)."""
     kpi = config.kpis[0]
@@ -65,7 +67,7 @@ def demo_improve(config: DomainConfig, parameter: str | None = None) -> str:
             },
             "action": {
                 "parameter": parameter or right,
-                "machine_id": config.demo.machine_id,
+                "machine_id": machine_id or config.demo.machine_id,
                 "value": load_scenario()["baseline"][right],  # back to the SOP value
             },
         }
@@ -96,8 +98,11 @@ class DemoLLM:
     link to the anomaly, so Measure fails and the agent proposes a rollback; every later proposal is the right fix.
     """
 
-    def __init__(self, config: DomainConfig, *, ask_first: bool = True, rollback: bool = False) -> None:
+    def __init__(
+        self, config: DomainConfig, *, ask_first: bool = True, rollback: bool = False, machine_id: str | None = None
+    ) -> None:
         self._config = config
+        self._machine_id = machine_id  # None = the demo machine of the config
         self._ask_first = ask_first
         self._rollback = rollback
         self._investigations = 0
@@ -111,7 +116,7 @@ class DemoLLM:
         return self._improve()
 
     def _investigate(self, messages: list) -> LLMResponse:
-        steps = demo_investigate(self._config)
+        steps = demo_investigate(self._config, machine_id=self._machine_id)
         if len(messages) > 1:  # a tool result (or a format retry) came back: give the final answer
             return LLMResponse(text=steps[1])
         self._investigations += 1
@@ -122,7 +127,8 @@ class DemoLLM:
     def _improve(self) -> LLMResponse:
         self._improvements += 1
         wrong = self._rollback and self._improvements == 1
-        return LLMResponse(text=demo_improve(self._config, self._config.actions.parameters[-1] if wrong else None))
+        parameter = self._config.actions.parameters[-1] if wrong else None
+        return LLMResponse(text=demo_improve(self._config, parameter, machine_id=self._machine_id))
 
 
 def llm_from_env(config: DomainConfig) -> LLM | None:

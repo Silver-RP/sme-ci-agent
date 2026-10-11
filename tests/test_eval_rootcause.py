@@ -68,3 +68,62 @@ def test_main_prints_table_and_exits_zero(e2e_db_url, monkeypatch, capsys):  # n
     assert EV.main(["--seeds", "1"]) == 0
     out = capsys.readouterr().out
     assert "right" in out and "wrong" in out and "unsure" in out and "accuracy" in out
+
+
+# --- R10b2/dev-05 (A4): --until learn -------------------------------------------------------------------------
+
+
+def test_until_learn_reports_passed_rate_over_five_seeds(db_session, capsys):
+    res = EV.evaluate({"right": EV.SCRIPTED["right"]}, CFG, db_session, seeds=[42, 43, 44, 45, 46], until="learn")[0]
+    assert len(res.runs) == 5
+    assert all(r.ended == "finished" for r in res.runs)
+    assert all(r.learned for r in res.runs)
+    print(EV.format_table([res], until="learn"))
+    out = capsys.readouterr().out
+    assert "passed_rate" in out
+    assert res.passed_rate >= 0.9
+
+
+def test_until_learn_wrong_action_does_not_pass(db_session):
+    # control: a proposal whose action the simulator does not link to the anomaly; the rate must drop to 0
+    from backend.agent.demo_llm import demo_improve, demo_investigate
+
+    other = CFG.actions.parameters[-1]
+    assert other != CFG.actions.parameters[0]
+
+    def bad(c):
+        return ScriptedLLM([*demo_investigate(c), demo_improve(c, parameter=other)])
+
+    res = EV.evaluate({"bad": bad}, CFG, db_session, seeds=[42], until="learn")[0]
+    assert res.runs[0].passed is False
+    assert res.passed_rate == 0.0  # the rate reads kpi_measured.passed; it is not true by construction
+
+
+def test_until_learn_restores_skip_handled_env_and_is_repeatable(db_session, monkeypatch):
+    monkeypatch.setenv("SME_SKIP_HANDLED", "1")
+    a = EV.evaluate({"right": EV.SCRIPTED["right"]}, CFG, db_session, seeds=[42], until="learn")[0]
+    b = EV.evaluate({"right": EV.SCRIPTED["right"]}, CFG, db_session, seeds=[42], until="learn")[0]
+    assert a.passed_rate == b.passed_rate == 1.0
+    import os
+
+    assert os.environ["SME_SKIP_HANDLED"] == "1"
+
+
+def test_until_learn_empty_seeds_zero(db_session):
+    res = EV.evaluate({"right": EV.SCRIPTED["right"]}, CFG, db_session, seeds=[], until="learn")[0]
+    assert res.passed_rate == 0.0
+
+
+def test_default_mode_stops_at_proposal_and_table_is_unchanged(db_session):
+    res = EV.evaluate({"right": EV.SCRIPTED["right"]}, CFG, db_session, seeds=[42])
+    assert res[0].runs[0].ended == "proposal"
+    assert "passed_rate" not in EV.format_table(res)
+    assert EV.format_table(res).splitlines()[0].split() == [
+        "scenario", "runs", "accuracy", "ask_rate", "improve_no_evidence", "tokens~"]
+
+
+def test_main_until_learn_uses_own_database_and_prints_rate(e2e_db_url, monkeypatch, capsys):  # noqa: F811
+    monkeypatch.setenv("DATABASE_URL", e2e_db_url)
+    assert EV.main(["--seeds", "2", "--until", "learn"]) == 0
+    out = capsys.readouterr().out
+    assert "passed_rate" in out and "right" in out

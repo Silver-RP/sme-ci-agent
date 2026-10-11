@@ -30,7 +30,7 @@ def max_tokens_from_env() -> int:
 EFFORT_ENV = "LLM_EFFORT"
 DEFAULT_EFFORT = "medium"
 VALID_EFFORTS = ("low", "medium", "high", "xhigh", "max")
-NO_EFFORT_MODEL_PREFIXES = ("claude-haiku-4-5",)  # these models reject output_config.effort
+NO_EFFORT_ENV = "LLM_NO_EFFORT_MODELS"  # comma-separated model-name prefixes that reject output_config.effort
 
 
 def effort_from_env() -> str:
@@ -44,7 +44,9 @@ def effort_from_env() -> str:
 
 
 def supports_effort(model: str) -> bool:
-    return not model.startswith(NO_EFFORT_MODEL_PREFIXES)
+    """False when ``model`` starts with a prefix listed in ``LLM_NO_EFFORT_MODELS`` (no model name lives in code)."""
+    prefixes = tuple(p.strip() for p in (os.environ.get(NO_EFFORT_ENV) or "").split(",") if p.strip())
+    return not (prefixes and model.startswith(prefixes))
 
 
 class LLMConfigError(RuntimeError):

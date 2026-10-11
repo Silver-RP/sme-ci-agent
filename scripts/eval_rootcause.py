@@ -3,6 +3,7 @@
     uv run python scripts/eval_rootcause.py                  # scripted LLM (3 scenarios: right, wrong, unsure), no key
     uv run python scripts/eval_rootcause.py --llm real       # AnthropicLLM; you set the key and MODEL_REASONING in .env
     uv run python scripts/eval_rootcause.py --seeds 5        # N runs per scenario, a different data seed each
+    uv run python scripts/eval_rootcause.py --until learn    # approve and run to Learn; table shows passed_rate (A4)
 
 Each run drives the full graph with a NEUTRAL person: every answer is "no further information" and nothing in
 the answer, the approval or the reason names the cause, so the agent cannot be handed the solution. A run stops
@@ -24,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import uuid
@@ -143,6 +145,8 @@ class RunResult:
     ended: str  # "proposal" | "halt" | "finished" | "no_anomaly"
     llm_calls: int
     tokens: int
+    passed: bool | None = None  # --until learn: the last kpi_measured.passed of the run (None = never measured)
+    learned: bool = False  # --until learn: a learning_saved event
 
 
 @dataclass
@@ -162,6 +166,11 @@ class ScenarioResult:
         return self._rate(lambda r: r.asked)
 
     @property
+    def passed_rate(self) -> float:
+        """A4: share of runs whose last ``kpi_measured`` has ``passed = true`` (never measured counts as not passed)."""
+        return self._rate(lambda r: r.passed is True)
+
+    @property
     def improve_no_evidence(self) -> int:
         return sum(1 for r in self.runs if r.improve_no_evidence)
 
@@ -170,7 +179,38 @@ class ScenarioResult:
         return sum(r.tokens for r in self.runs)
 
 
-def run_once(llm: LLM, config: DomainConfig, session: Session, *, seed: int) -> RunResult:
+def _drive_to_end(graph: Any, cfg: dict, session: Session, approver: str) -> None:
+    """--until learn: the simulated person approves the proposal as it stands (the ``action`` is the LLM's, not
+    chosen here), then plays Measure's follow-ups with the same rules as the metrics replay."""
+    from scripts.metrics_report import _drive
+
+    try:
+        _drive(graph, Command(resume={"decision": "approved", "decided_by": approver, "reason": "eval until learn"}),
+               cfg, session, approver)
+    except RuntimeError:  # script ran out (ScriptExhaustedError) or the run did not end: keep what the state holds
+        session.rollback()
+
+
+def run_once(
+    llm: LLM, config: DomainConfig, session: Session, *, seed: int, until: str = "proposal"
+) -> RunResult:
+    if until != "learn":
+        return _run_once(llm, config, session, seed=seed, until=until)
+    # Learn commits lessons, so a repeat on the same database must not skip the anomaly the script is written for
+    prev = os.environ.get("SME_SKIP_HANDLED")
+    os.environ["SME_SKIP_HANDLED"] = "0"
+    try:
+        return _run_once(llm, config, session, seed=seed, until=until)
+    finally:
+        if prev is None:
+            os.environ.pop("SME_SKIP_HANDLED", None)
+        else:
+            os.environ["SME_SKIP_HANDLED"] = prev
+
+
+def _run_once(
+    llm: LLM, config: DomainConfig, session: Session, *, seed: int, until: str
+) -> RunResult:
     counted = CountingLLM(llm)
     data = generate_dataset(seed=seed)
     root_cause = data.ground_truth[0].root_cause
@@ -180,6 +220,7 @@ def run_once(llm: LLM, config: DomainConfig, session: Session, *, seed: int) -> 
     cfg = {"configurable": {"thread_id": run_id}}
     payload: object = new_state(run_id, config.domain)
     ended = "finished"
+    reached_proposal = False
     snap = None
     for _ in range(MAX_STEPS):
         graph.invoke(payload, cfg)
@@ -193,6 +234,11 @@ def run_once(llm: LLM, config: DomainConfig, session: Session, *, seed: int) -> 
             payload = Command(resume=NEUTRAL_ANSWER)
         elif step == "wait_approval":
             ended = "proposal"
+            if until == "learn":
+                reached_proposal = True
+                _drive_to_end(graph, cfg, session, config.approvers[0])
+                snap = graph.get_state(cfg)
+                ended = "finished" if not snap.next else ("halt" if snap.next[0] == "wait_halt" else snap.next[0])
             break
         else:  # wait_halt or anything else that needs a person: the eval stops here
             ended = "halt" if step == "wait_halt" else step
@@ -201,9 +247,10 @@ def run_once(llm: LLM, config: DomainConfig, session: Session, *, seed: int) -> 
     proposal = values.get("proposal")
     hyps = values.get("hypotheses") or []
     top = (proposal or {}).get("hypothesis") or (max(hyps, key=lambda h: h.confidence).model_dump() if hyps else None)
-    reached = ended == "proposal"
+    reached = ended == "proposal" or reached_proposal
     weak = bool(top) and (top["confidence"] < config.ask.confidence_threshold or not has_tool_evidence(values))
     events = values.get("events", [])
+    measured = [e["payload"].get("passed") for e in events if e["type"] == "kpi_measured"]
     return RunResult(
         correct=is_correct(top, root_cause, config),
         asked=any(e["type"] == "question_asked" for e in events),
@@ -212,6 +259,8 @@ def run_once(llm: LLM, config: DomainConfig, session: Session, *, seed: int) -> 
         ended=ended,
         llm_calls=counted.calls,
         tokens=counted.tokens,
+        passed=measured[-1] if measured else None,
+        learned=any(e["type"] == "learning_saved" for e in events),
     )
 
 
@@ -221,18 +270,26 @@ def evaluate(
     session: Session,
     *,
     seeds: list[int],
+    until: str = "proposal",
 ) -> list[ScenarioResult]:
     """Run every scenario once per seed; a fresh LLM per run (a script keeps a cursor)."""
     out = []
     for name, factory in llm_factories.items():
         res = ScenarioResult(name)
         for seed in seeds:
-            res.runs.append(run_once(factory(config), config, session, seed=seed))
+            res.runs.append(run_once(factory(config), config, session, seed=seed, until=until))
         out.append(res)
     return out
 
 
-def format_table(results: list[ScenarioResult]) -> str:
+def format_table(results: list[ScenarioResult], until: str = "proposal") -> str:
+    if until == "learn":
+        head = f"{'scenario':<10}{'runs':>5}{'passed_rate':>13}{'learned':>9}{'tokens~':>9}"
+        rows = [
+            f"{r.name:<10}{len(r.runs):>5}{r.passed_rate:>13.0%}{sum(x.learned for x in r.runs):>9}{r.tokens:>9}"
+            for r in results
+        ]
+        return "\n".join([head, *rows])
     head = f"{'scenario':<10}{'runs':>5}{'accuracy':>10}{'ask_rate':>10}{'improve_no_evidence':>21}{'tokens~':>9}"
     rows = [
         f"{r.name:<10}{len(r.runs):>5}{r.accuracy:>10.0%}{r.ask_rate:>10.0%}{r.improve_no_evidence:>21}{r.tokens:>9}"
@@ -245,6 +302,11 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--llm", choices=["scripted", "real"], default="scripted")
     p.add_argument("--seeds", type=int, default=3, help="runs per scenario (data seeds 42, 43, ...)")
+    p.add_argument(
+        "--until", choices=["proposal", "learn"], default="proposal",
+        help="proposal: stop at the first proposal (default); learn: a simulated person approves, run to Learn "
+        "and report the share of runs with kpi_measured.passed (A4)",
+    )
     args = p.parse_args(argv)
     if args.llm == "real":
         problem = prepare_real_llm_env(ROOT / ".env")
@@ -256,13 +318,19 @@ def main(argv: list[str] | None = None) -> int:
     factories: dict[str, Callable[[DomainConfig], LLM]] = (
         dict(SCRIPTED) if args.llm == "scripted" else {"real": lambda _c: AnthropicLLM()}
     )
-    with Session(make_engine()) as session:
-        try:
-            results = evaluate(factories, config, session, seeds=seeds)
-        except Exception:
-            session.rollback()
-            raise
-    print(format_table(results))
+    if args.until == "learn":  # lessons are keyed without seed: use a throwaway database, never the main one
+        from scripts.metrics_report import temp_db_sessions
+
+        with temp_db_sessions()() as session:
+            results = evaluate(factories, config, session, seeds=seeds, until="learn")
+    else:
+        with Session(make_engine()) as session:
+            try:
+                results = evaluate(factories, config, session, seeds=seeds)
+            except Exception:
+                session.rollback()
+                raise
+    print(format_table(results, args.until))
     return 0
 
 

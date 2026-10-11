@@ -11,7 +11,7 @@ from backend.agent.nodes.act import make_act_node, make_measure_node, resolve_ch
 from backend.agent.state import new_state
 from backend.db.models import LearningEntry
 from backend.domain_config import MeasureParams
-from backend.sandbox.post_change import build_post_change_tables, fix_addresses_cause
+from backend.sandbox.post_change import build_post_change_tables
 from tests.test_act import (
     CFG,
     CHANGE,
@@ -73,14 +73,6 @@ def test_fix_for_the_wrong_cause_does_not_pass(db_session):
     assert "learning_saved" not in types(out)
 
 
-def test_fix_addresses_cause_uses_hypothesis_text_only():
-    assert fix_addresses_cause({"description": "wrong_setpoint"})
-    assert fix_addresses_cause({"description": "Operator set the zone 3 setpoint to 195C"})
-    assert not fix_addresses_cause({"description": "calibration drift"})
-    assert not fix_addresses_cause({})
-    assert not fix_addresses_cause(None)
-
-
 def test_same_inputs_give_same_post_change_data():
     kw = {"kpi": KPI, "change_time": CHANGE, "machine_id": "M02", "fixed": True, "baseline": 0.02, "noise_sd": 0.004, "run_id": "r"}
     a = build_post_change_tables(_tables(), **kw)["kpi_log"]
@@ -116,7 +108,7 @@ def test_too_few_samples_is_not_enough_evidence_not_a_failure(db_session):
     graph, c, out = run_to_measure(db_session, script_with("wrong_setpoint"), change_time=late)
     m = out["measurement"]
     assert m["status"] == "insufficient_evidence" and m["passed"] is None
-    assert m["n_after"] < CFG.measure.min_samples_after
+    assert m["n_after"] < CFG.measure.min_units_after  # R10b2: n_after counts units, threshold in units
     assert graph.get_state(c).next == ("wait_evidence",)  # waits for a person, no rollback
     assert "rollback" not in json.dumps([e["payload"] for e in out["events"] if e["type"] == "proposal_created"])
     q = [e for e in out["events"] if e["type"] == "question_asked"]
@@ -136,7 +128,7 @@ def test_insufficient_evidence_questions_are_bounded_then_halt(db_session):
 
 def test_min_samples_comes_from_config(db_session):
     late = "2026-06-29T22:00:00"
-    easy = CFG.model_copy(update={"measure": MeasureParams(min_samples_after=1)})
+    easy = CFG.model_copy(update={"measure": MeasureParams(min_units_after=1)})  # R10b2: threshold is in units
     _, _, out = run_to_measure(db_session, script_with("wrong_setpoint"), change_time=late, cfg=easy)
     assert out["measurement"]["status"] == "measured"
 

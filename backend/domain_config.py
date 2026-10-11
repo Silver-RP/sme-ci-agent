@@ -44,6 +44,7 @@ class DetectParams(_Strict):
     rule_window: int = Field(default=3, ge=1)
     rule_hits: int = Field(default=2, ge=1)
     max_gap: int = Field(default=3, ge=0)  # points (shifts) of normal data that keep one anomaly open
+    max_detect_delay_shifts: int = Field(default=3, ge=0)  # timeline replay: detection at most this many shifts after start
 
 
 class InvestigateParams(_Strict):
@@ -54,6 +55,7 @@ class InvestigateParams(_Strict):
     max_tool_steps: int = Field(default=6, ge=1)  # max LLM rounds in one investigation
     max_log_rows: int = Field(default=50, ge=1)  # rows a log/schedule tool returns; more -> cut and flagged
     max_format_retries: int = Field(default=1, ge=0)  # times the LLM may be asked to fix an unparsable answer
+    max_lessons: int = Field(default=5, ge=0)  # earlier lessons (same KPI) shown to Investigate as context
 
 
 class ImproveParams(_Strict):
@@ -113,7 +115,8 @@ class MeasureParams(_Strict):
     # KPI passes when it is within ``tolerance`` (relative) of the KPI target on the good side:
     # decrease: after <= target * (1 + tolerance); increase: after >= target * (1 - tolerance)
     tolerance: float = Field(default=0.25, ge=0.0)
-    min_samples_after: int = Field(default=6, ge=1)  # fewer KPI points after the change -> "not enough evidence"
+    min_samples_after: int = Field(default=6, ge=1)  # kpi_log fallback (no production_log): fewer points -> "not enough evidence"
+    min_units_after: int = Field(default=6000, ge=1)  # units after the change (sum of the KPI denominator) below this -> "not enough evidence"
 
 
 class LoopParams(_Strict):
@@ -210,8 +213,27 @@ class ValidateParams(_Strict):
         return v
 
 
+UNSOURCED = "giả định, chờ D3"
+
+
+class Assumption(_Strict):
+    """A parameter the data does not produce (YAML key ``assumptions:``). ``alternatives`` feed the sensitivity table."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    value: float
+    unit: str = ""
+    source: str = ""  # empty = not sourced yet; shown as UNSOURCED
+    alternatives: list[float] = Field(default_factory=list)  # other values tried for sensitivity (two)
+
+    @property
+    def source_label(self) -> str:
+        return self.source.strip() or UNSOURCED
+
+
 class DomainConfig(_Strict):
     domain: str = Field(min_length=1)
+    assumptions: dict[str, Assumption] = Field(default_factory=dict)
     plant: PlantParams
     machine_log: MachineLogParams = Field(default_factory=MachineLogParams)
     validate_: ValidateParams = Field(default_factory=ValidateParams, alias="validate")

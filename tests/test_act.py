@@ -54,6 +54,12 @@ def _fixed_tables():
     m = (k["machine_id"] == "M02") & (k["timestamp"] >= CHANGE) & (k["kpi"] == KPI)
     k.loc[m, "value"] = CFG.kpis[0].target
     t["kpi_log"] = k
+    # R10b2/dev-01: Measure pools production_log counts, so the fixed counts must be set there too
+    pl = t["production_log"].copy()
+    kc = CFG.kpis[0]
+    rows = (pl["machine_id"] == "M02") & (pl["shift_start"] >= CHANGE)
+    pl.loc[rows, kc.numerator] = (pl.loc[rows, kc.denominator] * kc.target).round().astype(pl[kc.numerator].dtype)
+    t["production_log"] = pl
     return t
 
 

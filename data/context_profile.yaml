@@ -33,10 +33,12 @@ detect:                     # tham số detect (mặc định = giá trị cũ t
   rule_window: 3            # luật k trên n: n điểm
   rule_hits: 2              # luật k trên n: k điểm vượt ngưỡng
   max_gap: 3                # khoảng gộp tối đa (điểm) giữa hai điểm xác nhận
+  max_detect_delay_shifts: 3  # phát hiện theo dòng thời gian: muộn nhất bao nhiêu ca sau start
 investigate:
   max_tool_steps: 6         # số vòng gọi LLM tối đa khi điều tra
   max_log_rows: 50          # số dòng tối đa một tool đọc log trả về; nhiều hơn thì cắt và báo truncated
   max_format_retries: 1     # số lần yêu cầu LLM sửa câu trả lời không parse được, quá thì báo lỗi
+  max_lessons: 5            # số bài học cũ (cùng KPI) đưa vào prompt Investigate làm ngữ cảnh; 0 = tắt
 improve:
   max_evidence_item_chars: 800  # cỡ tối đa (ký tự) mỗi mục evidence đưa vào prompt Improve
   max_format_retries: 1     # số lần yêu cầu LLM sửa đề xuất không parse được, quá thì báo lỗi
@@ -53,7 +55,8 @@ ask:
   max_questions: 2          # số lần hỏi tối đa mỗi run; vượt thì dừng chờ người
 measure:
   window_days: 7            # cửa sổ before/after khi đo KPI sau khi áp dụng
-  min_samples_after: 6      # ít hơn số điểm KPI này sau thay đổi -> "chưa đủ bằng chứng" (hỏi người, không rollback)
+  min_samples_after: 6      # chỉ khi không có production_log (đo từ kpi_log): ít điểm hơn thế -> "chưa đủ bằng chứng"
+  min_units_after: 6000     # ít đơn vị (tổng mẫu số KPI) hơn thế sau thay đổi -> "chưa đủ bằng chứng" (hỏi người, không rollback); ~6 ca
   tolerance: 0.25          # đạt khi KPI trong 25% so với target (đúng phía tốt); không đạt -> đề xuất rollback
 loop:
   max_rejections: 3         # số đề xuất bị từ chối tối đa trước khi dừng chờ người
@@ -61,6 +64,12 @@ loop:
   max_total_rollbacks: 4    # tổng rollback của cả run (không đặt lại); vượt thì chỉ còn lựa chọn kết thúc
   max_revisions: 3          # số lần người chọn revise tối đa; thêm một lần nữa thì dừng chờ người
   max_retries: 3            # số lần /retry liên tiếp thất bại tối đa mỗi run; vượt thì 409, retryable=false
+assumptions:                # tham số dữ liệu không sinh ra; metrics_report in danh sách này và chạy độ nhạy với `alternatives`
+  # source để trống = "giả định, chờ D3" (docs/research/reflow_domain.md của vai A)
+  manual_detect_delay_hours: {value: 72, unit: hours, source: "", alternatives: [24, 168]}  # không agent: từ start tới lúc người phát hiện
+  manual_fix_delay_hours: {value: 24, unit: hours, source: "", alternatives: [8, 72]}       # không agent: từ lúc phát hiện tới lúc sửa có hiệu lực
+  approval_delay_hours: {value: 4, unit: hours, source: "", alternatives: [1, 24]}          # có agent: từ lúc agent đề xuất tới lúc người duyệt, thay đổi có hiệu lực
+  sop_prevention_efficacy: {value: 0.5, unit: ratio, source: "", alternatives: [0.25, 0.75]}  # có agent: phần tái diễn được SOP mới chặn lại
 approvers:                  # người được duyệt/từ chối (allow-list, tên synthetic)
   - alice                   # trưởng ca
   - bob                     # QA

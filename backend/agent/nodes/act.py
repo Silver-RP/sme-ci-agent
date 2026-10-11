@@ -366,7 +366,7 @@ def _audit_not_measured(ctx: ToolContext, measurement: dict[str, Any]) -> None:
         ctx.session, actor="system", action="kpi_not_measured",
         params={
             k: measurement.get(k)
-            for k in ("kpi", "status", "reason", "n_after", "min_samples_after")
+            for k in ("kpi", "status", "reason", "n_after", "n_unit", "min_samples_after", "min_units_after")
             if measurement.get(k) is not None
         },
         run_id=ctx.run_id,
@@ -426,11 +426,13 @@ def make_measure_node(config: DomainConfig, ctx: ToolContext):
             window_days=config.measure.window_days,
             machine_id=machine,
             min_samples_after=config.measure.min_samples_after,
+            min_units_after=config.measure.min_units_after,
         )
         if not res["sufficient"]:
             measurement = {
                 **res, **base, "status": INSUFFICIENT, "passed": None,
                 "min_samples_after": config.measure.min_samples_after,
+                "min_units_after": config.measure.min_units_after,
             }
             _audit_not_measured(ctx, measurement)
             emit("kpi_measured", "quality", measurement)
@@ -456,8 +458,9 @@ def make_ask_evidence_node(config: DomainConfig):
         count = state.get("measure_wait_count", 0) + 1
         payload = {
             "question": (
-                f"Not enough evidence yet: only {m.get('n_after')} {m.get('kpi')} point(s) after the change "
-                f"(need {m.get('min_samples_after')}). Wait for more data and confirm to measure again."
+                f"Not enough evidence yet: only {m.get('n_after')} {m.get('n_unit', 'unit')} for {m.get('kpi')} "
+                f"after the change (need {m.get('min_units_after') if m.get('n_unit') == 'units' else m.get('min_samples_after')}). "
+                "Wait for more data and confirm to measure again."
             ),
             "attempt": count,
             "max_questions": config.ask.max_questions,
@@ -490,6 +493,7 @@ def make_learn_node(config: DomainConfig, ctx: ToolContext):
             "anomaly": state.get("anomaly"),
             "root_cause": proposal.get("hypothesis"),
             "change": proposal.get("change"),
+            "action": proposal.get("action"),
             "rationale": proposal.get("rationale"),
             "sop_id": applied.get("sop_id"),
             "sop_version": applied.get("version"),
@@ -699,6 +703,7 @@ def make_wait_halt_node(config: DomainConfig, ctx: ToolContext | None = None):
         return {
             "approval": None, "status": "", "events": emit.events, "evidence": evidence,
             "question_count": 0, "rejection_count": 0, "rollback_count": 0, "measure_wait_count": 0,
+            "revision_count": 0,  # H-33: the person chose to continue, so revisions restart too
             "evidence_gap": False, "proposal": None, "measurement": None,
             # "applied" is kept on purpose (H-19): the SOP in force stays known while investigating again
         }

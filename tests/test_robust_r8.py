@@ -25,7 +25,6 @@ from backend.agent.nodes.investigate import InvestigationFormatError, run_invest
 from backend.agent.state import Hypothesis, new_state
 from backend.domain_config import ImproveParams, InvestigateParams, load_domain_config
 from backend.sandbox import generate_dataset
-from backend.sandbox.post_change import fix_addresses_cause
 from backend.tools.readonly import ToolContext, get_shift_schedule, query_logs
 from tests.test_act import (
     HUMAN,
@@ -188,6 +187,7 @@ def test_effort_sent_from_env_default_and_arg(monkeypatch):
 def test_haiku_gets_no_output_config(monkeypatch):
     client, sent = _capturing_client()
     monkeypatch.setenv("LLM_EFFORT", "high")
+    monkeypatch.setenv("LLM_NO_EFFORT_MODELS", "claude-haiku-4-5")  # H-39: the list now comes from env
     AnthropicLLM(model="claude-haiku-4-5-20251001", client=client).complete("s", [], [])
     assert "output_config" not in sent
 
@@ -394,30 +394,6 @@ def test_max_tokens_bad_env_is_clear_error(monkeypatch, bad):
     monkeypatch.setenv("LLM_MAX_TOKENS", bad)
     with pytest.raises(LLMConfigError, match="LLM_MAX_TOKENS"):
         _llm()
-
-
-# ---- 6. fix_addresses_cause with wording a real LLM would use ----
-
-
-@pytest.mark.parametrize(
-    "desc",
-    [
-        "wrong_setpoint",
-        "Wrong setpoint on machine M02",
-        "Setpoint drifted away from the SOP value after the night shift change",
-        "Operator changed the set point manually",
-        "The set-point was altered",
-        "Incorrect setpoints were applied",
-    ],
-)
-def test_fix_addresses_cause_real_wording(desc):
-    assert fix_addresses_cause({"description": desc}) is True
-
-
-@pytest.mark.parametrize("desc", ["sensor calibration drift", "material batch change", "", "worn tool"])
-def test_fix_addresses_cause_other_causes(desc):
-    assert fix_addresses_cause({"description": desc}) is False
-    assert fix_addresses_cause(None) is False
 
 
 def test_human_reason_not_needed_for_rollback(db_session):

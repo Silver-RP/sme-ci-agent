@@ -82,9 +82,11 @@ D2_EXPECTED = {
         ("V01", E, "production_log", None, "shift_start", "*"),
         ("N02", W, "production_log", None, "Shift_Start", "*"),
     ],
+    "V01d_missing_conditional_column": [("V01", E, "machine_log", None, "parameter", "*")],
     "V01e_duplicate_column": [("V01", E, "production_log", None, "product_id", "*")],
     "V02_int_decimal": [("V02", E, "production_log", 9, "units_produced", "820.0")],
     "V02_conditional_empty": [("V02", E, "machine_log", 4, "parameter", "")],
+    "V02_float_comma": [("V02", E, "machine_log", 4, "old_value", "180,5")],
     "V02_row_cell_count": [("V02", E, "production_log", 9, None, "*")],
     "V02_bool": [("V02", E, "shift_schedule", 9, "is_substitute", "TRUE")],
     "V02_date": [("V02", E, "shift_schedule", 2, "date", "2026-02-30")],
@@ -92,7 +94,12 @@ D2_EXPECTED = {
         ("V09", E, "shift_schedule", None, "operator_name", "*"),
         ("N02", W, "shift_schedule", None, "operator_name", "*"),
     ],
+    "V09a_header_camelcase": [
+        ("V09", E, "shift_schedule", None, "OperatorName", "*"),
+        ("N02", W, "shift_schedule", None, "OperatorName", "*"),
+    ],
     "V09b_operator_value": [("V09", E, "shift_schedule", 3, "operator_id", "Nguyen Van A")],
+    "N01_extra_file": [("N01", W, "kpi_log.csv", None, "*", "*")],
 }
 
 
@@ -100,17 +107,17 @@ D2_EXPECTED = {
 def test_d2_set_gives_exactly_the_named_code(name):
     issues = run(INVALID / name)
     assert_scope(issues, D2_EXPECTED[name])
-    assert {i["code"] for i in issues if i["code"].startswith("V") and i["code"] in SCOPE} == {
+    assert {i["code"] for i in issues if i["code"] in SCOPE and i["code"] != "N02"} == {
         D2_EXPECTED[name][0][0]
     }
 
 
 def test_every_d2_v01_v02_v09_set_is_covered_by_a_test():
-    names = {p.name for p in INVALID.iterdir() if p.name[:3] in ("V01", "V02", "V09")}
+    names = {p.name for p in INVALID.iterdir() if p.name[:3] in ("V01", "V02", "V09", "N01")}
     assert names == set(D2_EXPECTED)
 
 
-@pytest.mark.parametrize("name", sorted(p.name for p in INVALID.iterdir() if p.name[:3] not in ("V01", "V02", "V09")))
+@pytest.mark.parametrize("name", sorted(p.name for p in INVALID.iterdir() if p.name[:3] not in ("V01", "V02", "V09", "N01")))
 def test_other_d2_sets_have_no_part1_items(name):
     """No false positive of part 1 on sets built for V03-V08."""
     assert _scope(run(INVALID / name)) == []

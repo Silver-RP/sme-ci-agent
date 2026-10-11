@@ -36,6 +36,14 @@ def shared_db_url():
     admin.dispose()
 
 
+@pytest.fixture(autouse=True)
+def first_anomaly_by_default(monkeypatch):
+    """R10b2/dev-03: runs skip anomalies that already have a lesson. Older tests repeat full runs on one
+    database and expect the first anomaly each time, so they run with the skip off (also in subprocesses).
+    tests/test_lessons_r10b2.py turns it back on (the product default)."""
+    monkeypatch.setenv("SME_SKIP_HANDLED", "0")
+
+
 @pytest.fixture
 def db_session(shared_db_url):
     """One transaction per test, rolled back at the end."""

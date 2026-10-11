@@ -14,6 +14,7 @@ from pydantic import ValidationError
 
 from backend.agent.events import make_event
 from backend.agent.jsonutil import extract_json_object, parse_bool
+from backend.agent.lessons import lessons_text, relevant_lessons
 from backend.agent.llm import LLM, LLMResponse, ToolCall, ToolSpec
 from backend.agent.prompts import build_system_prompt
 from backend.agent.state import AgentState, Hypothesis, validate_hypothesis_groups
@@ -166,6 +167,7 @@ def run_investigation(
     anomaly = state.get("anomaly")
     prior_answers = [e for e in evidence if e.get("source") == "human_answer"]
     user_text = f"Anomaly detected: {json.dumps(anomaly, default=str)}. Investigate."
+    user_text += lessons_text(relevant_lessons(ctx, anomaly if isinstance(anomaly, dict) else None, config.investigate.max_lessons))
     if prior_answers:
         user_text += " Human answers so far: " + json.dumps(prior_answers, default=str)
     feedback = [

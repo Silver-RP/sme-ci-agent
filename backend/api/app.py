@@ -40,8 +40,9 @@ from backend.agent.nodes.act import DecisionError, parse_decision, validate_chan
 from backend.agent.nodes.improve import ProposalError
 from backend.agent.state import new_state
 from backend.api.kpi_series import SeriesError, kpi_series
+from backend.api.metrics_source import build_metrics
 from backend.api.run_export import build_export
-from backend.dataset_store import active_tables
+from backend.dataset_store import active_name, active_tables
 from backend.db import repo
 from backend.db.session import dispose_shared_engines, get_shared_engine
 from backend.detect.statistical import detect as run_detect
@@ -136,9 +137,12 @@ LEARNINGS_DEFAULT_LIMIT = 50
 LEARNINGS_MAX_LIMIT = 500
 
 
+SANDBOX_SEED = 42
+
+
 @cache
 def _simulated_tables():
-    return generate_dataset(seed=42).tables
+    return generate_dataset(seed=SANDBOX_SEED).tables
 
 
 def _default_tables():
@@ -684,36 +688,10 @@ def create_app(
 
     @app.get("/metrics")
     def metrics() -> dict[str, Any]:
-        """The 3 PLAN metrics. Only what has a real source is filled: the KPI before/after of the latest lesson in
-        learning_store for the first configured KPI. MTTD/MTTR and recurrence stay unavailable until R10b2."""
+        """The 3 PLAN metrics from the report of scripts/metrics_report.py for this dataset and seed (R10b2).
+        No report for them, or one of another dataset or seed: available false with the reason, never a number."""
         kpi = cfg_domain.kpis[0]
-        with read_db() as session:
-            lessons = repo.list_learning(session, cfg_domain.domain)
-        latest = next(
-            (r for r in lessons if r.content.get("kpi") == kpi.name and r.content.get("kpi_before") is not None
-             and r.content.get("kpi_after") is not None),
-            None,
-        )
-        if latest is not None:
-            first = {
-                "name": kpi.name, "unit": kpi.unit, "before": latest.content["kpi_before"],
-                "after": latest.content["kpi_after"], "available": True, "reason": None, "run_id": latest.run_id,
-            }
-        else:
-            first = {
-                "name": kpi.name, "unit": kpi.unit, "before": None, "after": None, "available": False,
-                "reason": "no finished run has saved a lesson with this KPI yet", "run_id": None,
-            }
-        pending = "no real source yet (planned for R10b2)"
-        return {
-            "metrics": [
-                first,
-                {"name": "mttd_mttr", "unit": "hours", "before": None, "after": None, "available": False,
-                 "reason": pending, "run_id": None},
-                {"name": "recurrence_rate", "unit": "ratio", "before": None, "after": None, "available": False,
-                 "reason": pending, "run_id": None},
-            ]
-        }
+        return build_metrics(kpi.name, kpi.unit, active_name() or "sandbox", SANDBOX_SEED)
 
     @app.get("/kpi/series")
     def kpi_series_api(

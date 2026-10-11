@@ -281,11 +281,6 @@ class Harness:
 # ---- tests ----
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="H-39 (llm.py NO_EFFORT_MODEL_PREFIXES) is closed in R10b2/dev-07; strict: this turns red when it is "
-    "fixed, so remove the mark then",
-)
 def test_no_model_name_in_backend():
     hits = [str(f) for f in (ROOT / "backend").rglob("*.py") if re.search(r"claude-", f.read_text(encoding="utf-8"))]
     assert hits == [], f"model names must come from .env, found in {hits}"
