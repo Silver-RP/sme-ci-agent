@@ -1,6 +1,6 @@
 {
   "updated": "2026-10-12",
-  "source": "audit 2026-10-12 (sau R10d, R10b1, R10b2) + audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132",
+  "source": "audit 2026-10-12 (sau R10d, R10b1, R10b2) + audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10)",
   "milestones": {
     "project": [
       {
@@ -27,8 +27,8 @@
       {
         "id": "M4",
         "status": "in_progress",
-        "tasks": "2/6",
-        "note": "T-040, T-041 xong; T-042..T-045 mở"
+        "tasks": "3/6",
+        "note": "T-040..T-042 xong; T-043 (vai D), T-044, T-045 (vai Q) mở; cổng 13/10 go, tag v0.1-e2e trên c60fec5 (#135, 12/10)"
       }
     ],
     "runs": [
@@ -223,8 +223,8 @@
     {
       "id": 3,
       "text": "Đo 3 chỉ số trước/sau trên 6 tháng dữ liệu mô phỏng: defect %, MTTD/MTTR, tỷ lệ tái diễn",
-      "percent": 100,
-      "evidence": "R10b2: scripts/metrics_report.py --months 6 --seed 42 (LLM giả, supervisor chạy 2 lần cùng số; seed 7 cũng đủ): có agent / không agent: tỷ lệ lỗi period_rate 0,0204 / 0,0208; MTTD 8 / 72 giờ, MTTR 24 / 44 giờ; tái diễn 0,25 / 0,5 -> cả 3 phần A7 tốt hơn đối chứng -> 100 theo công thức. CẢNH BÁO: 4 giả định đều 'giả định, chờ D3'; MTTD không agent = giả định, tái diễn = (1 - sop_prevention_efficacy) theo cấu tạo; lợi thế tỷ lệ lỗi rất nhỏ. Audit 4 xét lại | Audit 4 (2026-10-12): đề nghị <= 67 (33 nếu đọc chặt): tái diễn đạt theo cấu tạo, độ nhạy chung đảo chiều (H-64); leader chốt cách tính.",
+      "percent": 67,
+      "evidence": "R10b2: scripts/metrics_report.py --months 6 --seed 42 (LLM giả, supervisor chạy 2 lần cùng số; seed 7 cũng đủ): có agent / không agent: tỷ lệ lỗi period_rate 0,0204 / 0,0208; MTTD 8 / 72 giờ, MTTR 24 / 44 giờ; tái diễn 0,25 / 0,5 -> cả 3 phần A7 tốt hơn đối chứng -> 100 theo công thức. CẢNH BÁO: 4 giả định đều 'giả định, chờ D3'; MTTD không agent = giả định, tái diễn = (1 - sop_prevention_efficacy) theo cấu tạo; lợi thế tỷ lệ lỗi rất nhỏ. Audit 4 xét lại | Audit 4 (2026-10-12): đề nghị <= 67 (33 nếu đọc chặt): tái diễn đạt theo cấu tạo, độ nhạy chung đảo chiều (H-64); leader chốt cách tính. | Leader chốt 12/10: 67 (tái diễn = 0 theo criteria.md mục 2 'đạt theo cấu tạo'; tỷ lệ lỗi, MTTD/MTTR tính 1; cờ H-64 chờ D3).",
       "missing": "Nguồn D3 cho 4 giả định; tái diễn theo nguyên nhân + kịch bản A2 khác A1 (R11a); T-043 (vai D); A7 với LLM thật",
       "estimate_old": 5,
       "metrics": [
@@ -510,6 +510,10 @@
   "decisions": [
     {
       "date": "2026-10-12",
+      "text": "Đóng phiên: cổng 13/10 go, tag v0.1-e2e trên c60fec5 (docs/qa/gate-v0.1-e2e.md, #135); A4 tính đạt theo chữ ngưỡng v0.1, H-32 phải sửa trước freeze 20/10. Điều 3 chốt 67 (tái diễn = 0 theo luật đạt theo cấu tạo; H-64 chờ D3). #126 (5 bộ D2 thêm) merge; R10b2 dev-07 thêm test 37 bộ D2 (#129). Guard giữ nguyên, không thêm duyệt xoá một lần. Phiên sau: câu chữ cho người dùng bằng tiếng Việt (đang hard-code tiếng Anh ở ask.py), #114, #111."
+    },
+    {
+      "date": "2026-10-12",
       "text": "Audit 4 (sau R10d, R10b1, R10b2): 15 lỗ hổng mới H-60..H-74 (1 cao: H-64), đóng H-35, H-44, H-46 (auditor chạy vitest, 49 passed), còn 31 mở. Điều 3 đề nghị hạ 100 -> <= 67 (33 nếu đọc chặt). % đạt công thức giữ 0/67/100 đến khi leader chốt."
     },
     {
@@ -719,9 +723,10 @@
     },
     {
       "id": "gate-13-10",
-      "date": "13/10",
+      "date": "12/10",
       "goal": "Cổng go/no-go (criteria.md mục 3) rồi tag v0.1-e2e (leader duyệt; UI FR-01..05)",
-      "needs_team": true
+      "needs_team": false,
+      "status": "go, tag v0.1-e2e trên c60fec5 (#135); A6 0, A8 10/10 p95 0,8 s, A5 1,0/1,0, A7 tính được, A4 1,0 (H-32 sửa trước freeze), FR-01..05 #116–#118"
     },
     {
       "id": "R11a",

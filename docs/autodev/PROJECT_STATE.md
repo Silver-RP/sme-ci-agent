@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-12 · Nguồn: audit `docs/audits/2026-10-12.md` (audit 4) + audit `2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10) + bộ thử reviewer (#105–#108) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132.
+Cập nhật: 2026-10-12 · Nguồn: audit `docs/audits/2026-10-12.md` (audit 4) + audit `2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10) + bộ thử reviewer (#105–#108) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10).
 
 ## Mốc
 
@@ -10,7 +10,7 @@ Cập nhật: 2026-10-12 · Nguồn: audit `docs/audits/2026-10-12.md` (audit 4)
 |---|---|---|---|
 | Dự án | M0–M2 | ✅ 19/19 task | |
 | Dự án | M3 | ✅ 2/2 | T-030 xong 10/10: vòng LLM thật khép kín; dashboard lỗi H-44 |
-| Dự án | M4 | 🔄 2/6 | T-040, T-041 xong; T-042..T-045 mở; tag v0.1-e2e 13/10 |
+| Dự án | M4 | 🔄 3/6 | T-040..T-042 xong; T-043 (vai D), T-044, T-045 (vai Q) mở; **cổng 13/10 go, tag `v0.1-e2e` trên c60fec5 (#135, 12/10)** |
 | Chạy | R4–R9, R9h, R9i, R9ih, R10a, R10c, R10ch, R10d, R10b1, R10b2 | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55, #58, #82, #84, #91, #120, #130, #132 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 / ~0,64 / 4,00 / 5,81 / 3,51 / ~3,63 / 9,10 / 8,76 (worker) USD |
 | Plugin | P1–P3 | ✅ | |
 | Plugin | P4 | 🔄 | chờ reset hạn mức phiên đã chạy thật (R9); còn kiểm hạn mức trước mốc, hạn mức tuần mới thử bằng test giả |
@@ -28,7 +28,7 @@ Từ 2026-10-10, **% đạt tính bằng công thức từ chỉ số đo đư�
 |---|---|---|---|---|---|---|
 | 1 | Tìm đúng nguyên nhân gốc, biết hỏi người khi thiếu bằng chứng | 0 | 30 | A1 top-1 tập giữ lại ≥ 0,7; A2 precision ≥ 0,6, recall ≥ 0,8; A3 = 0 | eval LLM giả chỉ kiểm bộ chấm (right 100%, wrong 0%, unsure hỏi 100%); chấm theo chuỗi (H-28) | đo nền LLM thật sau R10a; R11a, R11b |
 | 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 67 | 65 | A4 ≥ 0,9; A5 (a) 1,0, (b) ≥ 0,8; A6 = 0 vi phạm | Luật chỉ số nhiều phần (`criteria.md`). A4: R10b2 `eval_rootcause.py --until learn --seeds 5` LLM giả, `right` 5/5 = 1,0; LLM thật chưa đo → A4 = 0,5 (lưu ý `wrong` cũng 100%: đúng `action`, sai nguyên nhân, H-32). A5: LLM giả 1,0 (R10ch), LLM thật chưa đo → 0,5. A6 = 0 vi phạm → 1. (0,5 + 0,5 + 1)/3 = 67 | A4, A5 LLM thật |
-| 3 | 3 chỉ số trước/sau trên 6 tháng mô phỏng | 100 | 5 | A7: 3 chỉ số tính được, tốt hơn đối chứng "không agent" | R10b2 `metrics_report.py --months 6 --seed 42` (LLM giả, lặp lại cùng số): có agent / không agent: tỷ lệ lỗi `period_rate` 0,0204 / 0,0208; MTTD 8 / 72 giờ, MTTR 24 / 44 giờ; tái diễn 0,25 / 0,5 → cả 3 phần tốt hơn → 100 theo công thức. **Cảnh báo:** 4 giả định đều "chờ D3"; MTTD không agent = giả định, tái diễn theo cấu tạo; lợi thế tỷ lệ lỗi rất nhỏ. **Audit 4 (12/10):** đề nghị ≤ 67 (33 nếu chặt): tái diễn đạt theo cấu tạo, độ nhạy chung đảo chiều (H-64); leader chốt | nguồn D3; R11a (tái diễn theo nguyên nhân) |
+| 3 | 3 chỉ số trước/sau trên 6 tháng mô phỏng | 67 | 5 | A7: 3 chỉ số tính được, tốt hơn đối chứng "không agent" | R10b2 `metrics_report.py --months 6 --seed 42` (LLM giả, lặp lại cùng số): có agent / không agent: tỷ lệ lỗi `period_rate` 0,0204 / 0,0208; MTTD 8 / 72 giờ, MTTR 24 / 44 giờ; tái diễn 0,25 / 0,5 → cả 3 phần tốt hơn → 100 theo công thức. **Cảnh báo:** 4 giả định đều "chờ D3"; MTTD không agent = giả định, tái diễn theo cấu tạo; lợi thế tỷ lệ lỗi rất nhỏ. **Audit 4 (12/10):** đề nghị ≤ 67 (33 nếu chặt): tái diễn đạt theo cấu tạo, độ nhạy chung đảo chiều (H-64). **Leader chốt 12/10: 67** (tái diễn = 0 theo `criteria.md` mục 2; tỷ lệ lỗi, MTTD/MTTR tính 1; cờ H-64 chờ D3) | nguồn D3; R11a (tái diễn theo nguyên nhân) |
 
 Cổng go/no-go 13/10 và 20/10: `docs/eval/criteria.md` mục 3. Chỉ số plugin B1–B5: `python3 .autodev/metrics.py` (nền: B1 = 1,67 ở audit 1, 1,75 ở audit 2; B2 = 2/44 task cần ≥ 2 vòng sau R10a).
 
@@ -90,6 +90,7 @@ Từ `docs/audits/2026-10-12.md` (mới) và `2026-10-10.md`, `2026-10-09_2.md` 
 | H-71, H-72, H-73, H-74 | thấp | Learn chưa commit; Learn chỉ khi pass; target NaN; gom nhỏ (xem audit 2026-10-12) |
 ## Quyết định gần đây
 
+- 2026-10-12 (đóng phiên): cổng 13/10 **go**, tag `v0.1-e2e` trên c60fec5 (biên bản `docs/qa/gate-v0.1-e2e.md`, #135); A4 tính đạt theo chữ ngưỡng v0.1, **H-32 phải sửa trước freeze 20/10**. Điều 3 chốt **67** (tái diễn = 0 theo luật "đạt theo cấu tạo"; H-64 chờ D3). #126 (5 bộ D2 thêm) merge; R10b2 dev-07 thêm test 37 bộ D2 (#129). Guard giữ nguyên, không thêm duyệt xoá một lần. Phiên sau: câu chữ cho người dùng bằng tiếng Việt (đang hard-code tiếng Anh ở `ask.py`), #114, #111.
 - 2026-10-12: audit 4 (sau R10d, R10b1, R10b2): 15 lỗ hổng mới H-60..H-74 (1 cao: H-64), đóng H-35, H-44, H-46 (auditor chạy vitest, 49 passed), còn 31 mở. Điều 3 đề nghị hạ 100 → ≤ 67 (33 nếu đọc chặt): tái diễn đạt theo cấu tạo, 4 giả định chưa có nguồn D3, độ nhạy một chiều không đảo chiều. % đạt công thức giữ 0/67/100 đến khi leader chốt.
 - 2026-10-12: R10b2 merge #132 (điều 3: Measure trọng số sản lượng, Detect theo dòng thời gian, run chọn anomaly chưa xử lý + đọc bài học, `metrics_report.py` có đối chứng + độ nhạy, eval `--until learn`, `/metrics` thật). Supervisor tự kiểm: 4/4 tiêu chí cấp mốc đạt (936 passed, smoke 4/4). Đóng H-11, H-33, H-39 (H-33, H-39 đỏ trên main). % đạt 0/67/100; điều 3 dựa trên giả định chưa có nguồn D3. 6 đề xuất (c) của worker chờ leader (PR #132).
 - 2026-10-11: R10b1 merge #130 (dữ liệu theo hợp đồng D1: `production_log` số đếm, `material_batches`, `sop`, simulator nhị thức, `kpi_log` dẫn xuất, `import_data.py` + V01–V09, `SME_DATASET`). Supervisor tự kiểm: 4/4 tiêu chí cấp mốc đạt; 31/31 bộ D2 đúng mã; nhập seed 7 thì app đọc đúng bảng nhập; A1 ≈ 9,6σ (chưa nhỏ đi, H-29 cần D4). Không đóng H-xx. 7 đề xuất (c) của worker chờ leader/vai A (PR #130). Fixture + 2 test dashboard đổi số mong đợi: báo vai D.
@@ -139,7 +140,7 @@ Kế hoạch P6 (duyệt 10/10; đầy đủ, kèm luồng plugin, pre-mortem, t
 | R10d | ✅ 11/10 #120 | API cho dashboard | #110, #112, #113, #115; H-49, H-57 | |
 | R10b1 | ✅ 11/10 #130 | Dữ liệu theo hợp đồng **D1 đã chốt** (#122) | `production_log`, `material_batches`, `sop`, simulator nhị thức, `import_data.py` + V01–V09 (dùng D2 #123); plan #124 | không (D1, D2 đã merge) |
 | R10b2 | ✅ 12/10 #132 | Điều 3 | H-11, T-042, `/metrics` thật, `metrics_report.py` có đối chứng; H-33, H-39; audit 4 sau mốc này (`--audit-every 3`) | giả định cần D3 |
-| Cổng 13/10 | 13/10 | tag v0.1-e2e (leader duyệt) | `criteria.md` mục 3; UI FR-01..05 | UI: vai D |
+| Cổng 13/10 | ✅ 12/10 #135 | tag v0.1-e2e (leader duyệt) | A6 0, A8 10/10 p95 0,8 s, A5 1,0/1,0, A7 tính được, A4 1,0 (H-32 sửa trước freeze), FR-01..05 #116–#118 | |
 | R11a | 13–14/10 | Điều 1: cơ chế eval trung thực | H-28, H-29, H-32, H-36, H-18; 1 kịch bản khó do backend soạn; `environment_log`, `training_level` | không |
 | R11b | 15–17/10 | Điều 1: đề độc lập | nhập D4/D5; eval nhiều seed LLM thật; ghi run tốt để phát lại | vai A |
 | R12 | 18–19/10 | Gom lỗi bug bash 2, audit 4, bộ dữ liệu demo (D6) | | vai Q, A |
