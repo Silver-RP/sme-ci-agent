@@ -167,7 +167,10 @@ def run_investigation(
     anomaly = state.get("anomaly")
     prior_answers = [e for e in evidence if e.get("source") == "human_answer"]
     user_text = f"Anomaly detected: {json.dumps(anomaly, default=str)}. Investigate."
-    user_text += lessons_text(relevant_lessons(ctx, anomaly if isinstance(anomaly, dict) else None, config.investigate.max_lessons))
+    user_text += lessons_text(
+        relevant_lessons(ctx, anomaly if isinstance(anomaly, dict) else None, config.investigate.max_lessons),
+        config.learn.unconfirmed_label,
+    )
     if prior_answers:
         user_text += " Human answers so far: " + json.dumps(prior_answers, default=str)
     feedback = [

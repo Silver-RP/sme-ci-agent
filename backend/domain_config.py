@@ -98,6 +98,19 @@ class ActionParams(_Strict):
         return self
 
 
+class LearnParams(_Strict):
+    """Learn parameters (YAML key ``learn:``): when a lesson counts as a confirmed cause (H-32)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    # |r| of the top hypothesis' own signal (from a tool result) must reach this for the cause to count as confirmed
+    min_cause_evidence: float = Field(default=0.5, ge=0.0, le=1.0)
+    # signal/hypothesis name -> action parameters that act on it (a fix on another parameter does not confirm it)
+    cause_parameters: dict[str, list[str]] = Field(default_factory=dict)
+    # shown in the Investigate prompt before a lesson whose cause is not confirmed
+    unconfirmed_label: str = Field(default="cause not confirmed", min_length=1)
+
+
 class AskParams(_Strict):
     """Ask parameters (YAML key ``ask:``)."""
 
@@ -338,6 +351,7 @@ class DomainConfig(_Strict):
     loop: LoopParams = Field(default_factory=LoopParams)
     detect: DetectParams = Field(default_factory=DetectParams)
     investigate: InvestigateParams = Field(default_factory=InvestigateParams)
+    learn: LearnParams = Field(default_factory=LearnParams)
     improve: ImproveParams = Field(default_factory=ImproveParams)
     kpis: list[KPI] = Field(min_length=1)
     hypothesis_groups: dict[str, list[str]] = Field(min_length=1)
@@ -348,6 +362,14 @@ class DomainConfig(_Strict):
     def _event_types_cover_setpoint(self) -> DomainConfig:
         if self.signals.setpoint_event not in self.machine_log.event_types:
             raise ValueError("machine_log.event_types must contain signals.setpoint_event")
+        return self
+
+    @model_validator(mode="after")
+    def _learn_links_known(self) -> DomainConfig:
+        for cause, params in self.learn.cause_parameters.items():
+            unknown = [p for p in params if p not in self.actions.parameters]
+            if unknown:
+                raise ValueError(f"learn.cause_parameters[{cause}]: {unknown} not in actions.parameters")
         return self
 
     @field_validator("approvers")

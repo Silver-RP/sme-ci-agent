@@ -116,9 +116,11 @@ Có hai dạng; phân biệt bằng `kind`.
 `conflict` (chuỗi, R10c, H-14) chỉ có khi rollback không thực hiện được vì SOP đã bị run khác đổi (`rolled_back: false`, kèm `current_version`).
 
 ### learning_saved (improvement)
-`{learning_id, domain, content: {anomaly, root_cause, change, rationale, sop_id, sop_version, kpi, kpi_before, kpi_after, outcome}}`
+`{learning_id, domain, content: {anomaly, root_cause, change, rationale, sop_id, sop_version, kpi, kpi_before, kpi_after, outcome, cause_status}}`
 
-`outcome` là `success` hoặc `no_change`.
+`outcome` là `success` hoặc `no_change`: hành động có làm KPI đạt hay không.
+
+`cause_status` (R10e, H-32) là `confirmed` hoặc `unconfirmed`: nguyên nhân (`root_cause`) có được xác nhận hay không, tách khỏi `outcome`. `confirmed` khi đủ cả ba: KPI đạt; có kết quả tool cho chính tín hiệu của giả thuyết đứng đầu, `|r|` >= `learn.min_cause_evidence`; tham số của `action` nằm trong `learn.cause_parameters` của giả thuyết đó. Thiếu một điều kiện (kể cả `outcome: no_change`) thì `unconfirmed`. Bài học cũ không có trường này: coi như chưa biết. Bài học `unconfirmed` vào prompt Investigate kèm nhãn `learn.unconfirmed_label`.
 
 ### run_finished (system)
 `status` là một trong:

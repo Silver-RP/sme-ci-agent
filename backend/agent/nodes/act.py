@@ -27,6 +27,7 @@ import pandas as pd
 from langgraph.types import interrupt
 
 from backend.agent.events import make_event
+from backend.agent.lessons import cause_status
 from backend.agent.nodes.ask import (
     audit_answer,
     audit_halt_raised,
@@ -514,6 +515,10 @@ def make_learn_node(config: DomainConfig, ctx: ToolContext):
             "kpi_after": m.get("after"),
             "outcome": "success" if applied and m.get("passed") else "no_change",
         }
+        # "the action worked" is not "the cause was right": confirmed needs KPI passed AND the evidence/action links
+        lesson["cause_status"] = (
+            cause_status(state, config) if lesson["outcome"] == "success" else "unconfirmed"
+        )
         res = save_learning(ctx, content=lesson)
         emit = _Emitter(state, config)
         emit("learning_saved", "improvement", {"learning_id": res["id"], "domain": res["domain"], "content": lesson})
