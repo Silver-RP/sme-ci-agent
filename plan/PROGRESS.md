@@ -416,3 +416,7 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 ### R10b2/dev-06: DONE
 - Vòng: 1. Commit: 750ba44. Review: .autodev/reviews/dev-06-r1.json (PASS).
 - `/metrics` đọc `data/reports/metrics_<dataset>_seed<seed>.json`, khác dataset/seed hoặc thiếu → `available:false` kèm `reason`; probe thật khớp báo cáo.
+
+### R10e/dev-01: DONE
+- Vòng: 1. Commit: be13f18. Review: .autodev/reviews/R10e-dev-01-r1.json (PASS).
+- Khối `messages:` tiếng Việt trong config; ask/act lấy câu hỏi, halt, rollback, not_applied từ template; `halt_payload` đổi chữ ký (nhận config). 968 test pass.
