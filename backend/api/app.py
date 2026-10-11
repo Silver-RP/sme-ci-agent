@@ -41,6 +41,7 @@ from backend.agent.nodes.improve import ProposalError
 from backend.agent.state import new_state
 from backend.api.kpi_series import SeriesError, kpi_series
 from backend.api.run_export import build_export
+from backend.dataset_store import active_tables
 from backend.db import repo
 from backend.db.session import dispose_shared_engines, get_shared_engine
 from backend.detect.statistical import detect as run_detect
@@ -136,8 +137,13 @@ LEARNINGS_MAX_LIMIT = 500
 
 
 @cache
-def _default_tables():
+def _simulated_tables():
     return generate_dataset(seed=42).tables
+
+
+def _default_tables():
+    """SME_DATASET (imported CSV) when set, else the simulator data."""
+    return active_tables(_simulated_tables)
 
 
 def _default_ctx_factory(run_id: str) -> ToolContext:
@@ -659,14 +665,16 @@ def create_app(
             raise HTTPException(status_code=404, detail=f"sop {sop_id!r} not found")
         found: dict[int, dict[str, Any]] = {
             s.version: {
-                "version": s.version, "created_by": "config", "run_id": None, "created_at": None,
+                "version": s.version, "created_by": s.origin, "run_id": None, "created_at": None,
                 "content": "\n".join(s.steps),
             }
             for s in base
         }
+        origin = {s.version: s.origin for s in base}
         with read_db() as session:
             for r in repo.list_sop_versions(session, sop_id):
-                is_config = r.created_by == "config"  # the DB copy of the config version: not made by a run (#112)
+                # the DB copy of the base version (config or import): not made by a run (#112)
+                is_config = origin.get(r.version) == r.created_by
                 found[r.version] = {
                     "version": r.version, "created_by": r.created_by,
                     "run_id": None if is_config else r.run_id,

@@ -32,6 +32,7 @@ class SOP(_Strict):
     version: int = Field(ge=1)
     title: str
     steps: list[str] = Field(default_factory=list)
+    origin: str = "config"  # who made this base version: "config" (YAML) or "import" (dataset sop.csv); = created_by
 
 
 class DetectParams(_Strict):
@@ -255,4 +256,9 @@ class DomainConfig(_Strict):
 def load_domain_config(path: str | Path = DEFAULT_PROFILE_PATH) -> DomainConfig:
     """Load and validate the domain config. Raises pydantic.ValidationError on bad input."""
     data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
-    return DomainConfig.model_validate(data)
+    cfg = DomainConfig.model_validate(data)
+    if Path(path) == DEFAULT_PROFILE_PATH:  # SME_DATASET: the base SOP comes from the dataset (R10b1 dev-06)
+        from backend.dataset_store import apply_to_config
+
+        cfg = apply_to_config(cfg)
+    return cfg

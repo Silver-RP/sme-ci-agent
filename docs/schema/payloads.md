@@ -143,7 +143,7 @@ Có hai dạng; phân biệt bằng `kind`.
 | GET | `/runs` | | `{runs: [RunSummary]}`, mới nhất trước (R10a) |
 | GET | `/audit?run_id=&limit=` | | `{rows: [AuditRow]}`, mới nhất trước. `limit` 1..500 (mặc định 100), ngoài khoảng thì 422 |
 | GET | `/learnings?limit=` | | `{learnings: [{learning_id, run_id, created_at, content}]}` từ `learning_store` của domain đang chạy, mới nhất trước; `content` cùng hình dạng `learning_saved.content`. `limit` 1..500 (mặc định 50), ngoài khoảng thì 422. Chỉ đọc; không có `DATABASE_URL` thì `{learnings: []}`. Còn sau khi app khởi động lại (R10d) |
-| GET | `/sop/{sop_id}/versions` | | `{sop_id, versions: [SopVersion]}`, cũ nhất trước; 404 nếu `sop_id` không có trong config |
+| GET | `/sop/{sop_id}/versions` | | `{sop_id, versions: [SopVersion]}`, cũ nhất trước; 404 nếu `sop_id` không có trong config. Từ R10b1: khi chạy với `SME_DATASET=<tên>` thì SOP gốc là SOP trong `sop.csv` của dataset (SOP chỉ có trong config thì 404) |
 | GET | `/metrics` | | `{metrics: [Metric]}`, luôn đúng 3 phần tử theo thứ tự: KPI chính (tên, đơn vị lấy từ config), `mttd_mttr`, `recurrence_rate` (R10a) |
 | GET | `/kpi/series?kpi=&machine=&shift=&start=&end=` | `kpi` bắt buộc | chuỗi KPI từ dữ liệu sandbox của app (R10b1 đổi nguồn sang `production_log`). `kpi`, `machine`, `shift` lạ hoặc `start`/`end` sai định dạng thì 422. `start`/`end` là giờ không múi giờ (giờ sandbox), ví dụ `2026-01-01T00:00:00`; có múi giờ (`Z`, `+09:00`) thì 422 với `detail` nêu tên tham số, không quy đổi. `start <= ts < end`; khoảng rỗng thì `points: []` |
 
@@ -184,8 +184,9 @@ AuditRow: {"id": 12, "ts": "2026-10-10T09:00:03+00:00", "run_id": "run_ff5de085"
 `params` là object JSON (khoá nào cũng giữ cấu trúc: `save_learning.content`, `apply_sop.approval` là object, không phải chuỗi `repr`). Từ R10d. Dòng ghi trước R10d có thể còn `params` là chuỗi; audit append-only nên không sửa, dashboard đọc nguyên văn.
 
 ```json
-SopVersion: {"version": 2, "created_by": "config | <người duyệt>", "run_id": "run_ff5de085" | null, "created_at": "..." | null, "content": "..."}
+SopVersion: {"version": 2, "created_by": "config | import | <người duyệt>", "run_id": "run_ff5de085" | null, "created_at": "..." | null, "content": "..."}
 ```
+`created_by` là `"config"` cho bản gốc lấy từ `sop:` của config, `"import"` cho bản gốc lấy từ `sop.csv` của dataset (R10b1, `SME_DATASET`); cả hai có `run_id` và `created_at` là `null`.
 
 `outcome` là `status` của event `run_finished` cuối (null khi chưa có). Bản gốc từ config có `created_by: "config"`, `run_id` và `created_at` là null; khi run đầu tiên sửa SOP, bản 1 trong DB là bản sao của bản gốc nên chỉ hiện một lần.
 

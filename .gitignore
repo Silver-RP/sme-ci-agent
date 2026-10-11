@@ -11,5 +11,6 @@ pgdata/
 *.log
 .DS_Store
 data/generated/
+data/datasets/
 .autodev/env.local.json
 .autodev/runs/
