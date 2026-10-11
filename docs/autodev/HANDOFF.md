@@ -16,84 +16,60 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao" hay "là gì". Cuối mỗi báo cáo có câu hỏi "làm gì tiếp": danh sách **đánh số kèm nội dung**, leader trả lời bằng số.
 - **Đo bằng số, không ước lượng:** % đạt 3 điều tính theo `docs/eval/criteria.md` (A1–A8, luật chỉ số nhiều phần); chỉ số plugin B1–B6 bằng `python3 .autodev/metrics.py`.
 
-## R10d ✅ MERGE #120 (2026-10-11, supervisor `--review-only` lần 2)
-- Worker chạy lại chỉ dev-05: `payloads.md` thêm quy tắc múi giờ `/kpi/series` + test tài liệu (`test_payloads_doc_kpi_series_row_states_time_zone_rule_and_422`). Supervisor tự chạy: verify sạch; 609 passed + 1 xfail; smoke 4/4; test tài liệu đỏ với `payloads.md` của main, xanh trên nhánh; `TestClient`: `+09:00`/`Z` → 422 nêu tên tham số, rỗng → 422, không múi giờ → 200. **Cả 3 tiêu chí cấp mốc đạt.** Bảng đầy đủ + ước tính ↔ thực tế: `PROGRESS.md` mục R10d.
-- Đóng **H-49, H-57** (PROJECT_STATE, `state.json`). 161 phút / 100–130 (B3 1,24); ~3,63 USD / 4–6; B4 = 1 (lượt 1 trả về).
-- **Việc mở:** chạy `export_fixtures.py` làm mới `docs/schema/examples/` và `dashboard/fixtures/examples/` (ví dụ `/answer` cũ thiếu `question_id`); việc nhỏ, có thể đưa vào R10b1. Non-blocking từ review: `rollback_apply` chưa có test riêng cho `decided_by`.
-- **Mốc kế tiếp:** R10b1 (chờ D1 #66; PR #122 của Bảo đang mở → đối chiếu `plan/R10b1.md`, `R10b2.md` theo bảng "Khi team xong" dưới đây).
-
-### Lượt duyệt 1 (giữ để tham khảo): CHƯA MERGE
-- **PR #120** (`milestone/R10d`): worker 4/4 task PASS vòng 1, ~104 phút (ước 100–130). Supervisor tự kiểm:
-
-| Tiêu chí cấp mốc | Lệnh / test supervisor tự chạy | Kết quả |
-|---|---|---|
-| 1. verify, smoke, demo | `python3 .autodev/verify.py`; `uv run pytest -q`; `verify.py --smoke`; `scripts/demo.sh --fresh-db --check` | sạch; 608 passed + 1 xfail; smoke 4/4 ok; `CHECK PASSED` |
-| 2. #110, #112, #113 không tái hiện | 4 file test mới chạy trên code `origin/main` | 19/21 đỏ trên main (đúng), xanh trên nhánh |
-| 3. `payloads.md` đủ 4 mục | `grep` `payloads.md` | `/learnings`, `question_id` bắt buộc, `params` object: có. **Quy tắc múi giờ `/kpi/series`: KHÔNG có** (dòng `GET /kpi/series` không đổi) → **chưa đạt** |
-
-- Ca biên tự thử (đều đúng): `/kpi/series` chỉ ngày `2026-01-01` → 200, chuỗi rác → 422 (không 500); `/learnings?limit=500` → 200, `limit=abc` → 422, DB rỗng → `[]`; `/answer` với `question_id: ""` → 422.
-- Ghi chú worker "dashboard gửi `/answer` không `question_id`" là báo động giả: `dashboard/lib/api.ts` chỉ bỏ trường khi `questionId` null (backend cũ); luồng thật gửi đủ từ #118.
-- **Quyết định:** không merge; thêm **dev-05 (b)** vào `plan/R10d.md` trên nhánh mốc (commit `f0f74e6`): bổ sung quy tắc múi giờ `/kpi/series` vào `payloads.md` kèm test tài liệu. Không đổi tiêu chí hay phạm vi.
-- Đã làm ở lượt 2 (mục trên).
-
-## Bước tiếp theo (cập nhật 2026-10-11 rạng sáng, đóng phiên)
+## Bước tiếp theo (cập nhật 2026-10-11 chiều, đóng phiên; runner R10b1 → R10b2 đang chạy)
 
 ### Bối cảnh
 - **Team 4 người** (`docs/PLAN.md` mục 4). Ranh giới: auto-dev không làm thay việc của vai A/D/Q, kể cả khi không đụng file của họ (**trùng việc** khác **trùng file**).
 
-| Vai | Người | Issue | Trạng thái 10/10 tối |
+| Vai | Người | Issue mở | Trạng thái 11/10 chiều |
 |---|---|---|---|
-| A: dữ liệu, kịch bản | @bobbibao (Bảo) | #63, #66 (D1) | đã nhận lời mời, đã gán; chưa có commit/PR. D1 hạn [12/10] đang chặn R10b1 |
-| D: giao diện | @Finnng1104 (Finn) | #64, #67 (H-44), #89 (H-46, sev:1), #90 (H-49) | đã nhận lời mời, đã gán tay (workflow `auto-assign` không chạy theo lịch lần nào) |
-| Q: kiểm chứng | @daivonpham (Daivon) | #65 | **chưa nhận lời mời**; #65 chưa gán |
-| Backend, auto-dev | leader + Claude | | `plan/Rx.md` |
+| A: dữ liệu, kịch bản | @bobbibao (Bảo) | #63 (D3–D6) | **D1 (#122) và D2 (#123) đã merge.** Còn chờ Bảo trả lời 2 câu hỏi SOP ở #122 (plan R10b1 làm theo đề xuất: bản gốc từ `sop.csv` có `created_by: "import"`; SOP chỉ có trong config thì dataset không có) |
+| D: giao diện | @Finnng1104 (Finn) | #64, #114 | **#116–#118 đã merge** (UI mới, H-44, H-46, H-49 phía UI). #114 `GET /config/domain` để sau R10b1 (cần `plant.*` trong domain config) |
+| Q: kiểm chứng | @daivonpham (Daivon) | #65 | **chưa nhận lời mời**; #65 chưa gán. D1 merge không chờ vai Q (leader quyết) |
+| Backend, auto-dev | leader + Claude | #111 (H-34, R11a) | `plan/Rx.md` |
 
-- **Mốc tham khảo:** kickoff 11/10 (giờ chưa chốt); cổng go/no-go + tag v0.1-e2e 13/10; Đợt 2 UI 17/10; freeze 20/10; Pitch 24/10.
-- **Kế hoạch P6 hai luồng** (dự án + plugin) đã duyệt: `ROADMAP.md` mục "Kế hoạch hai luồng"; bảng mốc ở PROJECT_STATE mục "Tầm nhìn".
+- **Mốc tham khảo:** cổng go/no-go + tag v0.1-e2e 13/10; Đợt 2 UI 17/10; freeze 20/10; Pitch 24/10.
+- **Kế hoạch P6 hai luồng** đã duyệt: `ROADMAP.md` mục "Kế hoạch hai luồng"; bảng mốc ở PROJECT_STATE mục "Tầm nhìn".
 
-### Đã xong trong phiên 2026-10-10 khuya → 11/10 rạng sáng (PR #103–#108, đều merge; chỉ plugin, không đụng code dự án)
-- **Hạn mức (#103):**
-  - `usage.py` báo tuổi số liệu; lệnh mới `show [--last N]`;
-  - `/session-start` in dòng hạn mức.
-  - Status line không chạy trong VS Code, nên số liệu cũ thì hỏi leader `/usage`. Leader dán số dạng "32(5h)/63w"; Claude ghi vào `~/.claude/usage-latest.json` (`five_hour`, `seven_day`, `at` = bây giờ).
-- **Đề xuất 1 + 3 (#104):**
-  - Cổng `test_guard` trong `verify.py`: chặn khi xoá file/hàm test, thêm `skip`/`xfail`/`.only`, hay giảm tổng số assert so với merge-base trên main.
-  - Developer giải trình bằng dòng `allow-test-change: <test> <lý do>` trong commit: không bị chặn, nhưng reviewer phải xét lý do. Dòng đó nằm trong `plan/` trên main thì miễn hẳn.
-  - Vì sao có đường giải trình: chạy thử trên 12 PR mốc cũ thì 5 bị gắn cờ, cả 5 đều là đổi hành vi hợp lệ.
-  - `reviewer.md` bước 8: 4 câu hỏi bắt buộc, trả lời ở trường `risk_checks`.
-- **Đề xuất 4, bộ thử reviewer (#105–#108):**
-  - `.autodev/bench_reviewer.py`; 11 ca trong `.autodev/bench/cases.json` (9 lỗi đã lọt + 2 sạch), tách `dev` (p2, p3) và `holdout`.
-  - Kết quả và cách đọc: `docs/autodev/research/2026-10-10-bo-thu-reviewer.md`. Tổng 6,60 USD.
-  - Reviewer hiện tại **chặn 2/9**, **thấy 5/9** (đọc tay), bắt nhầm 0/3. Tức là reviewer thấy lỗi nhưng xếp nhẹ ("hướng an toàn", "chấp nhận được").
-  - Bản sửa (a)(d) (`new2`, `.autodev/bench/reviewer-candidate.md`) không cải thiện trên holdout, nên **không** đưa vào `reviewer.md` (luật leader đặt trước khi đo).
-  - Nhiễu giữa các lần chạy lớn: muốn kết luận thì cần ≥ 3 lần mỗi ca.
-- **Hạn mức lúc đóng phiên** (leader dán khoảng 23:00 10/10): 5 giờ 32%, tuần 63% (reset 13:00 14/10).
+### Đã xong trong phiên 2026-10-11 sáng → chiều (PR #116–#125, đều merge)
+- **UI của Finn (#116–#118):** kiểm phía backend trên bản gộp (vitest 94/94, `demo.sh --fresh-db --check` PASSED, trường `pending` khớp backend), approve, merge; đóng #67, #89, #90. `plugin-guard` cho qua PR của thành viên (chỉ sửa `dashboard/`, đúng vùng); nhánh chặn vẫn chưa thử.
+- **6 issue `api` của Finn:** phân loại trong ngày. #110, #112, #113, #115 + `question_id` bắt buộc → R10d; #114 → sau R10b1; #111 (H-34) → R11a. #110 chốt **422** khi giờ có múi giờ (giống `change_time` R10ch), không quy đổi.
+- **R10d** (plan #119, mốc #120, hồ sơ #121): 5 task, đóng H-49, H-57; ~4,70 USD. Lượt 1 thiếu tài liệu múi giờ → supervisor thêm dev-05 (b) → lượt 2 đạt. Đã đóng issue #110, #112, #113, #115.
+- **D1 (#122), D2 (#123):** review phía backend (D1 đối chiếu code + plan; D2 diff từng bộ `invalid/` với `valid/`, 32/32 khớp đáp án README), approve, merge. D2 merge sau khi Bảo bỏ draft; commit trùng bản đã review.
+- **Plan R10b1/R10b2 (#124):** R10b1 đối chiếu D1 (7 task: `units_nonconforming`, 11 khoá config, validator tách 2 task, import ghi nguyên tử, SOP của dataset, sự kiện máy bình thường); R10b2 sửa ước tính, bỏ H-31 (đã đóng). Tổng ước tính R10b1 + R10b2 + audit 4: 20–26 USD.
+- **#125:** `test_open_gaps_match_latest_audit` đỏ trên main sau #121 (state.json đóng H-49, H-57 nhưng bảng audit 3 vẫn "mở") → sửa bảng audit.
+- **Dọn nhánh:** leader duyệt và **tự chạy** (guard chặn mọi lệnh xoá của Claude): xoá 56 nhánh remote + 89 local đã merge; xoá worktree review.
+- **Hạn mức** (leader dán 13:45 11/10): 5 giờ 1%, tuần 71% (reset 13:00 14/10). Ước tính sau R10b + audit 4: tuần ~84–87%.
 
-### ⏸ Tạm dừng việc dự án (leader quyết 2026-10-10 đêm)
-Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại chuyển sang nghiên cứu auto-dev (plugin). Không chạy mốc R nào cho tới khi có tín hiệu dưới đây. Luật ước tính + pre-mortem mới (thiết kế 6.5) đã được leader duyệt.
-
-**Khi team xong thì bắt đầu từ đâu** (`/session-start` kiểm từng dòng):
-| Tín hiệu | Việc đầu tiên |
-|---|---|
-| D1 #66 (Bảo) merge | Đối chiếu `plan/R10b1.md`, `R10b2.md` với `docs/schema/data_contract.md` bản D1 (cột, luật V01–V09); sửa plan theo luật 6.5 (≥ 25 phút/task có Postgres; USD = worker + 2; pre-mortem "kill ở giữa?" và "đạt theo cấu tạo?") qua PR; leader duyệt → chạy `R10b1 R10b2`, `audit.json` đặt audit 4 sau R10b2 (+5–6 USD). Đây là đường găng của cổng 13/10 (A4, A7). |
-| PR của Finn cho #67, #89, #90 | Kiểm với backend: H-44, H-46, H-49 (`question_id` gửi kèm `/answer`), chạy `scripts/demo.sh --fresh-db --check`; đóng lỗ hổng trong PROJECT_STATE khi có test. PR đầu tiên của team: xem `plugin-guard` có chặn đúng không. |
-| Daivon nhận lời mời | Gán #65 bằng tay (`gh issue edit 65 --add-assignee daivonpham`); vai Q chạy đo nền LLM thật (≤ 2 USD, leader cho phép từng lần). |
-| Issue nhãn `api` từ vai D | Backend trả lời trong ngày (không tính là chạy mốc). |
+### Runner đang chạy (khởi động 13:44 11/10)
+- Lệnh: `.autodev/autodev-run.sh --audit-every 3 R10b1 R10b2`. `audit.json` có `pending = [R10d]`, nên **audit 4 chạy sau R10b2** và phủ R10d, R10b1, R10b2.
+- Vòng chờ nền của phiên cũ mất khi đóng phiên. Phiên sau: `tail -15 .autodev/runs/run.log`, `ls -t .autodev/runs/STOPPED-* | head -1`, `gh pr list`. Gặp STOP thì đọc báo cáo trong PR mốc trước khi chạy tiếp.
+- Ước tính: ~7–8 giờ worker + supervisor + audit, tức xong khoảng 22:00–23:00 11/10.
 
 ### Làm tiếp theo thứ tự
-1. **Chờ leader:**
-   - (a) **để sau**, leader tự làm khi cần: đo nền LLM thật (`eval_rootcause.py --llm real --seeds 3`, ≤ 2 USD); quyết R10b1 nếu D1 chưa merge sáng 12/10.
-   - Leader đã nói **không nhắc lại** trong báo cáo: nhắc Bảo/Daivon, giờ kickoff, đưa đề xuất nghiên cứu vào ROADMAP (bộ nhớ `skip-team-reminders`).
-   - Phiên sau không còn việc nào chặn bởi leader. Việc đầu tiên: `/session-start` kiểm bảng "Tín hiệu" ở mục ⏸.
-2. **Plugin, chỉ làm khi chưa có tín hiệu từ team và hạn mức tuần còn đủ cho R10b** (giữ ~25 USD cho R10b1 + R10b2 + audit 4):
-   - Luật xếp mức cho reviewer: ghi chú mô tả hành vi sai so với tiêu chí hoặc quy tắc thì là blocking, kể cả khi hậu quả "đi về hướng an toàn"; ngoại lệ là khi plan ghi rõ chấp nhận.
-   - Chỉ đo luật này trên **ca mới chưa xem** (≥ 5 ca lỗi lấy từ audit 4), mỗi ca 3 lần. Không đo trên 11 ca hiện có, vì đã xem output của chúng.
-   - Hỏi leader trước mỗi lượt đo.
-   - Khi Daivon nhận lời mời: gán #65 bằng tay. Plan R10b1/R10b2 khi sửa sau D1: áp luật 6.5.
-3. **R10b1 khi D1 merge:** đối chiếu `plan/R10b1.md` với bản D1 (cột, luật V01–V09), sửa plan qua PR, rồi chạy `R10b1 R10b2` nối tiếp. Đặt `audit.json` sao cho audit 4 chạy sau R10b2.
-4. **Cổng 13/10:** theo `criteria.md` mục 3. Đang có A6 = 0; A5 phần LLM giả; A8 (LLM giả). A4, A7 cần R10b2; UI FR-01..05 cần vai D. Leader duyệt tag.
-5. **R11a** (13–14/10): H-28, H-29, H-56 (gộp H-18), H-32, H-36, H-52, H-53, H-55; kịch bản `ask` và `none`; treo từ R10ch: bản SOP trùng nếu kill giữa commit và checkpoint.
-6. **Plugin sau v0.1:** P9 (reviewer cho PR của team, chỉ comment), P7a Telegram một chiều.
+1. **Chờ leader** (không có việc nào chặn runner):
+   - (a) Guard: thêm cách duyệt xoá một lần (ví dụ biến môi trường), để Claude tự xoá khi leader đã duyệt? Trả lời "có/không". Chỉ sửa khi runner rảnh.
+   - (b) Xoá worktree `../sme-ci-agent-d2` (tạo để review D2): leader tự chạy `git worktree remove ../sme-ci-agent-d2`.
+   - (c) **Để sau**, leader tự làm khi cần: đo nền LLM thật (`eval_rootcause.py --llm real --seeds 3`, ≤ 2 USD).
+   - Không nhắc trong báo cáo: nhắc Bảo/Daivon, giờ kickoff, ROADMAP nghiên cứu (bộ nhớ `skip-team-reminders`).
+2. **Khi runner xong:** kiểm R10b1, R10b2 đã merge và PR hồ sơ đã merge; đọc audit 4 (`docs/audits/2026-10-1x.md`); cập nhật % đạt (A4, A7) và lỗ hổng theo audit; xem reviewer có trả `risk_checks` và `test_guard` có chặn nhầm không (lần đầu chạy trong mốc thật).
+3. **Cổng 13/10:** `criteria.md` mục 3; leader duyệt tag v0.1-e2e.
+4. **#114 `GET /config/domain`:** sau R10b1 (nguồn `plant.*` trong domain config). Gộp vào R11a hoặc mốc nhỏ; trả lời Finn ở #114.
+5. **Sửa plugin (giữa hai mốc, sau R10b; P4):**
+   - runner không chạy tiếp được mốc đã có PR mở (`new_milestone_pr` chỉ nhận PR mới) → lần này phải dùng `--skip-merge-check`, mất bước tự merge PR hồ sơ;
+   - worktree worker không kéo commit (b) supervisor đẩy lên nhánh mốc → lần này phải `git merge --ff-only` tay;
+   - supervisor đóng lỗ hổng trong `state.json` mà không sửa bảng audit → `.autodev/tests` đỏ trên main (#125). Supervisor phải chạy `.autodev/tests` trước khi merge PR hồ sơ.
+6. **Reviewer:** đo luật xếp mức (ghi chú sai so với tiêu chí = blocking) trên ≥ 5 ca mới từ audit 4, mỗi ca 3 lần; hỏi leader trước; nên đợi sau reset hạn mức tuần (14/10).
+7. **R11a** (sau cổng 13/10): H-28, H-29, H-56 (gộp H-18), H-32, H-34 (#111), H-36, H-52, H-53, H-55; kịch bản `ask` và `none`; treo từ R10ch: bản SOP trùng nếu kill giữa commit và checkpoint.
+8. **Plugin sau v0.1:** P9 (reviewer cho PR của team, chỉ comment), P7a Telegram một chiều.
+
+**Tín hiệu team còn lại** (`/session-start` kiểm):
+| Tín hiệu | Việc đầu tiên |
+|---|---|
+| Daivon nhận lời mời | Gán #65 bằng tay (`gh issue edit 65 --add-assignee daivonpham`); vai Q chạy đo nền LLM thật (≤ 2 USD, leader cho phép từng lần). |
+| Issue nhãn `api` mới | Backend trả lời trong ngày (không tính là chạy mốc). |
+| PR mới của Finn/Bảo | Kiểm phía backend như #116–#118, #122–#123: chạy test + demo, comment, leader approve/merge. PR draft thì không merge, nhờ tác giả bỏ draft. |
+| Bảo trả lời câu hỏi SOP ở #122 | Khác đề xuất thì sửa theo câu trả lời ở mốc sau (ghi vào "Đề xuất chờ duyệt" của plan đang chạy). |
 
 ### Cách làm việc với team
 - **Chỉ leader/Claude chạy auto-dev** (`/run-milestone`, `/supervise`, `/audit`). Team dùng Claude Code trên máy riêng, trong vùng của vai:
@@ -104,21 +80,23 @@ Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại
 - **Chạy LLM thật:** chỉ vai Q, ngân sách ≤ [2] USD/ngày, leader cho phép từng lần; ghi chi phí vào `docs/token-cost.md`.
 - **Repo đang public:** không đưa email hay thông tin cá nhân của thành viên vào issue, tài liệu hay commit.
 - **Claude của thành viên không có quyền tự merge** (quyền đó nằm trong `settings.local.json` của máy leader).
-- **`plugin-guard`** chưa thử nhánh chặn (PR của thành viên): kiểm ở PR đầu tiên của team.
+- **`plugin-guard`** cho qua đúng 5 PR đầu của team (#116–#118 chỉ `dashboard/`; #122–#123 chỉ vùng vai A). Nhánh chặn (thành viên sửa file plugin) chưa có dịp thử.
+- **Review PR của team:** Claude kiểm phía backend (test, demo, đối chiếu hợp đồng), comment; approve/merge là quyết định của leader. Không merge PR draft; không bỏ draft hộ tác giả.
 
-## Trạng thái hiện tại (2026-10-11 rạng sáng)
-- **Dự án (⏸ tạm dừng chờ team):**
+## Trạng thái hiện tại (2026-10-11 chiều)
+- **Dự án:**
   - M0–M3 xong; M4: T-040, T-041 xong, T-042..T-045 mở;
-  - 587 pytest + 1 xfail (`test_no_model_name_in_backend`, gỡ khi đóng H-39 ở R10b2);
-  - % đạt 3 điều: **0 / 50 / 0**.
+  - 610 test thu thập trên main (609 passed + 1 xfail `test_no_model_name_in_backend`, gỡ khi đóng H-39 ở R10b2);
+  - % đạt 3 điều: **0 / 50 / 0** (R10d không đổi chỉ số A).
 - **Plugin:**
-  - P1–P3, P5, P6 xong; P4 đang làm (còn kiểm hạn mức trước mốc);
+  - P1–P3, P5, P6 xong; P4 đang làm (chạy tiếp mốc có PR mở, kiểm hạn mức trước mốc);
   - P7–P9 chưa làm.
-  - Chi phí cả ngày 10/10 (worker + supervisor + audit): R10a 5,94; R10c 7,88; audit 3 5,55; R10ch 4,77 USD; bộ thử reviewer 6,60 USD.
-  - Mới trong phiên: cổng `test_guard` (bật mặc định), `reviewer.md` có `risk_checks`. Cả hai **chưa chạy trong mốc R thật**: kiểm ở R10b1 xem reviewer có trả `risk_checks` không, và `test_guard` có chặn nhầm không.
-- **Runner:** rảnh. `.autodev/runs/audit.json` `pending = []`.
-- **Demo:** tắt. Bật bằng `scripts/demo.sh`; tắt bằng `lsof -ti tcp:8000,3000 -sTCP:LISTEN | xargs kill`. Phải tắt trước khi chạy mốc R mới (smoke cần cổng 8000/3000).
-- **Không có PR mở.**
+  - Chi phí 11/10: R10d ~4,70 USD (2 lượt). R10b đang chạy.
+  - `test_guard` và `risk_checks` **chưa thấy trong mốc thật**: R10d có chạy nhưng chưa kiểm; kiểm ở báo cáo R10b1.
+- **Runner:** đang chạy `R10b1 R10b2` (`--audit-every 3`), từ 13:44 11/10.
+- **Demo:** tắt. Bật bằng `scripts/demo.sh`; tắt bằng `lsof -ti tcp:8000,3000 -sTCP:LISTEN | xargs kill`. Phải tắt khi runner chạy (smoke cần cổng 8000/3000).
+- **PR mở:** không có (runner sẽ mở PR mốc R10b1, R10b2 và PR hồ sơ).
+- **Worktree:** chính, `-autodev` (worker), `-supervisor`, `-bench` (cố định), `-d2` (chờ leader xoá).
 
 ## Môi trường
 - **Repo:** `~/dev/sme-ci-agent/` chứa 3 worktree cạnh nhau:
@@ -133,8 +111,10 @@ Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại
 - **Chạy mốc** (từ repo chính, sau khi `plan/Rx.md` đã merge lên main):
   ```bash
   export PATH=~/.nvm/versions/node/v22.23.3/bin:$PATH AUTODEV_SUPERVISOR_MODEL=opus AUTODEV_SUPERVISOR_EFFORT=medium
-  nohup .autodev/autodev-run.sh R10b1 R10b2 > .autodev/runs/nohup.out 2>&1 &
+  nohup .autodev/autodev-run.sh [--audit-every N] <mốc> [<mốc> ...] > .autodev/runs/nohup.out 2>&1 &
   ```
+  `--audit-every` (mặc định 2) đếm cả `pending` còn lại trong `audit.json`; chọn N để audit chạy sau đúng mốc mong muốn.
+  **Chạy tiếp mốc đã có PR mở** (sau khi supervisor thêm task (b)): `git -C ../sme-ci-agent-autodev merge --ff-only origin/milestone/<M>` rồi chạy với `--skip-merge-check`; sau đó tự kiểm PR mốc đã merge và tự merge PR hồ sơ (chờ sửa plugin, mục 5 "Làm tiếp").
   Ngay sau đó, bằng Bash `run_in_background`, chạy vòng `until` chờ "Hoàn tất|STOP" trong `.autodev/runs/run.log`, để phiên chat được báo khi xong. Có thể nối mốc kế bằng một script chờ "Hoàn tất" rồi mới khởi động (dừng khi gặp STOP).
 - **Phạm vi audit:** runner đọc `.autodev/runs/audit.json` (`pending`, không commit) đúng lúc quyết định có chạy audit hay không. Sửa danh sách này để chọn audit chạy sau mốc nào.
 - **Theo dõi:** `.autodev/watch.sh` (terminal) hoặc trang trạng thái Artifact (ảnh chụp).
@@ -150,14 +130,16 @@ Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại
 - **Plan mốc:** mở PR cho leader xem phạm vi; merge và chạy runner khi leader duyệt.
 - **Không đẩy thẳng `main`:** GitHub chặn, guard cũng chặn.
 - **Không sửa plugin** (`.autodev/*.py`, `.claude/`) khi runner đang chạy; chỉ giữa hai mốc.
-- **Không xoá** file, thư mục, nhánh, worktree, container nếu người dùng chưa duyệt. Merge không kèm `--delete-branch`. Nhánh đã merge còn lại đang chờ duyệt xoá.
+- **Không xoá** file, thư mục, nhánh, worktree, container nếu người dùng chưa duyệt. Merge không kèm `--delete-branch`. Guard chặn mọi lệnh xoá nhánh/worktree kể cả khi leader đã duyệt: Claude kiểm phạm vi (chỉ nhánh đã merge, của mình, không đang checkout), ghi danh sách ra scratchpad và đưa lệnh cho leader tự chạy. Không lách bằng `gh api`.
 - **Không đọc hay in `.env`.** Guard so khớp theo chữ: sửa file tại chỗ bằng sed và script Python qua stdin (heredoc) bị chặn; dùng Edit/Write tool hoặc script file.
 - **Tầng tầm nhìn** (thứ tự mốc, cắt việc, luật tính %) luôn do người dùng duyệt. Kiến trúc trong ADR cố định.
 - **Không đổi tiêu chí chấp nhận trong brief** khi chưa hỏi leader. Phiên bản thay đổi ghi ở mục "Lịch sử thay đổi yêu cầu" của brief.
 
 ## Việc mở / cần để ý
 - **Lỗ hổng dự án:** PROJECT_STATE mục "Lỗ hổng mở" (nguồn `docs/audits/2026-10-10.md`).
-- **B1 = 0,71 > 0,5:** reviewer vẫn lỏng ở mức mục tiêu (audit 3 tìm H-54 "đạt theo cấu tạo"). Bộ thử xác nhận: reviewer một lần chặn khoảng 2/9 lỗi đã biết, nên **giữ audit 4 sau R10b2**. Theo dõi ở audit 4.
+- **B1 = 0,71 > 0,5:** reviewer vẫn lỏng ở mức mục tiêu (audit 3 tìm H-54 "đạt theo cấu tạo"). Bộ thử xác nhận: reviewer một lần chặn khoảng 2/9 lỗi đã biết, nên audit 4 chạy sau R10b2 (đã đặt). Theo dõi ở audit 4.
+- **Hạn mức tuần:** 71% lúc 13:45 11/10, dự kiến ~84–87% sau R10b + audit 4; reset 13:00 14/10. Trước đó tránh chạy thêm mốc auto-dev hay bộ thử reviewer.
+- **Fixture:** `docs/schema/examples/` còn request `/answer` cũ thiếu `question_id`; R10b1 dev-07 sinh lại.
 - **pytest chập chờn:** đỏ 1/4 lần trên main, không bắt được tên test. Gặp lại thì ghi tên test.
 - **Để sau** (người dùng chốt): đo chất lượng theo thời gian; hook trước khi nén ngữ cảnh.
 
@@ -169,4 +151,5 @@ Backend/auto-dev của dự án **dừng để chờ team**; phiên hiện tại
 - 2026-10-10 chiều–tối: kế hoạch P6 + tiêu chí đo được (#76, #78, #87); R10a (#82), R10c (#84), audit 3 (#86, B1 = 0,71), R10ch (#91); R10b1 chờ D1; trang trạng thái Artifact.
 - 2026-10-10 đêm: P5, P6 đóng; `--fresh-db`; tạm dừng dự án chờ team; quy tắc ước tính + ghi % hạn mức; báo cáo so sánh bên ngoài (#94–#101).
 - 2026-10-10 khuya → 11/10: `usage.py show`; cổng `test_guard` + `risk_checks` (đề xuất 1 + 3); bộ thử reviewer 11 ca: chặn 2/9, thấy 5/9 (#103–#108).
+- 2026-10-11 sáng → chiều: team có tín hiệu; merge UI của Finn (#116–#118), D1/D2 của Bảo (#122–#123); R10d (#119–#121, H-49, H-57); plan R10b đối chiếu D1 (#124); sửa bảng audit (#125); dọn nhánh; chạy R10b1 → R10b2.
 - Chi tiết trong `PROGRESS.md`.

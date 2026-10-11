@@ -87,6 +87,7 @@ Từ `docs/audits/2026-10-09_2.md` (chi tiết, bằng chứng, test cần có �
 
 ## Quyết định gần đây
 
+- 2026-10-11 (đóng phiên chiều): hết tạm dừng: UI của vai D (#116–#118) và D1, D2 của vai A (#122, #123) merge sau khi Claude kiểm phía backend; leader merge D1 **không chờ vai Q**. API của vai D: #110 có múi giờ → 422 (không quy đổi, giống `change_time`); #114 `/config/domain` để sau R10b1; #111 vào R11a. Plan R10b1 đối chiếu D1 (#124), chạy `R10b1 R10b2` với audit 4 sau R10b2 (20–26 USD). Không merge PR draft của thành viên. Guard chặn mọi lệnh xoá: leader tự chạy lệnh Claude đưa.
 - 2026-10-11: R10d merge #120 (API cho dashboard: #110, #112, #113, #115). Đóng H-49 (`question_id` bắt buộc ở `/answer`, thiếu → 422) và H-57 (`/kpi/series` múi giờ hoặc tham số rỗng → 422, không 500). Lượt duyệt đầu chưa đạt tiêu chí 3 (tài liệu múi giờ) → dev-05 (b), lượt 2 đạt. Treo: `export_fixtures.py` làm mới `docs/schema/examples/`.
 - 2026-10-11 (đóng phiên rạng sáng): làm đề xuất 1 + 3 (cổng `test_guard`, `risk_checks` của reviewer) và 4 (bộ thử reviewer, 6,60 USD). Bộ thử: reviewer chặn 2/9 lỗi đã lọt, thấy 5/9. Luật leader đặt trước khi đo: chỉ giữ thay đổi prompt nếu recall trên holdout tăng → bản sửa (a)(d) **không** vào `reviewer.md`. Giữ audit 4 sau R10b2. Đo lại luật xếp mức chỉ trên ca mới (audit 4), mỗi ca 3 lần. Không nhắc lại trong báo cáo: nhắc team, giờ kickoff, ROADMAP nghiên cứu.
 - 2026-10-10 (đóng phiên đêm): quy tắc ước tính thời gian khi bắt đầu nhiệm vụ (`CLAUDE.md`) + ghi % hạn mức 5 giờ và tuần trước/sau (`.autodev/usage.py`). Báo cáo so sánh bên ngoài (`docs/autodev/research/`): phiên sau làm đề xuất 1 (cổng "không nới test") + 3 (câu hỏi bắt buộc cho reviewer); 7 đề xuất chưa vào ROADMAP. Chỉ đề xuất đóng phiên khi có lý do (việc lớn mới, ngữ cảnh dài, trước auto-dev).
@@ -130,11 +131,11 @@ Kế hoạch P6 (duyệt 10/10; đầy đủ, kèm luồng plugin, pre-mortem, t
 | Audit 3 | ✅ 10/10 #86 | Rà R9i, R9ih, R10a, R10c | B1 = 0,71 (ngưỡng ≤ 0,5); H-45..H-59 | |
 | R10ch | ✅ 10/10 #91 | Sửa nhanh sau audit 3 | H-31, H-45, H-47, H-48, H-50, H-51, H-54; A5 LLM giả đo thật | |
 | R10d | ✅ 11/10 #120 | API cho dashboard | #110, #112, #113, #115; H-49, H-57 | |
-| R10b1 | 12/10 | Dữ liệu theo hợp đồng **D1 đã chốt** | `production_log`, `material_batches`, simulator nhị thức, `import_data.py` + V01–V09 (dùng D2) | **chờ D1 #66 merge** (vai A) |
-| R10b2 | 12–13/10 | Điều 3 | H-11, T-042, `/metrics` thật, `metrics_report.py` có đối chứng; H-33, H-39 | sau R10b1; giả định cần D3 |
+| R10b1 | 🔄 11/10 (chạy từ 13:44) | Dữ liệu theo hợp đồng **D1 đã chốt** (#122) | `production_log`, `material_batches`, `sop`, simulator nhị thức, `import_data.py` + V01–V09 (dùng D2 #123); plan #124 | không (D1, D2 đã merge) |
+| R10b2 | 🔄 11/10 (nối sau R10b1) | Điều 3 | H-11, T-042, `/metrics` thật, `metrics_report.py` có đối chứng; H-33, H-39; audit 4 sau mốc này (`--audit-every 3`) | giả định cần D3 |
 | Cổng 13/10 | 13/10 | tag v0.1-e2e (leader duyệt) | `criteria.md` mục 3; UI FR-01..05 | UI: vai D |
 | R11a | 13–14/10 | Điều 1: cơ chế eval trung thực | H-28, H-29, H-32, H-36, H-18; 1 kịch bản khó do backend soạn; `environment_log`, `training_level` | không |
 | R11b | 15–17/10 | Điều 1: đề độc lập | nhập D4/D5; eval nhiều seed LLM thật; ghi run tốt để phát lại | vai A |
 | R12 | 18–19/10 | Gom lỗi bug bash 2, audit 4, bộ dữ liệu demo (D6) | | vai Q, A |
 
-Chỉ số mỗi mốc phải đo được khi xong: R10b2 → A4, A7; R11a → A1–A3 tập dev; R11b → A1 tập giữ lại (`TASKS.md`, `docs/eval/criteria.md`). D1 chưa merge sáng 12/10 thì leader quyết; R10b2 trễ thì A7 chuyển sang cổng 20/10.
+Chỉ số mỗi mốc phải đo được khi xong: R10b2 → A4, A7; R11a → A1–A3 tập dev; R11b → A1 tập giữ lại (`TASKS.md`, `docs/eval/criteria.md`). R10b2 trễ thì A7 chuyển sang cổng 20/10.

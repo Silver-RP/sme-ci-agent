@@ -437,6 +437,10 @@
   "decisions": [
     {
       "date": "2026-10-11",
+      "text": "Đóng phiên chiều: hết tạm dừng: UI vai D (#116–#118) và D1, D2 vai A (#122, #123) merge sau khi Claude kiểm phía backend; leader merge D1 không chờ vai Q. API vai D: #110 có múi giờ -> 422 (không quy đổi); #114 /config/domain để sau R10b1; #111 vào R11a. Plan R10b1 đối chiếu D1 (#124), chạy R10b1 R10b2 với audit 4 sau R10b2 (20–26 USD). Không merge PR draft của thành viên. Guard chặn mọi lệnh xoá: leader tự chạy lệnh Claude đưa."
+    },
+    {
+      "date": "2026-10-11",
       "text": "R10d merge #120: đóng H-49 (question_id bắt buộc, thiếu -> 422) và H-57 (/kpi/series múi giờ hoặc tham số rỗng -> 422). Lượt duyệt đầu chưa đạt tiêu chí 3 -> dev-05 (b), lượt 2 đạt. Treo: export_fixtures.py làm mới docs/schema/examples/."
     },
     {
@@ -608,10 +612,10 @@
     },
     {
       "id": "R10b1",
-      "date": "12/10",
-      "goal": "Dữ liệu theo hợp đồng D1 đã chốt (production_log, material_batches, simulator nhị thức, import CSV + V01–V09, dùng D2)",
-      "needs_team": true,
-      "status": "chờ D1 #66"
+      "date": "11/10",
+      "goal": "Dữ liệu theo hợp đồng D1 đã chốt #122 (production_log, material_batches, sop, simulator nhị thức, import CSV + V01–V09, dùng D2 #123); plan #124",
+      "needs_team": false,
+      "status": "đang chạy từ 13:44 11/10"
     },
     {
       "id": "R10b2",
@@ -625,7 +629,8 @@
       "tasks": [
         "T-042"
       ],
-      "needs_team": false
+      "needs_team": false,
+      "status": "nối sau R10b1; audit 4 sau mốc này (--audit-every 3)"
     },
     {
       "id": "gate-13-10",
