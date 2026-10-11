@@ -329,3 +329,7 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 2eec698, f500ce1. Review: .autodev/reviews/R10ch-dev-04-r1.json (PASS).
 - H-54: A5(b) đọc kpi_measured.passed. 5 seed 42..46: LLM đúng (a)=1,00 (b)=1,00; LLM luôn sai (b)=0,00; không áp dụng gì: passed không bao giờ true. Chỉ sửa test. 583 pytest.
 - Điều chỉnh (a): tiêu chí "đỏ trên main" không áp dụng cho code (code đã đúng, chỉ phép đo cũ sai).
+
+### R10d/dev-01: DONE
+- Vòng: 1. Commit: 7bfa9a3. Review: .autodev/reviews/R10d-dev-01-r1.json (PASS).
+- #110: /kpi/series 422 khi start/end có múi giờ. #112: bản SOP config trả run_id/created_at null (sửa ở tầng API). 593 pytest.
