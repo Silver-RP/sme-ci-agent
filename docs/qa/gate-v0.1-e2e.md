@@ -21,6 +21,10 @@ Luật cổng: `docs/eval/criteria.md` mục 3. Luật "đạt theo cấu tạo"
 2. **Việc M4 ngoài luật cổng còn mở:** T-043 (số liệu lên dashboard, kịch bản 4 phút; vai D), T-044 (sổ chi phí token; vai Q), T-045 (bug bash, demo nội bộ, `demo-1.md`; vai Q).
 3. **Rủi ro demo (audit 4, không chặn cổng):** H-65 (`/metrics` không nói số từ LLM giả), H-66 (ví dụ `docs/schema/examples/` cũ), H-67 (thẻ đo "900 / 6 điểm"), H-68 (kẹt sau Close), H-69 (tải lại trang "thinking" mãi).
 
+## Quyết định
+
+Leader 12/10: **go**. A4 tính đạt theo chữ của ngưỡng v0.1; H-32 là việc phải sửa trước freeze 20/10 (khi đó A4 không được đạt theo cấu tạo). Tag `v0.1-e2e` đặt trên commit merge PR này. T-043, T-044, T-045 tiếp tục, không chặn tag.
+
 ## Ghi chú môi trường demo
 
 Lần đo A8 đầu tiên trượt ở bước dashboard: `dashboard/node_modules` thiếu thư viện mới từ #116 (`clsx`, `lucide-react`, `@tailwindcss/postcss`). Sửa bằng `yarn install --frozen-lockfile` trong `dashboard/`, rồi xoá cache `dashboard/.next/` (Turbopack giữ lỗi phân giải module cũ). Máy demo cần làm hai bước này sau mỗi lần merge PR đổi `dashboard/package.json`.
