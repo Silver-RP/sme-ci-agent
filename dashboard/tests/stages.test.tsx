@@ -28,10 +28,10 @@ describe("ProposalStage (S5, FR-01) with the real R9i payload", () => {
     expect(action).toHaveTextContent("180");
     expect(action).toHaveTextContent("°C");
     expect(screen.getByTestId("proposal-change")).toHaveTextContent("Restore the setpoint");
-    // SOP: same content in the scripted run -> "không đổi", versions v21 -> v22
+    // SOP: same content in the scripted run -> "không đổi", versions v137 -> v138
     expect(screen.getByTestId("sop-unchanged")).toHaveTextContent("Nội dung SOP không đổi");
-    expect(screen.getByTestId("sop-versions")).toHaveTextContent("v21");
-    expect(screen.getByTestId("sop-versions")).toHaveTextContent("v22");
+    expect(screen.getByTestId("sop-versions")).toHaveTextContent("v137");
+    expect(screen.getByTestId("sop-versions")).toHaveTextContent("v138");
     // expected KPI
     expect(screen.getByTestId("proposal-kpi")).toHaveTextContent("Tỷ lệ lỗi giảm về 2,0%");
     expect(screen.getByTestId("decision-panel")).toBeInTheDocument();
@@ -141,8 +141,8 @@ describe("MeasurementCard (FR-03)", () => {
   it("measured: big before/after, verdict and samples", () => {
     const m = buildRunModel(recording("run-happy").events).lastMeasurement!;
     render(<MeasurementCard m={m} />);
-    expect(screen.getByTestId("measure-before")).toHaveTextContent("6,3%");
-    expect(screen.getByTestId("measure-after")).toHaveTextContent("2,1%");
+    expect(screen.getByTestId("measure-before")).toHaveTextContent("6,2%");
+    expect(screen.getByTestId("measure-after")).toHaveTextContent("2,2%");
     expect(screen.getByTestId("measure-verdict")).toHaveTextContent("Đạt");
     expect(screen.getByTestId("measure-samples")).toHaveTextContent("21 điểm trước · 21 điểm sau");
   });

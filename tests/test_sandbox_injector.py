@@ -213,20 +213,23 @@ def _load_gen_data():
 
 def test_gen_data_main_writes_csv_and_summary(tmp_path, capsys):
     mod = _load_gen_data()
-    counts = mod.main(["--seed", "42"], out_dir=tmp_path)
-    out = capsys.readouterr().out
-    assert set(counts) == set(TABLE_NAMES)
-    for name in TABLE_NAMES:
-        assert (tmp_path / f"{name}.csv").exists()
-        assert f"{name}: {counts[name]} rows" in out
-    k = pd.read_csv(tmp_path / "kpi_log.csv", parse_dates=["timestamp"])
-    span_days = (k["timestamp"].max() - k["timestamp"].min()).days
+    out = tmp_path / "export"
+    counts = mod.main(["--seed", "42"], out_dir=out)
+    text = capsys.readouterr().out
+    contract = {"production_log", "machine_log", "shift_schedule", "material_batches", "sop"}  # dev-07: contract tables only
+    assert set(counts) == contract and contract <= set(TABLE_NAMES)
+    for name in contract:
+        assert (out / f"{name}.csv").exists()
+        assert f"{name}: {counts[name]} rows" in text
+    k = pd.read_csv(out / "production_log.csv", parse_dates=["shift_start"])
+    span_days = (k["shift_start"].max() - k["shift_start"].min()).days
     assert 178 <= span_days <= 184  # 6 months
-    truth = json.loads((tmp_path / "ground_truth.json").read_text(encoding="utf-8"))
+    truth = json.loads((tmp_path / "export_ground_truth.json").read_text(encoding="utf-8"))
     assert {t["id"] for t in truth} == {"A1", "A2_recurrence", "FP1"}
-    # ground truth is a separate file, not in any CSV
-    for name in TABLE_NAMES:
-        header = (tmp_path / f"{name}.csv").read_text(encoding="utf-8").splitlines()[0]
+    # ground truth is a separate file outside the export, not in any CSV
+    assert not (out / "ground_truth.json").exists()
+    for name in contract:
+        header = (out / f"{name}.csv").read_text(encoding="utf-8").splitlines()[0]
         assert "root_cause" not in header
 
 
@@ -235,7 +238,7 @@ def test_gen_data_repeat_call_same_output(tmp_path):
     a, b = tmp_path / "a", tmp_path / "b"
     mod.main(["--seed", "3"], out_dir=a)
     mod.main(["--seed", "3"], out_dir=b)
-    assert (a / "kpi_log.csv").read_text() == (b / "kpi_log.csv").read_text()
+    assert (a / "production_log.csv").read_text() == (b / "production_log.csv").read_text()
 
 
 def test_default_scenario_path_unchanged():

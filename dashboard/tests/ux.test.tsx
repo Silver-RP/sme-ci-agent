@@ -36,14 +36,14 @@ describe("rollback in plain Vietnamese (items 1 and 4)", () => {
         approvers={APPROVERS}
         busy={false}
         lastMeasurement={model.lastMeasurement}
-        restoreVersion={22}
+        restoreVersion={138}
         onDecide={vi.fn()}
       />,
     );
-    expect(screen.getByTestId("proposal-change")).toHaveTextContent("Đưa SOP-RFL-001 về nội dung của bản v22");
-    expect(screen.getByTestId("sop-versions")).toHaveTextContent("Khôi phục nội dung v22 (lưu thành v24)");
+    expect(screen.getByTestId("proposal-change")).toHaveTextContent("Đưa SOP-RFL-001 về nội dung của bản v138");
+    expect(screen.getByTestId("sop-versions")).toHaveTextContent("Khôi phục nội dung v138 (lưu thành v140)");
     // the backend's English sentence is only in the folded technical details
-    expect(screen.getByTestId("tech-detail")).toHaveTextContent("Roll back SOP SOP-RFL-001 to version 22");
+    expect(screen.getByTestId("tech-detail")).toHaveTextContent("Roll back SOP SOP-RFL-001 to version 138");
   });
 });
 

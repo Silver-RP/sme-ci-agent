@@ -8,7 +8,7 @@
       "body": {},
       "http": 201,
       "response": {
-        "run_id": "run_71a94d7e",
+        "run_id": "run_fc41c636",
         "state": "error",
         "status": "error",
         "pending": null,
@@ -16,9 +16,9 @@
         "retryable": true
       },
       "last_event": {
-        "event_id": "evt_run_71a94d7e_err01",
-        "run_id": "run_71a94d7e",
-        "ts": "2026-10-10T02:32:05Z",
+        "event_id": "evt_run_fc41c636_err01",
+        "run_id": "run_fc41c636",
+        "ts": "2026-10-11T08:48:13Z",
         "type": "run_finished",
         "agent": "system",
         "domain": "manufacturing",
@@ -33,14 +33,14 @@
       "request": "POST /runs/{run_id}/retry",
       "http": 200,
       "response": {
-        "run_id": "run_71a94d7e",
+        "run_id": "run_fc41c636",
         "state": "waiting",
         "status": "",
         "pending": {
           "type": "approval",
           "kind": "proposal",
           "proposal": {
-            "proposal_id": "ff181aaeb773",
+            "proposal_id": "04ae18d7e175",
             "hypothesis": {
               "group": "machine",
               "description": "wrong_setpoint",
@@ -58,9 +58,9 @@
             },
             "status": "pending_approval",
             "sop_proposal": {
-              "proposal_id": "11164c945a28",
+              "proposal_id": "c3fd050e15dc",
               "sop_id": "SOP-RFL-001",
-              "base_version": 51,
+              "base_version": 144,
               "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
               "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
               "kpi": "defect_rate",
@@ -72,26 +72,26 @@
               "value": 180.0
             }
           },
-          "run_id": "run_71a94d7e",
+          "run_id": "run_fc41c636",
           "current_sop": {
             "sop_id": "SOP-RFL-001",
-            "version": 51,
+            "version": 144,
             "content": "Verify the setpoint.\nCheck the setpoint again after the shift change."
           },
-          "proposal_id": "ff181aaeb773",
-          "proposal_hash": "4d9fbf96ba43cfbf9935f9098fd5fac9edcc6e18de10b81d0a442cd1a08e047d"
+          "proposal_id": "04ae18d7e175",
+          "proposal_hash": "672b0f3e11460f5524ddb5e2fbe82e16def1492bd3ef4927579495a6bc60bd6a"
         }
       },
       "last_event": {
-        "event_id": "evt_run_71a94d7e_0005",
-        "run_id": "run_71a94d7e",
-        "ts": "2026-10-10T02:32:05Z",
+        "event_id": "evt_run_fc41c636_0005",
+        "run_id": "run_fc41c636",
+        "ts": "2026-10-11T08:48:13Z",
         "type": "proposal_created",
         "agent": "improvement",
         "domain": "manufacturing",
         "payload": {
           "proposal": {
-            "proposal_id": "ff181aaeb773",
+            "proposal_id": "04ae18d7e175",
             "hypothesis": {
               "group": "machine",
               "description": "wrong_setpoint",
@@ -109,9 +109,9 @@
             },
             "status": "pending_approval",
             "sop_proposal": {
-              "proposal_id": "11164c945a28",
+              "proposal_id": "c3fd050e15dc",
               "sop_id": "SOP-RFL-001",
-              "base_version": 51,
+              "base_version": 144,
               "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
               "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
               "kpi": "defect_rate",
@@ -129,7 +129,7 @@
     {
       "request": "POST /runs/{run_id}/approval",
       "body": {
-        "proposal_id": "ff181aaeb773",
+        "proposal_id": "04ae18d7e175",
         "kind": "proposal",
         "decision": "approved",
         "decided_by": "alice",
@@ -137,15 +137,15 @@
       },
       "http": 200,
       "response": {
-        "run_id": "run_71a94d7e",
+        "run_id": "run_fc41c636",
         "state": "finished",
         "status": "completed",
         "pending": null
       },
       "last_event": {
-        "event_id": "evt_run_71a94d7e_0010",
-        "run_id": "run_71a94d7e",
-        "ts": "2026-10-10T02:32:05Z",
+        "event_id": "evt_run_fc41c636_0010",
+        "run_id": "run_fc41c636",
+        "ts": "2026-10-11T08:48:13Z",
         "type": "run_finished",
         "agent": "system",
         "domain": "manufacturing",
@@ -157,9 +157,9 @@
   ],
   "events": [
     {
-      "event_id": "evt_run_71a94d7e_0001",
-      "run_id": "run_71a94d7e",
-      "ts": "2026-10-10T02:32:05Z",
+      "event_id": "evt_run_fc41c636_0001",
+      "run_id": "run_fc41c636",
+      "ts": "2026-10-11T08:48:13Z",
       "type": "tool_called",
       "agent": "quality",
       "domain": "manufacturing",
@@ -173,9 +173,9 @@
       }
     },
     {
-      "event_id": "evt_run_71a94d7e_0002",
-      "run_id": "run_71a94d7e",
-      "ts": "2026-10-10T02:32:05Z",
+      "event_id": "evt_run_fc41c636_0002",
+      "run_id": "run_fc41c636",
+      "ts": "2026-10-11T08:48:13Z",
       "type": "anomaly_detected",
       "agent": "quality",
       "domain": "manufacturing",
@@ -185,19 +185,19 @@
         "shift": "night",
         "start": "2026-03-10T22:00:00",
         "end": "2026-06-30T22:00:00",
-        "value": 0.061942,
-        "peak": 0.071583,
-        "baseline": 0.019544,
-        "sigma": 0.003667,
-        "upper_limit": 0.030544,
+        "value": 0.06214,
+        "peak": 0.086749,
+        "baseline": 0.019594,
+        "sigma": 0.00462,
+        "upper_limit": 0.033454,
         "n_points": 337,
         "planned": false
       }
     },
     {
-      "event_id": "evt_run_71a94d7e_err01",
-      "run_id": "run_71a94d7e",
-      "ts": "2026-10-10T02:32:05Z",
+      "event_id": "evt_run_fc41c636_err01",
+      "run_id": "run_fc41c636",
+      "ts": "2026-10-11T08:48:13Z",
       "type": "run_finished",
       "agent": "system",
       "domain": "manufacturing",
@@ -208,9 +208,9 @@
       }
     },
     {
-      "event_id": "evt_run_71a94d7e_0003",
-      "run_id": "run_71a94d7e",
-      "ts": "2026-10-10T02:32:05Z",
+      "event_id": "evt_run_fc41c636_0003",
+      "run_id": "run_fc41c636",
+      "ts": "2026-10-11T08:48:13Z",
       "type": "tool_called",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -224,9 +224,9 @@
       }
     },
     {
-      "event_id": "evt_run_71a94d7e_0004",
-      "run_id": "run_71a94d7e",
-      "ts": "2026-10-10T02:32:05Z",
+      "event_id": "evt_run_fc41c636_0004",
+      "run_id": "run_fc41c636",
+      "ts": "2026-10-11T08:48:13Z",
       "type": "hypothesis_updated",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -242,15 +242,15 @@
       }
     },
     {
-      "event_id": "evt_run_71a94d7e_0005",
-      "run_id": "run_71a94d7e",
-      "ts": "2026-10-10T02:32:05Z",
+      "event_id": "evt_run_fc41c636_0005",
+      "run_id": "run_fc41c636",
+      "ts": "2026-10-11T08:48:13Z",
       "type": "proposal_created",
       "agent": "improvement",
       "domain": "manufacturing",
       "payload": {
         "proposal": {
-          "proposal_id": "ff181aaeb773",
+          "proposal_id": "04ae18d7e175",
           "hypothesis": {
             "group": "machine",
             "description": "wrong_setpoint",
@@ -268,9 +268,9 @@
           },
           "status": "pending_approval",
           "sop_proposal": {
-            "proposal_id": "11164c945a28",
+            "proposal_id": "c3fd050e15dc",
             "sop_id": "SOP-RFL-001",
-            "base_version": 51,
+            "base_version": 144,
             "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
             "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
             "kpi": "defect_rate",
@@ -285,16 +285,16 @@
       }
     },
     {
-      "event_id": "evt_run_71a94d7e_0006",
-      "run_id": "run_71a94d7e",
-      "ts": "2026-10-10T02:32:05Z",
+      "event_id": "evt_run_fc41c636_0006",
+      "run_id": "run_fc41c636",
+      "ts": "2026-10-11T08:48:13Z",
       "type": "approval_decided",
       "agent": "system",
       "domain": "manufacturing",
       "payload": {
         "kind": "proposal",
-        "proposal_id": "ff181aaeb773",
-        "proposal_hash": "4d9fbf96ba43cfbf9935f9098fd5fac9edcc6e18de10b81d0a442cd1a08e047d",
+        "proposal_id": "04ae18d7e175",
+        "proposal_hash": "672b0f3e11460f5524ddb5e2fbe82e16def1492bd3ef4927579495a6bc60bd6a",
         "decision": "approved",
         "decided_by": "alice",
         "reason": "ok",
@@ -302,17 +302,17 @@
       }
     },
     {
-      "event_id": "evt_run_71a94d7e_0007",
-      "run_id": "run_71a94d7e",
-      "ts": "2026-10-10T02:32:05Z",
+      "event_id": "evt_run_fc41c636_0007",
+      "run_id": "run_fc41c636",
+      "ts": "2026-10-11T08:48:13Z",
       "type": "sop_applied",
       "agent": "improvement",
       "domain": "manufacturing",
       "payload": {
         "applied": true,
         "sop_id": "SOP-RFL-001",
-        "version": 52,
-        "previous_version": 51,
+        "version": 145,
+        "previous_version": 144,
         "approved_by": "alice",
         "change_time": "2026-06-23T22:00:00",
         "action": {
@@ -323,9 +323,9 @@
       }
     },
     {
-      "event_id": "evt_run_71a94d7e_0008",
-      "run_id": "run_71a94d7e",
-      "ts": "2026-10-10T02:32:05Z",
+      "event_id": "evt_run_fc41c636_0008",
+      "run_id": "run_fc41c636",
+      "ts": "2026-10-11T08:48:13Z",
       "type": "kpi_measured",
       "agent": "quality",
       "domain": "manufacturing",
@@ -334,9 +334,9 @@
         "machine_id": "M02",
         "change_time": "2026-06-23T22:00:00",
         "window_days": 7,
-        "before": 0.06286363476851778,
-        "after": 0.02136348910802672,
-        "delta": -0.04150014566049106,
+        "before": 0.06216598193961474,
+        "after": 0.019841204753984997,
+        "delta": -0.04232477718562974,
         "sufficient": true,
         "n_before": 21,
         "n_after": 21,
@@ -350,14 +350,14 @@
       }
     },
     {
-      "event_id": "evt_run_71a94d7e_0009",
-      "run_id": "run_71a94d7e",
-      "ts": "2026-10-10T02:32:05Z",
+      "event_id": "evt_run_fc41c636_0009",
+      "run_id": "run_fc41c636",
+      "ts": "2026-10-11T08:48:13Z",
       "type": "learning_saved",
       "agent": "improvement",
       "domain": "manufacturing",
       "payload": {
-        "learning_id": 54,
+        "learning_id": 144,
         "domain": "manufacturing",
         "content": {
           "anomaly": {
@@ -366,11 +366,11 @@
             "shift": "night",
             "start": "2026-03-10T22:00:00",
             "end": "2026-06-30T22:00:00",
-            "value": 0.061942,
-            "peak": 0.071583,
-            "baseline": 0.019544,
-            "sigma": 0.003667,
-            "upper_limit": 0.030544,
+            "value": 0.06214,
+            "peak": 0.086749,
+            "baseline": 0.019594,
+            "sigma": 0.00462,
+            "upper_limit": 0.033454,
             "n_points": 337,
             "planned": false
           },
@@ -382,18 +382,18 @@
           "change": "Restore the setpoint and add a setpoint check step to the SOP",
           "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
           "sop_id": "SOP-RFL-001",
-          "sop_version": 52,
+          "sop_version": 145,
           "kpi": "defect_rate",
-          "kpi_before": 0.06286363476851778,
-          "kpi_after": 0.02136348910802672,
+          "kpi_before": 0.06216598193961474,
+          "kpi_after": 0.019841204753984997,
           "outcome": "success"
         }
       }
     },
     {
-      "event_id": "evt_run_71a94d7e_0010",
-      "run_id": "run_71a94d7e",
-      "ts": "2026-10-10T02:32:05Z",
+      "event_id": "evt_run_fc41c636_0010",
+      "run_id": "run_fc41c636",
+      "ts": "2026-10-11T08:48:13Z",
       "type": "run_finished",
       "agent": "system",
       "domain": "manufacturing",
