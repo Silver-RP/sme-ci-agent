@@ -205,17 +205,24 @@ def _pearson(a: np.ndarray, b: np.ndarray) -> float | None:
 
 
 def _setpoint_deviation(ctx: ToolContext, machine_id: str, times: pd.Series) -> np.ndarray | None:
-    """|setpoint - reference| at each time; reference = value before the first logged change."""
+    """|setpoint - reference| at each time, largest over the logged parameters.
+
+    Per parameter, reference = value before its first logged change (the log also holds ordinary small
+    adjustments of other parameters, which must not be mixed with the series of one parameter).
+    """
     ml = ctx.tables["machine_log"]
-    ch = ml[(ml["machine_id"] == machine_id) & (ml["event_type"] == ctx.config.signals.setpoint_event)].sort_values(
-        "timestamp", kind="stable"
-    )
-    if ch.empty:
+    ch_all = ml[(ml["machine_id"] == machine_id) & (ml["event_type"] == ctx.config.signals.setpoint_event)]
+    if ch_all.empty:
         return None
-    ref = float(ch["old_value"].iloc[0])
-    idx = np.searchsorted(ch["timestamp"].to_numpy(), times.to_numpy(), side="right")
-    values = np.concatenate([[ref], ch["new_value"].to_numpy(dtype=float)])
-    return np.abs(values[idx] - ref)
+    best: np.ndarray | None = None
+    for _param, ch in ch_all.groupby("parameter", sort=True):
+        ch = ch.sort_values("timestamp", kind="stable")
+        ref = float(ch["old_value"].iloc[0])
+        idx = np.searchsorted(ch["timestamp"].to_numpy(), times.to_numpy(), side="right")
+        values = np.concatenate([[ref], ch["new_value"].to_numpy(dtype=float)])
+        dev = np.abs(values[idx] - ref)
+        best = dev if best is None else np.maximum(best, dev)
+    return best
 
 
 def _batch_change(ctx: ToolContext, times: pd.Series) -> np.ndarray | None:

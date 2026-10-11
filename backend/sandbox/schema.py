@@ -81,4 +81,8 @@ CONTRACT_TABLE_SCHEMAS: dict[str, dict[str, str]] = {
 
 DEPRECATED_TABLES: tuple[str, ...] = ("inventory", "supplier")  # to be removed (replaced by material_batches)
 
+# dev-02: the simulator generates the contract tables, so they are part of the sandbox table set now.
+for _name in ("production_log", "material_batches"):
+    TABLE_SCHEMAS[_name] = CONTRACT_TABLE_SCHEMAS[_name]
+
 TABLE_NAMES: tuple[str, ...] = tuple(TABLE_SCHEMAS)

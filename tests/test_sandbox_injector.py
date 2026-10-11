@@ -56,7 +56,11 @@ def test_machine_log_setpoint_changes(ds):
     ml = ds.tables["machine_log"]
     for gid, machine in (("A1", "M02"), ("A2_recurrence", "M01")):
         g = gt(ds, gid)
-        row = ml[(ml["event_type"] == "setpoint_change") & (ml["machine_id"] == machine)]
+        row = ml[
+            (ml["event_type"] == "setpoint_change")
+            & (ml["machine_id"] == machine)
+            & (ml["parameter"] == "zone3_setpoint_c")  # ordinary tweaks touch other parameters
+        ]
         assert len(row) == 1
         r = row.iloc[0]
         assert r["timestamp"] == g.start
@@ -193,7 +197,8 @@ def test_scenario_without_injections_is_normal(tmp_path):
     p.write_text(yaml.safe_dump(scen), encoding="utf-8")
     d = generate_dataset(seed=42, scenario_path=p)
     assert d.ground_truth == []
-    assert d.tables["machine_log"].empty
+    ml = d.tables["machine_log"]  # only ordinary events: nothing on the modelled setpoint, no maintenance
+    assert not (ml["parameter"] == "zone3_setpoint_c").any() and not (ml["event_type"] == "maintenance").any()
     assert not d.tables["shift_schedule"]["is_substitute"].any()
 
 

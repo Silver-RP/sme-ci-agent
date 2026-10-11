@@ -28,6 +28,7 @@ from backend.sandbox.simulator import (
     SimParams,
     _typed,
     params_from_config,
+    scenario_kpi_log,
     simulate,
 )
 
@@ -91,20 +92,22 @@ def inject(
     """Apply anomalies and planned maintenance from ``scenario`` to ``tables`` (not mutated)."""
     rng = np.random.default_rng([params.seed, 1])  # separate stream: normal data stays unchanged
     horizon_end = pd.Timestamp(params.start_date) + pd.Timedelta(days=params.days)
-    kpi_log = tables["kpi_log"].copy()
+    production_log = tables["production_log"].copy()
+    numerator = params.numerator
     log_rows: list[dict] = []
     sub_operators: dict[tuple[pd.Timestamp, str, str], str] = {}
     truth: list[GroundTruth] = []
 
     def redraw(machine: str, start: pd.Timestamp, end: pd.Timestamp, level: float) -> None:
+        """Push the probability of the numerator: counts ~ Binomial(units, level); volume is untouched."""
         mask = (
-            (kpi_log["machine_id"] == machine)
-            & (kpi_log["timestamp"] >= start)
-            & (kpi_log["timestamp"] < end)
+            (production_log["machine_id"] == machine)
+            & (production_log["shift_start"] >= start)
+            & (production_log["shift_start"] < end)
         )
-        n = int(mask.sum())
-        if n:
-            kpi_log.loc[mask, "value"] = np.clip(rng.normal(level, params.noise_sd, n), 0.0, 1.0)
+        if int(mask.sum()):
+            units = production_log.loc[mask, params.kpi_columns[params.kpi][1]].to_numpy()
+            production_log.loc[mask, numerator] = rng.binomial(units, min(max(level, 0.0), 1.0))
 
     for spec in scenario.get("injected_anomalies", []):
         start, end = _window(spec, horizon_end)
@@ -199,7 +202,8 @@ def inject(
         sched.loc[m, "is_substitute"] = True
 
     out = dict(tables)
-    out["kpi_log"] = kpi_log
+    out["production_log"] = production_log
+    out["kpi_log"] = scenario_kpi_log(production_log, params)  # derived (contract 2.8), never written directly
     out["machine_log"] = machine_log
     out["shift_schedule"] = sched
     out = {name: _typed(name, out[name]) for name in TABLE_NAMES}
