@@ -25,12 +25,13 @@ AGENT = "investigation"
 _TOOL_SPECS: list[ToolSpec] = [
     ToolSpec(
         "query_logs",
-        "Filter kpi_log or machine_log by KPI, machine and time window [start, end).",
+        "Filter kpi_log, machine_log or production_log (counts and lot batch_id per shift) by KPI, "
+        "machine and time window [start, end).",
         {
             "type": "object",
             "properties": {
                 "kpi": {"type": "string"},
-                "source": {"type": "string", "enum": ["kpi_log", "machine_log"]},
+                "source": {"type": "string", "enum": ["kpi_log", "machine_log", "production_log"]},
                 "machine_id": {"type": "string"},
                 "start": {"type": "string"},
                 "end": {"type": "string"},

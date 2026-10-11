@@ -52,4 +52,37 @@ TABLE_SCHEMAS: dict[str, dict[str, str]] = {
     },
 }
 
+# Tables of the input data contract (docs/schema/data_contract.md, R10b1). ``inventory`` and ``supplier``
+# above are kept only for compatibility and will be removed once dev-02/dev-03 switch the simulator and
+# tools to ``material_batches``. ``sop`` (2.6) is already in TABLE_SCHEMAS. These two are not yet in
+# TABLE_SCHEMAS so the simulator's table set stays unchanged until dev-02 generates them.
+# Optional columns (contract "T") may be empty.
+CONTRACT_TABLE_SCHEMAS: dict[str, dict[str, str]] = {
+    "production_log": {
+        "shift_start": "datetime",
+        "shift": "str",
+        "machine_id": "str",
+        "units_produced": "int",
+        "units_nonconforming": "int",
+        "units_reworked": "int",  # optional
+        "product_id": "str",  # optional
+        "batch_id": "str",  # optional
+    },
+    "material_batches": {
+        "batch_id": "str",
+        "material_id": "str",
+        "supplier_id": "str",
+        "received_date": "datetime",
+        "expiry_date": "datetime",  # optional
+        "qc_result": "str",  # optional
+    },
+    "sop": TABLE_SCHEMAS["sop"],
+}
+
+DEPRECATED_TABLES: tuple[str, ...] = ("inventory", "supplier")  # to be removed (replaced by material_batches)
+
+# dev-02: the simulator generates the contract tables, so they are part of the sandbox table set now.
+for _name in ("production_log", "material_batches"):
+    TABLE_SCHEMAS[_name] = CONTRACT_TABLE_SCHEMAS[_name]
+
 TABLE_NAMES: tuple[str, ...] = tuple(TABLE_SCHEMAS)

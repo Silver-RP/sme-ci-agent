@@ -24,7 +24,8 @@ from backend.db import repo
 from backend.db.models import SopVersion
 from backend.domain_config import DomainConfig, load_domain_config
 
-LOG_SOURCES = ("kpi_log", "machine_log")
+LOG_SOURCES = ("kpi_log", "machine_log", "production_log")
+_TIME_COL = {"kpi_log": "timestamp", "machine_log": "timestamp", "production_log": "shift_start"}
 
 
 @dataclass
@@ -96,7 +97,8 @@ def query_logs(
     start: str | None = None,
     end: str | None = None,
 ) -> dict:
-    """Filter a log table. ``kpi_log``: by KPI/machine/time; ``machine_log``: by machine/time.
+    """Filter a log table. ``kpi_log``: by KPI/machine/time; ``machine_log`` and ``production_log``
+    (counts per shift, with lot ``batch_id``): by machine/time.
 
     The window is ``[start, end)`` (ISO strings). ``kpi`` is always validated against the config.
     """
@@ -108,7 +110,7 @@ def query_logs(
         df = df[df["kpi"] == kpi]
     if machine_id is not None:
         df = df[df["machine_id"] == machine_id]
-    df = _slice(df, "timestamp", start, end)
+    df = _slice(df, _TIME_COL[source], start, end)
     limit = ctx.config.investigate.max_log_rows
     out: dict = {
         "source": source,
@@ -205,30 +207,43 @@ def _pearson(a: np.ndarray, b: np.ndarray) -> float | None:
 
 
 def _setpoint_deviation(ctx: ToolContext, machine_id: str, times: pd.Series) -> np.ndarray | None:
-    """|setpoint - reference| at each time; reference = value before the first logged change."""
+    """|setpoint - reference| at each time, largest over the logged parameters.
+
+    Per parameter, reference = value before its first logged change (the log also holds ordinary small
+    adjustments of other parameters, which must not be mixed with the series of one parameter).
+    """
     ml = ctx.tables["machine_log"]
-    ch = ml[(ml["machine_id"] == machine_id) & (ml["event_type"] == ctx.config.signals.setpoint_event)].sort_values(
-        "timestamp", kind="stable"
-    )
-    if ch.empty:
+    ch_all = ml[(ml["machine_id"] == machine_id) & (ml["event_type"] == ctx.config.signals.setpoint_event)]
+    if ch_all.empty:
         return None
-    ref = float(ch["old_value"].iloc[0])
-    idx = np.searchsorted(ch["timestamp"].to_numpy(), times.to_numpy(), side="right")
-    values = np.concatenate([[ref], ch["new_value"].to_numpy(dtype=float)])
-    return np.abs(values[idx] - ref)
+    best: np.ndarray | None = None
+    for _param, ch in ch_all.groupby("parameter", sort=True):
+        ch = ch.sort_values("timestamp", kind="stable")
+        ref = float(ch["old_value"].iloc[0])
+        idx = np.searchsorted(ch["timestamp"].to_numpy(), times.to_numpy(), side="right")
+        values = np.concatenate([[ref], ch["new_value"].to_numpy(dtype=float)])
+        dev = np.abs(values[idx] - ref)
+        best = dev if best is None else np.maximum(best, dev)
+    return best
 
 
-def _batch_change(ctx: ToolContext, times: pd.Series) -> np.ndarray | None:
-    """1.0 on days where any material's batch differs from the previous day, else 0.0."""
-    inv = ctx.tables["inventory"]
-    if inv.empty:
+def _batch_change(ctx: ToolContext, machine_id: str, times: pd.Series) -> np.ndarray | None:
+    """1.0 at the first shift of the machine on a new material lot, else 0.0.
+
+    Lots come from ``production_log.batch_id`` and count only when they exist in ``material_batches``;
+    a shift without a known lot adds no signal. ``None`` when no shift of the machine has a known lot.
+    """
+    pl, mb = ctx.tables["production_log"], ctx.tables["material_batches"]
+    pl = pl[pl["machine_id"] == machine_id].sort_values("shift_start", kind="stable")
+    known = pl["batch_id"].isin(set(mb["batch_id"].dropna())) & pl["batch_id"].ne("")
+    if not known.any():
         return None
-    inv = inv.sort_values(["material_id", "date"], kind="stable")
-    changed = inv["batch_id"].ne(inv.groupby("material_id")["batch_id"].shift()) & inv.groupby(
-        "material_id"
-    )["batch_id"].shift().notna()
-    per_day = changed.groupby(inv["date"]).any().astype(float)
-    return per_day.reindex(times.dt.normalize()).fillna(0.0).to_numpy()
+    lot = pl["batch_id"].where(known)
+    prev = lot.shift()
+    changed = (lot.notna() & prev.notna() & lot.ne(prev)).astype(float)
+    by_time = pd.Series(changed.to_numpy(), index=pl["shift_start"].to_numpy())
+    by_time = by_time[~by_time.index.duplicated(keep="last")]
+    return by_time.reindex(times.to_numpy()).fillna(0.0).to_numpy()
 
 
 @_audited
@@ -244,7 +259,7 @@ def correlate(
     """Pearson correlation between the KPI series of one machine and a signal per hypothesis.
 
     Signals: ``wrong_setpoint`` = |setpoint - SOP value| from machine_log; ``material_batch`` =
-    batch-change indicator from inventory. A hypothesis with no data in the sandbox (e.g.
+    lot-change indicator from ``production_log.batch_id`` resolved in ``material_batches``. A hypothesis with no data in the sandbox (e.g.
     ``ambient_temperature``) gets ``status="no_data"`` and strength 0. ``hypotheses`` defaults to
     every hypothesis in the domain config. Result is ranked by |r|, strongest first.
     """
@@ -259,7 +274,7 @@ def correlate(
 
     signals: dict[str, Callable[[], np.ndarray | None]] = {
         ctx.config.signals.setpoint_deviation: lambda: _setpoint_deviation(ctx, machine_id, times),
-        ctx.config.signals.batch_change: lambda: _batch_change(ctx, times),
+        ctx.config.signals.batch_change: lambda: _batch_change(ctx, machine_id, times),
     }
     results = []
     for h in hypotheses:

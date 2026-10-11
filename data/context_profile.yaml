@@ -1,17 +1,33 @@
 # Domain config (synthetic). Reasoning core đọc file này; không hard-code KPI/nhóm giả thuyết trong code.
 
 domain: manufacturing
+plant:                      # bố trí nhà máy (hợp đồng dữ liệu 1.2); scenario và validator đọc từ đây
+  machines: [M01, M02, M03]
+  shifts: [morning, afternoon, night]
+  shift_start_hours: {morning: 6, afternoon: 14, night: 22}
+  timezone: Asia/Ho_Chi_Minh  # chỉ để hiển thị; dữ liệu không kèm múi giờ
+machine_log:
+  event_types: [setpoint_change, program_change, maintenance, calibration, breakdown, alarm, note]
+validate:
+  max_missing_shifts: 3     # số ca trống liên tiếp tối đa trên một máy trước khi cảnh báo
+  min_monitor_days: 14      # ngày theo dõi tối thiểu sau kỳ tham chiếu
+  operator_id_pattern: "^OP-[A-Z0-9]+$"
+  pii_tokens: [name, fullname, email, phone, tel, mobile, address, birth, birthday, dob, cccd, cmnd]
 kpis:
   - name: defect_rate
     unit: ratio
     target: 0.02
     alert_threshold_sd: 3   # theo control limits
     direction: decrease     # chiều tốt của KPI (do config quyết định, không do LLM)
+    numerator: units_nonconforming  # cột production_log làm tử số
+    denominator: units_produced
   - name: rework_rate
     unit: ratio
     target: 0.03
     alert_threshold_sd: 3
     direction: decrease
+    numerator: units_reworked
+    denominator: units_produced
 detect:                     # tham số detect (mặc định = giá trị cũ trong code)
   reference_days: 28        # số ngày đầu dùng làm kỳ tham chiếu
   rule_window: 3            # luật k trên n: n điểm

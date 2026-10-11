@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from backend.contract_defaults import DEFAULT_EVENT_TYPES
 
 DEFAULT_PROFILE_PATH = Path(__file__).resolve().parents[1] / "data" / "context_profile.yaml"
 
@@ -20,6 +23,8 @@ class KPI(_Strict):
     target: float
     alert_threshold_sd: float = Field(gt=0)
     direction: str = Field(default="decrease", pattern="^(decrease|increase)$")  # which way is good
+    numerator: str = Field(min_length=1)  # production_log column used as numerator (data contract 1.2)
+    denominator: str = Field(default="units_produced", min_length=1)  # production_log column as denominator
 
 
 class SOP(_Strict):
@@ -27,6 +32,7 @@ class SOP(_Strict):
     version: int = Field(ge=1)
     title: str
     steps: list[str] = Field(default_factory=list)
+    origin: str = "config"  # who made this base version: "config" (YAML) or "import" (dataset sop.csv); = created_by
 
 
 class DetectParams(_Strict):
@@ -140,8 +146,75 @@ class DemoParams(_Strict):
     machine_id: str = Field(min_length=1)
 
 
+class PlantParams(_Strict):
+    """Plant layout (YAML key ``plant:``), data contract 1.2. machines/shifts/shift_start_hours are required."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    machines: list[str] = Field(min_length=1)
+    shifts: list[str] = Field(min_length=1)
+    shift_start_hours: dict[str, int]
+    timezone: str = "Asia/Ho_Chi_Minh"  # IANA name; display/documentation only
+
+    @model_validator(mode="after")
+    def _hours_match_shifts(self) -> PlantParams:
+        if len(set(self.shifts)) != len(self.shifts):
+            raise ValueError("plant.shifts must not repeat a shift")
+        if set(self.shift_start_hours) != set(self.shifts):
+            raise ValueError("plant.shift_start_hours must have exactly one value per plant.shifts name")
+        if any(not 0 <= h <= 23 for h in self.shift_start_hours.values()):
+            raise ValueError("plant.shift_start_hours values must be 0-23")
+        return self
+
+
+class MachineLogParams(_Strict):
+    """Machine log vocabulary (YAML key ``machine_log:``)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    event_types: list[str] = Field(default_factory=lambda: list(DEFAULT_EVENT_TYPES), min_length=1)
+
+
+class ValidateParams(_Strict):
+    """Input validation thresholds (YAML key ``validate:``)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    max_missing_shifts: int = Field(default=3, ge=1)  # consecutive empty shifts per asset before a warning
+    min_monitor_days: int = Field(default=14, ge=0)  # monitoring days required after the reference period
+    operator_id_pattern: str = r"^OP-[A-Z0-9]+$"
+    pii_tokens: list[str] = Field(
+        default_factory=lambda: [
+            "name",
+            "fullname",
+            "email",
+            "phone",
+            "tel",
+            "mobile",
+            "address",
+            "birth",
+            "birthday",
+            "dob",
+            "cccd",
+            "cmnd",
+        ]
+    )
+
+    @field_validator("operator_id_pattern")
+    @classmethod
+    def _pattern_compiles(cls, v: str) -> str:
+        try:
+            re.compile(v)
+        except re.error as e:
+            raise ValueError(f"operator_id_pattern is not a valid regex: {e}") from e
+        return v
+
+
 class DomainConfig(_Strict):
     domain: str = Field(min_length=1)
+    plant: PlantParams
+    machine_log: MachineLogParams = Field(default_factory=MachineLogParams)
+    validate_: ValidateParams = Field(default_factory=ValidateParams, alias="validate")
     signals: SignalNames
     demo: DemoParams
     default_period: tuple[str, str]
@@ -156,6 +229,12 @@ class DomainConfig(_Strict):
     hypothesis_groups: dict[str, list[str]] = Field(min_length=1)
     sop: list[SOP]
     approvers: list[str] = Field(min_length=1)  # allow-list of names allowed to approve or reject (synthetic)
+
+    @model_validator(mode="after")
+    def _event_types_cover_setpoint(self) -> DomainConfig:
+        if self.signals.setpoint_event not in self.machine_log.event_types:
+            raise ValueError("machine_log.event_types must contain signals.setpoint_event")
+        return self
 
     @field_validator("approvers")
     @classmethod
@@ -177,4 +256,9 @@ class DomainConfig(_Strict):
 def load_domain_config(path: str | Path = DEFAULT_PROFILE_PATH) -> DomainConfig:
     """Load and validate the domain config. Raises pydantic.ValidationError on bad input."""
     data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
-    return DomainConfig.model_validate(data)
+    cfg = DomainConfig.model_validate(data)
+    if Path(path) == DEFAULT_PROFILE_PATH:  # SME_DATASET: the base SOP comes from the dataset (R10b1 dev-06)
+        from backend.dataset_store import apply_to_config
+
+        cfg = apply_to_config(cfg)
+    return cfg

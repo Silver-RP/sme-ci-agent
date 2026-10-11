@@ -63,7 +63,8 @@ def test_query_logs_other_kpi_and_unfiltered_and_empty(ctx):
 
 def test_query_logs_machine_log(ctx):
     r = query_logs(ctx, kpi=KPI, source="machine_log", machine_id="M02", end="2026-03-11")
-    sp = [x for x in r["rows"] if x["event_type"] == "setpoint_change"]
+    # ordinary small adjustments of other parameters are also logged (R10b1/dev-02)
+    sp = [x for x in r["rows"] if x["event_type"] == "setpoint_change" and x["parameter"] == "zone3_setpoint_c"]
     assert len(sp) == 1 and sp[0]["old_value"] == 180 and sp[0]["new_value"] == 195
     assert sp[0]["timestamp"] == A1_START
     with pytest.raises(ValueError):
@@ -119,10 +120,15 @@ def test_correlate_explicit_hypotheses_and_empty(ctx):
     r = correlate(ctx, kpi=KPI, machine_id="M02", start="2026-03-03", end="2026-03-17",
                   hypotheses=["material_batch"])
     assert [c["hypothesis"] for c in r["correlations"]] == ["material_batch"]
-    # machine without setpoint change: no data for wrong_setpoint; empty window: no crash
+    # machine without a setpoint change of the modelled parameter: only ordinary small adjustments of other
+    # parameters, so the signal is weak or constant, never a strong match; empty window: no crash
     r2 = correlate(ctx, kpi=KPI, machine_id="M03", start="2026-03-03", end="2026-03-17",
                    hypotheses=["wrong_setpoint"])
-    assert r2["correlations"][0]["status"] == "no_data"
+    assert r2["correlations"][0]["status"] in ("no_data", "constant", "ok")
+    a1 = correlate(ctx, kpi=KPI, machine_id="M02", start="2026-03-03", end="2026-03-17",
+                   hypotheses=["wrong_setpoint"])["correlations"][0]
+    assert r2["correlations"][0]["strength"] < 0.6
+    assert a1["strength"] > r2["correlations"][0]["strength"] + 0.15  # A1 clearly stronger than M03
     r3 = correlate(ctx, kpi=KPI, machine_id="M02", start="2030-01-01")
     assert all(c["status"] == "no_data" and c["strength"] == 0.0 for c in r3["correlations"])
     with pytest.raises(ValueError):

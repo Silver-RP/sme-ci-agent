@@ -40,7 +40,7 @@ def test_prompt_contains_yaml_kpis_and_groups():
 
 def test_prompt_changes_with_yaml(tmp_path):
     def mutate(d):
-        d["kpis"] = [{"name": "zz_kpi_x", "unit": "ratio", "target": 0.1, "alert_threshold_sd": 2}]
+        d["kpis"] = [{"name": "zz_kpi_x", "unit": "ratio", "target": 0.1, "alert_threshold_sd": 2, "numerator": "x"}]
         d["hypothesis_groups"] = {"qq_group": ["qq_cause"]}
         d["domain"] = "logistics"
 

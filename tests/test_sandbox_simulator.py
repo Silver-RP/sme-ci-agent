@@ -22,9 +22,11 @@ CHECKS = {
 
 
 def test_six_tables_with_fixed_schema():
+    # R10b1/dev-02: + production_log and material_batches (contract); inventory/supplier kept for compatibility
     tables = simulate(params_from_config())
     assert set(tables) == set(TABLE_NAMES) == {
-        "kpi_log", "machine_log", "shift_schedule", "inventory", "supplier", "sop"
+        "kpi_log", "machine_log", "shift_schedule", "inventory", "supplier", "sop",
+        "production_log", "material_batches",
     }
     for name, df in tables.items():
         assert list(df.columns) == list(TABLE_SCHEMAS[name])
@@ -33,12 +35,13 @@ def test_six_tables_with_fixed_schema():
 
 
 def test_schema_holds_for_empty_tables_and_defaults():
-    # no setpoint changes -> machine_log empty but still typed
+    # no logged setpoint changes of the modelled parameter -> none in machine_log (only ordinary events)
     tables = simulate(params_from_config())
-    assert tables["machine_log"].empty
+    ml = tables["machine_log"]
+    assert not (ml["parameter"] == "zone3_setpoint_c").any()
     for col, kind in TABLE_SCHEMAS["machine_log"].items():
         assert CHECKS[kind](tables["machine_log"][col])
-    # zero days -> still 6 tables with schema
+    # zero days -> still all tables with schema
     empty = simulate(params_from_config().with_(days=0))
     assert list(empty["kpi_log"].columns) == list(TABLE_SCHEMAS["kpi_log"])
     assert empty["kpi_log"].empty
@@ -114,6 +117,7 @@ def test_setpoint_shift_raises_then_restore_returns_to_baseline():
     assert abs(_mean(t, "M01") - base) <= sd
     # changes are logged with old/new values
     ml = t["machine_log"]
+    ml = ml[ml["parameter"] == p.setpoint_param]  # ordinary events (other parameters) are also logged
     assert list(ml["old_value"]) == [180.0, 195.0]
     assert list(ml["new_value"]) == [195.0, 180.0]
     assert set(ml["event_type"]) == {"setpoint_change"}

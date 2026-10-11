@@ -135,7 +135,7 @@ def _write_sop_version(ctx: ToolContext, sop_id: str, new_content: str, approver
                     sop_id=sop_id,
                     version=top.version,
                     content="\n".join(top.steps),
-                    created_by="config",
+                    created_by=top.origin,
                     run_id=ctx.run_id,
                 )
             )

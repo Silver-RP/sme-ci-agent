@@ -7,11 +7,9 @@ domain: manufacturing
 
 plant:
   description: Công ty linh kiện điện tử quy mô nhỏ, 3 lò hàn reflow, 3 ca/ngày
-  machines: [M01, M02, M03]
-  shifts: [morning, afternoon, night]
+  # machines, shifts, shift_start_hours: nằm ở data/context_profile.yaml (plant.*), không khai ở đây
   horizon_months: 6
   start_date: "2026-01-01"   # đề xuất chờ T-004
-  shift_start_hours: {morning: 6, afternoon: 14, night: 22}   # đề xuất chờ T-004
 
 baseline:
   kpi: defect_rate
@@ -19,6 +17,30 @@ baseline:
   noise_sd: 0.004
   zone3_setpoint_c: 180 # theo SOP
   setpoint_sensitivity_per_c: 0.0028   # đề xuất chờ T-004: tỉ lệ lỗi tăng mỗi °C lệch SOP (15 °C -> +0.042 = 0.062)
+
+# Sản lượng mô phỏng (số board mỗi ca). Số không đạt ~ Binomial(units_produced, p); p lấy từ
+# baseline / setpoint / `effect` của anomaly. Cỡ mẫu ~1200 cho độ lệch chuẩn của tỷ lệ ~0.004.
+production:
+  units_mean: 1200
+  units_cv: 0.1                     # độ lệch chuẩn tương đối của sản lượng mỗi ca
+  machine_factor: {M01: 1.0, M02: 0.95, M03: 1.05}
+  shift_factor: {morning: 1.0, afternoon: 1.0, night: 0.9}
+  products: [PRD-A, PRD-B, PRD-C]
+  product_change_days: 9            # đổi sản phẩm (program_change) khoảng mỗi N ngày
+
+# Lô nguyên liệu (kem hàn, chất trợ hàn): mỗi vật tư nhận lô mới mỗi N ngày
+materials:
+  items: [MAT-A, MAT-B]
+  receive_every_days: 7
+  shelf_life_days: 90
+  conditional_rate: 0.05
+
+# Sự kiện máy bình thường (làm đáp án không lộ): cảnh báo, đổi chương trình, chỉnh nhỏ tham số khác
+normal_events:
+  alarms_per_machine_per_month: 2
+  setpoint_tweaks_per_machine_per_month: 3
+  tweak_step: 2
+  reference_values: {zone2_setpoint_c: 170, other_parameter_c: 250}   # không phải tham số được mô hình hoá
 
 # Quy ước: `effect` của mỗi anomaly là NGUỒN CHÍNH quyết định mức KPI bị đẩy lên.
 # Hàm setpoint (setpoint_sensitivity_per_c * độ lệch) chỉ dùng cho phép thử phản thực tế

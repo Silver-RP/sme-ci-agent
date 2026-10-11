@@ -351,3 +351,38 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 ### R10d/dev-05: DONE
 - Vòng: 1. Commit: 30dd52f. Review: .autodev/reviews/dev-05-r1.json (PASS).
 - payloads.md ghi quy tắc múi giờ + 422 của /kpi/series, kèm test tài liệu. Hook không chạy, verify chạy tay sạch.
+
+### R10b1/dev-01: DONE
+- Vòng: 1. Commit: 5cd5d0f. Review: .autodev/reviews/dev-01-r1.json (PASS).
+- 11 khoá config hợp đồng, `plant.*` chuyển sang domain config, bảng hợp đồng trong `CONTRACT_TABLE_SCHEMAS` (dev-02 gộp vào `TABLE_SCHEMAS`), `kpi_derive.derive_kpi_log` (N03, N04). 628 pytest.
+- Non-blocking: `row` của N03 giả định thứ tự file (dev-06 chú ý); numerator rỗng bỏ dòng im lặng, hợp đồng chưa quy định.
+
+### R10b1/dev-02: DONE
+- Vòng: 1. Commit: 77a8013. Review: .autodev/reviews/dev-02-r1.json (PASS).
+- Simulator nhị thức, `material_batches`, `sop`, sự kiện máy bình thường; 8 bảng. Anomaly A1 ≈ 9,2σ (trước ≈ 10σ). 645 pytest.
+- Non-blocking: assert M03 ở `test_correlate_explicit_hypotheses_and_empty` yếu hơn (có lý do), nên siết ở dev-03; `_setpoint_deviation` lấy max theo tham số, giữ khi sửa `correlate`.
+
+### R10b1/dev-03: DONE
+- Vòng: 1. Commit: 27538fb. Review: .autodev/reviews/dev-03-r1.json (PASS).
+- `correlate` đọc `material_batches`, `query_logs` nhận `production_log`, `post_change` sinh lại số đếm rồi dẫn xuất `kpi_log`; assert M03 đã siết. 656 pytest.
+- Non-blocking: thiếu test "không dòng kpi_log nào bị bỏ sót" ở post_change.
+
+### R10b1/dev-04: DONE
+- Vòng: 2. Commit: bd332ab, b7c9b58. Review: .autodev/reviews/dev-04-r1.json (FAIL), dev-04-r2.json (PASS).
+- `backend/sandbox/validate.py`: quy tắc chung, V01, V02, V09, N01, N02; 13 bộ D2 V01/V02/V09 cho đúng mã. Vòng 1 FAIL vì `is_file()` không phân biệt hoa thường trên macOS (sửa bằng `iterdir()`). Hook không chạy lượt 1 (verify chạy tay sạch). 759 pytest.
+- Non-blocking: V02 cho `machine_log` ở dòng không phải setpoint_change bỏ qua kiểm kiểu (hợp đồng chưa rõ); N01 liệt kê cả `.DS_Store`.
+
+### R10b1/dev-05: DONE
+- Vòng: 1. Commit: 46f6c58. Review: .autodev/reviews/dev-05-r1.json (PASS).
+- V03–V08, N03, N04 trong `validate.py`; mỗi bộ D2 V03–V08 cho đúng mã tên thư mục; simulator seed 42: 0 lỗi, 0 cảnh báo, 0 ghi chú. `valid/` của D2 chỉ có cảnh báo nền V08 (value 1) theo README D2.
+- Non-blocking: dấu phân cách `step_no` thiếu nhiều số chưa có trong hợp đồng (đề xuất (c)); reviewer không chạy hết pytest trong 10 phút.
+
+### R10b1/dev-06: DONE
+- Vòng: 1. Commit: 6f2bc43. Review: .autodev/reviews/dev-06-r1.json (PASS).
+- `scripts/import_data.py` + `backend/dataset_store.py`: kiểm, ghi thư mục tạm + `_COMPLETE` + rename một lần, `SME_DATASET` nối vào app, `run_scenario`, domain config; SOP gốc `created_by: "import"`. Hook không chạy, verify tay: ruff + pytest sạch, 1 test vitest dashboard rớt do tải (đạt khi chạy riêng).
+- Non-blocking: `data_report`, `eval_rootcause`, `export_fixtures` chưa đọc `SME_DATASET`.
+
+### R10b1/dev-07: DONE
+- Vòng: 1. Commit: cfee6d8. Review: .autodev/reviews/dev-07-r1.json (PASS).
+- `gen_data.py --out-dir` xuất 5 bảng hợp đồng, ground truth ở `<thư mục>_ground_truth.json`; test vòng tròn gen → import → `SME_DATASET` → `learning_saved`; 8 fixture sinh lại (kèm bản sao `dashboard/fixtures/examples/` và 2 test dashboard đổi giá trị mong đợi).
+- Non-blocking: vòng tròn seed 42 trùng simulator mặc định; số phiên bản fixture phụ thuộc DB dùng chung.
