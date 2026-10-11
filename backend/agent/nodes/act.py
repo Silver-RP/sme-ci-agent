@@ -281,16 +281,25 @@ def make_wait_approval_node(config: DomainConfig, ctx: ToolContext):
     return wait_approval
 
 
-def _sop_conflict_update(state: AgentState, emit: _Emitter, proposal: dict[str, Any], exc: SopConflict) -> dict[str, Any]:
+def _conflict_text(config: DomainConfig, exc: SopConflict) -> str:
+    return config.messages.render(
+        "sop_conflict", sop_id=exc.sop_id, base_version=exc.base_version, current_version=exc.current_version
+    )
+
+
+def _sop_conflict_update(
+    state: AgentState, emit: _Emitter, proposal: dict[str, Any], exc: SopConflict, config: DomainConfig
+) -> dict[str, Any]:
     """The SOP changed since the proposal was built: nothing written, tell the person, propose again (bounded)."""
+    text = _conflict_text(config, exc)
     info = {"sop_id": exc.sop_id, "base_version": exc.base_version, "current_version": exc.current_version}
-    emit("approval_decided", "system", {"kind": "proposal", "decision": "sop_conflict", "message": str(exc), **info})
+    emit("approval_decided", "system", {"kind": "proposal", "decision": "sop_conflict", "message": text, **info})
     return {
         "events": emit.events,
         "approval": None,
         "rejection_count": state.get("rejection_count", 0) + 1,
-        "proposal": {**proposal, "status": "sop_conflict", "conflict": str(exc)},
-        "evidence": [*state.get("evidence", []), {"source": "sop_conflict", "message": str(exc), **info}],
+        "proposal": {**proposal, "status": "sop_conflict", "conflict": text},
+        "evidence": [*state.get("evidence", []), {"source": "sop_conflict", "message": text, **info}],
     }
 
 
@@ -329,7 +338,7 @@ def make_act_node(config: DomainConfig, ctx: ToolContext):
                 **lock,
             )
         except SopConflict as exc:
-            return _sop_conflict_update(state, emit, proposal, exc)
+            return _sop_conflict_update(state, emit, proposal, exc, config)
         ctx.session.commit()  # H-45: the version and its audit row are durable before the checkpoint says "applied"
         previous =repo.get_sop_version(ctx.session, sop["sop_id"], res["version"] - 1)
         prev_version = previous.version if previous else None
@@ -391,7 +400,7 @@ def make_measure_node(config: DomainConfig, ctx: ToolContext):
         if not applied:
             measurement = {
                 **base, "status": NOT_APPLIED, "passed": None, "before": None, "after": None,
-                "reason": "the proposal changed no SOP, so there is nothing to measure",
+                "reason": config.messages.render("not_applied_no_sop"),
             }
             _audit_not_measured(ctx, measurement)
             emit("kpi_measured", "quality", measurement)
@@ -404,7 +413,7 @@ def make_measure_node(config: DomainConfig, ctx: ToolContext):
         if sim is not None and not applied.get("action"):
             measurement = {
                 **base, "status": NOT_APPLIED, "passed": None, "before": None, "after": None,
-                "reason": "the proposal has no structured action, so no machine parameter was changed",
+                "reason": config.messages.render("not_applied_no_action"),
             }
             _audit_not_measured(ctx, measurement)
             emit("kpi_measured", "quality", measurement)
@@ -457,10 +466,9 @@ def make_ask_evidence_node(config: DomainConfig):
         m = state.get("measurement") or {}
         count = state.get("measure_wait_count", 0) + 1
         payload = {
-            "question": (
-                f"Not enough evidence yet: only {m.get('n_after')} {m.get('n_unit', 'unit')} for {m.get('kpi')} "
-                f"after the change (need {m.get('min_units_after') if m.get('n_unit') == 'units' else m.get('min_samples_after')}). "
-                "Wait for more data and confirm to measure again."
+            "question": config.messages.render(
+                "evidence_wait_question", n_after=m.get("n_after"), n_unit=m.get("n_unit", "unit"), kpi=m.get("kpi"),
+                needed=m.get("min_units_after") if m.get("n_unit") == "units" else m.get("min_samples_after"),
             ),
             "attempt": count,
             "max_questions": config.ask.max_questions,
@@ -519,9 +527,9 @@ def make_rollback_propose_node(config: DomainConfig, ctx: ToolContext):
     def rollback_propose(state: AgentState) -> dict[str, Any]:
         applied = state.get("applied")
         m = state.get("measurement") or {}
-        rationale = (
-            f"{m.get('kpi')} after the change is {_fmt(m.get('after'))}, outside the limit "
-            f"(target {m.get('target')}, tolerance {m.get('tolerance')})."
+        rationale = config.messages.render(
+            "rollback_rationale", kpi=m.get("kpi"), after=_fmt(m.get("after")), target=m.get("target"),
+            tolerance=m.get("tolerance"),
         )
         sop_prop = None
         if applied and applied.get("previous_content"):
@@ -532,8 +540,9 @@ def make_rollback_propose_node(config: DomainConfig, ctx: ToolContext):
         proposal = {
             "kind": "rollback",
             "proposal_id": uuid.uuid4().hex[:12],
-            "change": f"Roll back SOP {applied['sop_id']} to version {applied['previous_version']}"
-            if sop_prop else "Roll back the change (no SOP version to restore)",
+            "change": config.messages.render(
+                "rollback_change_sop", sop_id=applied["sop_id"], previous_version=applied["previous_version"]
+            ) if sop_prop else config.messages.render("rollback_change_no_sop"),
             "rationale": rationale,
             "expected_kpi": (state.get("proposal") or {}).get("expected_kpi"),
             "status": "pending_approval",
@@ -593,7 +602,7 @@ def make_rollback_apply_node(config: DomainConfig, ctx: ToolContext):
                     restored_from_version=applied["previous_version"], failed_version=applied["version"],
                 )
             except SopConflict as exc:  # another run changed the SOP after this one: do not overwrite it
-                payload.update(sop_id=applied["sop_id"], conflict=str(exc), current_version=exc.current_version)
+                payload.update(sop_id=applied["sop_id"], conflict=_conflict_text(config, exc), current_version=exc.current_version)
         emit("rollback_done", "improvement", payload)
         count = state.get("rollback_count", 0) + 1
         evidence = [
@@ -645,7 +654,7 @@ def make_loop_halt_node(config: DomainConfig, ctx: ToolContext | None = None):
         if applied:  # an SOP version is in force (e.g. the rollback was declined): say which
             extra = {"sop_still_in_force": True, "sop_id": applied.get("sop_id"), "sop_version": applied.get("version")}
         emit = _Emitter(state, config)
-        payload = halt_payload(reason, options=halt_options(state, config), **extra)
+        payload = halt_payload(config, reason, options=halt_options(state, config), **extra)
         audit_halt_raised(ctx, payload)
         emit("question_asked", "system", payload)
         return {"status": "awaiting_human", "events": emit.events}

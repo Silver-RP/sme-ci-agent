@@ -292,7 +292,7 @@ def test_confident_conclusion_without_tool_result_asks(ctx):
     out = graph.invoke(new_state("run_r8", CFG.domain), cfg)
     assert graph.get_state(cfg).next == ("wait_answer",)
     q = next(e for e in out["events"] if e["type"] == "question_asked")
-    assert "no tool result" in q["payload"]["question"]
+    assert "chưa có kết quả công cụ" in q["payload"]["question"]
 
 
 def test_confident_conclusion_without_tool_result_never_reaches_improve(db_session):

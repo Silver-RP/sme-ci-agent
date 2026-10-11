@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import string
 from pathlib import Path
 
 import yaml
@@ -213,6 +214,71 @@ class ValidateParams(_Strict):
         return v
 
 
+HALT_REASON_CODES = (
+    "insufficient_evidence",
+    "rollback_declined",
+    "max_total_rollbacks_reached",
+    "max_rollbacks_reached",
+    "max_revisions_reached",
+    "max_rejections_reached",
+    "max_questions_reached",
+)
+
+# Placeholders each template may use (checked at load time so a typo fails with the key name).
+_MESSAGE_PLACEHOLDERS: dict[str, set[str]] = {
+    "question_no_hypothesis": set(),
+    "question_unsupported_hypothesis": {"group", "description", "confidence"},
+    "question_low_confidence": {"group", "description", "confidence", "threshold"},
+    "halt_question_finish": {"reason"},
+    "halt_question_investigate": {"reason"},
+    "evidence_wait_question": {"n_after", "n_unit", "kpi", "needed"},
+    "rollback_change_sop": {"sop_id", "previous_version"},
+    "rollback_change_no_sop": set(),
+    "rollback_rationale": {"kpi", "after", "target", "tolerance"},
+    "not_applied_no_sop": set(),
+    "not_applied_no_action": set(),
+    "sop_conflict": {"sop_id", "base_version", "current_version"},
+}
+
+
+class Messages(_Strict):
+    """User-facing sentences (YAML key ``messages:``), templates with ``{placeholder}``. All keys are required."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    question_no_hypothesis: str
+    question_unsupported_hypothesis: str
+    question_low_confidence: str
+    halt_question_finish: str
+    halt_question_investigate: str
+    halt_reasons: dict[str, str]
+    evidence_wait_question: str
+    rollback_change_sop: str
+    rollback_change_no_sop: str
+    rollback_rationale: str
+    not_applied_no_sop: str
+    not_applied_no_action: str
+    sop_conflict: str
+
+    @model_validator(mode="after")
+    def _templates_ok(self) -> Messages:
+        for key, allowed in _MESSAGE_PLACEHOLDERS.items():
+            used = {f for _, f, _, _ in string.Formatter().parse(getattr(self, key)) if f}
+            if used - allowed:
+                raise ValueError(f"messages.{key} uses unknown placeholder(s) {sorted(used - allowed)}; allowed {sorted(allowed)}")
+        missing = [c for c in HALT_REASON_CODES if c not in self.halt_reasons]
+        if missing:
+            raise ValueError(f"messages.halt_reasons is missing key(s) {missing}")
+        return self
+
+    def render(self, key: str, **params: object) -> str:
+        """Fill the template ``messages.<key>`` with the given placeholder values."""
+        return getattr(self, key).format(**params)
+
+    def halt_reason_label(self, code: str) -> str:
+        return self.halt_reasons.get(code, code)
+
+
 UNSOURCED = "giả định, chờ D3"
 
 
@@ -239,6 +305,7 @@ class DomainConfig(_Strict):
     validate_: ValidateParams = Field(default_factory=ValidateParams, alias="validate")
     signals: SignalNames
     demo: DemoParams
+    messages: Messages
     default_period: tuple[str, str]
     actions: ActionParams = Field(default_factory=ActionParams)
     ask: AskParams = Field(default_factory=AskParams)

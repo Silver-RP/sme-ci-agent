@@ -50,7 +50,7 @@ def test_two_runs_same_base_second_approval_does_not_overwrite(db_session):
     conflicts = [e for e in out["events"] if e["payload"].get("decision") == "sop_conflict"]
     assert len(conflicts) == 1
     msg = conflicts[0]["payload"]["message"]
-    assert "version 1" in msg and "version 2" in msg and conflicts[0]["payload"]["current_version"] == 2
+    assert "phiên bản 1" in msg and "phiên bản 2" in msg and conflicts[0]["payload"]["current_version"] == 2
     assert "sop_applied" not in types(out)
     assert graph_b.get_state(cb).next == ("wait_approval",)  # proposed again, now on the SOP in force
     assert _pending(graph_b, cb)["proposal"]["sop_proposal"]["base_version"] == 2
@@ -91,7 +91,7 @@ def test_rollback_does_not_overwrite_a_newer_version_from_another_run(db_session
     apply_sop(make_ctx(db_session, _tables()), sop_id=SOP_ID, new_content="another run's SOP", approval=APPROVAL)
     out = graph.invoke(Command(resume={"decision": "approved", "decided_by": "bob"}), cfg)
     done = [e for e in out["events"] if e["type"] == "rollback_done"][-1]["payload"]
-    assert done["rolled_back"] is False and "version 2" in done["conflict"]
+    assert done["rolled_back"] is False and "phiên bản 2" in done["conflict"]
     v = versions(db_session)
     assert set(v) == {1, 2, 3} and v[3] == "another run's SOP"
 

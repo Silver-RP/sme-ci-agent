@@ -112,7 +112,7 @@ def test_too_few_samples_is_not_enough_evidence_not_a_failure(db_session):
     assert graph.get_state(c).next == ("wait_evidence",)  # waits for a person, no rollback
     assert "rollback" not in json.dumps([e["payload"] for e in out["events"] if e["type"] == "proposal_created"])
     q = [e for e in out["events"] if e["type"] == "question_asked"]
-    assert q and "not enough" in q[-1]["payload"]["question"].lower()
+    assert q and "chưa đủ bằng chứng" in q[-1]["payload"]["question"].lower()
     assert sorted(versions(db_session)) == [1, 2] and "learning_saved" not in types(out)
 
 

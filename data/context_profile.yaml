@@ -81,6 +81,27 @@ signals:                    # tên miền mà tool correlate và nhật ký máy
 default_period: ["2026-10-01", "2026-10-07"]  # khoảng ngày của bản mock (không có tool thật)
 demo:
   machine_id: M02           # máy mà kịch bản LLM giả (demo) điều tra
+messages:                   # câu hiện cho người dùng (template {placeholder}); mã, khoá, tên trường giữ tiếng Anh
+  question_no_hypothesis: "Chưa đủ bằng chứng để đưa ra giả thuyết. Anh/chị biết thêm điều gì về bất thường này?"
+  question_unsupported_hypothesis: "Giả thuyết đứng đầu ({group}: {description}) có độ tin cậy {confidence:.2f} nhưng chưa có kết quả công cụ nào hỗ trợ. Anh/chị xác nhận giúp hoặc cho biết bằng chứng đang có?"
+  question_low_confidence: "Giả thuyết đứng đầu ({group}: {description}) có độ tin cậy {confidence:.2f}, thấp hơn ngưỡng {threshold:.2f}. Anh/chị xác nhận hoặc bổ sung thông tin?"
+  halt_question_finish: "Agent đã dừng ({reason}). Kết thúc phiên chạy?"
+  halt_question_investigate: "Agent đã dừng ({reason}). Điều tra lại (bổ sung thông tin nếu có) hay kết thúc?"
+  halt_reasons:             # nhãn tiếng Việt của mã lý do dừng (mã giữ nguyên trong payload.reason)
+    insufficient_evidence: "chưa đủ bằng chứng sau thay đổi"
+    rollback_declined: "đề xuất hoàn tác bị từ chối"
+    max_total_rollbacks_reached: "đã hết số lần hoàn tác của cả phiên chạy"
+    max_rollbacks_reached: "đã đạt số lần hoàn tác tối đa"
+    max_revisions_reached: "đã đạt số lần yêu cầu sửa đề xuất tối đa"
+    max_rejections_reached: "đã đạt số lần từ chối đề xuất tối đa"
+    max_questions_reached: "đã đạt số câu hỏi tối đa"
+  evidence_wait_question: "Chưa đủ bằng chứng: sau thay đổi mới có {n_after} {n_unit} cho {kpi} (cần {needed}). Chờ thêm dữ liệu rồi xác nhận để đo lại."
+  rollback_change_sop: "Hoàn tác SOP {sop_id} về phiên bản {previous_version}"
+  rollback_change_no_sop: "Hoàn tác thay đổi (không có phiên bản SOP để khôi phục)"
+  rollback_rationale: "{kpi} sau thay đổi là {after}, ngoài giới hạn (mục tiêu {target}, dung sai {tolerance})."
+  not_applied_no_sop: "Đề xuất không đổi SOP nào nên không có gì để đo."
+  not_applied_no_action: "Đề xuất không có hành động có cấu trúc nên chưa đổi tham số máy nào."
+  sop_conflict: "SOP {sop_id} xung đột: đề xuất dựa trên phiên bản {base_version} nhưng hiện đang áp dụng phiên bản {current_version}; chưa thay đổi gì."
 hypothesis_groups:          # Ishikawa
   machine: [wrong_setpoint, wear, calibration]
   method: [outdated_sop, missing_check]
