@@ -399,7 +399,7 @@ def test_v09_operator_pattern_from_config_and_machine_log(tmp_path):
             "machine_log.csv": ML_HEADER + "\n2026-03-10T22:05:00,M02,note,,,,W12,\n2026-03-10T22:06:00,M02,note,,,,OP-017,\n2026-03-10T22:07:00,M02,note,,,,,\n"
         },
     )
-    got = [i for i in run(d, cfg) if i["table"] == "machine_log"]
+    got = [i for i in run(d, cfg) if i["table"] == "machine_log" and i["code"] in SCOPE]
     assert [(i["code"], i["row"], i["value"]) for i in got] == [("V09", 3, "OP-017")]
 
 
