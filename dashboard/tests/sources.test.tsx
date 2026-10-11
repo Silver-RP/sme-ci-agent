@@ -5,6 +5,7 @@ import {
   createFixtureSource,
   createSseSource,
   type EventSourceAdapter,
+  type EventSourceCtor,
   type EventSourceLike,
   type SourceHandlers,
 } from "@/lib/sources";
@@ -19,7 +20,7 @@ class FakeES implements EventSourceLike {
   readyState = 0;
   onopen: ((ev: unknown) => void) | null = null;
   onerror: ((ev: unknown) => void) | null = null;
-  listeners: Record<string, ((ev: { data: unknown }) => void)[]> = {};
+  listeners: Record<string, ((ev: { data: unknown; lastEventId?: string }) => void)[]> = {};
   closed = false;
   constructor(public url: string) {
     FakeES.last = this;
@@ -31,9 +32,9 @@ class FakeES implements EventSourceLike {
     this.closed = true;
     this.readyState = 2;
   }
-  emit(ev: unknown) {
+  emit(ev: unknown, lastEventId?: string) {
     const e = ev as { type: string };
-    this.listeners[e.type]?.forEach((l) => l({ data: JSON.stringify(ev) }));
+    this.listeners[e.type]?.forEach((l) => l({ data: JSON.stringify(ev), lastEventId }));
   }
   emitRaw(type: string, data: string) {
     this.listeners[type]?.forEach((l) => l({ data }));
@@ -184,6 +185,43 @@ describe("RunView with SSE", () => {
     act(() => es.emit(fin));
     expect(screen.getByTestId("connection-status")).toHaveAttribute("data-status", "closed");
     expect(es.closed).toBe(true);
+  });
+
+  it("a retryable error keeps following the run: reopened with after=<last id>; both run_finished show, closed after the second (H-46)", () => {
+    const { raws, statuses, h } = recorder();
+    createSseSource("r1", { ctor: FakeES as unknown as EventSourceCtor, baseUrl: "http://api.test" }).start(h);
+    const first = FakeES.last;
+    const error = { ...fixture[0], type: "run_finished", event_id: "e_err", payload: { status: "error", error: "RuntimeError: 529", retryable: true } };
+    const done = { ...fixture[0], type: "run_finished", event_id: "e_done", payload: { status: "completed" } };
+    first.emit(error, "3");
+    expect(first.closed).toBe(false);
+    // the backend ends the stream while the run is in error (the browser would be reconnecting: readyState 0)
+    first.onerror?.({});
+    first.onerror?.({}); // late callback of the detached stream: ignored
+    vi.advanceTimersByTime(2000);
+    const second = FakeES.last;
+    expect(second).not.toBe(first);
+    expect(second.url).toBe("http://api.test/runs/r1/events?follow=true&after=3");
+    expect(statuses).not.toContain("disconnected");
+    second.emit(done, "4");
+    expect(raws).toHaveLength(2);
+    expect(second.closed).toBe(true);
+    expect(statuses.at(-1)).toBe("closed");
+  });
+
+  it("a non-retryable error ends the stream; a fatal error while waiting for Retry is still reported", () => {
+    const a = recorder();
+    createSseSource("r1", { ctor: FakeES as unknown as EventSourceCtor }).start(a.h);
+    FakeES.last.emit({ ...fixture[0], type: "run_finished", event_id: "e1", payload: { status: "error", retryable: false } });
+    expect(FakeES.last.closed).toBe(true);
+
+    const b = recorder();
+    createSseSource("r2", { ctor: FakeES as unknown as EventSourceCtor }).start(b.h);
+    const es = FakeES.last;
+    es.emit({ ...fixture[0], type: "run_finished", event_id: "e2", payload: { status: "error", retryable: true } });
+    es.readyState = 2; // e.g. 404 after a backend restart: the browser gives up
+    es.onerror?.({});
+    expect(b.statuses.at(-1)).toBe("disconnected");
   });
 
   it("reports missing EventSource instead of crashing", () => {
