@@ -351,3 +351,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 ### R10d/dev-05: DONE
 - Vòng: 1. Commit: 30dd52f. Review: .autodev/reviews/dev-05-r1.json (PASS).
 - payloads.md ghi quy tắc múi giờ + 422 của /kpi/series, kèm test tài liệu. Hook không chạy, verify chạy tay sạch.
+
+### R10b1/dev-01: DONE
+- Vòng: 1. Commit: 5cd5d0f. Review: .autodev/reviews/dev-01-r1.json (PASS).
+- 11 khoá config hợp đồng, `plant.*` chuyển sang domain config, bảng hợp đồng trong `CONTRACT_TABLE_SCHEMAS` (dev-02 gộp vào `TABLE_SCHEMAS`), `kpi_derive.derive_kpi_log` (N03, N04). 628 pytest.
+- Non-blocking: `row` của N03 giả định thứ tự file (dev-06 chú ý); numerator rỗng bỏ dòng im lặng, hợp đồng chưa quy định.

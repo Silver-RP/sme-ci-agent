@@ -1,46 +1,80 @@
 {
-  "milestone": "R10d",
-  "current_task": null,
+  "milestone": "R10b1",
+  "current_task": "dev-02",
   "tasks": {
     "dev-01": {
       "status": "DONE",
       "round": 1,
-      "base": "5ca4924",
-      "commit": "7bfa9a3"
+      "base": "ed41902",
+      "commit": "5cd5d0f"
     },
     "dev-02": {
-      "status": "DONE",
-      "round": 1,
-      "base": "6075f58",
-      "commit": "e7c3096"
+      "status": "TODO",
+      "round": 0
     },
     "dev-03": {
-      "status": "DONE",
-      "round": 1,
-      "base": "b0473d0",
-      "commit": "cd00a51"
+      "status": "TODO",
+      "round": 0
     },
     "dev-04": {
-      "status": "DONE",
-      "round": 1,
-      "base": "c4d8bcf",
-      "commit": "8627626"
+      "status": "TODO",
+      "round": 0
     },
     "dev-05": {
-      "status": "DONE",
-      "round": 1,
-      "base": "f0f74e6",
-      "commit": "30dd52f"
+      "status": "TODO",
+      "round": 0
+    },
+    "dev-06": {
+      "status": "TODO",
+      "round": 0
+    },
+    "dev-07": {
+      "status": "TODO",
+      "round": 0
     }
   },
   "verify": {
     "consecutive_blocks": 0,
     "last_status": "PASS",
-    "hook_runs": 60,
-    "last_hook_at": "2026-10-11T01:51:22Z",
+    "hook_runs": 61,
+    "last_hook_at": "2026-10-11T05:09:39Z",
     "last_hook_agent": "developer"
   },
   "history": {
+    "R10d": {
+      "tasks": {
+        "dev-01": {
+          "status": "DONE",
+          "round": 1,
+          "base": "5ca4924",
+          "commit": "7bfa9a3"
+        },
+        "dev-02": {
+          "status": "DONE",
+          "round": 1,
+          "base": "6075f58",
+          "commit": "e7c3096"
+        },
+        "dev-03": {
+          "status": "DONE",
+          "round": 1,
+          "base": "b0473d0",
+          "commit": "cd00a51"
+        },
+        "dev-04": {
+          "status": "DONE",
+          "round": 1,
+          "base": "c4d8bcf",
+          "commit": "8627626"
+        },
+        "dev-05": {
+          "status": "DONE",
+          "round": 1,
+          "base": "f0f74e6",
+          "commit": "30dd52f"
+        }
+      }
+    },
     "R10ch": {
       "tasks": {
         "dev-01": {
