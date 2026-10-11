@@ -100,7 +100,8 @@ def test_domain_values_come_from_yaml_not_code():
     scenario = yaml.safe_load(SCENARIO1.read_text(encoding="utf-8"))
     names = {cfg.signals.setpoint_deviation, cfg.signals.batch_change, cfg.signals.setpoint_event}
     names |= {cfg.demo.machine_id, *cfg.default_period}
-    names |= {s for s in scenario["plant"]["machines"] if s == cfg.demo.machine_id}
+    assert "machines" not in scenario["plant"]  # plant.machines lives in the domain config only (R10b1)
+    names |= {s for s in cfg.plant.machines if s == cfg.demo.machine_id}
     assert all(names)
     files = [
         ROOT / "backend" / "tools" / "readonly.py",

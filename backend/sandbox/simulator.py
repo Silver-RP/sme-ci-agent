@@ -218,9 +218,9 @@ def params_from_config(
     start = pd.Timestamp(plant.get("start_date", "2026-01-01"))
     days = (start + pd.DateOffset(months=int(plant["horizon_months"])) - start).days
     return SimParams(
-        machines=tuple(plant["machines"]),
-        shifts=tuple(plant["shifts"]),
-        shift_start_hours=dict(plant["shift_start_hours"]),
+        machines=tuple(cfg.plant.machines),
+        shifts=tuple(cfg.plant.shifts),
+        shift_start_hours=dict(cfg.plant.shift_start_hours),
         start_date=str(start.date()),
         days=days,
         kpi=kpi,

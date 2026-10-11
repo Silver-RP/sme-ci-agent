@@ -7,11 +7,9 @@ domain: manufacturing
 
 plant:
   description: Công ty linh kiện điện tử quy mô nhỏ, 3 lò hàn reflow, 3 ca/ngày
-  machines: [M01, M02, M03]
-  shifts: [morning, afternoon, night]
+  # machines, shifts, shift_start_hours: nằm ở data/context_profile.yaml (plant.*), không khai ở đây
   horizon_months: 6
   start_date: "2026-01-01"   # đề xuất chờ T-004
-  shift_start_hours: {morning: 6, afternoon: 14, night: 22}   # đề xuất chờ T-004
 
 baseline:
   kpi: defect_rate
