@@ -1,0 +1,11 @@
+date,shift,machine_id,operator_id,is_substitute
+2026-03-10,morning,M01,OP-003,false
+2026-03-10,morning,M02,OP-005,false
+2026-03-10,morning,M03,OP-008,false
+2026-03-10,afternoon,M01,OP-011,false
+2026-03-10,afternoon,M02,OP-012,false
+2026-03-10,afternoon,M03,OP-014,false
+2026-03-10,night,M01,OP-017,false
+2026-03-10,night,M02,OP-SUB01,true
+2026-03-10,night,M03,OP-021,false
+2026-03-10,night,M02,OP-021,false

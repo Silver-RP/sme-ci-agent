@@ -1,0 +1,6 @@
+sop_id,version,title,step_no,step_text
+SOP-RFL-001,1,Reflow setpoint check,1,Verify zone3_setpoint_c at shift start
+SOP-RFL-001,1,Reflow setpoint check,0,Record zone3_setpoint_c on the shift sheet
+SOP-RFL-001,1,Reflow setpoint check,3,Run a first-article inspection
+SOP-CAL-002,1,Machine calibration routine,1,Calibrate sensors every 7 days
+SOP-CAL-002,1,Machine calibration routine,2,Log the calibration result in the maintenance sheet
