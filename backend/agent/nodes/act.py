@@ -366,7 +366,7 @@ def _audit_not_measured(ctx: ToolContext, measurement: dict[str, Any]) -> None:
         ctx.session, actor="system", action="kpi_not_measured",
         params={
             k: measurement.get(k)
-            for k in ("kpi", "status", "reason", "n_after", "min_samples_after")
+            for k in ("kpi", "status", "reason", "n_after", "n_unit", "min_samples_after", "min_units_after")
             if measurement.get(k) is not None
         },
         run_id=ctx.run_id,
@@ -426,11 +426,13 @@ def make_measure_node(config: DomainConfig, ctx: ToolContext):
             window_days=config.measure.window_days,
             machine_id=machine,
             min_samples_after=config.measure.min_samples_after,
+            min_units_after=config.measure.min_units_after,
         )
         if not res["sufficient"]:
             measurement = {
                 **res, **base, "status": INSUFFICIENT, "passed": None,
                 "min_samples_after": config.measure.min_samples_after,
+                "min_units_after": config.measure.min_units_after,
             }
             _audit_not_measured(ctx, measurement)
             emit("kpi_measured", "quality", measurement)
@@ -456,8 +458,9 @@ def make_ask_evidence_node(config: DomainConfig):
         count = state.get("measure_wait_count", 0) + 1
         payload = {
             "question": (
-                f"Not enough evidence yet: only {m.get('n_after')} {m.get('kpi')} point(s) after the change "
-                f"(need {m.get('min_samples_after')}). Wait for more data and confirm to measure again."
+                f"Not enough evidence yet: only {m.get('n_after')} {m.get('n_unit', 'unit')} for {m.get('kpi')} "
+                f"after the change (need {m.get('min_units_after') if m.get('n_unit') == 'units' else m.get('min_samples_after')}). "
+                "Wait for more data and confirm to measure again."
             ),
             "attempt": count,
             "max_questions": config.ask.max_questions,

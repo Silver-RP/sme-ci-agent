@@ -162,15 +162,21 @@ def measure(
     detected_at: str | None = None,
     resolved_at: str | None = None,
     min_samples_after: int | None = None,
+    min_units_after: int | None = None,
 ) -> dict:
-    """Mean KPI in ``[change - window, change)`` vs ``[change, change + window)``, plus MTTD/MTTR.
+    """KPI before/after the change, plus MTTD/MTTR.
+
+    Pooled over units (R10b2): ``sum(numerator) / sum(denominator)`` of ``production_log`` in
+    ``[change - window, change)`` vs ``[change, change + window)`` (columns from the KPI config), not a mean of
+    shift ratios. ``n_before``/``n_after`` are then units (sum of the denominator). Without a usable
+    ``production_log`` it falls back to the mean of ``kpi_log`` points and ``n_*`` count points.
 
     MTTD = detected_at - started_at; MTTR = resolved_at - detected_at (hours, None if the needed
     times are missing). Times out of order raise ``ValueError``.
 
-    With ``min_samples_after`` set, too few points in either window is not an error: the result has
-    ``sufficient: False`` and ``before``/``after``/``delta`` None (the caller decides what to ask).
-    Without it, an empty window raises ``ValueError``.
+    With ``min_units_after`` (or, on the ``kpi_log`` fallback, ``min_samples_after``) set, too little data is not
+    an error: the result has ``sufficient: False`` and ``before``/``after``/``delta`` None (the caller decides what
+    to ask). Without any threshold, an empty window raises ``ValueError``.
     """
     _check_kpi(ctx, kpi)
     if window_days <= 0:
@@ -189,19 +195,48 @@ def measure(
     if s is not None and r is not None and r < s:
         raise ValueError("resolved_at is before started_at")
 
-    k = ctx.tables["kpi_log"]
-    k = k[k["kpi"] == kpi]
-    if machine_id is not None:
-        k = k[k["machine_id"] == machine_id]
-    before = _slice(k, "timestamp", str(t0 - w), str(t0))["value"]
-    after = _slice(k, "timestamp", str(t0), str(t0 + w))["value"]
-    sufficient = True
-    if min_samples_after is not None:
-        sufficient = len(before) > 0 and len(after) >= max(1, min_samples_after)
-    elif before.empty or after.empty:
-        raise ValueError("no KPI data in the before or after window")
-    b = float(before.mean()) if sufficient else None
-    a = float(after.mean()) if sufficient else None
+    kpi_cfg = next(k for k in ctx.config.kpis if k.name == kpi)
+    pl = ctx.tables.get("production_log")
+    pooled = (
+        pl is not None
+        and {kpi_cfg.numerator, kpi_cfg.denominator, "shift_start", "machine_id"} <= set(pl.columns)
+    )
+    if pooled:
+        p = pl if machine_id is None else pl[pl["machine_id"] == machine_id]
+        p = p[[kpi_cfg.numerator, kpi_cfg.denominator, "shift_start"]].copy()
+        p[kpi_cfg.numerator] = pd.to_numeric(p[kpi_cfg.numerator], errors="coerce")
+        p[kpi_cfg.denominator] = pd.to_numeric(p[kpi_cfg.denominator], errors="coerce")
+        p = p.dropna()
+        p = p[p[kpi_cfg.denominator] > 0]  # same rows as kpi_log derivation (contract 2.8)
+        win_b = _slice(p, "shift_start", str(t0 - w), str(t0))
+        win_a = _slice(p, "shift_start", str(t0), str(t0 + w))
+        n_before = int(win_b[kpi_cfg.denominator].sum())
+        n_after = int(win_a[kpi_cfg.denominator].sum())
+        rate = lambda x: float(x[kpi_cfg.numerator].sum() / x[kpi_cfg.denominator].sum())
+        if min_units_after is not None:
+            sufficient = n_before > 0 and n_after >= max(1, min_units_after)
+        elif min_samples_after is not None:
+            sufficient = len(win_b) > 0 and len(win_a) >= max(1, min_samples_after)
+        else:
+            sufficient = True
+            if n_before == 0 or n_after == 0:
+                raise ValueError("no KPI data in the before or after window")
+    else:
+        k = ctx.tables["kpi_log"]
+        k = k[k["kpi"] == kpi]
+        if machine_id is not None:
+            k = k[k["machine_id"] == machine_id]
+        win_b = _slice(k, "timestamp", str(t0 - w), str(t0))
+        win_a = _slice(k, "timestamp", str(t0), str(t0 + w))
+        n_before, n_after = len(win_b), len(win_a)
+        rate = lambda x: float(x["value"].mean())
+        sufficient = True
+        if min_samples_after is not None:
+            sufficient = n_before > 0 and n_after >= max(1, min_samples_after)
+        elif n_before == 0 or n_after == 0:
+            raise ValueError("no KPI data in the before or after window")
+    b = rate(win_b) if sufficient else None
+    a = rate(win_a) if sufficient else None
 
     def hours(x: pd.Timestamp | None, y: pd.Timestamp | None) -> float | None:
         return None if x is None or y is None else (y - x) / pd.Timedelta(hours=1)
@@ -215,8 +250,9 @@ def measure(
         "after": a,
         "delta": a - b if sufficient else None,
         "sufficient": sufficient,
-        "n_before": len(before),
-        "n_after": len(after),
+        "n_before": n_before,
+        "n_after": n_after,
+        "n_unit": "units" if pooled else "points",
         "mttd_hours": hours(s, d),
         "mttr_hours": hours(d, r),
     }

@@ -113,7 +113,8 @@ class MeasureParams(_Strict):
     # KPI passes when it is within ``tolerance`` (relative) of the KPI target on the good side:
     # decrease: after <= target * (1 + tolerance); increase: after >= target * (1 - tolerance)
     tolerance: float = Field(default=0.25, ge=0.0)
-    min_samples_after: int = Field(default=6, ge=1)  # fewer KPI points after the change -> "not enough evidence"
+    min_samples_after: int = Field(default=6, ge=1)  # kpi_log fallback (no production_log): fewer points -> "not enough evidence"
+    min_units_after: int = Field(default=6000, ge=1)  # units after the change (sum of the KPI denominator) below this -> "not enough evidence"
 
 
 class LoopParams(_Strict):

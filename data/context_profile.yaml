@@ -53,7 +53,8 @@ ask:
   max_questions: 2          # số lần hỏi tối đa mỗi run; vượt thì dừng chờ người
 measure:
   window_days: 7            # cửa sổ before/after khi đo KPI sau khi áp dụng
-  min_samples_after: 6      # ít hơn số điểm KPI này sau thay đổi -> "chưa đủ bằng chứng" (hỏi người, không rollback)
+  min_samples_after: 6      # chỉ khi không có production_log (đo từ kpi_log): ít điểm hơn thế -> "chưa đủ bằng chứng"
+  min_units_after: 6000     # ít đơn vị (tổng mẫu số KPI) hơn thế sau thay đổi -> "chưa đủ bằng chứng" (hỏi người, không rollback); ~6 ca
   tolerance: 0.25          # đạt khi KPI trong 25% so với target (đúng phía tốt); không đạt -> đề xuất rollback
 loop:
   max_rejections: 3         # số đề xuất bị từ chối tối đa trước khi dừng chờ người

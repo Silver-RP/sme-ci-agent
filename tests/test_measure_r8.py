@@ -116,7 +116,7 @@ def test_too_few_samples_is_not_enough_evidence_not_a_failure(db_session):
     graph, c, out = run_to_measure(db_session, script_with("wrong_setpoint"), change_time=late)
     m = out["measurement"]
     assert m["status"] == "insufficient_evidence" and m["passed"] is None
-    assert m["n_after"] < CFG.measure.min_samples_after
+    assert m["n_after"] < CFG.measure.min_units_after  # R10b2: n_after counts units, threshold in units
     assert graph.get_state(c).next == ("wait_evidence",)  # waits for a person, no rollback
     assert "rollback" not in json.dumps([e["payload"] for e in out["events"] if e["type"] == "proposal_created"])
     q = [e for e in out["events"] if e["type"] == "question_asked"]
@@ -136,7 +136,7 @@ def test_insufficient_evidence_questions_are_bounded_then_halt(db_session):
 
 def test_min_samples_comes_from_config(db_session):
     late = "2026-06-29T22:00:00"
-    easy = CFG.model_copy(update={"measure": MeasureParams(min_samples_after=1)})
+    easy = CFG.model_copy(update={"measure": MeasureParams(min_units_after=1)})  # R10b2: threshold is in units
     _, _, out = run_to_measure(db_session, script_with("wrong_setpoint"), change_time=late, cfg=easy)
     assert out["measurement"]["status"] == "measured"
 
