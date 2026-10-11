@@ -16,6 +16,20 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao" hay "là gì". Cuối mỗi báo cáo có câu hỏi "làm gì tiếp": danh sách **đánh số kèm nội dung**, leader trả lời bằng số.
 - **Đo bằng số, không ước lượng:** % đạt 3 điều tính theo `docs/eval/criteria.md` (A1–A8, luật chỉ số nhiều phần); chỉ số plugin B1–B6 bằng `python3 .autodev/metrics.py`.
 
+## Duyệt R10d (2026-10-11 trưa, supervisor `--review-only`): CHƯA MERGE
+- **PR #120** (`milestone/R10d`): worker 4/4 task PASS vòng 1, ~104 phút (ước 100–130). Supervisor tự kiểm:
+
+| Tiêu chí cấp mốc | Lệnh / test supervisor tự chạy | Kết quả |
+|---|---|---|
+| 1. verify, smoke, demo | `python3 .autodev/verify.py`; `uv run pytest -q`; `verify.py --smoke`; `scripts/demo.sh --fresh-db --check` | sạch; 608 passed + 1 xfail; smoke 4/4 ok; `CHECK PASSED` |
+| 2. #110, #112, #113 không tái hiện | 4 file test mới chạy trên code `origin/main` | 19/21 đỏ trên main (đúng), xanh trên nhánh |
+| 3. `payloads.md` đủ 4 mục | `grep` `payloads.md` | `/learnings`, `question_id` bắt buộc, `params` object: có. **Quy tắc múi giờ `/kpi/series`: KHÔNG có** (dòng `GET /kpi/series` không đổi) → **chưa đạt** |
+
+- Ca biên tự thử (đều đúng): `/kpi/series` chỉ ngày `2026-01-01` → 200, chuỗi rác → 422 (không 500); `/learnings?limit=500` → 200, `limit=abc` → 422, DB rỗng → `[]`; `/answer` với `question_id: ""` → 422.
+- Ghi chú worker "dashboard gửi `/answer` không `question_id`" là báo động giả: `dashboard/lib/api.ts` chỉ bỏ trường khi `questionId` null (backend cũ); luồng thật gửi đủ từ #118.
+- **Quyết định:** không merge; thêm **dev-05 (b)** vào `plan/R10d.md` trên nhánh mốc (commit `f0f74e6`): bổ sung quy tắc múi giờ `/kpi/series` vào `payloads.md` kèm test tài liệu. Không đổi tiêu chí hay phạm vi.
+- **Làm tiếp:** chạy lại worker cho R10d (chỉ dev-05) rồi `/supervise R10d --review-only`; đạt thì merge #120, chuyển số đo vào PROGRESS, cập nhật PROJECT_STATE (H-49 bắt buộc, H-57 đóng), `state.json`. Sau merge: chạy `export_fixtures.py` làm mới `docs/schema/examples/` (việc treo từ dev-04).
+
 ## Bước tiếp theo (cập nhật 2026-10-11 rạng sáng, đóng phiên)
 
 ### Bối cảnh
