@@ -21,13 +21,15 @@
       "commit": "a2d82e4"
     },
     "dev-04": {
-      "status": "IN_PROGRESS",
-      "round": 0,
-      "base": "a2d82e4"
+      "status": "DONE",
+      "round": 1,
+      "base": "74c2677",
+      "commit": "8a40bd7"
     },
     "dev-05": {
-      "status": "TODO",
-      "round": 0
+      "status": "IN_PROGRESS",
+      "round": 0,
+      "base": "8a40bd7"
     },
     "dev-06": {
       "status": "TODO",
