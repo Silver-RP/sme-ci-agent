@@ -125,7 +125,10 @@ def test_correlate_explicit_hypotheses_and_empty(ctx):
     r2 = correlate(ctx, kpi=KPI, machine_id="M03", start="2026-03-03", end="2026-03-17",
                    hypotheses=["wrong_setpoint"])
     assert r2["correlations"][0]["status"] in ("no_data", "constant", "ok")
+    a1 = correlate(ctx, kpi=KPI, machine_id="M02", start="2026-03-03", end="2026-03-17",
+                   hypotheses=["wrong_setpoint"])["correlations"][0]
     assert r2["correlations"][0]["strength"] < 0.6
+    assert a1["strength"] > r2["correlations"][0]["strength"] + 0.15  # A1 clearly stronger than M03
     r3 = correlate(ctx, kpi=KPI, machine_id="M02", start="2030-01-01")
     assert all(c["status"] == "no_data" and c["strength"] == 0.0 for c in r3["correlations"])
     with pytest.raises(ValueError):
