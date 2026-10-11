@@ -1,6 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { RunView } from "@/components/RunView";
 import { EVENT_TYPES } from "@/lib/events";
 import {
   createFixtureSource,
@@ -10,6 +9,7 @@ import {
   type SourceHandlers,
 } from "@/lib/sources";
 import { validateEvent } from "@/lib/validate";
+import { useRunEvents } from "@/lib/useRunEvents";
 import scenario1 from "@/fixtures/scenario1.json";
 
 const fixture = scenario1 as unknown as Record<string, unknown>[];
@@ -38,6 +38,22 @@ class FakeES implements EventSourceLike {
   emitRaw(type: string, data: string) {
     this.listeners[type]?.forEach((l) => l({ data }));
   }
+}
+
+/** Minimal consumer of useRunEvents (the run screen renders the same state with more styling). */
+function RunView({ makeSource }: { title?: string; sourceKey?: string; makeSource: () => EventSourceAdapter | null }) {
+  const s = useRunEvents(makeSource, ["k"]);
+  return (
+    <div>
+      <span data-testid="connection-status" data-status={s.status} />
+      {s.events.map((e) => (
+        <i key={e.event_id} data-testid="timeline-item">
+          {e.type}
+        </i>
+      ))}
+      {s.errors.length > 0 && <p data-testid="event-errors">{s.errors.length} invalid event(s)</p>}
+    </div>
+  );
 }
 
 function recorder() {

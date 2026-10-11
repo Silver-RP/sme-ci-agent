@@ -9,6 +9,8 @@ export interface RunStatus {
   pending: ({ type: "answer" | "approval" } & Record<string, unknown>) | null;
   /** set when state is "error" (the step failed; POST /runs/{id}/retry runs it again) */
   error?: string;
+  /** with state "error": false once /retry was used up (loop.max_retries); then the UI hides Retry */
+  retryable?: boolean;
 }
 
 export interface Decision {
@@ -43,7 +45,7 @@ function detailText(d: unknown): string {
   return d === undefined ? "" : JSON.stringify(d);
 }
 
-async function call(method: "GET" | "POST", path: string, body: unknown, o: ApiOptions): Promise<RunStatus> {
+async function call<T = RunStatus>(method: "GET" | "POST", path: string, body: unknown, o: ApiOptions): Promise<T> {
   const base = (o.baseUrl ?? apiBase()).replace(/\/$/, "");
   const f = o.fetchFn ?? fetch;
   let res: Response;
@@ -65,13 +67,20 @@ async function call(method: "GET" | "POST", path: string, body: unknown, o: ApiO
     const d = data && typeof data === "object" && "detail" in data ? detailText((data as { detail: unknown }).detail) : "";
     throw new ApiError(res.status, d || `HTTP ${res.status}`);
   }
-  return data as RunStatus;
+  return data as T;
 }
 
 const post = (path: string, body: unknown, o: ApiOptions) => call("POST", path, body, o);
 
+/** Read-only GET with the same error handling as the run actions (used by lib/readApi.ts). */
+export const getJson = <T>(path: string, o: ApiOptions = {}) => call<T>("GET", path, null, o);
+
 /** Current status of a run (used to refresh after a 409). */
 export const getRun = (runId: string, o: ApiOptions = {}) => call("GET", `/runs/${encodeURIComponent(runId)}`, null, o);
+
+/** Close a run in error that can no longer be retried (H-48); both fields are required by the backend. */
+export const closeRun = (runId: string, closedBy: string, reason: string, o: ApiOptions = {}) =>
+  post(`/runs/${encodeURIComponent(runId)}/close`, { closed_by: closedBy, reason }, o);
 
 /** Run the failed step again (only when the run is in state "error"). */
 export const retryRun = (runId: string, o: ApiOptions = {}) => post(`/runs/${encodeURIComponent(runId)}/retry`, {}, o);
