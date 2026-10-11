@@ -650,9 +650,11 @@ def create_app(
         }
         with read_db() as session:
             for r in repo.list_sop_versions(session, sop_id):
+                is_config = r.created_by == "config"  # the DB copy of the config version: not made by a run (#112)
                 found[r.version] = {
-                    "version": r.version, "created_by": r.created_by, "run_id": r.run_id,
-                    "created_at": r.created_at.isoformat(), "content": r.content,
+                    "version": r.version, "created_by": r.created_by,
+                    "run_id": None if is_config else r.run_id,
+                    "created_at": None if is_config else r.created_at.isoformat(), "content": r.content,
                 }
         return {"sop_id": sop_id, "versions": [found[v] for v in sorted(found)]}
 
