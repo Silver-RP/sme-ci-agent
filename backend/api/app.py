@@ -131,6 +131,8 @@ def _failures_in_row(error_events: list[tuple[int, dict[str, Any]]], n_events: i
 
 AUDIT_DEFAULT_LIMIT = 100
 AUDIT_MAX_LIMIT = 500
+LEARNINGS_DEFAULT_LIMIT = 50
+LEARNINGS_MAX_LIMIT = 500
 
 
 @cache
@@ -630,6 +632,20 @@ def create_app(
             return {
                 "rows": [
                     {"id": r.id, "ts": r.ts.isoformat(), "run_id": r.run_id, "actor": r.actor, "action": r.action, "params": r.params}
+                    for r in rows
+                ]
+            }
+
+    @app.get("/learnings")
+    def learnings(limit: int = Query(LEARNINGS_DEFAULT_LIMIT, ge=1, le=LEARNINGS_MAX_LIMIT)) -> dict[str, Any]:
+        """Lessons of the running domain from learning_store, newest first (read only). No database: empty list."""
+        if ctx_factory is None and not os.environ.get("DATABASE_URL"):
+            return {"learnings": []}
+        with read_db() as session:
+            rows = repo.list_learning(session, cfg_domain.domain, limit=limit)
+            return {
+                "learnings": [
+                    {"learning_id": r.id, "run_id": r.run_id, "created_at": r.created_at.isoformat(), "content": r.content}
                     for r in rows
                 ]
             }

@@ -142,6 +142,7 @@ Có hai dạng; phân biệt bằng `kind`.
 | GET | `/config/approvers` | | `{approvers: [str]}` |
 | GET | `/runs` | | `{runs: [RunSummary]}`, mới nhất trước (R10a) |
 | GET | `/audit?run_id=&limit=` | | `{rows: [AuditRow]}`, mới nhất trước. `limit` 1..500 (mặc định 100), ngoài khoảng thì 422 |
+| GET | `/learnings?limit=` | | `{learnings: [{learning_id, run_id, created_at, content}]}` từ `learning_store` của domain đang chạy, mới nhất trước; `content` cùng hình dạng `learning_saved.content`. `limit` 1..500 (mặc định 50), ngoài khoảng thì 422. Chỉ đọc; không có `DATABASE_URL` thì `{learnings: []}`. Còn sau khi app khởi động lại (R10d) |
 | GET | `/sop/{sop_id}/versions` | | `{sop_id, versions: [SopVersion]}`, cũ nhất trước; 404 nếu `sop_id` không có trong config |
 | GET | `/metrics` | | `{metrics: [Metric]}`, luôn đúng 3 phần tử theo thứ tự: KPI chính (tên, đơn vị lấy từ config), `mttd_mttr`, `recurrence_rate` (R10a) |
 | GET | `/kpi/series?kpi=&machine=&shift=&start=&end=` | `kpi` bắt buộc | chuỗi KPI từ dữ liệu sandbox của app (R10b1 đổi nguồn sang `production_log`). `kpi`, `machine`, `shift` lạ hoặc `start`/`end` sai định dạng thì 422. `start <= ts < end`; khoảng rỗng thì `points: []` |

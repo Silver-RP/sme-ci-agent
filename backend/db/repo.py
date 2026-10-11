@@ -168,11 +168,12 @@ def save_learning(
     return row
 
 
-def list_learning(session: Session, domain: str) -> list[LearningEntry]:
-    """Read only: lessons of one domain, newest first."""
-    return list(
-        session.scalars(select(LearningEntry).where(LearningEntry.domain == domain).order_by(LearningEntry.id.desc()))
-    )
+def list_learning(session: Session, domain: str, limit: int | None = None) -> list[LearningEntry]:
+    """Read only: lessons of one domain, newest first (at most `limit` when given)."""
+    q = select(LearningEntry).where(LearningEntry.domain == domain).order_by(LearningEntry.id.desc())
+    if limit is not None:
+        q = q.limit(limit)
+    return list(session.scalars(q))
 
 
 def recent_actions(session: Session, run_id: str | None = None, limit: int = 100) -> list[AuditLog]:
