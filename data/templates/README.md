@@ -15,7 +15,7 @@ data/templates/
   invalid/<mã>_<mô tả>/      mỗi thư mục là một bộ dữ liệu đầy đủ, chép từ valid/ rồi sửa một chỗ
 ```
 
-Mỗi bộ `invalid/` chỉ vi phạm **một** luật V (mã N01–N04 đi kèm được phép). Hai ngoại lệ có nhiều dòng thay đổi vì luật cần nhiều dòng mới thấy được: `V06_gap` (thêm 8 dòng) và `V08_short_history` (sinh lại `production_log` và `shift_schedule`, 369 dòng mỗi bảng).
+Hiện có **37 bộ** `invalid/`: 35 bộ cho luật V01–V09 và 2 bộ cho mã N01, N03. Mỗi bộ `invalid/` chỉ vi phạm **một** luật V (mã N01–N04 đi kèm được phép); hai bộ `N01_extra_file`, `N03_zero_produced` không vi phạm luật V nào, chỉ sinh đúng mã N của nó. Hai ngoại lệ có nhiều dòng thay đổi vì luật cần nhiều dòng mới thấy được: `V06_gap` (thêm 8 dòng) và `V08_short_history` (sinh lại `production_log` và `shift_schedule`, 369 dòng mỗi bảng).
 
 ## 2. Config giả định
 Config mặc định ở mục 1.2 và ví dụ mục 4 của hợp đồng:
@@ -55,12 +55,14 @@ Quy ước:
 | `V01c_header_only` | V01 (c) | `sop.csv` chỉ còn dòng tiêu đề | `V01, error, sop, —, —, *` · nền |
 | `V01d_missing_column` | V01 (d) | `production_log.csv`: bỏ cột `units_nonconforming` | `V01, error, production_log, —, units_nonconforming, *` · `N04, note, production_log, —, units_nonconforming, defect_rate` · nền |
 | `V01d_wrong_case` | V01 (d) | `production_log.csv` dòng 1: `shift_start` → `Shift_Start` | `V01, error, production_log, —, shift_start, *` · `N02, warning, production_log, —, Shift_Start, *` · **không có nền** (V08 cần cột `shift_start`) |
+| `V01d_missing_conditional_column` | V01 (d) | `machine_log.csv`: bỏ cột `parameter` (cột "B nếu `setpoint_change`") | `V01, error, machine_log, —, parameter, *` · nền. Các luật cần `parameter` (V02 ô trống có điều kiện, V03 `limits`, V05 tham số) bị bỏ qua (mục 4.0) |
 | `V01e_duplicate_column` | V01 (e) | `production_log.csv`: thêm cột `product_id` thứ hai, giá trị giống cột đầu | `V01, error, production_log, —, product_id, *` · nền. Không có N02 (mục 4.0) |
 | `V02_int_decimal` | V02 | `production_log.csv` dòng 9, `units_produced`: `820` → `820.0` | `V02, error, production_log, 9, units_produced, 820.0` · nền |
 | `V02_conditional_empty` | V02 | `machine_log.csv` dòng 4 (`setpoint_change`), `parameter`: `zone3_setpoint_c` → trống | `V02, error, machine_log, 4, parameter, ""` · nền |
 | `V02_row_cell_count` | V02 | `production_log.csv` dòng 9: bỏ ô cuối (`batch_id`), còn 7 ô | `V02, error, production_log, 9, —, *` · nền |
 | `V02_bool` | V02 | `shift_schedule.csv` dòng 9, `is_substitute`: `true` → `TRUE` | `V02, error, shift_schedule, 9, is_substitute, TRUE` · nền |
 | `V02_date` | V02 | `shift_schedule.csv` dòng 2, `date`: `2026-03-10` → `2026-02-30` | `V02, error, shift_schedule, 2, date, 2026-02-30` · nền. Dòng này không tham gia V04 (ô khoá bị V02) |
+| `V02_float_comma` | V02 | `machine_log.csv` dòng 4 (`setpoint_change`), `old_value`: `180` → `"180,5"` (có ngoặc kép, nên dòng vẫn đủ 8 ô) | `V02, error, machine_log, 4, old_value, 180,5` · nền. Ô bị V02 nên không kiểm `limits` (V03) |
 | `V03_nonconforming_gt_produced` | V03 | `production_log.csv` dòng 9, `units_nonconforming`: `17` → `830` | `V03, error, production_log, 9, units_nonconforming, 830` · nền |
 | `V03_reworked_gt_produced` | V03 | `production_log.csv` dòng 9, `units_reworked`: `5` → `900` | `V03, error, production_log, 9, units_reworked, 900` · nền |
 | `V03_negative_count` | V03 | `production_log.csv` dòng 9, `units_reworked`: `5` → `-1` | `V03, error, production_log, 9, units_reworked, -1` · nền |
@@ -81,12 +83,15 @@ Quy ước:
 | `V07b_batch` | V07 (b) | `production_log.csv` dòng 9, `batch_id`: `PST-2603-01` → `PST-9999-99` | `V07, warning, production_log, 9, batch_id, PST-9999-99` · nền |
 | `V08_short_history` | V08 | `production_log.csv` và `shift_schedule.csv` sinh lại: M01–M03 × 3 ca, mỗi ngày từ 2026-01-01 tới 2026-02-10 (369 dòng mỗi bảng), `batch_id` để trống; các file khác giữ nguyên | `V08, warning, production_log, —, shift_start, 41` · **không có nền, không có V06** |
 | `V09a_header` | V09 (a) | `shift_schedule.csv`: thêm cột `operator_name` (ô trống) | `V09, error, shift_schedule, —, operator_name, *` · `N02, warning, shift_schedule, —, operator_name, *` · nền |
+| `V09a_header_camelcase` | V09 (a) | `shift_schedule.csv`: thêm cột `OperatorName` (ô trống) | `V09, error, shift_schedule, —, OperatorName, *` · `N02, warning, shift_schedule, —, OperatorName, *` · nền. `OperatorName` tách thành `operator`, `name` |
 | `V09b_operator_value` | V09 (b) | `shift_schedule.csv` dòng 3, `operator_id`: `OP-005` → `Nguyen Van A` (người này không xuất hiện trong `machine_log`, nên không sinh V07) | `V09, error, shift_schedule, 3, operator_id, Nguyen Van A` · nền |
+| `N01_extra_file` | N01 | Thêm file `kpi_log.csv` (tiêu đề + 1 dòng); file này không được đọc | `N01, warning, kpi_log.csv, —, *, *` · nền |
+| `N03_zero_produced` | N03 | `production_log.csv` dòng 9: `units_produced`, `units_nonconforming`, `units_reworked`: `820,17,5` → `0,0,0` | `N03, note, production_log, 9, *, *` · nền. Dòng vẫn tính là có dữ liệu cho V06 |
 
 Ghi chú về `V08_short_history`:
 - `shift_schedule` vẫn chứa mọi `operator_id` mà `machine_log` dùng, nên không có V07.
 - `machine_log` giữ nguyên các sự kiện tháng 3, nằm ngoài khoảng sản xuất; không luật nào kiểm điều này.
 
 ## 5. Chưa có trong D2
-- V02 file không phải UTF-8: R10b1 tự thêm ở `tests/fixtures/contract/` nếu cần.
-- N01 (file thừa) và N03 (ca `units_produced = 0`) chưa có bộ riêng; chúng không phải luật V.
+- **V02 file không phải UTF-8: cố ý không làm.** Hợp đồng (mục 4.0) chỉ nói file không giải mã được bằng UTF-8 là V02 ở mức bảng, nhưng chưa quy định các luật khác xử lý thế nào khi một bảng không đọc được: bảng đó có bị bỏ qua như khi bị V01 mức bảng không, và các luật tham chiếu chéo tới nó (V07) có chạy không. Chưa có quy định thì không viết được đáp án chắc chắn. Cần bổ sung hợp đồng trước, rồi mới thêm bộ này.
+- N02 và N04 không có bộ riêng vì đã xuất hiện kèm trong các bộ V01, V09 (xem bảng 4).
