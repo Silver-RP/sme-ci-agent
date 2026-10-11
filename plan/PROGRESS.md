@@ -371,3 +371,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 2. Commit: bd332ab, b7c9b58. Review: .autodev/reviews/dev-04-r1.json (FAIL), dev-04-r2.json (PASS).
 - `backend/sandbox/validate.py`: quy tắc chung, V01, V02, V09, N01, N02; 13 bộ D2 V01/V02/V09 cho đúng mã. Vòng 1 FAIL vì `is_file()` không phân biệt hoa thường trên macOS (sửa bằng `iterdir()`). Hook không chạy lượt 1 (verify chạy tay sạch). 759 pytest.
 - Non-blocking: V02 cho `machine_log` ở dòng không phải setpoint_change bỏ qua kiểm kiểu (hợp đồng chưa rõ); N01 liệt kê cả `.DS_Store`.
+
+### R10b1/dev-05: DONE
+- Vòng: 1. Commit: 46f6c58. Review: .autodev/reviews/dev-05-r1.json (PASS).
+- V03–V08, N03, N04 trong `validate.py`; mỗi bộ D2 V03–V08 cho đúng mã tên thư mục; simulator seed 42: 0 lỗi, 0 cảnh báo, 0 ghi chú. `valid/` của D2 chỉ có cảnh báo nền V08 (value 1) theo README D2.
+- Non-blocking: dấu phân cách `step_no` thiếu nhiều số chưa có trong hợp đồng (đề xuất (c)); reviewer không chạy hết pytest trong 10 phút.
