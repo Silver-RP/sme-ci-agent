@@ -376,3 +376,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 46f6c58. Review: .autodev/reviews/dev-05-r1.json (PASS).
 - V03–V08, N03, N04 trong `validate.py`; mỗi bộ D2 V03–V08 cho đúng mã tên thư mục; simulator seed 42: 0 lỗi, 0 cảnh báo, 0 ghi chú. `valid/` của D2 chỉ có cảnh báo nền V08 (value 1) theo README D2.
 - Non-blocking: dấu phân cách `step_no` thiếu nhiều số chưa có trong hợp đồng (đề xuất (c)); reviewer không chạy hết pytest trong 10 phút.
+
+### R10b1/dev-06: DONE
+- Vòng: 1. Commit: 6f2bc43. Review: .autodev/reviews/dev-06-r1.json (PASS).
+- `scripts/import_data.py` + `backend/dataset_store.py`: kiểm, ghi thư mục tạm + `_COMPLETE` + rename một lần, `SME_DATASET` nối vào app, `run_scenario`, domain config; SOP gốc `created_by: "import"`. Hook không chạy, verify tay: ruff + pytest sạch, 1 test vitest dashboard rớt do tải (đạt khi chạy riêng).
+- Non-blocking: `data_report`, `eval_rootcause`, `export_fixtures` chưa đọc `SME_DATASET`.
