@@ -73,8 +73,8 @@ class AnswerBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     answer: str = Field(min_length=1)
-    # optional (H-20): the question the person saw; a stale one is 409. Absent = accepted as before.
-    question_id: str | None = Field(default=None, min_length=1)
+    # required (H-49): the question the person saw (pending.question_id); a stale one is 409.
+    question_id: str = Field(min_length=1)
 
 
 class ApprovalBody(BaseModel):
@@ -131,6 +131,8 @@ def _failures_in_row(error_events: list[tuple[int, dict[str, Any]]], n_events: i
 
 AUDIT_DEFAULT_LIMIT = 100
 AUDIT_MAX_LIMIT = 500
+LEARNINGS_DEFAULT_LIMIT = 50
+LEARNINGS_MAX_LIMIT = 500
 
 
 @cache
@@ -451,7 +453,7 @@ def create_app(
         with run.lock:
             require_waiting(run, "answer")
             current = _status(run)["pending"].get("question_id")
-            if body.question_id is not None and body.question_id != current:
+            if body.question_id != current:
                 raise HTTPException(
                     status_code=409,
                     detail=(
@@ -634,6 +636,20 @@ def create_app(
                 ]
             }
 
+    @app.get("/learnings")
+    def learnings(limit: int = Query(LEARNINGS_DEFAULT_LIMIT, ge=1, le=LEARNINGS_MAX_LIMIT)) -> dict[str, Any]:
+        """Lessons of the running domain from learning_store, newest first (read only). No database: empty list."""
+        if ctx_factory is None and not os.environ.get("DATABASE_URL"):
+            return {"learnings": []}
+        with read_db() as session:
+            rows = repo.list_learning(session, cfg_domain.domain, limit=limit)
+            return {
+                "learnings": [
+                    {"learning_id": r.id, "run_id": r.run_id, "created_at": r.created_at.isoformat(), "content": r.content}
+                    for r in rows
+                ]
+            }
+
     @app.get("/sop/{sop_id}/versions")
     def sop_versions(sop_id: str) -> dict[str, Any]:
         """The config version plus the versions in sop_versions, oldest first. On the same version number the DB row
@@ -650,9 +666,11 @@ def create_app(
         }
         with read_db() as session:
             for r in repo.list_sop_versions(session, sop_id):
+                is_config = r.created_by == "config"  # the DB copy of the config version: not made by a run (#112)
                 found[r.version] = {
-                    "version": r.version, "created_by": r.created_by, "run_id": r.run_id,
-                    "created_at": r.created_at.isoformat(), "content": r.content,
+                    "version": r.version, "created_by": r.created_by,
+                    "run_id": None if is_config else r.run_id,
+                    "created_at": None if is_config else r.created_at.isoformat(), "content": r.content,
                 }
         return {"sop_id": sop_id, "versions": [found[v] for v in sorted(found)]}
 

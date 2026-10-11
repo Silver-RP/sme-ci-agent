@@ -329,3 +329,25 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 2eec698, f500ce1. Review: .autodev/reviews/R10ch-dev-04-r1.json (PASS).
 - H-54: A5(b) đọc kpi_measured.passed. 5 seed 42..46: LLM đúng (a)=1,00 (b)=1,00; LLM luôn sai (b)=0,00; không áp dụng gì: passed không bao giờ true. Chỉ sửa test. 583 pytest.
 - Điều chỉnh (a): tiêu chí "đỏ trên main" không áp dụng cho code (code đã đúng, chỉ phép đo cũ sai).
+
+### R10d/dev-01: DONE
+- Vòng: 1. Commit: 7bfa9a3. Review: .autodev/reviews/R10d-dev-01-r1.json (PASS).
+- #110: /kpi/series 422 khi start/end có múi giờ. #112: bản SOP config trả run_id/created_at null (sửa ở tầng API). 593 pytest.
+
+### R10d/dev-02: DONE
+- Vòng: 1. Commit: e7c3096. Review: .autodev/reviews/R10d-dev-02-r1.json (PASS).
+- #113: params audit_log là object JSON (repo.to_jsonable trong append_audit); approval có decided_by. 598 pytest.
+- Non-blocking: rollback_apply chưa có test riêng cho decided_by; payloads.md bị tách khối json.
+
+### R10d/dev-03: DONE
+- Vòng: 1. Commit: cd00a51. Review: .autodev/reviews/R10d-dev-03-r1.json (PASS).
+- #115: GET /learnings chỉ đọc, theo domain, limit 1..500. 605 pytest.
+
+### R10d/dev-04: DONE
+- Vòng: 1. Commit: 8627626. Review: .autodev/reviews/R10d-dev-04-r1.json (PASS).
+- H-49: question_id bắt buộc ở /answer; check_run, export_fixtures, test cập nhật; smoke + demo --check xanh. 608 pytest.
+- Non-blocking: dashboard api.ts còn gửi không question_id; fixtures mẫu chưa export lại.
+
+### R10d/dev-05: DONE
+- Vòng: 1. Commit: 30dd52f. Review: .autodev/reviews/dev-05-r1.json (PASS).
+- payloads.md ghi quy tắc múi giờ + 422 của /kpi/series, kèm test tài liệu. Hook không chạy, verify chạy tay sạch.
