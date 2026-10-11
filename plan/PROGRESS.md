@@ -356,3 +356,8 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 - Vòng: 1. Commit: 5cd5d0f. Review: .autodev/reviews/dev-01-r1.json (PASS).
 - 11 khoá config hợp đồng, `plant.*` chuyển sang domain config, bảng hợp đồng trong `CONTRACT_TABLE_SCHEMAS` (dev-02 gộp vào `TABLE_SCHEMAS`), `kpi_derive.derive_kpi_log` (N03, N04). 628 pytest.
 - Non-blocking: `row` của N03 giả định thứ tự file (dev-06 chú ý); numerator rỗng bỏ dòng im lặng, hợp đồng chưa quy định.
+
+### R10b1/dev-02: DONE
+- Vòng: 1. Commit: 77a8013. Review: .autodev/reviews/dev-02-r1.json (PASS).
+- Simulator nhị thức, `material_batches`, `sop`, sự kiện máy bình thường; 8 bảng. Anomaly A1 ≈ 9,2σ (trước ≈ 10σ). 645 pytest.
+- Non-blocking: assert M03 ở `test_correlate_explicit_hypotheses_and_empty` yếu hơn (có lý do), nên siết ở dev-03; `_setpoint_deviation` lấy max theo tham số, giữ khi sửa `correlate`.
