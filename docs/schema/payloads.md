@@ -135,7 +135,7 @@ Có hai dạng; phân biệt bằng `kind`.
 | POST | `/runs` | `{change_time?}` | 201 + trạng thái run. 422 ngay (trước khi gọi LLM) nếu `change_time` sai định dạng, có múi giờ (`Z`, `+09:00`), ở tương lai của dữ liệu, hoặc trước lúc anomaly bắt đầu (H-48) |
 | GET | `/runs/{id}` | | trạng thái run; 404 nếu backend đã khởi động lại (H-15) |
 | GET | `/runs/{id}/events?follow=true&after=N` | | SSE. `id` = số thứ tự (bắt đầu từ 1), `event` = type, `data` = event JSON. Hỗ trợ `Last-Event-ID` |
-| POST | `/runs/{id}/answer` | `{answer, question_id?}` (`answer` không rỗng) | 409 nếu run không chờ câu trả lời, hoặc `question_id` không khớp câu đang chờ (câu cũ, H-20): gọi lại `GET /runs/{id}`, câu hiện tại không bị trả lời. Không gửi `question_id` thì nhận như trước (R10c) |
+| POST | `/runs/{id}/answer` | `{answer, question_id}` (cả hai bắt buộc, không rỗng; thiếu `question_id` → 422) | 409 nếu run không chờ câu trả lời, hoặc `question_id` không khớp câu đang chờ (câu cũ, H-20): gọi lại `GET /runs/{id}`, câu hiện tại không bị trả lời. Lấy `question_id` từ `pending` của `GET /runs/{id}` (R10d, H-49) |
 | POST | `/runs/{id}/approval` | `{proposal_id, kind, decision, decided_by, reason?}` | 409 nếu sai `kind` hoặc `proposal_id` (đề xuất đã cũ, hoặc bấm hai lần): gọi lại `GET /runs/{id}`. 422 nếu tên không có trong danh sách người duyệt, hoặc `revise` mà thiếu `reason` |
 | POST | `/runs/{id}/retry` | | 409 nếu không có bước lỗi, hoặc đã Retry liên tiếp quá `loop.max_retries` lần (khi đó `retryable: false`) |
 | POST | `/runs/{id}/close` | `{reason, closed_by}` (cả hai không rỗng; `closed_by` thuộc danh sách người duyệt) | 200 + trạng thái `finished`/`closed`. 409 nếu run không ở trạng thái `error` đã hết lượt retry (đang chờ duyệt, chờ rollback, còn retry được, đã đóng). 422 nếu thiếu lý do hoặc người đóng không hợp lệ. Ghi một dòng audit `run_closed`, phát `run_finished` `closed`; không tạo hay khôi phục bản SOP (H-48) |
@@ -198,7 +198,7 @@ Trạng thái run:
 `error` và `retryable` chỉ có khi `state: "error"` (`retryable` giống trường trong event `run_finished` lỗi). Trạng thái `error` có `status: "error"` và `pending: null`.
 
 Hai dạng `pending`:
-- **Trả lời:** `{type: "answer", question, question_id, attempt, run_id}`. `question_id` (chuỗi, là `event_id` của event `question_asked` tương ứng) và `attempt` (số lần hỏi, từ 1) là trường mới của R10c (H-20); dashboard nên gửi lại `question_id` trong `POST /answer`. Có hai nguồn: Investigate chưa chắc, hoặc Measure thiếu mẫu (R9). Cùng dạng, cùng `POST /answer`.
+- **Trả lời:** `{type: "answer", question, question_id, attempt, run_id}`. `question_id` (chuỗi, là `event_id` của event `question_asked` tương ứng) và `attempt` (số lần hỏi, từ 1) là trường mới của R10c (H-20); dashboard phải gửi lại `question_id` trong `POST /answer` (bắt buộc từ R10d). Có hai nguồn: Investigate chưa chắc, hoặc Measure thiếu mẫu (R9). Cùng dạng, cùng `POST /answer`.
 - **Duyệt:** `{type: "approval", kind, proposal_id, proposal_hash?, run_id, ...}`.
   - `kind: "proposal"` hoặc `"rollback"`: có thêm `proposal` (như event `proposal_created`) và `current_sop: {sop_id, version, content}`. Màn "SOP cũ → mới" so `current_sop.content` với `proposal.sop_proposal.new_content`.
   - `kind: "halt"`: `{reason, question, options, sop_still_in_force, sop_id, sop_version}`.

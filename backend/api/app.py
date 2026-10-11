@@ -73,8 +73,8 @@ class AnswerBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     answer: str = Field(min_length=1)
-    # optional (H-20): the question the person saw; a stale one is 409. Absent = accepted as before.
-    question_id: str | None = Field(default=None, min_length=1)
+    # required (H-49): the question the person saw (pending.question_id); a stale one is 409.
+    question_id: str = Field(min_length=1)
 
 
 class ApprovalBody(BaseModel):
@@ -453,7 +453,7 @@ def create_app(
         with run.lock:
             require_waiting(run, "answer")
             current = _status(run)["pending"].get("question_id")
-            if body.question_id is not None and body.question_id != current:
+            if body.question_id != current:
                 raise HTTPException(
                     status_code=409,
                     detail=(

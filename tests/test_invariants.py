@@ -231,9 +231,8 @@ class Harness:
             if st["state"] == "error":
                 return self.step(rid, "retry", lambda: self.post(rid, "retry"), st.get("retryable", True))
             if kind == "answer":
-                body = {"answer": rng.choice(["Setpoint was changed on M02", "no idea"])}
-                if rng.random() < 0.5:
-                    body["question_id"] = p.get("question_id") or "none"
+                body = {"answer": rng.choice(["Setpoint was changed on M02", "no idea"]),
+                        "question_id": p.get("question_id") or "none"}
                 return self.step(rid, "answer", lambda: self.post(rid, "answer", body), True)
             if kind == "approval":
                 options = p.get("options") or []
@@ -261,9 +260,9 @@ class Harness:
             body = {**ok, "proposal_id": "prop_stale", "decision": "approved"}
             return self.step(rid, "approval:stale_id", lambda: self.post(rid, "approval", body), False)
         if wrong == "answer":
-            return self.step(rid, "answer:out_of_order", lambda: self.post(rid, "answer", {"answer": "late answer"}), kind == "answer")
+            return self.step(rid, "answer:out_of_order", lambda: self.post(rid, "answer", {"answer": "late answer", "question_id": p.get("question_id") or "none"}), kind == "answer")
         if wrong == "empty_answer":
-            return self.step(rid, "answer:empty", lambda: self.post(rid, "answer", {"answer": ""}), False)
+            return self.step(rid, "answer:empty", lambda: self.post(rid, "answer", {"answer": "", "question_id": "q"}), False)
         if wrong == "stale_q":
             body = {"answer": "x", "question_id": "q_stale"}
             return self.step(rid, "answer:stale_question", lambda: self.post(rid, "answer", body), False)
@@ -412,7 +411,7 @@ def test_retry_after_an_answer_keeps_one_answer_row(db_session, fail_at):
         assert h.client.post(f"/runs/{rid}/retry").status_code == 200
         st = h.status(rid)
     assert st["pending"]["type"] == "answer"
-    r = h.client.post(f"/runs/{rid}/answer", json={"answer": "Setpoint was changed on M02"})
+    r = h.client.post(f"/runs/{rid}/answer", json={"answer": "Setpoint was changed on M02", "question_id": st["pending"]["question_id"]})
     assert r.status_code == 200
     for _ in range(3):
         if h.status(rid)["state"] != "error":
@@ -470,7 +469,7 @@ def test_error_and_pending_runs_do_not_hold_connections(own_db_url, monkeypatch)
             run = c.post("/runs", json={}).json()  # waits for an answer
             assert run["state"] == "waiting", run
             assert engine.pool.checkedout() == 0
-            r = c.post(f"/runs/{run['run_id']}/answer", json={"answer": "Setpoint was changed on M02"}).json()
+            r = c.post(f"/runs/{run['run_id']}/answer", json={"answer": "Setpoint was changed on M02", "question_id": run["pending"]["question_id"]}).json()
             assert engine.pool.checkedout() == 0
             (failed if r["state"] == "error" else waiting).append(run["run_id"])
         assert failed and waiting, (failed, waiting)
@@ -532,7 +531,7 @@ def test_versions_in_events_are_durable_after_a_failure_after_act(own_db_url, mo
         run = c.post("/runs", json={}).json()
         rid = run["run_id"]
         if run["pending"]["type"] == "answer":
-            run = c.post(f"/runs/{rid}/answer", json=ANSWER).json()
+            run = c.post(f"/runs/{rid}/answer", json={**ANSWER, "question_id": run["pending"]["question_id"]}).json()
         for _ in range(4):
             p = run["pending"]
             if p is None:

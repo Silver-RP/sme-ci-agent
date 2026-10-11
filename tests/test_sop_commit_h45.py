@@ -71,7 +71,7 @@ def decide(c, rid, decision, by="alice"):
 def start(c):
     run = c.post("/runs", json={}).json()
     if run["pending"] and run["pending"]["type"] == "answer":
-        run = c.post(f"/runs/{run['run_id']}/answer", json=ANSWER).json()
+        run = c.post(f"/runs/{run['run_id']}/answer", json={**ANSWER, "question_id": run["pending"]["question_id"]}).json()
     assert run["pending"]["kind"] == "proposal", run
     return run["run_id"]
 

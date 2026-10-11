@@ -38,7 +38,7 @@ def test_answer_to_ask_is_one_audit_row(db_session):
     run = start(client)
     rid, qid = run["run_id"], run["pending"]["question_id"]
     assert rows(db_session, "answer_received") == []
-    assert client.post(f"/runs/{rid}/answer", json={"answer": "Setpoint was changed on M02"}).status_code == 200
+    assert client.post(f"/runs/{rid}/answer", json={"answer": "Setpoint was changed on M02", "question_id": qid}).status_code == 200
     [row] = rows(db_session, "answer_received", rid)
     assert row.actor == "human" and row.run_id == rid
     assert row.params["answer"] == "Setpoint was changed on M02" and row.params["question_id"] == qid
@@ -49,7 +49,7 @@ def test_refused_answer_writes_no_row(db_session):
     client = make_client(db_session, [[final(0.1, gap=True), *investigate_script(), improve_answer()]])
     rid = start(client)["run_id"]
     client.post(f"/runs/{rid}/answer", json={"answer": "x", "question_id": "stale"})  # 409
-    client.post(f"/runs/{rid}/answer", json={"answer": ""})  # 422
+    client.post(f"/runs/{rid}/answer", json={"answer": "", "question_id": "q"})  # 422
     assert rows(db_session, "answer_received") == []
 
 
@@ -61,7 +61,7 @@ def test_measure_insufficient_evidence_and_its_answer_one_row_each(db_session):
     [m] = rows(db_session, "kpi_not_measured", rid)
     assert m.actor == "system" and m.params["status"] == "insufficient_evidence" and m.params["kpi"]
     assert rows(db_session, "answer_received", rid) == []
-    client.post(f"/runs/{rid}/answer", json={"answer": "wait for more data"})
+    client.post(f"/runs/{rid}/answer", json={"answer": "wait for more data", "question_id": got["pending"]["question_id"]})
     [a] = rows(db_session, "answer_received", rid)
     assert a.actor == "human" and a.params["answer"] == "wait for more data"
     assert len(rows(db_session, "kpi_not_measured", rid)) == 2  # the second Measure is a second decision
@@ -116,7 +116,7 @@ def test_ask_limit_halt_is_raised_once(db_session):
         pend = client.get(f"/runs/{rid}").json()["pending"]
         if pend["type"] != "answer":
             break
-        client.post(f"/runs/{rid}/answer", json={"answer": "no idea"})
+        client.post(f"/runs/{rid}/answer", json={"answer": "no idea", "question_id": pend["question_id"]})
     assert client.get(f"/runs/{rid}").json()["pending"]["kind"] == "halt"
     [raised] = rows(db_session, "halt_raised", rid)
     assert raised.params["reason"] == "max_questions_reached" and raised.params["options"]

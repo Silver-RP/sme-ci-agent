@@ -50,7 +50,7 @@ def start(c):
     assert r.status_code == 201, r.text
     run = r.json()
     if run["pending"] and run["pending"]["type"] == "answer":
-        run = c.post(f"/runs/{run['run_id']}/answer", json=ANSWER).json()
+        run = c.post(f"/runs/{run['run_id']}/answer", json={**ANSWER, "question_id": run["pending"]["question_id"]}).json()
     assert run["pending"]["kind"] == "proposal", run
     return run
 
@@ -195,7 +195,7 @@ def _drive(c, rid, max_steps=14):
         if run["state"] == "finished" or not pend:
             break
         if pend.get("type") == "answer":
-            run = c.post(f"/runs/{rid}/answer", json=ANSWER).json()
+            run = c.post(f"/runs/{rid}/answer", json={**ANSWER, "question_id": run["pending"]["question_id"]}).json()
         elif pend["kind"] == "proposal":
             run = decide(c, rid, HUMAN)
         elif pend["kind"] == "rollback":
