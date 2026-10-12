@@ -440,3 +440,7 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 ### R10e/dev-06: DONE
 - Vòng: 1. Commit: e8c3978. Review: .autodev/reviews/R10e-dev-06-r1.json (PASS).
 - `/metrics` có `llm`/`limits`, từ chối báo cáo sai `months`, NaN/inf -> `available:false`; `demo.sh --fresh-db` sinh báo cáo (seed 42 cố định), `--check` đòi có số. Reviewer chạy thật demo.sh --fresh-db --check: CHECK PASSED. 1014 test pass.
+
+### R10e/dev-07: DONE
+- Vòng: 1. Commit: 34a024d. Review: .autodev/reviews/R10e-dev-07-r1.json (PASS).
+- export_fixtures sinh trên DB tạm, chuẩn hoá id/phiên bản/giờ; thêm ví dụ run-insufficient-evidence-final; payloads.md khớp code. 6 vitest của vai D đỏ do dữ liệu ví dụ mới (liệt kê trong báo cáo mốc). 1028 test pass.
