@@ -44,6 +44,19 @@ Trạng thái: đã chốt (leader xác nhận 2026-10-08, xem ADR-009).
 - Quyết định (leader xác nhận 2026-10-08): giữ nguyên `docs/schema/events.json` hiện tại làm v0.1, và interface 4 tool chỉ đọc trong `backend/tools/readonly.py` (`query_logs`, `correlate`, `get_shift_schedule`, `read_sop`, nhận `ToolContext` và tham số tường minh). Lịch dời theo ADR-008.
 - Hệ quả: đổi events.json hay chữ ký 4 tool từ nay phải qua PR riêng và báo trong sync. Phân vai trong docs/PLAN.md mục 4 điền khi có đủ người.
 
+## ADR-010: Mọi chữ hiện trên UI bằng tiếng Việt; giữ thuật ngữ ngành quen dùng
+
+- Bối cảnh (2026-10-12, leader thử dashboard với LLM thật sau R10e): câu do code sinh đã là tiếng Việt, nhưng UI vẫn lộ mã (`wrong_setpoint`, `defect_rate`, `zone3_setpoint_c`), SOP v1/v2 tiếng Anh, ghi chú log tiếng Anh. Nguyên nhân: prompt bảo LLM giữ nguyên tên mã; quy tắc ngôn ngữ R10e bỏ sót `new_content` của SOP; SOP gốc và ghi chú simulator viết tiếng Anh; bảng nhãn nằm cứng trong `dashboard/lib/strings.ts`.
+- Quyết định (leader chốt 2026-10-12):
+  1. Mọi chữ hiện trên UI là tiếng Việt. Mã (KPI, giả thuyết, nhóm, tham số, trạng thái) vẫn tiếng Anh trong code, API, DB.
+  2. **Thuật ngữ ngành quen dùng giữ nguyên** (SOP, KPI, setpoint, operator…), giải nghĩa ở lần đầu xuất hiện, theo một bảng thuật ngữ trong domain config. Không dịch gượng.
+  3. Chỗ bắt buộc không phải tiếng Việt (dữ liệu nguồn của khách, ví dụ ghi chú log) thì UI hiện dạng "trích nguyên văn" có nhãn và dòng giải nghĩa.
+- Chia việc theo nguyên tắc "chữ do ai sinh thì người đó chịu":
+  - Backend: khối `labels` + bảng thuật ngữ trong `data/context_profile.yaml`, trả qua `GET /config/domain`; prompt đưa bảng nhãn vào và yêu cầu câu văn dùng nhãn, không dùng mã; thêm `new_content` vào quy tắc ngôn ngữ; ghi chú simulator tiếng Việt.
+  - Frontend (vai D): hiện nhãn lấy từ `/config/domain` (bỏ bảng nhãn viết cứng), mã để ở chú thích; mã còn sót trong câu LLM hiện thành chip có nhãn; kiểu hiển thị "trích nguyên văn".
+  - Vai A: nội dung SOP gốc tiếng Việt (#122).
+- Hệ quả: thêm `labels` vào `/config/domain` là thêm trường, ghi vào `docs/schema/payloads.md`; không đổi `events.json`.
+
 ## Việc cần sửa sau khi chạy (log lỗi M3)
 
 ### T-030 lần 1 (2026-10-09, LLM thật `claude-sonnet-5-5`, chạy qua API của `demo.sh`, người trả lời trung tính)

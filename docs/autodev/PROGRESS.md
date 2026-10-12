@@ -209,7 +209,7 @@ Nguồn: mục "Ước tính" và "Pre-mortem" của `plan/R10a.md`, `R10c.md`, 
 | 2026-10-10.md | R9i, R9ih, R10a, R10c | 12 | 17 | 0,71 |
 | 2026-10-12.md | R10d | 11 | 5 | 2,20 |
 
-### B2 Độ chặt review: 4/74 task cần ≥ 2 vòng (5%). Đọc cùng B1: B2 thấp mà B1 cao là reviewer lỏng.
+### B2 Độ chặt review: 5/81 task cần ≥ 2 vòng (6%). Đọc cùng B1: B2 thấp mà B1 cao là reviewer lỏng.
 
 ### B3–B5 theo mốc (B3: thực tế / ước tính, 1,0 = trong khoảng, ngưỡng 0,5–2; B4: số lần runner dừng, ngưỡng 0; B5: chi phí trên task)
 
@@ -224,6 +224,7 @@ Nguồn: mục "Ước tính" và "Pre-mortem" của `plan/R10a.md`, `R10c.md`, 
 | R10c | 7 | 115 | 7,88 | 16,4 | 1,13 | 138 | 1,00 | 1,00 | 0 |
 | R10ch | 4 | 111 | 4,77 | 27,7 | 1,19 | 75 | 1,85 | 1,19 | 0 |
 | R10d | 5 | 161 | 4,70 | 32,2 | 0,94 | 141 | 1,24 | 1,00 | 1 |
+| R10e | 7 | 287 | 9,49 | 41,0 | 1,36 | 144 | 1,06 | 1,00 | 0 |
 | R4 | 4 | 18 | 2,59 | 4,4 | 0,65 | 86 | – | – | 1 |
 | R5 | 3 | 18 | 3,01 | 6,2 | 1,00 | 26 | – | – | 0 |
 | R6 | 3 | 21 | 1,81 | 7,1 | 0,60 | 63 | – | – | 0 |

@@ -1,6 +1,6 @@
 {
   "updated": "2026-10-12",
-  "source": "audit 2026-10-12 (sau R10d, R10b1, R10b2) + audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10) + R10e merge #138",
+  "source": "audit 2026-10-12 (sau R10d, R10b1, R10b2) + audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10) + R10e merge #138 + đo nền LLM thật và ADR-010 (12/10)",
   "milestones": {
     "project": [
       {
@@ -205,14 +205,14 @@
       "text": "Tìm đúng nguyên nhân gốc so với ground truth và biết hỏi người khi chưa đủ bằng chứng",
       "percent": 0,
       "evidence": "Chưa chỉ số nào đo được theo docs/eval/criteria.md; eval LLM giả chỉ kiểm bộ chấm (right 100%, wrong 0%, unsure hỏi 100%); chấm theo chuỗi (H-28)",
-      "missing": "T-030 + eval --llm real có kết quả; H-28 chấm theo chuỗi, script chứa nhãn; H-29 correlate trả nhãn, anomaly ~10σ",
+      "missing": "A1 trên tập giữ lại; trường signal để chấm theo mã (H-28); eval trên DB sạch; kịch bản khó (H-29: zone3 chỉ đổi đúng 2 lần, correlate r≈0,95, 7/9 giả thuyết no_data); nhánh hỏi người với LLM thật chưa được thử",
       "estimate_old": 30,
       "metrics": [
         "A1",
         "A2",
         "A3"
       ],
-      "baseline": "eval LLM giả chỉ kiểm bộ chấm (right 100%, wrong 0%, unsure hỏi 100%); chấm theo chuỗi (H-28)"
+      "baseline": "eval LLM giả chỉ kiểm bộ chấm (right 100%, wrong 0%, unsure hỏi 100%); chấm theo chuỗi (H-28). Nền LLM thật 12/10 (--llm real --seeds 3, sau R10e): DB sạch 3/3 đúng wrong_setpoint (A1, M02), hỏi 0%, ~41k token; DB dùng chung 67% do chấm theo chữ + 185 bài học lộ đáp án. Bài dễ (~10σ, 3 seed chỉ đổi nhiễu) → chưa phải A1 tập giữ lại, % giữ 0"
     },
     {
       "id": 2,
@@ -500,6 +500,10 @@
   "decisions": [
     {
       "date": "2026-10-12",
+      "text": "Đóng phiên chiều: đo nền LLM thật lần đầu cho điều 1 (leader cho chạy): DB sạch 3/3, DB dùng chung 67% (lỗi chấm + bài học lộ đáp án); ~0,4 USD cả hai lần (ước từ token). ADR-010 (leader chốt): mọi chữ trên UI tiếng Việt, mã giữ trong code/API, thuật ngữ ngành giữ nguyên có giải nghĩa, dữ liệu nguồn hiện dạng trích nguyên văn; vai D #141. R11a bắt buộc: trường signal (chấm theo mã), eval luôn trên DB sạch, ≥ 1 kịch bản khó. Comment #63 làm rõ dạng bàn giao D4/D6. % đạt giữ 0/67/67; leader có thể chốt lại điều 1."
+    },
+    {
+      "date": "2026-10-12",
       "text": "R10e merge #138 (supervisor --review-only): 7/7 DONE, 8 vòng; 1028 passed, smoke 4/4, demo --check xanh, A4 theo nguyên nhân right 5/5 confirmed, wrong 0/5. Đóng H-32, H-34, H-66 (test đỏ trên main qua git archive); H-65 còn (b, f, g) phía UI. Đóng #111, #114. (c) supervisor quyết: tiêu chí 1 tính đạt phần backend dù 6 vitest dashboard đỏ (plan dev-07 cấm sửa dashboard/tests, đã dự kiến); giao vai D ở #139. % đạt giữ 0/67/67."
     },
     {
@@ -737,8 +741,8 @@
     },
     {
       "id": "R11a",
-      "date": "13–14/10",
-      "goal": "Điều 1: cơ chế eval trung thực, 1 kịch bản khó do backend soạn",
+      "date": "14–15/10",
+      "goal": "Điều 1: cơ chế eval trung thực (trường signal, eval trên DB sạch), 1 kịch bản khó do backend soạn; ADR-010 phía backend (labels, prompt dùng nhãn, new_content tiếng Việt)",
       "gaps": [
         "H-28",
         "H-29",
