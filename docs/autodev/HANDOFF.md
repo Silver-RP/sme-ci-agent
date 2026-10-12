@@ -16,77 +16,65 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao" hay "là gì" (**giải thích đơn giản trước**, chi tiết khi được hỏi thêm). Cuối mỗi báo cáo có câu hỏi "làm gì tiếp": danh sách **đánh số kèm nội dung**, leader trả lời bằng số.
 - **Đo bằng số, không ước lượng:** % đạt 3 điều tính theo `docs/eval/criteria.md` (A1–A8, luật chỉ số nhiều phần); chỉ số plugin B1–B6 bằng `python3 .autodev/metrics.py`.
 
-## Bước tiếp theo (cập nhật 2026-10-12 rạng sáng, đóng phiên: cổng 13/10 go, tag v0.1-e2e)
-
-### R10e ✅ merge #138 (supervisor `--review-only`, 12/10; mới nhất, đọc trước)
-- Worker 7/7 DONE, 8 vòng (dev-04 2 vòng). Supervisor tự chạy: **1028 passed**, smoke 4/4, `demo.sh --fresh-db --check` xanh; A4 theo nguyên nhân (LLM giả) `right` confirmed 5/5, `wrong` 0/5 (8 seed: 8/8, 0/8). Test H-32/H-34/H-66, #111, #114 đỏ trên main qua `git archive`. Bảng tiêu chí + pre-mortem: `PROGRESS.md` mục R10e. 287 phút / 200–270 (B3 1,06); 7,05 + ~1,19 USD / 9–11.
-- Đóng **H-32, H-34, H-66**; H-65 còn (b, f, g) phía UI. Đóng issue #111, #114. Supervisor tick R10e trong TASKS.md (bỏ H-32 khỏi dòng R11a).
-- **(c) supervisor quyết:** tiêu chí 1 ("verify sạch") tính đạt phần backend dù **6 vitest dashboard đỏ** (kỳ vọng cũ tiếng Anh, số phiên bản phụ thuộc DB dev); plan dev-07 cấm sửa `dashboard/tests` và pre-mortem 3 đã dự kiến. Giao vai D ở **#139** (gán Finn; kèm lỗi nghĩa "4270 / 6" ở thẻ thiếu bằng chứng, H-65 b/f/g, H-67..H-69). **Hệ quả:** `verify.py` của mốc kế sẽ báo `dashboard` đỏ "mới so với baseline" cho tới khi #139 merge → trước khi chạy R11a, hoặc chờ #139, hoặc ghi rõ trong plan R11a là lỗi đã biết.
-- **Đề xuất (c) của worker chờ leader** (PR #138): (1) thêm trường `signal` vào Hypothesis + prompt + eval (LLM thật hiện luôn `unconfirmed`) → R11a; (2) `new_content` SOP của LLM giả còn tiếng Anh; (3) `demo.sh` cố định seed 42 cho báo cáo `/metrics`; (4) LLM thật trả tiếng Việt chưa kiểm (cần leader cho chạy LLM thật).
-- Còn tiếng Anh tới dashboard (không do agent sinh): `limits` của `/metrics`, `reason` người gõ trong kịch bản `export_fixtures.py`.
-- Mục 2 của "Làm tiếp theo thứ tự" dưới đây (mốc backend kế) **đã xong ở R10e**; việc kế là R11a (mục 3).
+## Bước tiếp theo (cập nhật 2026-10-12 chiều, đóng phiên: R10e xong, đo nền LLM thật, ADR-010)
 
 ### Bối cảnh
 - **Team 4 người** (`docs/PLAN.md` mục 4). Ranh giới: auto-dev không làm thay việc của vai A/D/Q, kể cả khi không đụng file của họ (**trùng việc** khác **trùng file**).
 
-| Vai | Người | Issue mở | Trạng thái 12/10 |
+| Vai | Người | Issue mở | Trạng thái 12/10 chiều |
 |---|---|---|---|
-| A: dữ liệu, kịch bản | @bobbibao (Bảo) | #63 (D3–D6) | D1, D2 (+ #126 bổ sung 5 bộ) đã merge. **D3** (`docs/research/reflow_domain.md`, nguồn cho 4 giả định điều 3, H-64) là việc kế, hạn tham khảo 14/10. Chưa trả lời 2 câu hỏi SOP ở #122 |
-| D: giao diện | @Finnng1104 (Finn) | #64, #111, #114 | #116–#118 merge. Ô FR-01..05 trong #64 chưa tick. Cần báo: H-65..H-69 (audit 4), fixture sinh lại |
-| Q: kiểm chứng | @daivonpham (Daivon) | #65 | **chưa nhận lời mời**; #65 chưa gán. T-044, T-045 (biên bản `demo-1.md`) của vai Q chưa có người |
-| Backend, auto-dev | leader + Claude | #111 (H-34), #114 | `plan/Rx.md` |
+| A: dữ liệu, kịch bản | @bobbibao (Bảo) | #63 (D3–D6) | D1, D2 merge. Việc kế: D3 (`docs/research/reflow_domain.md`, nguồn 4 giả định điều 3, H-64), D4 (≥ 4 kịch bản). Comment 12/10 ở #63 làm rõ dạng bàn giao D4/D6: YAML + **đáp án theo mã**, hoặc bộ CSV ≥ 42 ngày qua `import_data.py --check-only`. Chưa trả lời 2 câu hỏi SOP ở #122 |
+| D: giao diện | @Finnng1104 (Finn) | #64, #139, #141 (gán) | #139: 6 vitest đỏ trên main sau R10e (kỳ vọng tiếng Anh cũ) + H-65 b/f/g, H-67..H-69. #141: ADR-010 (nhãn từ `/config/domain`, chú thích mã, kiểu "trích nguyên văn") |
+| Q: kiểm chứng | @daivonpham (Daivon) | #65 | **chưa nhận lời mời**; #65 chưa gán. T-044, T-045 chưa có người. `docs/token-cost.md` (vùng vai Q) chưa có: chi phí LLM thật ghi tạm ở PROJECT_STATE |
+| Backend, auto-dev | leader + Claude | | `plan/Rx.md` |
 
-- **Mốc tham khảo:** ~~cổng 13/10~~ (go 12/10); Đợt 2 UI 17/10; freeze 20/10 (tag v0.2-freeze); Pitch 24/10.
+- **Mốc tham khảo:** Đợt 2 UI 17/10; freeze 20/10 (tag v0.2-freeze); Pitch 24/10.
 
-### Đã xong trong phiên 2026-10-11 chiều → 12/10 rạng sáng (PR #126, #129–#135, tag)
-- **#126 (Bảo, 5 bộ D2 bổ sung):** review diff từng bộ với `valid/` + README + hợp đồng, approve; leader merge (classifier chặn Claude merge PR của thành viên).
-- **#129:** R10b1 chạy trước khi #126 merge, nên plan R10b2 dev-07 thêm test tham số hoá trên mọi bộ `data/templates/invalid/` (37). Thực tế: test R10b1 đỏ trên main ngay sau #126 (5 bộ chưa có đáp án) → worker R10b2 làm dev-07 trước. **Bài học:** merge PR dữ liệu của team khi runner đang chạy thì chạy pytest trên main ngay sau đó.
-- **R10b1 #130, R10b2 #132, audit 4 #134** (runner tự merge; chi tiết ở mục dưới và PROGRESS). Tổng chuỗi ~27,7 USD (ước tính 20–26).
-- **Điều 3 chốt 67** (leader): tái diễn = 0 theo luật "đạt theo cấu tạo"; tỷ lệ lỗi và MTTD/MTTR tính 1; cờ H-64 chờ D3.
-- **A8 đo 12/10:** `demo.sh --fresh-db --check --repeat 10` → 10/10, p95 0,8 s. Lần đầu trượt ở dashboard: `dashboard/node_modules` thiếu thư viện từ #116 → `yarn install --frozen-lockfile`, rồi leader tự xoá `dashboard/.next` (Turbopack giữ lỗi cũ; guard chặn `rm -rf`).
-- **Cổng 13/10 go** (#135, `docs/qa/gate-v0.1-e2e.md`): A4 tính đạt theo chữ, **H-32 phải sửa trước freeze**. **Tag `v0.1-e2e`** trên c60fec5 (tạo từ clone scratchpad vì guard chặn thao tác trên nhánh main).
-- **#114:** comment cho Finn: làm sau R10b1, máy/ca đọc từ `plant.*` của config.
-- **Guard:** leader **không** thêm duyệt xoá một lần; giữ nguyên.
-- **Leader xem demo mức 1** (LLM giả): câu chữ hiện ra dashboard là **tiếng Anh** (ví dụ `question_asked` "Top hypothesis (…) has confidence 0.20, below 0.60…", chuỗi cứng `backend/agent/nodes/ask.py:56,60`). Ảnh leader gửi có thể là trang phát fixture (`run-happy.json`, nút "(mô phỏng)"), không phải run live: kiểm nhãn chế độ.
-
-### R10b1 ✅ #130 · R10b2 ✅ #132 · audit 4 ✅ #134
-- **R10b1:** 7/7, 8 vòng; 267 phút / 175–240; 9,10 + ~2,10 USD. 31/31 bộ D2 đúng mã. pytest + Postgres ~20 phút mỗi lần đầy đủ (máy i5-8279U, 8 GB, Docker trên Intel) là phần lớn thời gian (~86% thời gian worker là chạy cục bộ, không phải chờ API).
-- **R10b2:** 7/7, 8 vòng; 350 phút / 195–255; 8,76 + 2,23 USD. Đóng H-11, H-33, H-39. Fixture R10b1 trùng bộ D2: không có. `risk_checks.mock_only` của reviewer bắt lỗi dev-03 (suite xanh nhờ `conftest` tắt tính năng mới).
-- **Audit 4** (`docs/audits/2026-10-12.md`, 5,51 USD): H-60..H-74 (1 cao H-64), đóng H-35, H-44, H-46, còn 31 mở. Lệch hướng: điều 1 vẫn 0; chưa lần LLM thật nào.
-- **Plugin:** hook `SubagentStop` **không chạy** ở phần lớn task R10b2 (và dev-04 v1, dev-06 R10b1); supervisor tự chạy `verify.py` thay.
-- **Đề xuất (c) chờ duyệt** (PR #130, #132): số phiên bản SOP trong fixture phụ thuộc DB dùng chung; `data_report.py`, `eval_rootcause.py`, `export_fixtures.py` chưa đọc `SME_DATASET`; `eval_rootcause.py` mặc định crash `ScriptExhaustedError` khi DB đã có `learning_saved`; `/metrics` chưa kiểm `months`; test D2 trùng một phần `D2_EXPECTED`.
+### Đã xong trong phiên 2026-10-12 sáng → chiều (PR #137, #138, #140; issue #141)
+- **Plan R10e #137** (leader duyệt phạm vi; classifier chặn Claude merge, leader merge). **R10e #138** runner + supervisor `--review-only`, hồ sơ #140: 7/7, 313 phút, 9,49 USD (ước 9–11). Đóng H-32, H-34, H-66, #111, #114 (chi tiết: PROGRESS mục R10e, `.autodev/reports/R10e.md`).
+- **Đo nền LLM thật lần đầu** (leader cho chạy, `eval_rootcause.py --llm real --seeds 3`):
+  - DB dùng chung `sme_ci`: bảng 67%, nhưng đọc tay cả 3 run đều đúng `wrong_setpoint`. Sai do (1) chấm theo chữ: LLM viết tiếng Việt, không ghi nguyên mã (H-28); (2) DB có 185 bài học từ run LLM giả, agent đọc được ("các trường hợp trước…") và cả 3 run điều tra A2 (M01) thay vì A1.
+  - DB sạch (`fresh_db.py` → `sme_ci_demo`, `alembic upgrade head`): **3/3**, đúng A1 (M02, 10/3), hỏi 0%, ~41k token. Lý do và SOP mới tiếng Việt. Chi phí cả hai lần ~0,4 USD (ước từ token).
+  - Đọc đúng: bài dễ, 3 seed chỉ đổi nhiễu (cùng máy, giờ, ~10σ) → chưa phải A1 tập giữ lại; % điều 1 giữ 0.
+- **Phân tích seed 42** (sinh trong bộ nhớ): anomaly z 9–11 từ ca đầu, giữ tới hết dữ liệu; `zone3_setpoint_c` chỉ đổi 2 lần = đúng 2 anomaly (67 lần đổi khác là zone2/other); `correlate` wrong_setpoint r ≈ 0,95, material_batch ≈ 0,01–0,08, 7/9 giả thuyết `no_data`; nhiễu trong YAML không có tác dụng; A2 = A1 khác máy. Giá trị: kiểm vòng chạy, FP1, hồi quy; không kiểm suy luận.
+- **Leader thử dashboard với LLM thật** (`SME_LLM=real scripts/demo.sh --fresh-db`, trang `/?source=live`): UI vẫn lộ mã (`wrong_setpoint`, `defect_rate`, `zone3_setpoint_c`) trong câu LLM; SOP v1 (config) và v2 (LLM) tiếng Anh. Nguyên nhân đã kiểm: `system.py:26` bảo LLM giữ nguyên tên mã; quy tắc ngôn ngữ R10e **bỏ sót `new_content`**; SOP gốc + ghi chú simulator tiếng Anh; bảng nhãn viết cứng ở `dashboard/lib/strings.ts`. → **ADR-010** (leader chốt, `docs/decisions.md`): mọi chữ trên UI tiếng Việt; thuật ngữ ngành (SOP, KPI, setpoint, operator) giữ nguyên, giải nghĩa từ bảng thuật ngữ trong config; dữ liệu nguồn không phải tiếng Việt hiện dạng "trích nguyên văn". Vai D: issue **#141**.
+- **Đánh giá khách quan** (leader hỏi, chỉ trong chat): mạnh ở quản trị (duyệt, audit, phiên bản, rollback); yếu ở bằng chứng chẩn đoán, vòng tự kiểm (Claude sinh dữ liệu + code + chấm), điều 2 đạt theo cấu tạo (`post_change` do simulator sinh), dồn nguồn lực vào leader + Claude. Thương mại: rủi ro lớn nhất là dữ liệu SME (ít log có cấu trúc); hướng khả thi là trợ lý CAPA/8D + phiên bản SOP. Khuyến nghị trước freeze: kịch bản khó, pitch trung thực ("vòng cải tiến có kiểm soát; độ chính xác đang đo"), phỏng vấn 1 người làm QA thật.
+- **Leader hỏi** cho thành viên chạy `/session-start` sau khi mở quyền (luân phiên một người vận hành): khả thi, cần P8a (quyền `maintain`, khoá vận hành trong repo, chuyển quy tắc chung từ bộ nhớ vào repo, script dựng máy; ~4 task, 4–6 USD). **Chưa quyết**; leader chọn tiếp tục chờ runner.
+- **Hạn mức** leader báo 12/10 ~06:20: 5 giờ 15%, tuần **90%** (trước R10e 9,49 USD và đo LLM thật). Leader chọn chạy R10e ngay dù rủi ro chạm 100%. `usage-log.md` ghi sai số đầu nhiệm vụ (lấy số cũ 71%).
 
 ### Làm tiếp theo thứ tự
 1. **Chờ leader:**
-   - (a) Duyệt phạm vi **mốc backend kế** (mục 2): "duyệt" / sửa danh sách.
-   - (b) Đo nền LLM thật (`eval_rootcause.py --llm real --seeds 3`, ≤ 2 USD): "chạy" / "để sau". Cần cho điều 1 và để biết agent thật làm tới đâu.
-   - (c) Đo pytest chậm (`--durations=20`, ~20 phút, 0 USD): "đo" / "bỏ".
-   - (d) Xoá worktree `../sme-ci-agent-d2`: leader tự chạy `git worktree remove ../sme-ci-agent-d2`.
+   - (a) Chốt % điều 1 sau đo nền LLM thật: "giữ 0" / gõ số (Claude đề xuất 20–30: LLM thật đúng bài dễ, chưa có A1 tập giữ lại).
+   - (b) Gửi 2 số `/usage` (5 giờ, tuần) trước khi chạy mốc kế; reset tuần 13:00 14/10.
+   - (c) Duyệt viết plan **R11a** (mục 2): "viết plan" / sửa danh sách. Chạy runner sau reset 14/10.
+   - (d) P8a (cho thành viên vận hành luân phiên): "làm" / "để sau freeze".
+   - (e) Xoá worktree `../sme-ci-agent-d2`: leader tự chạy `git worktree remove ../sme-ci-agent-d2`.
    - Không nhắc trong báo cáo: nhắc Bảo/Daivon, giờ kickoff, ROADMAP nghiên cứu (bộ nhớ `skip-team-reminders`).
-2. **Mốc backend kế (leader yêu cầu 12/10), plan mở PR:**
-   - **Câu chữ cho người dùng bằng tiếng Việt:** chuỗi cứng tiếng Anh ở `ask.py` (và kiểm `improve.py`, câu "chưa đủ bằng chứng" của Measure, halt, lý do rollback) → lấy từ domain config (`data/context_profile.yaml`), không hard-code; prompt LLM yêu cầu trường hiển thị (giả thuyết, câu hỏi, đề xuất) bằng tiếng Việt. Code, khoá, tên trường giữ tiếng Anh. Sinh lại `docs/schema/examples/` + `dashboard/fixtures/examples/` (gộp H-66).
-   - **Issue của Finn:** #114 `GET /config/domain` (nay làm được: `plant.*` có sau R10b1; hình dạng chốt ở comment #114), #111 (H-34).
-   - **H-32** (A4 không được đạt theo cấu tạo; phải xong trước freeze), **H-65** (`/metrics` ghi rõ LLM giả, `limits`).
-   - Sau đó báo Finn H-65..H-69 (UI) kèm ví dụ mới.
-3. **R11a** (điều 1, đang 0): H-28, H-29, H-56 (gộp H-18), H-63, H-36, H-52, H-53, H-55; kịch bản `ask` và `none`; treo từ R10ch: bản SOP trùng nếu kill giữa commit và checkpoint. Có thể gộp phần nhỏ của mục 2 nếu leader muốn.
-4. **Sửa plugin (P4, giữa hai mốc):**
-   - hook `SubagentStop` không chạy ổn định;
+2. **R11a** (điều 1, đang 0), việc **bắt buộc** rút từ đo nền 12/10:
+   - Trường `signal` cho Hypothesis + prompt + chấm theo mã (H-28; đề xuất (c) 1 của R10e). Không có thì cách chấm theo chữ sai với LLM tiếng Việt.
+   - `eval_rootcause.py` luôn chạy trên DB sạch, không đọc `learning_store` của run trước (đã thấy lộ đáp án); kiểm cách eval chọn anomaly.
+   - ≥ 1 kịch bản khó do backend soạn (H-29): anomaly 2–3σ tăng dần, đổi zone3 ±2 °C thường xuyên, nhiễu trùng thời điểm (lô mới/người thay ca cùng đêm), có dữ liệu cho giả thuyết khác (`environment_log`, `training_level`), A2 khác nguyên nhân; kịch bản `ask` và `none`.
+   - ADR-010 phía backend: khối `labels` + bảng thuật ngữ trong `data/context_profile.yaml`, trả qua `/config/domain` (báo #141); prompt đưa bảng nhãn, yêu cầu câu văn dùng nhãn thay mã; thêm `new_content` vào quy tắc ngôn ngữ; ghi chú simulator, `demo_llm` `new_content` tiếng Việt.
+   - Còn lại: H-36, H-18/H-56/H-63, H-52, H-53, H-55; treo từ R10ch: bản SOP trùng nếu kill giữa commit và checkpoint.
+   - `verify.py` sẽ báo `dashboard` đỏ "mới so với baseline" tới khi #139 merge: ghi rõ trong plan R11a là lỗi đã biết, hoặc chờ #139.
+3. **Sửa plugin (P4, giữa hai mốc):**
+   - hook `SubagentStop` không chạy (R10e: `hook_runs` đứng ở 67 cả mốc);
    - runner không chạy tiếp được mốc đã có PR mở (`new_milestone_pr` chỉ nhận PR mới);
    - worktree worker không kéo commit (b) supervisor đẩy lên nhánh mốc;
    - supervisor phải chạy `.autodev/tests` trước khi merge PR hồ sơ (#125);
    - `/session-start` kiểm runner bằng `pgrep -fl 'autodev/run.py'` (`autodev-run` không khớp);
-   - tăng tốc verify (chạy test chọn lọc trong vòng TDD, đủ bộ một lần trước review; hoặc `pytest-xdist` với DB tách) — chờ số đo mục 1(c);
+   - tăng tốc verify (chạy test chọn lọc trong vòng TDD, đủ bộ một lần trước review; hoặc `pytest-xdist` với DB tách); đo `--durations=20` chưa chạy;
    - `demo.sh`: tự `yarn install` khi `dashboard/package.json`/`yarn.lock` đổi.
-5. **Reviewer:** đo luật xếp mức trên ≥ 5 ca mới từ audit 4, mỗi ca 3 lần; hỏi leader trước; sau reset hạn mức tuần (14/10).
-6. **Plugin sau v0.1:** P9 (reviewer cho PR của team, chỉ comment), P7a Telegram một chiều.
+4. **Reviewer:** đo luật xếp mức trên ≥ 5 ca mới từ audit 4, mỗi ca 3 lần; hỏi leader trước; sau reset hạn mức tuần (14/10).
+5. **Plugin sau v0.1:** P8a (nếu leader chọn), P9 (reviewer cho PR của team, chỉ comment), P7a Telegram một chiều.
 
 **Tín hiệu team còn lại** (`/session-start` kiểm):
 | Tín hiệu | Việc đầu tiên |
 |---|---|
-| Daivon nhận lời mời | Gán #65 bằng tay (`gh issue edit 65 --add-assignee daivonpham`); vai Q chạy đo nền LLM thật (≤ 2 USD, leader cho phép từng lần); T-044, T-045. |
+| Daivon nhận lời mời | Gán #65 bằng tay (`gh issue edit 65 --add-assignee daivonpham`); vai Q chạy đo LLM thật (≤ 2 USD, leader cho phép từng lần); T-044, T-045; tạo `docs/token-cost.md` (ghi lại 2 lần đo 12/10). |
 | Issue nhãn `api` mới | Backend trả lời trong ngày (không tính là chạy mốc). |
-| PR mới của Finn/Bảo | Kiểm phía backend (test, demo, đối chiếu hợp đồng), comment, approve; leader merge. Sau merge chạy pytest trên main nếu PR đổi dữ liệu test. PR draft thì không merge. |
-| Bảo trả lời câu hỏi SOP ở #122 / nộp D3 | SOP: khác đề xuất thì sửa ở mốc sau. D3: cập nhật `source` của 4 giả định, chạy lại `metrics_report.py`, xét lại % điều 3. |
+| PR mới của Finn/Bảo | Kiểm phía backend (test, demo, đối chiếu hợp đồng), comment, approve; leader merge. Sau merge chạy pytest trên main nếu PR đổi dữ liệu test. PR draft thì không merge. PR #139 của Finn merge thì `verify.py` hết đỏ `dashboard`. |
+| Bảo trả lời #63 (dạng D4/D6) / #122 (SOP) / nộp D3 | D4/D6: đưa vào R11b (nhập qua `import_data.py`, eval trên DB sạch). SOP: khác đề xuất thì sửa ở mốc sau (SOP gốc tiếng Việt theo ADR-010). D3: cập nhật `source` của 4 giả định, chạy lại `metrics_report.py`, xét lại % điều 3. |
 
 ### Cách làm việc với team
 - **Chỉ leader/Claude chạy auto-dev** (`/run-milestone`, `/supervise`, `/audit`). Team dùng Claude Code trên máy riêng, trong vùng của vai:
@@ -100,18 +88,17 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **`plugin-guard`** cho qua 6 PR của team (#116–#118 `dashboard/`; #122, #123, #126 vùng vai A). Nhánh chặn chưa có dịp thử.
 - **Review PR của team:** Claude kiểm phía backend, comment, approve; merge là quyết định của leader. Không merge PR draft; không bỏ draft hộ tác giả.
 
-## Trạng thái hiện tại (2026-10-12 rạng sáng)
+## Trạng thái hiện tại (2026-10-12 chiều)
 - **Dự án:**
-  - M0–M3 xong; M4 3/6 (T-040..T-042); T-043 (vai D), T-044, T-045 (vai Q) mở; **cổng 13/10 go, tag `v0.1-e2e`** (c60fec5);
-  - 936 passed trên main (R10b2);
-  - % đạt 3 điều: **0 / 67 / 67** (điều 3 leader chốt).
-- **Plugin:** P1–P3, P5, P6 xong; P4 đang làm (mục 4 "Làm tiếp"); P7–P9 chưa làm.
-- **Runner:** rảnh (chuỗi R10b1 → R10b2 → audit 4 xong 00:58 12/10).
-- **Demo:** tắt. Bật bằng `scripts/demo.sh --fresh-db`; tắt bằng `lsof -ti tcp:8000,3000 -sTCP:LISTEN | xargs kill`. Phải tắt khi runner chạy.
-- **Docker Desktop** đã tắt lúc nào đó sau khi runner xong (chưa rõ lý do); Claude bật lại 12/10 (`open -a Docker`, `docker start sme-ci-agent-autodev-db-1`).
+  - M0–M3 xong; M4 3/6 (T-040..T-042); T-043 (vai D), T-044, T-045 (vai Q) mở; cổng 13/10 go, tag `v0.1-e2e` (c60fec5);
+  - 1028 passed trên main (R10e); **6 vitest dashboard đỏ trên main** (#139, vai D);
+  - % đạt 3 điều: **0 / 67 / 67** (điều 1 có nền LLM thật, chờ leader chốt).
+- **Plugin:** P1–P3, P5, P6 xong; P4 đang làm (mục 3 "Làm tiếp"); P7–P9 chưa làm.
+- **Runner:** rảnh (R10e xong 11:34 12/10; `audit.json` pending `["R10e"]`, `--audit-every` mặc định 2 → audit chạy sau mốc kế).
+- **Demo:** tắt. DB demo `sme_ci_demo` còn các run thử LLM thật của leader (xoá khi `--fresh-db` lần sau). Bật: `scripts/demo.sh --fresh-db` (thêm `SME_LLM=real` cho LLM thật, mở `/?source=live`); tắt: `lsof -ti tcp:8000,3000 -sTCP:LISTEN | xargs kill`. Phải tắt khi runner chạy.
 - **PR mở:** không có (sau PR bàn giao này).
 - **Worktree:** chính, `-autodev` (worker), `-supervisor`, `-bench` (cố định), `-d2` (chờ leader xoá).
-- **Hạn mức:** số liệu cuối 13:45 11/10 (5 giờ 1%, tuần 71%); chuỗi runner sau đó ~27,7 USD → hỏi leader `/usage` đầu phiên sau. Reset tuần 13:00 14/10.
+- **Hạn mức:** leader báo ~06:20 12/10: 5 giờ 15%, tuần 90%; sau đó R10e 9,49 USD + LLM thật ~0,4 USD (API key, không tính hạn mức gói) → hỏi leader `/usage` đầu phiên sau. Reset tuần 13:00 14/10.
 
 ## Môi trường
 - **Repo:** `~/dev/sme-ci-agent/` chứa 3 worktree cạnh nhau:
@@ -153,8 +140,9 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 
 ## Việc mở / cần để ý
 - **Lỗ hổng dự án:** PROJECT_STATE mục "Lỗ hổng mở" (nguồn `docs/audits/2026-10-12.md`); 31 mở, cao: H-28, H-29, H-64.
-- **Điều 1 = 0:** chưa lần đo LLM thật nào; R11a + đo nền LLM thật là đường duy nhất để có số trước freeze.
-- **Freeze 20/10:** H-32 phải sửa; A1 trên tập giữ lại phải có số (thiếu đề của vai A thì ghi giới hạn khi pitch, điều 1 không báo quá 60%).
+- **Điều 1 = 0:** đã có nền LLM thật (12/10, DB sạch 3/3 trên bài dễ); R11a (chấm theo mã, kịch bản khó) là đường để có số A1 trước freeze.
+- **Freeze 20/10:** A1 trên tập giữ lại phải có số (thiếu đề của vai A thì ghi giới hạn khi pitch, điều 1 không báo quá 60%). H-32 đã sửa ở R10e.
+- **Eval trên DB dùng chung `sme_ci` sai số:** `learning_store` có ~185 bài học từ run LLM giả lộ đáp án; chạy eval LLM thật trên `sme_ci_demo` sạch (`fresh_db.py` + `alembic upgrade head`) tới khi R11a sửa.
 - **B1:** `metrics.py --write` (12/10) ra **2,20** cho audit 4, nhưng chỉ nhận R10d làm phạm vi (11 lỗ hổng / 5 task); đúng phải là R10d + R10b1 + R10b2 (19 task → ~0,58, vẫn > 0,5). Sửa cách `metrics.py` đọc phạm vi audit (P4).
 - **pytest chập chờn:** đỏ 1/4 lần trên main trước đây, không bắt được tên test. Gặp lại thì ghi tên test.
 - **Để sau** (người dùng chốt): đo chất lượng theo thời gian; hook trước khi nén ngữ cảnh.
@@ -169,4 +157,5 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - 2026-10-10 khuya → 11/10: `usage.py show`; cổng `test_guard` + `risk_checks` (đề xuất 1 + 3); bộ thử reviewer 11 ca: chặn 2/9, thấy 5/9 (#103–#108).
 - 2026-10-11 sáng → chiều: team có tín hiệu; merge UI của Finn (#116–#118), D1/D2 của Bảo (#122–#123); R10d (#119–#121, H-49, H-57); plan R10b đối chiếu D1 (#124); sửa bảng audit (#125); dọn nhánh; chạy R10b1 → R10b2.
 - 2026-10-11 chiều → 12/10 rạng sáng: #126 (D2 thêm), #129 (plan R10b2), R10b1 #130, R10b2 #132, audit 4 #134; điều 3 chốt 67; A8 10/10; cổng 13/10 go (#135), tag `v0.1-e2e`.
+- 2026-10-12 sáng → chiều: plan R10e #137, R10e #138 + hồ sơ #140 (tiếng Việt, `/config/domain`, H-32, H-34, H-66); đo nền LLM thật lần đầu (DB sạch 3/3); ADR-010; issue #139, #141 cho vai D; comment #63.
 - Chi tiết trong `PROGRESS.md`.
