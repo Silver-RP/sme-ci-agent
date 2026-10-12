@@ -431,4 +431,4 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 
 ### R10e/dev-04: DONE
 - Vòng: 2. Commit: 749f117. Review: .autodev/reviews/R10e-dev-04-r1.json (FAIL), -r2.json (PASS).
-- Vòng 1 FAIL: khớp giả thuyết-tín hiệu bằng chuỗi con làm "material_batch, not wrong_setpoint" thành confirmed. Vòng 2: `_claimed_signal` (trường signal hoặc mô tả đúng bằng một tên). Eval LLM giả 5 seed: right passed 100
+- Vòng 1 FAIL: khớp giả thuyết-tín hiệu bằng chuỗi con làm "material_batch, not wrong_setpoint" thành confirmed. Vòng 2: `_claimed_signal` (trường signal hoặc mô tả đúng bằng một tên). Eval LLM giả 5 seed: right passed 100%, cause_confirmed 100%; wrong passed 100%, cause_confirmed 0%; unsure 0%/0%. 1001 test pass. Đề xuất (c): trường `signal` cho LLM thật.
