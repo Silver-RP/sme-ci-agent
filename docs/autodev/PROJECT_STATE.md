@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-12 · Nguồn: audit `docs/audits/2026-10-12.md` (audit 4) + audit `2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10) + bộ thử reviewer (#105–#108) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10).
+Cập nhật: 2026-10-12 · Nguồn: audit `docs/audits/2026-10-12.md` (audit 4) + audit `2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10) + bộ thử reviewer (#105–#108) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10) + R10e merge #138.
 
 ## Mốc
 
@@ -11,7 +11,7 @@ Cập nhật: 2026-10-12 · Nguồn: audit `docs/audits/2026-10-12.md` (audit 4)
 | Dự án | M0–M2 | ✅ 19/19 task | |
 | Dự án | M3 | ✅ 2/2 | T-030 xong 10/10: vòng LLM thật khép kín; dashboard lỗi H-44 |
 | Dự án | M4 | 🔄 3/6 | T-040..T-042 xong; T-043 (vai D), T-044, T-045 (vai Q) mở; **cổng 13/10 go, tag `v0.1-e2e` trên c60fec5 (#135, 12/10)** |
-| Chạy | R4–R9, R9h, R9i, R9ih, R10a, R10c, R10ch, R10d, R10b1, R10b2 | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55, #58, #82, #84, #91, #120, #130, #132 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 / ~0,64 / 4,00 / 5,81 / 3,51 / ~3,63 / 9,10 / 8,76 (worker) USD |
+| Chạy | R4–R9, R9h, R9i, R9ih, R10a, R10c, R10ch, R10d, R10b1, R10b2, R10e | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55, #58, #82, #84, #91, #120, #130, #132, #138 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 / ~0,64 / 4,00 / 5,81 / 3,51 / ~3,63 / 9,10 / 8,76 / 7,05 (worker) USD |
 | Plugin | P1–P3 | ✅ | |
 | Plugin | P4 | 🔄 | chờ reset hạn mức phiên đã chạy thật (R9); còn kiểm hạn mức trước mốc, hạn mức tuần mới thử bằng test giả |
 | Plugin | P5 | ✅ | audit + trạng thái (file này); trang trạng thái Artifact làm mới bằng `.autodev/export_status.py` khi leader yêu cầu (đóng 10/10) |
@@ -27,7 +27,7 @@ Từ 2026-10-10, **% đạt tính bằng công thức từ chỉ số đo đư�
 | # | Điều cần kiểm chứng | % đo được | Ước lượng cũ | Chỉ số (ngưỡng freeze) | Nền 10/10 | Mốc đo |
 |---|---|---|---|---|---|---|
 | 1 | Tìm đúng nguyên nhân gốc, biết hỏi người khi thiếu bằng chứng | 0 | 30 | A1 top-1 tập giữ lại ≥ 0,7; A2 precision ≥ 0,6, recall ≥ 0,8; A3 = 0 | eval LLM giả chỉ kiểm bộ chấm (right 100%, wrong 0%, unsure hỏi 100%); chấm theo chuỗi (H-28) | đo nền LLM thật sau R10a; R11a, R11b |
-| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 67 | 65 | A4 ≥ 0,9; A5 (a) 1,0, (b) ≥ 0,8; A6 = 0 vi phạm | Luật chỉ số nhiều phần (`criteria.md`). A4: R10b2 `eval_rootcause.py --until learn --seeds 5` LLM giả, `right` 5/5 = 1,0; LLM thật chưa đo → A4 = 0,5 (lưu ý `wrong` cũng 100%: đúng `action`, sai nguyên nhân, H-32). A5: LLM giả 1,0 (R10ch), LLM thật chưa đo → 0,5. A6 = 0 vi phạm → 1. (0,5 + 0,5 + 1)/3 = 67 | A4, A5 LLM thật |
+| 2 | Duyệt → KPI cải thiện; không thì rollback, điều tra lại | 67 | 65 | A4 ≥ 0,9; A5 (a) 1,0, (b) ≥ 0,8; A6 = 0 vi phạm | Luật chỉ số nhiều phần (`criteria.md`). A4: R10e `eval_rootcause.py --until learn --seeds 5` LLM giả, chấm theo nguyên nhân (`cause_status`): `right` confirmed 5/5 = 1,0, `wrong` 0/5 (H-32 đóng); LLM thật chưa đo → A4 = 0,5 (LLM thật chưa xuất `signal` nên luôn `unconfirmed`: R11a). A5: LLM giả 1,0 (R10ch), LLM thật chưa đo → 0,5. A6 = 0 vi phạm → 1. (0,5 + 0,5 + 1)/3 = 67 | A4, A5 LLM thật |
 | 3 | 3 chỉ số trước/sau trên 6 tháng mô phỏng | 67 | 5 | A7: 3 chỉ số tính được, tốt hơn đối chứng "không agent" | R10b2 `metrics_report.py --months 6 --seed 42` (LLM giả, lặp lại cùng số): có agent / không agent: tỷ lệ lỗi `period_rate` 0,0204 / 0,0208; MTTD 8 / 72 giờ, MTTR 24 / 44 giờ; tái diễn 0,25 / 0,5 → cả 3 phần tốt hơn → 100 theo công thức. **Cảnh báo:** 4 giả định đều "chờ D3"; MTTD không agent = giả định, tái diễn theo cấu tạo; lợi thế tỷ lệ lỗi rất nhỏ. **Audit 4 (12/10):** đề nghị ≤ 67 (33 nếu chặt): tái diễn đạt theo cấu tạo, độ nhạy chung đảo chiều (H-64). **Leader chốt 12/10: 67** (tái diễn = 0 theo `criteria.md` mục 2; tỷ lệ lỗi, MTTD/MTTR tính 1; cờ H-64 chờ D3) | nguồn D3; R11a (tái diễn theo nguyên nhân) |
 
 Cổng go/no-go 13/10 và 20/10: `docs/eval/criteria.md` mục 3. Chỉ số plugin B1–B5: `python3 .autodev/metrics.py` (nền: B1 = 1,67 ở audit 1, 1,75 ở audit 2; B2 = 2/44 task cần ≥ 2 vòng sau R10a).
@@ -64,8 +64,6 @@ Từ `docs/audits/2026-10-12.md` (mới) và `2026-10-10.md`, `2026-10-09_2.md` 
 |---|---|---|
 | H-28 | cao | Eval nguyên nhân tự đúng: script chứa nhãn, chấm theo chuỗi (phủ định = đúng) |
 | H-29 | cao | Bài toán quá dễ: `correlate` trả nhãn r≈0,98, anomaly ~10σ, hỏi người chỉ do script |
-| H-32 | vừa | Chẩn đoán sai + hành động đúng → Learn lưu nguyên nhân sai là success |
-| H-34 | vừa | Câu hỏi "chưa đủ bằng chứng" của Measure không trả lời được |
 | H-36 | vừa | Điều tra lại sau rollback không biết `action` đã thất bại |
 | H-18 | vừa | `has_tool_evidence` tính tool của cả run |
 | H-22 | thấp | Giá trị miền hard-code ngoài YAML |
@@ -79,17 +77,17 @@ Từ `docs/audits/2026-10-12.md` (mới) và `2026-10-10.md`, `2026-10-09_2.md` 
 | H-58 | thấp | `demo.sh`: cổng bận không phát hiện, `--check` ép scripted, không phủ SSE/rollback, không CI |
 | H-59 | thấp | Gom: cache `Run` nhiều tiến trình, `/export` sau retry, `GET /runs` nạp hết, `POST /runs` không body (audit 4 đã bỏ `/audit`, NaN) |
 | H-64 | cao | Điều 3: đối chứng dựa 4 giả định chưa có nguồn D3; tái diễn đạt theo cấu tạo (agent luôn sai vẫn 0,0); độ nhạy chung đảo chiều |
-| H-65 | vừa | `/metrics`: bỏ `llm`/`limits`, NaN → 500, `months` không kiểm, báo cáo bị gitignore nên demo máy mới trống |
+| H-65 | vừa | `/metrics` phía UI còn: (b) bỏ `dataset`/`seed`/giả định, (f) `before = 0` → null, (g) thông điệp cũ; (a, c, d, e) đóng R10e; giao vai D #139 |
 | H-60 | vừa | `POST /runs` kiểm `change_time` theo anomaly đầu, graph chọn anomaly chưa xử lý (H-48 tái phát) |
 | H-61 | vừa | `SME_DATASET`: Measure vẫn dùng dữ liệu sau thay đổi mô phỏng từ scenario1.yaml |
 | H-62 | vừa | V09 (PII) chỉ quét tên cột, không quét giá trị `note`/`step_text` |
 | H-63 | vừa | Kết quả tool rỗng (`no_data`, `count:0`) vẫn tính là bằng chứng, không hỏi người |
-| H-66 | vừa | Ví dụ `docs/schema/examples` + `payloads.md` cũ so với code (thiếu `n_unit`, `action`) |
 | H-67, H-68, H-69 | vừa | UI (team frontend): thẻ Measure đơn vị sai; kẹt sau Close; kẹt khi tải lại run 404 |
 | H-70 | vừa | Khoá lesson không có dataset/seed; `no_change` tính là đã xử lý |
 | H-71, H-72, H-73, H-74 | thấp | Learn chưa commit; Learn chỉ khi pass; target NaN; gom nhỏ (xem audit 2026-10-12) |
 ## Quyết định gần đây
 
+- 2026-10-12: R10e merge #138 (câu chữ tiếng Việt từ config, `/config/domain`, Learn `cause_status`, Measure không hỏi lặp, `/metrics` trung thực, ví dụ sinh lại). Supervisor tự kiểm: 1028 passed, smoke 4/4, `demo.sh --fresh-db --check` xanh, A4 theo nguyên nhân `right` 5/5, `wrong` 0/5 (8 seed cũng 8/8, 0/8). Đóng H-32, H-34, H-66 (test đỏ trên main); H-65 còn phần UI. Đóng #111, #114. **(c) supervisor quyết:** tiêu chí 1 tính đạt phần backend dù 6 vitest dashboard đỏ (plan cấm sửa `dashboard/tests`, đã dự kiến) → vai D #139. % đạt giữ 0/67/67.
 - 2026-10-12 (đóng phiên): cổng 13/10 **go**, tag `v0.1-e2e` trên c60fec5 (biên bản `docs/qa/gate-v0.1-e2e.md`, #135); A4 tính đạt theo chữ ngưỡng v0.1, **H-32 phải sửa trước freeze 20/10**. Điều 3 chốt **67** (tái diễn = 0 theo luật "đạt theo cấu tạo"; H-64 chờ D3). #126 (5 bộ D2 thêm) merge; R10b2 dev-07 thêm test 37 bộ D2 (#129). Guard giữ nguyên, không thêm duyệt xoá một lần. Phiên sau: câu chữ cho người dùng bằng tiếng Việt (đang hard-code tiếng Anh ở `ask.py`), #114, #111.
 - 2026-10-12: audit 4 (sau R10d, R10b1, R10b2): 15 lỗ hổng mới H-60..H-74 (1 cao: H-64), đóng H-35, H-44, H-46 (auditor chạy vitest, 49 passed), còn 31 mở. Điều 3 đề nghị hạ 100 → ≤ 67 (33 nếu đọc chặt): tái diễn đạt theo cấu tạo, 4 giả định chưa có nguồn D3, độ nhạy một chiều không đảo chiều. % đạt công thức giữ 0/67/100 đến khi leader chốt.
 - 2026-10-12: R10b2 merge #132 (điều 3: Measure trọng số sản lượng, Detect theo dòng thời gian, run chọn anomaly chưa xử lý + đọc bài học, `metrics_report.py` có đối chứng + độ nhạy, eval `--until learn`, `/metrics` thật). Supervisor tự kiểm: 4/4 tiêu chí cấp mốc đạt (936 passed, smoke 4/4). Đóng H-11, H-33, H-39 (H-33, H-39 đỏ trên main). % đạt 0/67/100; điều 3 dựa trên giả định chưa có nguồn D3. 6 đề xuất (c) của worker chờ leader (PR #132).

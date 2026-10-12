@@ -1,6 +1,6 @@
 {
   "updated": "2026-10-12",
-  "source": "audit 2026-10-12 (sau R10d, R10b1, R10b2) + audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10)",
+  "source": "audit 2026-10-12 (sau R10d, R10b1, R10b2) + audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10) + R10e merge #138",
   "milestones": {
     "project": [
       {
@@ -146,6 +146,14 @@
         "cost_usd": 8.76,
         "minutes": 350,
         "note": "điều 3: measure trọng số sản lượng, Detect theo dòng thời gian, chọn anomaly chưa xử lý + đọc bài học, metrics_report.py có đối chứng + độ nhạy, eval --until learn (A4 right 5/5), /metrics thật; đóng H-11, H-33, H-39; 37 bộ D2; ước tính 195–255 phút, 8,5–10,5 USD (B3 phút 1,37, USD ~1,00); 8 vòng review; cost chỉ tính worker"
+      },
+      {
+        "id": "R10e",
+        "status": "merged",
+        "pr": 138,
+        "cost_usd": 7.05,
+        "minutes": 287,
+        "note": "câu chữ tiếng Việt từ messages.*, ui.language + demo.texts, Measure không hỏi lặp (H-34, #111), Learn cause_status (H-32), GET /config/domain (#114), /metrics trung thực (H-65 a, c, d, e), ví dụ sinh lại (H-66); A4 theo nguyên nhân LLM giả right 5/5, wrong 0/5; 1028 passed; 6 vitest vai D đỏ (#139); ước tính 200–270 phút, 9–11 USD (B3 phút 1,06, USD ~0,92); 8 vòng review; cost chỉ tính worker"
       }
     ],
     "plugin": [
@@ -210,8 +218,8 @@
       "id": 2,
       "text": "Đề xuất được duyệt làm KPI cải thiện; nếu không thì rollback và điều tra lại",
       "percent": 67,
-      "evidence": "Luật chỉ số nhiều phần (criteria.md). A4: R10b2 eval --until learn --seeds 5 LLM giả, kịch bản right 5/5 = 1,0 (supervisor chạy lại 2026-10-12); LLM thật chưa đo -> A4 = 0,5. A5 LLM giả 1,0, LLM thật chưa đo -> 0,5. A6 = 0 vi phạm -> 1. (0,5+0,5+1)/3 = 67. Lưu ý: kịch bản wrong cũng passed 100% (đúng action, sai nguyên nhân; H-32)",
-      "missing": "A4, A5 LLM thật; H-32, H-36",
+      "evidence": "Luật chỉ số nhiều phần (criteria.md). A4: R10e eval --until learn --seeds 5 LLM giả, chấm theo nguyên nhân (cause_status): right passed 5/5, cause_confirmed 5/5; wrong cause_confirmed 0/5 (H-32 đóng); LLM thật chưa đo -> A4 = 0,5. A5 LLM giả 1,0, LLM thật chưa đo -> 0,5. A6 = 0 vi phạm -> 1. (0,5+0,5+1)/3 = 67",
+      "missing": "A4, A5 LLM thật (LLM thật chưa xuất trường signal nên cause_status luôn unconfirmed: đề xuất R11a); H-36",
       "estimate_old": 65,
       "metrics": [
         "A4",
@@ -357,18 +365,6 @@
       "audit": "2026-10-09_2"
     },
     {
-      "id": "H-32",
-      "severity": "vừa",
-      "summary": "Chẩn đoán sai + hành động đúng → Learn lưu nguyên nhân sai là success",
-      "audit": "2026-10-09_2"
-    },
-    {
-      "id": "H-34",
-      "severity": "vừa",
-      "summary": "Câu hỏi chưa đủ bằng chứng của Measure không trả lời được, luôn halt",
-      "audit": "2026-10-09_2"
-    },
-    {
       "id": "H-36",
       "severity": "vừa",
       "summary": "Điều tra lại sau rollback không biết action đã thất bại",
@@ -449,13 +445,7 @@
     {
       "id": "H-65",
       "severity": "vừa",
-      "summary": "/metrics: bỏ llm/limits, NaN -> 500, months không kiểm, báo cáo gitignore nên demo máy mới trống",
-      "audit": "2026-10-12"
-    },
-    {
-      "id": "H-66",
-      "severity": "vừa",
-      "summary": "Ví dụ docs/schema/examples và payloads.md cũ so với code (thiếu n_unit, action)",
+      "summary": "/metrics phía UI còn (b) bỏ dataset/seed/assumptions, (f) before = 0 thành null, (g) thông điệp cũ; (a, c, d, e) đóng R10e #138; giao vai D #139",
       "audit": "2026-10-12"
     },
     {
@@ -508,6 +498,10 @@
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-12",
+      "text": "R10e merge #138 (supervisor --review-only): 7/7 DONE, 8 vòng; 1028 passed, smoke 4/4, demo --check xanh, A4 theo nguyên nhân right 5/5 confirmed, wrong 0/5. Đóng H-32, H-34, H-66 (test đỏ trên main qua git archive); H-65 còn (b, f, g) phía UI. Đóng #111, #114. (c) supervisor quyết: tiêu chí 1 tính đạt phần backend dù 6 vitest dashboard đỏ (plan dev-07 cấm sửa dashboard/tests, đã dự kiến); giao vai D ở #139. % đạt giữ 0/67/67."
+    },
     {
       "date": "2026-10-12",
       "text": "Đóng phiên: cổng 13/10 go, tag v0.1-e2e trên c60fec5 (docs/qa/gate-v0.1-e2e.md, #135); A4 tính đạt theo chữ ngưỡng v0.1, H-32 phải sửa trước freeze 20/10. Điều 3 chốt 67 (tái diễn = 0 theo luật đạt theo cấu tạo; H-64 chờ D3). #126 (5 bộ D2 thêm) merge; R10b2 dev-07 thêm test 37 bộ D2 (#129). Guard giữ nguyên, không thêm duyệt xoá một lần. Phiên sau: câu chữ cho người dùng bằng tiếng Việt (đang hard-code tiếng Anh ở ask.py), #114, #111."
@@ -729,13 +723,25 @@
       "status": "go, tag v0.1-e2e trên c60fec5 (#135); A6 0, A8 10/10 p95 0,8 s, A5 1,0/1,0, A7 tính được, A4 1,0 (H-32 sửa trước freeze), FR-01..05 #116–#118"
     },
     {
+      "id": "R10e",
+      "date": "12/10",
+      "goal": "Câu chữ tiếng Việt, /config/domain, Learn trung thực (H-32), /metrics trung thực",
+      "gaps": [
+        "H-32",
+        "H-34",
+        "H-65",
+        "H-66"
+      ],
+      "needs_team": false,
+      "status": "merged #138"
+    },
+    {
       "id": "R11a",
       "date": "13–14/10",
       "goal": "Điều 1: cơ chế eval trung thực, 1 kịch bản khó do backend soạn",
       "gaps": [
         "H-28",
         "H-29",
-        "H-32",
         "H-36",
         "H-18"
       ],
