@@ -62,19 +62,31 @@ def _norm(text: Any) -> str:
     return " " + re.sub(r"[^a-z0-9]+", " ", str(text).lower()).strip() + " "
 
 
+def _claimed_signal(hyp: Any, config: DomainConfig) -> str | None:
+    """The one hypothesis name (from ``hypothesis_groups``) the hypothesis claims, or None.
+
+    Taken from a structured ``signal`` field when present; otherwise the whole description must be exactly one
+    known name. Free text that merely mentions a name ("material_batch, not wrong_setpoint") claims nothing."""
+    known = {n for names in config.hypothesis_groups.values() for n in names}
+    raw = hyp.get("signal") or hyp.get("description", "") if isinstance(hyp, dict) else hyp or ""
+    text = _norm(raw)
+    matches = [n for n in known if _norm(n) == text]
+    return matches[0] if len(matches) == 1 else None
+
+
 def cause_status(state: dict[str, Any], config: DomainConfig) -> str:
-    """``confirmed`` or ``unconfirmed`` (H-32). Confirmed only when the top hypothesis names a signal, a tool
+    """``confirmed`` or ``unconfirmed`` (H-32). Confirmed only when the top hypothesis claims exactly one signal (see ``_claimed_signal``), a tool
     result of this run for that very signal (same machine as the anomaly) has |r| >= ``learn.min_cause_evidence``,
     and the action's parameter is linked to that signal in ``learn.cause_parameters``. The KPI result is checked
     by the caller (a lesson without a passed KPI is ``no_change`` anyway). Anything missing means unconfirmed."""
     proposal = state.get("proposal") or {}
     hyp = proposal.get("hypothesis")
-    desc = _norm(hyp.get("description", "") if isinstance(hyp, dict) else hyp or "")
+    claimed = _claimed_signal(hyp, config)
     action = proposal.get("action")
     param = action.get("parameter") if isinstance(action, dict) else None
     machine = (state.get("anomaly") or {}).get("machine")
     for signal, params in config.learn.cause_parameters.items():
-        if _norm(signal) not in desc or param not in params:
+        if signal != claimed or param not in params:
             continue
         for e in state.get("evidence") or []:
             res = e.get("result")

@@ -77,6 +77,18 @@ def test_tool_result_for_another_signal_does_not_confirm():
     assert cause_status(st, CFG) == "unconfirmed"
 
 
+@pytest.mark.parametrize("desc", ["material_batch, not wrong_setpoint", "not wrong_setpoint", "wrong_setpoint or wear", "Nguyên nhân là wrong_setpoint"])
+def test_free_text_mentioning_a_signal_does_not_claim_it(desc):
+    assert cause_status(_state(desc, [corr("wrong_setpoint", 0.95)]), CFG) == "unconfirmed"
+
+
+def test_structured_signal_field_claims_the_signal():
+    st = _state("Lò đặt sai nhiệt độ vùng 3", [corr("wrong_setpoint", 0.95)])
+    assert cause_status(st, CFG) == "unconfirmed"
+    st["proposal"]["hypothesis"]["signal"] = "wrong_setpoint"
+    assert cause_status(st, CFG) == "confirmed"
+
+
 def test_own_signal_below_threshold_does_not_confirm():
     st = _state("wrong_setpoint", [corr("wrong_setpoint", 0.2)])
     assert cause_status(st, CFG) == "unconfirmed"
