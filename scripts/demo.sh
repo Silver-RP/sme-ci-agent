@@ -95,6 +95,15 @@ if [ "$FRESH_DB" = "1" ]; then
   DATABASE_URL="$(uv run python scripts/fresh_db.py "$DATABASE_URL")"
   export DATABASE_URL
   echo "Fresh demo database: ${DATABASE_URL##*/}"
+  # data/reports/ is gitignored, so a new machine has no /metrics numbers: make the report (scripted LLM, a few minutes)
+  # unless one exists for this dataset and seed. The replay uses its own temp databases, not the demo one.
+  REPORT="${SME_REPORTS_DIR:-data/reports}/metrics_${SME_DATASET:-sandbox}_seed42.json"
+  if [ ! -f "$REPORT" ]; then
+    echo "No metrics report yet; making it (scripted LLM, takes a few minutes)..."
+    uv run python scripts/metrics_report.py --months 6 --seed 42 --llm scripted --out-dir "$(dirname "$REPORT")" >/dev/null \
+      || echo "WARNING: metrics report failed; /metrics will have no numbers." >&2
+  fi
+  if [ "$CHECK" = "1" ]; then export SME_CHECK_METRICS=1; fi
 fi
 uv run alembic upgrade head
 

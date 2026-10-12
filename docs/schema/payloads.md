@@ -166,7 +166,7 @@ Ví dụ phản hồi `GET /kpi/series`:
 Ví dụ phản hồi `GET /metrics` (chưa có báo cáo cho dataset + seed hiện tại; mọi chỉ số `available: false`, không có số):
 
 ```json
-{"dataset": "sandbox", "seed": 42, "generated_at": null, "assumptions": [],
+{"dataset": "sandbox", "seed": 42, "generated_at": null, "assumptions": [], "llm": null, "limits": [],
  "metrics": [
   {"name": "defect_rate", "unit": "ratio", "before": null, "after": null, "available": false,
    "reason": "no metrics report for dataset 'sandbox', seed 42: run `uv run python scripts/metrics_report.py --months 6 --seed 42` for dataset 'sandbox'", "run_id": null},
@@ -180,6 +180,7 @@ Từ R10b2 (dev-06) số lấy từ báo cáo `data/reports/metrics_<dataset>_se
 - KPI chính: `period_rate` (tỷ lệ gộp theo sản lượng cả kỳ);
 - `mttd_mttr` (giờ): MTTD + MTTR trung bình, tức từ lúc sự cố bắt đầu tới lúc xử lý xong;
 - `recurrence_rate`: tỷ lệ tái diễn.
+Từ R10e (dev-06): phản hồi có thêm `llm` (`scripted` hoặc `real`, lấy từ báo cáo) và `limits` (danh sách câu giới hạn của báo cáo, tiếng Anh như trong báo cáo); không có báo cáo thì `llm: null`, `limits: []`. Báo cáo có `months` khác 6 (hoặc thiếu) không được phục vụ: cả ba chỉ số `available: false` kèm `reason` nêu `months`. Số NaN/inf trong báo cáo thì chỉ số đó `available: false` (không trả 500), giá trị NaN/inf trong `assumptions` thành `null`.
 `run_id` luôn `null`. Hình dạng phần tử không đổi so với R10a. Tuyệt đối không có số giả khi `available: false`.
 
 Ba API đọc trên (R10a) chỉ đọc, không ghi DB. `GET /runs` đọc từ bộ nhớ của app nên mất khi backend khởi động lại (H-15, sửa ở R10c).
