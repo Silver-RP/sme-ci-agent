@@ -436,3 +436,7 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 ### R10e/dev-05: DONE
 - Vòng: 1. Commit: cc81b0c. Review: .autodev/reviews/R10e-dev-05-r1.json (PASS).
 - `GET /config/domain` chỉ đọc (domain, kpis, machines, shifts, sops, llm); không trả tên model; version SOP đọc từ sop_versions. 1005 test pass.
+
+### R10e/dev-06: DONE
+- Vòng: 1. Commit: e8c3978. Review: .autodev/reviews/R10e-dev-06-r1.json (PASS).
+- `/metrics` có `llm`/`limits`, từ chối báo cáo sai `months`, NaN/inf -> `available:false`; `demo.sh --fresh-db` sinh báo cáo (seed 42 cố định), `--check` đòi có số. Reviewer chạy thật demo.sh --fresh-db --check: CHECK PASSED. 1014 test pass.

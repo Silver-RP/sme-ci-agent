@@ -33,8 +33,10 @@
       "commit": "cc81b0c"
     },
     "dev-06": {
-      "status": "TODO",
-      "round": 0
+      "status": "DONE",
+      "round": 1,
+      "base": "e8542eb",
+      "commit": "e8c3978"
     },
     "dev-07": {
       "status": "TODO",
