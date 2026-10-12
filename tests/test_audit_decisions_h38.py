@@ -11,6 +11,7 @@ from backend.agent.state import new_state
 from backend.db.models import AuditLog
 from tests.test_act import (
     CFG,
+    GROWING,
     HUMAN,
     _tables,
     approve,
@@ -54,7 +55,7 @@ def test_refused_answer_writes_no_row(db_session):
 
 
 def test_measure_insufficient_evidence_and_its_answer_one_row_each(db_session):
-    client = client_with(db_session, ScriptedLLM([*investigate_script(), improve_answer()]), tables=_tables())
+    client = client_with(db_session, ScriptedLLM([*investigate_script(), improve_answer()]), GROWING, tables=_tables())
     rid = start(client, change_time=LATE)["run_id"]
     got = approve(client, rid, HUMAN).json()
     assert got["pending"]["type"] == "answer"

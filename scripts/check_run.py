@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import os
 import sys
 import time
 from pathlib import Path
@@ -127,6 +128,10 @@ def check_run(client: Any, kpi: str, sop_id: str) -> str:
     if len(metrics["metrics"]) != 3:
         raise CheckFailed("GET /metrics", f"expected 3 metrics, got {len(metrics['metrics'])}")
     need_keys("GET /metrics", metrics["metrics"][0], {"name", "unit", "before", "after", "available", "reason", "run_id"})
+    if os.environ.get("SME_CHECK_METRICS") == "1":  # demo.sh --fresh-db: the report was made at start, numbers must show
+        missing = [m["name"] for m in metrics["metrics"] if not m["available"] or m["before"] is None or m["after"] is None]
+        if missing:
+            raise CheckFailed("GET /metrics", f"no numbers for {', '.join(missing)}: {metrics['metrics'][0].get('reason')}")
     print("ok: GET /metrics", flush=True)
     return run_id
 

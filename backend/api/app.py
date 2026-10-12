@@ -579,6 +579,26 @@ def create_app(
     read_lock = threading.Lock()
     shared_read: dict[str, Session] = {}
 
+    @app.get("/config/domain")
+    def config_domain() -> dict[str, Any]:
+        """Read-only domain summary for the dashboard (#114). SOP version = newest in sop_versions, else the config's.
+        ``llm`` is only ``scripted`` or ``real``; never a model name."""
+        sops: list[dict[str, Any]] = []
+        with read_db() as session:
+            for sop_id in dict.fromkeys(s.id for s in cfg_domain.sop):
+                row = repo.get_sop_version(session, sop_id)
+                version = row.version if row is not None else max(s.version for s in cfg_domain.sop if s.id == sop_id)
+                sops.append({"sop_id": sop_id, "version": version})
+        mode = (os.environ.get("SME_LLM") or "").strip().lower()
+        return {
+            "domain": cfg_domain.domain,
+            "kpis": [{"name": k.name, "unit": k.unit, "direction": k.direction} for k in cfg_domain.kpis],
+            "machines": list(cfg_domain.plant.machines),
+            "shifts": list(cfg_domain.plant.shifts),
+            "sops": sops,
+            "llm": "scripted" if mode == "scripted" else "real",
+        }
+
     @contextmanager
     def read_db():
         """A session for read-only endpoints (audit, SOP versions). With an injected ctx_factory (tests) reuse its

@@ -108,6 +108,7 @@ BRANCHES = {
     "rollback": ("finished", "completed"),
     "rollback-declined": ("waiting", "halt:rollback_declined"),
     "insufficient-evidence": ("waiting", "answer"),
+    "insufficient-evidence-final": ("finished", "closed"),
     "revise": ("finished", "completed"),
     "halt-max-questions": ("waiting", "halt:max_questions_reached"),
     "error-retry": ("finished", "completed"),

@@ -4,6 +4,7 @@
     uv run python scripts/eval_rootcause.py --llm real       # AnthropicLLM; you set the key and MODEL_REASONING in .env
     uv run python scripts/eval_rootcause.py --seeds 5        # N runs per scenario, a different data seed each
     uv run python scripts/eval_rootcause.py --until learn    # approve and run to Learn; table shows passed_rate (A4)
+                                                             # and cause_confirmed (lesson cause_status, H-32)
 
 Each run drives the full graph with a NEUTRAL person: every answer is "no further information" and nothing in
 the answer, the approval or the reason names the cause, so the agent cannot be handed the solution. A run stops
@@ -122,7 +123,7 @@ def _wrong_llm(config: DomainConfig) -> ScriptedLLM:
 
 def _unsure_llm(config: DomainConfig) -> ScriptedLLM:
     group = next(iter(config.hypothesis_groups))
-    low = _hyp(group, "unclear cause", 0.2, insufficient=True)
+    low = _hyp(group, config.demo.texts.unclear_cause, 0.2, insufficient=True)
     return ScriptedLLM([low] * (config.ask.max_questions + 1))  # first look + one per answer
 
 
@@ -147,6 +148,7 @@ class RunResult:
     tokens: int
     passed: bool | None = None  # --until learn: the last kpi_measured.passed of the run (None = never measured)
     learned: bool = False  # --until learn: a learning_saved event
+    cause_confirmed: bool = False  # --until learn: the last learning_saved has cause_status == "confirmed" (H-32)
 
 
 @dataclass
@@ -169,6 +171,11 @@ class ScenarioResult:
     def passed_rate(self) -> float:
         """A4: share of runs whose last ``kpi_measured`` has ``passed = true`` (never measured counts as not passed)."""
         return self._rate(lambda r: r.passed is True)
+
+    @property
+    def cause_confirmed_rate(self) -> float:
+        """H-32: share of runs whose lesson says the cause was confirmed (not only that the KPI passed)."""
+        return self._rate(lambda r: r.cause_confirmed)
 
     @property
     def improve_no_evidence(self) -> int:
@@ -261,6 +268,10 @@ def _run_once(
         tokens=counted.tokens,
         passed=measured[-1] if measured else None,
         learned=any(e["type"] == "learning_saved" for e in events),
+        cause_confirmed=any(
+            e["type"] == "learning_saved" and e["payload"]["content"].get("cause_status") == "confirmed"
+            for e in events
+        ),
     )
 
 
@@ -284,9 +295,10 @@ def evaluate(
 
 def format_table(results: list[ScenarioResult], until: str = "proposal") -> str:
     if until == "learn":
-        head = f"{'scenario':<10}{'runs':>5}{'passed_rate':>13}{'learned':>9}{'tokens~':>9}"
+        head = f"{'scenario':<10}{'runs':>5}{'passed_rate':>13}{'cause_confirmed':>17}{'learned':>9}{'tokens~':>9}"
         rows = [
-            f"{r.name:<10}{len(r.runs):>5}{r.passed_rate:>13.0%}{sum(x.learned for x in r.runs):>9}{r.tokens:>9}"
+            f"{r.name:<10}{len(r.runs):>5}{r.passed_rate:>13.0%}{r.cause_confirmed_rate:>17.0%}"
+            f"{sum(x.learned for x in r.runs):>9}{r.tokens:>9}"
             for r in results
         ]
         return "\n".join([head, *rows])

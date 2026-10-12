@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import string
 from pathlib import Path
 
 import yaml
@@ -97,6 +98,19 @@ class ActionParams(_Strict):
         return self
 
 
+class LearnParams(_Strict):
+    """Learn parameters (YAML key ``learn:``): when a lesson counts as a confirmed cause (H-32)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    # |r| of the top hypothesis' own signal (from a tool result) must reach this for the cause to count as confirmed
+    min_cause_evidence: float = Field(default=0.5, ge=0.0, le=1.0)
+    # signal/hypothesis name -> action parameters that act on it (a fix on another parameter does not confirm it)
+    cause_parameters: dict[str, list[str]] = Field(default_factory=dict)
+    # shown in the Investigate prompt before a lesson whose cause is not confirmed
+    unconfirmed_label: str = Field(default="cause not confirmed", min_length=1)
+
+
 class AskParams(_Strict):
     """Ask parameters (YAML key ``ask:``)."""
 
@@ -117,6 +131,9 @@ class MeasureParams(_Strict):
     tolerance: float = Field(default=0.25, ge=0.0)
     min_samples_after: int = Field(default=6, ge=1)  # kpi_log fallback (no production_log): fewer points -> "not enough evidence"
     min_units_after: int = Field(default=6000, ge=1)  # units after the change (sum of the KPI denominator) below this -> "not enough evidence"
+    # True when the source may get more points after the change (a live source). The sandbox is a function of
+    # run_id: waiting adds nothing, so Measure reports once and offers only "finish" (H-34, #111).
+    source_may_grow: bool = False
 
 
 class LoopParams(_Strict):
@@ -141,12 +158,31 @@ class SignalNames(_Strict):
     batch_change: str = Field(min_length=1)
 
 
+class DemoTexts(_Strict):
+    """Display strings of the scripted demo LLM (YAML key ``demo.texts:``)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    unclear_cause: str = Field(min_length=1)  # hypothesis description of the unsure first answer
+    change: str = Field(min_length=1)  # proposal.change
+    rationale: str = Field(min_length=1)  # proposal.rationale
+
+
+class UiParams(_Strict):
+    """Display settings (YAML key ``ui:``)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    language: str = Field(min_length=1)  # language the LLM writes display fields in (e.g. an ISO code)
+
+
 class DemoParams(_Strict):
     """What the scripted demo LLM investigates (YAML key ``demo:``)."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     machine_id: str = Field(min_length=1)
+    texts: DemoTexts
 
 
 class PlantParams(_Strict):
@@ -213,6 +249,73 @@ class ValidateParams(_Strict):
         return v
 
 
+HALT_REASON_CODES = (
+    "insufficient_evidence",
+    "rollback_declined",
+    "max_total_rollbacks_reached",
+    "max_rollbacks_reached",
+    "max_revisions_reached",
+    "max_rejections_reached",
+    "max_questions_reached",
+)
+
+# Placeholders each template may use (checked at load time so a typo fails with the key name).
+_MESSAGE_PLACEHOLDERS: dict[str, set[str]] = {
+    "question_no_hypothesis": set(),
+    "question_unsupported_hypothesis": {"group", "description", "confidence"},
+    "question_low_confidence": {"group", "description", "confidence", "threshold"},
+    "halt_question_finish": {"reason"},
+    "halt_question_investigate": {"reason"},
+    "evidence_wait_question": {"n_after", "n_unit", "kpi", "needed"},
+    "evidence_final_question": {"n_after", "n_unit", "kpi", "needed"},
+    "rollback_change_sop": {"sop_id", "previous_version"},
+    "rollback_change_no_sop": set(),
+    "rollback_rationale": {"kpi", "after", "target", "tolerance"},
+    "not_applied_no_sop": set(),
+    "not_applied_no_action": set(),
+    "sop_conflict": {"sop_id", "base_version", "current_version"},
+}
+
+
+class Messages(_Strict):
+    """User-facing sentences (YAML key ``messages:``), templates with ``{placeholder}``. All keys are required."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    question_no_hypothesis: str
+    question_unsupported_hypothesis: str
+    question_low_confidence: str
+    halt_question_finish: str
+    halt_question_investigate: str
+    halt_reasons: dict[str, str]
+    evidence_wait_question: str
+    evidence_final_question: str
+    rollback_change_sop: str
+    rollback_change_no_sop: str
+    rollback_rationale: str
+    not_applied_no_sop: str
+    not_applied_no_action: str
+    sop_conflict: str
+
+    @model_validator(mode="after")
+    def _templates_ok(self) -> Messages:
+        for key, allowed in _MESSAGE_PLACEHOLDERS.items():
+            used = {f for _, f, _, _ in string.Formatter().parse(getattr(self, key)) if f}
+            if used - allowed:
+                raise ValueError(f"messages.{key} uses unknown placeholder(s) {sorted(used - allowed)}; allowed {sorted(allowed)}")
+        missing = [c for c in HALT_REASON_CODES if c not in self.halt_reasons]
+        if missing:
+            raise ValueError(f"messages.halt_reasons is missing key(s) {missing}")
+        return self
+
+    def render(self, key: str, **params: object) -> str:
+        """Fill the template ``messages.<key>`` with the given placeholder values."""
+        return getattr(self, key).format(**params)
+
+    def halt_reason_label(self, code: str) -> str:
+        return self.halt_reasons.get(code, code)
+
+
 UNSOURCED = "giả định, chờ D3"
 
 
@@ -239,6 +342,8 @@ class DomainConfig(_Strict):
     validate_: ValidateParams = Field(default_factory=ValidateParams, alias="validate")
     signals: SignalNames
     demo: DemoParams
+    messages: Messages
+    ui: UiParams
     default_period: tuple[str, str]
     actions: ActionParams = Field(default_factory=ActionParams)
     ask: AskParams = Field(default_factory=AskParams)
@@ -246,6 +351,7 @@ class DomainConfig(_Strict):
     loop: LoopParams = Field(default_factory=LoopParams)
     detect: DetectParams = Field(default_factory=DetectParams)
     investigate: InvestigateParams = Field(default_factory=InvestigateParams)
+    learn: LearnParams = Field(default_factory=LearnParams)
     improve: ImproveParams = Field(default_factory=ImproveParams)
     kpis: list[KPI] = Field(min_length=1)
     hypothesis_groups: dict[str, list[str]] = Field(min_length=1)
@@ -256,6 +362,14 @@ class DomainConfig(_Strict):
     def _event_types_cover_setpoint(self) -> DomainConfig:
         if self.signals.setpoint_event not in self.machine_log.event_types:
             raise ValueError("machine_log.event_types must contain signals.setpoint_event")
+        return self
+
+    @model_validator(mode="after")
+    def _learn_links_known(self) -> DomainConfig:
+        for cause, params in self.learn.cause_parameters.items():
+            unknown = [p for p in params if p not in self.actions.parameters]
+            if unknown:
+                raise ValueError(f"learn.cause_parameters[{cause}]: {unknown} not in actions.parameters")
         return self
 
     @field_validator("approvers")

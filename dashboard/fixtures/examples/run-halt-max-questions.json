@@ -8,26 +8,26 @@
       "body": {},
       "http": 201,
       "response": {
-        "run_id": "run_32fd183a",
+        "run_id": "run_2e8e4d59",
         "state": "waiting",
         "status": "",
         "pending": {
           "type": "answer",
-          "question": "Top hypothesis (machine: unclear cause) has confidence 0.20, below 0.60. Can you confirm or add information?",
-          "question_id": "evt_run_32fd183a_0004",
+          "question": "Giả thuyết đứng đầu (machine: Chưa rõ nguyên nhân) có độ tin cậy 0.20, thấp hơn ngưỡng 0.60. Anh/chị xác nhận hoặc bổ sung thông tin?",
+          "question_id": "evt_run_2e8e4d59_0004",
           "attempt": 1,
-          "run_id": "run_32fd183a"
+          "run_id": "run_2e8e4d59"
         }
       },
       "last_event": {
-        "event_id": "evt_run_32fd183a_0004",
-        "run_id": "run_32fd183a",
-        "ts": "2026-10-11T08:48:13Z",
+        "event_id": "evt_run_2e8e4d59_0004",
+        "run_id": "run_2e8e4d59",
+        "ts": "2026-01-01T00:00:03Z",
         "type": "question_asked",
         "agent": "investigation",
         "domain": "manufacturing",
         "payload": {
-          "question": "Top hypothesis (machine: unclear cause) has confidence 0.20, below 0.60. Can you confirm or add information?",
+          "question": "Giả thuyết đứng đầu (machine: Chưa rõ nguyên nhân) có độ tin cậy 0.20, thấp hơn ngưỡng 0.60. Anh/chị xác nhận hoặc bổ sung thông tin?",
           "attempt": 1,
           "max_questions": 2
         }
@@ -37,30 +37,30 @@
       "request": "POST /runs/{run_id}/answer",
       "body": {
         "answer": "not sure",
-        "question_id": "evt_run_32fd183a_0004"
+        "question_id": "evt_run_2e8e4d59_0004"
       },
       "http": 200,
       "response": {
-        "run_id": "run_32fd183a",
+        "run_id": "run_2e8e4d59",
         "state": "waiting",
         "status": "",
         "pending": {
           "type": "answer",
-          "question": "Top hypothesis (machine: unclear cause) has confidence 0.20, below 0.60. Can you confirm or add information?",
-          "question_id": "evt_run_32fd183a_0007",
+          "question": "Giả thuyết đứng đầu (machine: Chưa rõ nguyên nhân) có độ tin cậy 0.20, thấp hơn ngưỡng 0.60. Anh/chị xác nhận hoặc bổ sung thông tin?",
+          "question_id": "evt_run_2e8e4d59_0007",
           "attempt": 2,
-          "run_id": "run_32fd183a"
+          "run_id": "run_2e8e4d59"
         }
       },
       "last_event": {
-        "event_id": "evt_run_32fd183a_0007",
-        "run_id": "run_32fd183a",
-        "ts": "2026-10-11T08:48:13Z",
+        "event_id": "evt_run_2e8e4d59_0007",
+        "run_id": "run_2e8e4d59",
+        "ts": "2026-01-01T00:00:06Z",
         "type": "question_asked",
         "agent": "investigation",
         "domain": "manufacturing",
         "payload": {
-          "question": "Top hypothesis (machine: unclear cause) has confidence 0.20, below 0.60. Can you confirm or add information?",
+          "question": "Giả thuyết đứng đầu (machine: Chưa rõ nguyên nhân) có độ tin cậy 0.20, thấp hơn ngưỡng 0.60. Anh/chị xác nhận hoặc bổ sung thông tin?",
           "attempt": 2,
           "max_questions": 2
         }
@@ -70,20 +70,20 @@
       "request": "POST /runs/{run_id}/answer",
       "body": {
         "answer": "still not sure",
-        "question_id": "evt_run_32fd183a_0007"
+        "question_id": "evt_run_2e8e4d59_0007"
       },
       "http": 200,
       "response": {
-        "run_id": "run_32fd183a",
+        "run_id": "run_2e8e4d59",
         "state": "waiting",
         "status": "awaiting_human",
         "pending": {
           "type": "approval",
           "kind": "halt",
           "proposal_id": "halt_1",
-          "run_id": "run_32fd183a",
+          "run_id": "run_2e8e4d59",
           "reason": "max_questions_reached",
-          "question": "The agent stopped (max_questions_reached). Investigate again (add information if you have any) or finish?",
+          "question": "Agent đã dừng (đã đạt số câu hỏi tối đa). Điều tra lại (bổ sung thông tin nếu có) hay kết thúc?",
           "options": [
             "investigate",
             "finish"
@@ -94,9 +94,9 @@
         }
       },
       "last_event": {
-        "event_id": "evt_run_32fd183a_0010",
-        "run_id": "run_32fd183a",
-        "ts": "2026-10-11T08:48:13Z",
+        "event_id": "evt_run_2e8e4d59_0010",
+        "run_id": "run_2e8e4d59",
+        "ts": "2026-01-01T00:00:09Z",
         "type": "question_asked",
         "agent": "system",
         "domain": "manufacturing",
@@ -104,7 +104,7 @@
           "kind": "halt",
           "reason": "max_questions_reached",
           "status": "awaiting_human",
-          "question": "The agent stopped (max_questions_reached). Investigate again (add information if you have any) or finish?",
+          "question": "Agent đã dừng (đã đạt số câu hỏi tối đa). Điều tra lại (bổ sung thông tin nếu có) hay kết thúc?",
           "options": [
             "investigate",
             "finish"
@@ -116,9 +116,9 @@
   ],
   "events": [
     {
-      "event_id": "evt_run_32fd183a_0001",
-      "run_id": "run_32fd183a",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_2e8e4d59_0001",
+      "run_id": "run_2e8e4d59",
+      "ts": "2026-01-01T00:00:00Z",
       "type": "tool_called",
       "agent": "quality",
       "domain": "manufacturing",
@@ -132,9 +132,9 @@
       }
     },
     {
-      "event_id": "evt_run_32fd183a_0002",
-      "run_id": "run_32fd183a",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_2e8e4d59_0002",
+      "run_id": "run_2e8e4d59",
+      "ts": "2026-01-01T00:00:01Z",
       "type": "anomaly_detected",
       "agent": "quality",
       "domain": "manufacturing",
@@ -154,9 +154,9 @@
       }
     },
     {
-      "event_id": "evt_run_32fd183a_0003",
-      "run_id": "run_32fd183a",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_2e8e4d59_0003",
+      "run_id": "run_2e8e4d59",
+      "ts": "2026-01-01T00:00:02Z",
       "type": "hypothesis_updated",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -164,7 +164,7 @@
         "hypotheses": [
           {
             "group": "machine",
-            "description": "unclear cause",
+            "description": "Chưa rõ nguyên nhân",
             "confidence": 0.2
           }
         ],
@@ -172,22 +172,22 @@
       }
     },
     {
-      "event_id": "evt_run_32fd183a_0004",
-      "run_id": "run_32fd183a",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_2e8e4d59_0004",
+      "run_id": "run_2e8e4d59",
+      "ts": "2026-01-01T00:00:03Z",
       "type": "question_asked",
       "agent": "investigation",
       "domain": "manufacturing",
       "payload": {
-        "question": "Top hypothesis (machine: unclear cause) has confidence 0.20, below 0.60. Can you confirm or add information?",
+        "question": "Giả thuyết đứng đầu (machine: Chưa rõ nguyên nhân) có độ tin cậy 0.20, thấp hơn ngưỡng 0.60. Anh/chị xác nhận hoặc bổ sung thông tin?",
         "attempt": 1,
         "max_questions": 2
       }
     },
     {
-      "event_id": "evt_run_32fd183a_0005",
-      "run_id": "run_32fd183a",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_2e8e4d59_0005",
+      "run_id": "run_2e8e4d59",
+      "ts": "2026-01-01T00:00:04Z",
       "type": "answer_received",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -196,9 +196,9 @@
       }
     },
     {
-      "event_id": "evt_run_32fd183a_0006",
-      "run_id": "run_32fd183a",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_2e8e4d59_0006",
+      "run_id": "run_2e8e4d59",
+      "ts": "2026-01-01T00:00:05Z",
       "type": "hypothesis_updated",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -206,7 +206,7 @@
         "hypotheses": [
           {
             "group": "machine",
-            "description": "unclear cause",
+            "description": "Chưa rõ nguyên nhân",
             "confidence": 0.2
           }
         ],
@@ -214,22 +214,22 @@
       }
     },
     {
-      "event_id": "evt_run_32fd183a_0007",
-      "run_id": "run_32fd183a",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_2e8e4d59_0007",
+      "run_id": "run_2e8e4d59",
+      "ts": "2026-01-01T00:00:06Z",
       "type": "question_asked",
       "agent": "investigation",
       "domain": "manufacturing",
       "payload": {
-        "question": "Top hypothesis (machine: unclear cause) has confidence 0.20, below 0.60. Can you confirm or add information?",
+        "question": "Giả thuyết đứng đầu (machine: Chưa rõ nguyên nhân) có độ tin cậy 0.20, thấp hơn ngưỡng 0.60. Anh/chị xác nhận hoặc bổ sung thông tin?",
         "attempt": 2,
         "max_questions": 2
       }
     },
     {
-      "event_id": "evt_run_32fd183a_0008",
-      "run_id": "run_32fd183a",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_2e8e4d59_0008",
+      "run_id": "run_2e8e4d59",
+      "ts": "2026-01-01T00:00:07Z",
       "type": "answer_received",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -238,9 +238,9 @@
       }
     },
     {
-      "event_id": "evt_run_32fd183a_0009",
-      "run_id": "run_32fd183a",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_2e8e4d59_0009",
+      "run_id": "run_2e8e4d59",
+      "ts": "2026-01-01T00:00:08Z",
       "type": "hypothesis_updated",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -248,7 +248,7 @@
         "hypotheses": [
           {
             "group": "machine",
-            "description": "unclear cause",
+            "description": "Chưa rõ nguyên nhân",
             "confidence": 0.2
           }
         ],
@@ -256,9 +256,9 @@
       }
     },
     {
-      "event_id": "evt_run_32fd183a_0010",
-      "run_id": "run_32fd183a",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_2e8e4d59_0010",
+      "run_id": "run_2e8e4d59",
+      "ts": "2026-01-01T00:00:09Z",
       "type": "question_asked",
       "agent": "system",
       "domain": "manufacturing",
@@ -266,7 +266,7 @@
         "kind": "halt",
         "reason": "max_questions_reached",
         "status": "awaiting_human",
-        "question": "The agent stopped (max_questions_reached). Investigate again (add information if you have any) or finish?",
+        "question": "Agent đã dừng (đã đạt số câu hỏi tối đa). Điều tra lại (bổ sung thông tin nếu có) hay kết thúc?",
         "options": [
           "investigate",
           "finish"

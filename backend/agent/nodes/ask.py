@@ -48,18 +48,14 @@ def route_after_investigate(state: AgentState, config: DomainConfig) -> str:
 
 def _question_text(state: AgentState, config: DomainConfig) -> str:
     hyps = state.get("hypotheses") or []
+    msg = config.messages
     if not hyps:
-        return "Evidence is insufficient to form a hypothesis. What else do you know about this anomaly?"
+        return msg.render("question_no_hypothesis")
     top = max(hyps, key=lambda h: h.confidence)
+    params = {"group": top.group, "description": top.description, "confidence": top.confidence}
     if top.confidence >= config.ask.confidence_threshold:  # asked only because no tool result supports it
-        return (
-            f"Top hypothesis ({top.group}: {top.description}) has confidence {top.confidence:.2f} but no tool "
-            "result supports it. Can you confirm it or give the evidence you have?"
-        )
-    return (
-        f"Top hypothesis ({top.group}: {top.description}) has confidence {top.confidence:.2f}, below "
-        f"{config.ask.confidence_threshold:.2f}. Can you confirm or add information?"
-    )
+        return msg.render("question_unsupported_hypothesis", **params)
+    return msg.render("question_low_confidence", threshold=config.ask.confidence_threshold, **params)
 
 
 def make_ask_node(config: DomainConfig):
@@ -126,13 +122,12 @@ def halt_options(state: AgentState, config: DomainConfig) -> list[str]:
     return list(HALT_OPTIONS)
 
 
-def halt_payload(reason: str, options: list[str] | None = None, **extra: Any) -> dict[str, Any]:
-    """Payload of the ``question_asked`` event that stops the run for a person (resumable, not a dead end)."""
+def halt_payload(config: DomainConfig, reason: str, options: list[str] | None = None, **extra: Any) -> dict[str, Any]:
+    """Payload of the question_asked event that stops the run for a person (resumable, not a dead end).
+    reason stays a code; the sentence uses its label from messages.halt_reasons."""
     options = list(options if options is not None else HALT_OPTIONS)
-    if options == ["finish"]:
-        question = f"The agent stopped ({reason}). Finish the run?"
-    else:
-        question = f"The agent stopped ({reason}). Investigate again (add information if you have any) or finish?"
+    key = "halt_question_finish" if options == ["finish"] else "halt_question_investigate"
+    question = config.messages.render(key, reason=config.messages.halt_reason_label(reason))
     return {
         "kind": "halt",
         "reason": reason,
@@ -159,7 +154,7 @@ def make_halt_node(config: DomainConfig, ctx: ToolContext | None = None):
 
     def halt(state: AgentState) -> dict[str, Any]:
         payload = halt_payload(
-            "max_questions_reached", options=halt_options(state, config), questions=state.get("question_count", 0)
+            config, "max_questions_reached", options=halt_options(state, config), questions=state.get("question_count", 0)
         )
         audit_halt_raised(ctx, payload)
         ev = make_event(state, "question_asked", "system", payload, len(state.get("events", [])) + 1, config.domain)

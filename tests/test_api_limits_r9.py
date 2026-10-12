@@ -13,6 +13,7 @@ from backend.tools.readonly import ToolContext
 from tests.test_act import (
     CFG,
     CHANGE,
+    GROWING,
     HUMAN,
     _fixed_tables,
     _tables,
@@ -116,10 +117,10 @@ LATE = "2026-06-29T22:00:00"  # too few KPI points after the change
 
 
 def test_missing_samples_after_the_change_is_a_pending_answer_and_answer_continues(db_session):
-    client = client_with(db_session, ScriptedLLM([*investigate_script(), improve_answer()]), tables=_tables())
+    client = client_with(db_session, ScriptedLLM([*investigate_script(), improve_answer()]), GROWING, tables=_tables())
     rid = start(client, change_time=LATE)["run_id"]
     got = approve(client, rid, HUMAN).json()
-    assert got["state"] == "waiting" and got["pending"]["type"] == "answer" and "not enough" in got["pending"]["question"].lower()
+    assert got["state"] == "waiting" and got["pending"]["type"] == "answer" and "chưa đủ bằng chứng" in got["pending"]["question"].lower()
     r = client.post(f"/runs/{rid}/answer", json={"answer": "wait for more data", "question_id": got["pending"]["question_id"]})
     assert r.status_code == 200, r.text
 

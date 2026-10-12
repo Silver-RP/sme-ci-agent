@@ -25,7 +25,7 @@ def demo_low_confidence(config: DomainConfig) -> str:
     """An Investigate answer that is unsure: the agent asks a person."""
     return json.dumps(
         {
-            "hypotheses": [{"group": _group(config), "description": "unclear cause", "confidence": 0.2}],
+            "hypotheses": [{"group": _group(config), "description": config.demo.texts.unclear_cause, "confidence": 0.2}],
             "insufficient_evidence": True,
         }
     )
@@ -57,8 +57,8 @@ def demo_improve(config: DomainConfig, parameter: str | None = None, machine_id:
     right = config.actions.parameters[0]
     return json.dumps(
         {
-            "change": "Restore the setpoint and add a setpoint check step to the SOP",
-            "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
+            "change": config.demo.texts.change,
+            "rationale": config.demo.texts.rationale,
             "evidence_refs": [0],
             "expected_kpi": {"kpi": kpi.name, "direction": "decrease", "target": kpi.target},
             "sop_change": {

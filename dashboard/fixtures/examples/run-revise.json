@@ -8,21 +8,21 @@
       "body": {},
       "http": 201,
       "response": {
-        "run_id": "run_3bee37de",
+        "run_id": "run_d8abc561",
         "state": "waiting",
         "status": "",
         "pending": {
           "type": "approval",
           "kind": "proposal",
           "proposal": {
-            "proposal_id": "777ad6d14382",
+            "proposal_id": "e68ca8172e68",
             "hypothesis": {
               "group": "machine",
               "description": "wrong_setpoint",
               "confidence": 0.8
             },
-            "change": "Restore the setpoint and add a setpoint check step to the SOP",
-            "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
+            "change": "Khôi phục setpoint và thêm bước kiểm tra setpoint vào SOP",
+            "rationale": "Bằng chứng 0 cho thấy tỷ lệ lỗi thay đổi theo setpoint",
             "evidence_refs": [
               0
             ],
@@ -33,11 +33,11 @@
             },
             "status": "pending_approval",
             "sop_proposal": {
-              "proposal_id": "6e41a0160911",
+              "proposal_id": "37d13aabb6d2",
               "sop_id": "SOP-RFL-001",
-              "base_version": 143,
+              "base_version": 1,
               "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
-              "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
+              "rationale": "Bằng chứng 0 cho thấy tỷ lệ lỗi thay đổi theo setpoint",
               "kpi": "defect_rate",
               "status": "pending_approval"
             },
@@ -47,33 +47,33 @@
               "value": 180.0
             }
           },
-          "run_id": "run_3bee37de",
+          "run_id": "run_d8abc561",
           "current_sop": {
             "sop_id": "SOP-RFL-001",
-            "version": 143,
+            "version": 1,
             "content": "Verify the setpoint.\nCheck the setpoint again after the shift change."
           },
-          "proposal_id": "777ad6d14382",
-          "proposal_hash": "1ac50d6890795906f95d2833735a58535c4ab09153d9fcd39820d82e9061b625"
+          "proposal_id": "e68ca8172e68",
+          "proposal_hash": "f3126d426f7298194d2247a5c8f504ba38f1d154e29fc602a31863012af0437f"
         }
       },
       "last_event": {
-        "event_id": "evt_run_3bee37de_0005",
-        "run_id": "run_3bee37de",
-        "ts": "2026-10-11T08:48:13Z",
+        "event_id": "evt_run_d8abc561_0005",
+        "run_id": "run_d8abc561",
+        "ts": "2026-01-01T00:00:04Z",
         "type": "proposal_created",
         "agent": "improvement",
         "domain": "manufacturing",
         "payload": {
           "proposal": {
-            "proposal_id": "777ad6d14382",
+            "proposal_id": "e68ca8172e68",
             "hypothesis": {
               "group": "machine",
               "description": "wrong_setpoint",
               "confidence": 0.8
             },
-            "change": "Restore the setpoint and add a setpoint check step to the SOP",
-            "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
+            "change": "Khôi phục setpoint và thêm bước kiểm tra setpoint vào SOP",
+            "rationale": "Bằng chứng 0 cho thấy tỷ lệ lỗi thay đổi theo setpoint",
             "evidence_refs": [
               0
             ],
@@ -84,11 +84,11 @@
             },
             "status": "pending_approval",
             "sop_proposal": {
-              "proposal_id": "6e41a0160911",
+              "proposal_id": "37d13aabb6d2",
               "sop_id": "SOP-RFL-001",
-              "base_version": 143,
+              "base_version": 1,
               "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
-              "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
+              "rationale": "Bằng chứng 0 cho thấy tỷ lệ lỗi thay đổi theo setpoint",
               "kpi": "defect_rate",
               "status": "pending_approval"
             },
@@ -104,7 +104,7 @@
     {
       "request": "POST /runs/{run_id}/approval",
       "body": {
-        "proposal_id": "777ad6d14382",
+        "proposal_id": "e68ca8172e68",
         "kind": "proposal",
         "decision": "revise",
         "decided_by": "alice",
@@ -112,21 +112,21 @@
       },
       "http": 200,
       "response": {
-        "run_id": "run_3bee37de",
+        "run_id": "run_d8abc561",
         "state": "waiting",
         "status": "",
         "pending": {
           "type": "approval",
           "kind": "proposal",
           "proposal": {
-            "proposal_id": "834ef86f1011",
+            "proposal_id": "72b33e715e42",
             "hypothesis": {
               "group": "machine",
               "description": "wrong_setpoint",
               "confidence": 0.8
             },
-            "change": "Restore the setpoint and add a setpoint check step to the SOP",
-            "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
+            "change": "Khôi phục setpoint và thêm bước kiểm tra setpoint vào SOP",
+            "rationale": "Bằng chứng 0 cho thấy tỷ lệ lỗi thay đổi theo setpoint",
             "evidence_refs": [
               0
             ],
@@ -137,11 +137,11 @@
             },
             "status": "pending_approval",
             "sop_proposal": {
-              "proposal_id": "62373851fc05",
+              "proposal_id": "e8f80c7c7153",
               "sop_id": "SOP-RFL-001",
-              "base_version": 143,
+              "base_version": 1,
               "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
-              "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
+              "rationale": "Bằng chứng 0 cho thấy tỷ lệ lỗi thay đổi theo setpoint",
               "kpi": "defect_rate",
               "status": "pending_approval"
             },
@@ -151,33 +151,33 @@
               "value": 180.0
             }
           },
-          "run_id": "run_3bee37de",
+          "run_id": "run_d8abc561",
           "current_sop": {
             "sop_id": "SOP-RFL-001",
-            "version": 143,
+            "version": 1,
             "content": "Verify the setpoint.\nCheck the setpoint again after the shift change."
           },
-          "proposal_id": "834ef86f1011",
-          "proposal_hash": "282b043cb03ed01ac01c14123af0661c516fb7a5d0d8e45b002c33abf4118654"
+          "proposal_id": "72b33e715e42",
+          "proposal_hash": "b2c5509f6d6e5c082692391d6ae7d8dbeeeeb8b04b4de90d241a7b2eb47b3374"
         }
       },
       "last_event": {
-        "event_id": "evt_run_3bee37de_0009",
-        "run_id": "run_3bee37de",
-        "ts": "2026-10-11T08:48:13Z",
+        "event_id": "evt_run_d8abc561_0009",
+        "run_id": "run_d8abc561",
+        "ts": "2026-01-01T00:00:08Z",
         "type": "proposal_created",
         "agent": "improvement",
         "domain": "manufacturing",
         "payload": {
           "proposal": {
-            "proposal_id": "834ef86f1011",
+            "proposal_id": "72b33e715e42",
             "hypothesis": {
               "group": "machine",
               "description": "wrong_setpoint",
               "confidence": 0.8
             },
-            "change": "Restore the setpoint and add a setpoint check step to the SOP",
-            "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
+            "change": "Khôi phục setpoint và thêm bước kiểm tra setpoint vào SOP",
+            "rationale": "Bằng chứng 0 cho thấy tỷ lệ lỗi thay đổi theo setpoint",
             "evidence_refs": [
               0
             ],
@@ -188,11 +188,11 @@
             },
             "status": "pending_approval",
             "sop_proposal": {
-              "proposal_id": "62373851fc05",
+              "proposal_id": "e8f80c7c7153",
               "sop_id": "SOP-RFL-001",
-              "base_version": 143,
+              "base_version": 1,
               "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
-              "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
+              "rationale": "Bằng chứng 0 cho thấy tỷ lệ lỗi thay đổi theo setpoint",
               "kpi": "defect_rate",
               "status": "pending_approval"
             },
@@ -208,7 +208,7 @@
     {
       "request": "POST /runs/{run_id}/approval",
       "body": {
-        "proposal_id": "834ef86f1011",
+        "proposal_id": "72b33e715e42",
         "kind": "proposal",
         "decision": "approved",
         "decided_by": "alice",
@@ -216,15 +216,15 @@
       },
       "http": 200,
       "response": {
-        "run_id": "run_3bee37de",
+        "run_id": "run_d8abc561",
         "state": "finished",
         "status": "completed",
         "pending": null
       },
       "last_event": {
-        "event_id": "evt_run_3bee37de_0014",
-        "run_id": "run_3bee37de",
-        "ts": "2026-10-11T08:48:13Z",
+        "event_id": "evt_run_d8abc561_0014",
+        "run_id": "run_d8abc561",
+        "ts": "2026-01-01T00:00:13Z",
         "type": "run_finished",
         "agent": "system",
         "domain": "manufacturing",
@@ -236,9 +236,9 @@
   ],
   "events": [
     {
-      "event_id": "evt_run_3bee37de_0001",
-      "run_id": "run_3bee37de",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_d8abc561_0001",
+      "run_id": "run_d8abc561",
+      "ts": "2026-01-01T00:00:00Z",
       "type": "tool_called",
       "agent": "quality",
       "domain": "manufacturing",
@@ -252,9 +252,9 @@
       }
     },
     {
-      "event_id": "evt_run_3bee37de_0002",
-      "run_id": "run_3bee37de",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_d8abc561_0002",
+      "run_id": "run_d8abc561",
+      "ts": "2026-01-01T00:00:01Z",
       "type": "anomaly_detected",
       "agent": "quality",
       "domain": "manufacturing",
@@ -274,9 +274,9 @@
       }
     },
     {
-      "event_id": "evt_run_3bee37de_0003",
-      "run_id": "run_3bee37de",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_d8abc561_0003",
+      "run_id": "run_d8abc561",
+      "ts": "2026-01-01T00:00:02Z",
       "type": "tool_called",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -290,9 +290,9 @@
       }
     },
     {
-      "event_id": "evt_run_3bee37de_0004",
-      "run_id": "run_3bee37de",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_d8abc561_0004",
+      "run_id": "run_d8abc561",
+      "ts": "2026-01-01T00:00:03Z",
       "type": "hypothesis_updated",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -308,22 +308,22 @@
       }
     },
     {
-      "event_id": "evt_run_3bee37de_0005",
-      "run_id": "run_3bee37de",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_d8abc561_0005",
+      "run_id": "run_d8abc561",
+      "ts": "2026-01-01T00:00:04Z",
       "type": "proposal_created",
       "agent": "improvement",
       "domain": "manufacturing",
       "payload": {
         "proposal": {
-          "proposal_id": "777ad6d14382",
+          "proposal_id": "e68ca8172e68",
           "hypothesis": {
             "group": "machine",
             "description": "wrong_setpoint",
             "confidence": 0.8
           },
-          "change": "Restore the setpoint and add a setpoint check step to the SOP",
-          "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
+          "change": "Khôi phục setpoint và thêm bước kiểm tra setpoint vào SOP",
+          "rationale": "Bằng chứng 0 cho thấy tỷ lệ lỗi thay đổi theo setpoint",
           "evidence_refs": [
             0
           ],
@@ -334,11 +334,11 @@
           },
           "status": "pending_approval",
           "sop_proposal": {
-            "proposal_id": "6e41a0160911",
+            "proposal_id": "37d13aabb6d2",
             "sop_id": "SOP-RFL-001",
-            "base_version": 143,
+            "base_version": 1,
             "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
-            "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
+            "rationale": "Bằng chứng 0 cho thấy tỷ lệ lỗi thay đổi theo setpoint",
             "kpi": "defect_rate",
             "status": "pending_approval"
           },
@@ -351,26 +351,26 @@
       }
     },
     {
-      "event_id": "evt_run_3bee37de_0006",
-      "run_id": "run_3bee37de",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_d8abc561_0006",
+      "run_id": "run_d8abc561",
+      "ts": "2026-01-01T00:00:05Z",
       "type": "approval_decided",
       "agent": "system",
       "domain": "manufacturing",
       "payload": {
         "kind": "proposal",
-        "proposal_id": "777ad6d14382",
-        "proposal_hash": "1ac50d6890795906f95d2833735a58535c4ab09153d9fcd39820d82e9061b625",
+        "proposal_id": "e68ca8172e68",
+        "proposal_hash": "f3126d426f7298194d2247a5c8f504ba38f1d154e29fc602a31863012af0437f",
         "decision": "revise",
         "decided_by": "alice",
         "reason": "M02 was serviced on 3/18, check the calibration",
-        "change": "Restore the setpoint and add a setpoint check step to the SOP"
+        "change": "Khôi phục setpoint và thêm bước kiểm tra setpoint vào SOP"
       }
     },
     {
-      "event_id": "evt_run_3bee37de_0007",
-      "run_id": "run_3bee37de",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_d8abc561_0007",
+      "run_id": "run_d8abc561",
+      "ts": "2026-01-01T00:00:06Z",
       "type": "tool_called",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -384,9 +384,9 @@
       }
     },
     {
-      "event_id": "evt_run_3bee37de_0008",
-      "run_id": "run_3bee37de",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_d8abc561_0008",
+      "run_id": "run_d8abc561",
+      "ts": "2026-01-01T00:00:07Z",
       "type": "hypothesis_updated",
       "agent": "investigation",
       "domain": "manufacturing",
@@ -402,22 +402,22 @@
       }
     },
     {
-      "event_id": "evt_run_3bee37de_0009",
-      "run_id": "run_3bee37de",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_d8abc561_0009",
+      "run_id": "run_d8abc561",
+      "ts": "2026-01-01T00:00:08Z",
       "type": "proposal_created",
       "agent": "improvement",
       "domain": "manufacturing",
       "payload": {
         "proposal": {
-          "proposal_id": "834ef86f1011",
+          "proposal_id": "72b33e715e42",
           "hypothesis": {
             "group": "machine",
             "description": "wrong_setpoint",
             "confidence": 0.8
           },
-          "change": "Restore the setpoint and add a setpoint check step to the SOP",
-          "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
+          "change": "Khôi phục setpoint và thêm bước kiểm tra setpoint vào SOP",
+          "rationale": "Bằng chứng 0 cho thấy tỷ lệ lỗi thay đổi theo setpoint",
           "evidence_refs": [
             0
           ],
@@ -428,11 +428,11 @@
           },
           "status": "pending_approval",
           "sop_proposal": {
-            "proposal_id": "62373851fc05",
+            "proposal_id": "e8f80c7c7153",
             "sop_id": "SOP-RFL-001",
-            "base_version": 143,
+            "base_version": 1,
             "new_content": "Verify the setpoint.\nCheck the setpoint again after the shift change.",
-            "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
+            "rationale": "Bằng chứng 0 cho thấy tỷ lệ lỗi thay đổi theo setpoint",
             "kpi": "defect_rate",
             "status": "pending_approval"
           },
@@ -445,34 +445,34 @@
       }
     },
     {
-      "event_id": "evt_run_3bee37de_0010",
-      "run_id": "run_3bee37de",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_d8abc561_0010",
+      "run_id": "run_d8abc561",
+      "ts": "2026-01-01T00:00:09Z",
       "type": "approval_decided",
       "agent": "system",
       "domain": "manufacturing",
       "payload": {
         "kind": "proposal",
-        "proposal_id": "834ef86f1011",
-        "proposal_hash": "282b043cb03ed01ac01c14123af0661c516fb7a5d0d8e45b002c33abf4118654",
+        "proposal_id": "72b33e715e42",
+        "proposal_hash": "b2c5509f6d6e5c082692391d6ae7d8dbeeeeb8b04b4de90d241a7b2eb47b3374",
         "decision": "approved",
         "decided_by": "alice",
         "reason": "ok",
-        "change": "Restore the setpoint and add a setpoint check step to the SOP"
+        "change": "Khôi phục setpoint và thêm bước kiểm tra setpoint vào SOP"
       }
     },
     {
-      "event_id": "evt_run_3bee37de_0011",
-      "run_id": "run_3bee37de",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_d8abc561_0011",
+      "run_id": "run_d8abc561",
+      "ts": "2026-01-01T00:00:10Z",
       "type": "sop_applied",
       "agent": "improvement",
       "domain": "manufacturing",
       "payload": {
         "applied": true,
         "sop_id": "SOP-RFL-001",
-        "version": 144,
-        "previous_version": 143,
+        "version": 2,
+        "previous_version": 1,
         "approved_by": "alice",
         "change_time": "2026-06-23T22:00:00",
         "action": {
@@ -483,9 +483,9 @@
       }
     },
     {
-      "event_id": "evt_run_3bee37de_0012",
-      "run_id": "run_3bee37de",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_d8abc561_0012",
+      "run_id": "run_d8abc561",
+      "ts": "2026-01-01T00:00:11Z",
       "type": "kpi_measured",
       "agent": "quality",
       "domain": "manufacturing",
@@ -494,12 +494,13 @@
         "machine_id": "M02",
         "change_time": "2026-06-23T22:00:00",
         "window_days": 7,
-        "before": 0.06216598193961474,
-        "after": 0.02144133631152815,
-        "delta": -0.04072464562808659,
+        "before": 0.06186256478849691,
+        "after": 0.021004356798899334,
+        "delta": -0.04085820798959758,
         "sufficient": true,
-        "n_before": 21,
-        "n_after": 21,
+        "n_before": 23924,
+        "n_after": 21805,
+        "n_unit": "units",
         "mttd_hours": null,
         "mttr_hours": null,
         "direction": "decrease",
@@ -510,14 +511,14 @@
       }
     },
     {
-      "event_id": "evt_run_3bee37de_0013",
-      "run_id": "run_3bee37de",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_d8abc561_0013",
+      "run_id": "run_d8abc561",
+      "ts": "2026-01-01T00:00:12Z",
       "type": "learning_saved",
       "agent": "improvement",
       "domain": "manufacturing",
       "payload": {
-        "learning_id": 143,
+        "learning_id": 1,
         "domain": "manufacturing",
         "content": {
           "anomaly": {
@@ -539,21 +540,27 @@
             "description": "wrong_setpoint",
             "confidence": 0.8
           },
-          "change": "Restore the setpoint and add a setpoint check step to the SOP",
-          "rationale": "Evidence 0 shows the defect rate follows the setpoint change",
+          "change": "Khôi phục setpoint và thêm bước kiểm tra setpoint vào SOP",
+          "action": {
+            "parameter": "zone3_setpoint_c",
+            "machine_id": "M02",
+            "value": 180.0
+          },
+          "rationale": "Bằng chứng 0 cho thấy tỷ lệ lỗi thay đổi theo setpoint",
           "sop_id": "SOP-RFL-001",
-          "sop_version": 144,
+          "sop_version": 2,
           "kpi": "defect_rate",
-          "kpi_before": 0.06216598193961474,
-          "kpi_after": 0.02144133631152815,
-          "outcome": "success"
+          "kpi_before": 0.06186256478849691,
+          "kpi_after": 0.021004356798899334,
+          "outcome": "success",
+          "cause_status": "confirmed"
         }
       }
     },
     {
-      "event_id": "evt_run_3bee37de_0014",
-      "run_id": "run_3bee37de",
-      "ts": "2026-10-11T08:48:13Z",
+      "event_id": "evt_run_d8abc561_0014",
+      "run_id": "run_d8abc561",
+      "ts": "2026-01-01T00:00:13Z",
       "type": "run_finished",
       "agent": "system",
       "domain": "manufacturing",

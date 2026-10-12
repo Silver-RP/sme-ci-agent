@@ -39,6 +39,11 @@ investigate:
   max_log_rows: 50          # số dòng tối đa một tool đọc log trả về; nhiều hơn thì cắt và báo truncated
   max_format_retries: 1     # số lần yêu cầu LLM sửa câu trả lời không parse được, quá thì báo lỗi
   max_lessons: 5            # số bài học cũ (cùng KPI) đưa vào prompt Investigate làm ngữ cảnh; 0 = tắt
+learn:
+  min_cause_evidence: 0.5   # |r| tối thiểu của chính tín hiệu giả thuyết đứng đầu (kết quả tool) để bài học ghi cause_status=confirmed
+  cause_parameters:         # bảng nối giả thuyết -> tham số action tác động lên nó; action ngoài bảng thì không xác nhận nguyên nhân
+    wrong_setpoint: [zone3_setpoint_c]
+  unconfirmed_label: "chưa xác nhận nguyên nhân"  # nhãn trước bài học cause_status=unconfirmed trong prompt Investigate
 improve:
   max_evidence_item_chars: 800  # cỡ tối đa (ký tự) mỗi mục evidence đưa vào prompt Improve
   max_format_retries: 1     # số lần yêu cầu LLM sửa đề xuất không parse được, quá thì báo lỗi
@@ -57,6 +62,7 @@ measure:
   window_days: 7            # cửa sổ before/after khi đo KPI sau khi áp dụng
   min_samples_after: 6      # chỉ khi không có production_log (đo từ kpi_log): ít điểm hơn thế -> "chưa đủ bằng chứng"
   min_units_after: 6000     # ít đơn vị (tổng mẫu số KPI) hơn thế sau thay đổi -> "chưa đủ bằng chứng" (hỏi người, không rollback); ~6 ca
+  source_may_grow: false    # sandbox: dữ liệu sau thay đổi cố định theo run_id; chờ thêm không có điểm mới -> báo một lần, chỉ cho kết thúc. Nguồn thật có thể tăng: true (giữ hành vi hỏi rồi đo lại)
   tolerance: 0.25          # đạt khi KPI trong 25% so với target (đúng phía tốt); không đạt -> đề xuất rollback
 loop:
   max_rejections: 3         # số đề xuất bị từ chối tối đa trước khi dừng chờ người
@@ -81,6 +87,34 @@ signals:                    # tên miền mà tool correlate và nhật ký máy
 default_period: ["2026-10-01", "2026-10-07"]  # khoảng ngày của bản mock (không có tool thật)
 demo:
   machine_id: M02           # máy mà kịch bản LLM giả (demo) điều tra
+  texts:                    # câu hiển thị của LLM giả (tiếng Việt)
+    unclear_cause: "Chưa rõ nguyên nhân"
+    change: "Khôi phục setpoint và thêm bước kiểm tra setpoint vào SOP"
+    rationale: "Bằng chứng 0 cho thấy tỷ lệ lỗi thay đổi theo setpoint"
+ui:
+  language: vi              # ngôn ngữ LLM dùng cho các trường hiển thị (mã ISO)
+messages:                   # câu hiện cho người dùng (template {placeholder}); mã, khoá, tên trường giữ tiếng Anh
+  question_no_hypothesis: "Chưa đủ bằng chứng để đưa ra giả thuyết. Anh/chị biết thêm điều gì về bất thường này?"
+  question_unsupported_hypothesis: "Giả thuyết đứng đầu ({group}: {description}) có độ tin cậy {confidence:.2f} nhưng chưa có kết quả công cụ nào hỗ trợ. Anh/chị xác nhận giúp hoặc cho biết bằng chứng đang có?"
+  question_low_confidence: "Giả thuyết đứng đầu ({group}: {description}) có độ tin cậy {confidence:.2f}, thấp hơn ngưỡng {threshold:.2f}. Anh/chị xác nhận hoặc bổ sung thông tin?"
+  halt_question_finish: "Agent đã dừng ({reason}). Kết thúc phiên chạy?"
+  halt_question_investigate: "Agent đã dừng ({reason}). Điều tra lại (bổ sung thông tin nếu có) hay kết thúc?"
+  halt_reasons:             # nhãn tiếng Việt của mã lý do dừng (mã giữ nguyên trong payload.reason)
+    insufficient_evidence: "chưa đủ bằng chứng sau thay đổi"
+    rollback_declined: "đề xuất hoàn tác bị từ chối"
+    max_total_rollbacks_reached: "đã hết số lần hoàn tác của cả phiên chạy"
+    max_rollbacks_reached: "đã đạt số lần hoàn tác tối đa"
+    max_revisions_reached: "đã đạt số lần yêu cầu sửa đề xuất tối đa"
+    max_rejections_reached: "đã đạt số lần từ chối đề xuất tối đa"
+    max_questions_reached: "đã đạt số câu hỏi tối đa"
+  evidence_wait_question: "Chưa đủ bằng chứng: sau thay đổi mới có {n_after} {n_unit} cho {kpi} (cần {needed}). Chờ thêm dữ liệu rồi xác nhận để đo lại."
+  evidence_final_question: "Chưa đủ bằng chứng: sau thay đổi chỉ có {n_after} {n_unit} cho {kpi} (cần {needed}) và nguồn dữ liệu không còn thêm điểm nào, nên chờ cũng không đo lại được. Kết thúc phiên chạy."
+  rollback_change_sop: "Hoàn tác SOP {sop_id} về phiên bản {previous_version}"
+  rollback_change_no_sop: "Hoàn tác thay đổi (không có phiên bản SOP để khôi phục)"
+  rollback_rationale: "{kpi} sau thay đổi là {after}, ngoài giới hạn (mục tiêu {target}, dung sai {tolerance})."
+  not_applied_no_sop: "Đề xuất không đổi SOP nào nên không có gì để đo."
+  not_applied_no_action: "Đề xuất không có hành động có cấu trúc nên chưa đổi tham số máy nào."
+  sop_conflict: "SOP {sop_id} xung đột: đề xuất dựa trên phiên bản {base_version} nhưng hiện đang áp dụng phiên bản {current_version}; chưa thay đổi gì."
 hypothesis_groups:          # Ishikawa
   machine: [wrong_setpoint, wear, calibration]
   method: [outdated_sop, missing_check]

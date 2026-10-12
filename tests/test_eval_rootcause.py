@@ -127,3 +127,18 @@ def test_main_until_learn_uses_own_database_and_prints_rate(e2e_db_url, monkeypa
     assert EV.main(["--seeds", "2", "--until", "learn"]) == 0
     out = capsys.readouterr().out
     assert "passed_rate" in out and "right" in out
+
+
+def test_until_learn_cause_confirmed_right_all_wrong_none(db_session):
+    """R10e/dev-04 (H-32): `wrong` has a tool result and a passing KPI but its cause is not confirmed."""
+    res = {
+        r.name: r
+        for r in EV.evaluate(
+            {"right": EV.SCRIPTED["right"], "wrong": EV.SCRIPTED["wrong"]},
+            CFG, db_session, seeds=[42, 43, 44, 45, 46], until="learn",
+        )
+    }
+    assert res["right"].passed_rate >= 0.9
+    assert res["right"].cause_confirmed_rate == 1.0
+    assert res["wrong"].cause_confirmed_rate == 0.0
+    assert "cause_confirmed" in EV.format_table(list(res.values()), until="learn")

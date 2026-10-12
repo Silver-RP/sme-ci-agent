@@ -15,6 +15,7 @@ from backend.sandbox.post_change import build_post_change_tables
 from tests.test_act import (
     CFG,
     CHANGE,
+    GROWING,
     HUMAN,
     KPI,
     SOP_ID,
@@ -105,20 +106,20 @@ def test_direction_comes_from_the_kpi_config(db_session):
 
 def test_too_few_samples_is_not_enough_evidence_not_a_failure(db_session):
     late = "2026-06-29T22:00:00"
-    graph, c, out = run_to_measure(db_session, script_with("wrong_setpoint"), change_time=late)
+    graph, c, out = run_to_measure(db_session, script_with("wrong_setpoint"), change_time=late, cfg=GROWING)
     m = out["measurement"]
     assert m["status"] == "insufficient_evidence" and m["passed"] is None
     assert m["n_after"] < CFG.measure.min_units_after  # R10b2: n_after counts units, threshold in units
     assert graph.get_state(c).next == ("wait_evidence",)  # waits for a person, no rollback
     assert "rollback" not in json.dumps([e["payload"] for e in out["events"] if e["type"] == "proposal_created"])
     q = [e for e in out["events"] if e["type"] == "question_asked"]
-    assert q and "not enough" in q[-1]["payload"]["question"].lower()
+    assert q and "chưa đủ bằng chứng" in q[-1]["payload"]["question"].lower()
     assert sorted(versions(db_session)) == [1, 2] and "learning_saved" not in types(out)
 
 
 def test_insufficient_evidence_questions_are_bounded_then_halt(db_session):
     late = "2026-06-29T22:00:00"
-    graph, c, out = run_to_measure(db_session, script_with("wrong_setpoint"), change_time=late)
+    graph, c, out = run_to_measure(db_session, script_with("wrong_setpoint"), change_time=late, cfg=GROWING)
     for _ in range(CFG.ask.max_questions):
         out = graph.invoke(Command(resume="wait for more data"), c)
     assert out["status"] == "awaiting_human"

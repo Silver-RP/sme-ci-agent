@@ -416,3 +416,31 @@ Nhật ký của dự án SME CI Agent (plan nhỏ): mỗi task một mục, g�
 ### R10b2/dev-06: DONE
 - Vòng: 1. Commit: 750ba44. Review: .autodev/reviews/dev-06-r1.json (PASS).
 - `/metrics` đọc `data/reports/metrics_<dataset>_seed<seed>.json`, khác dataset/seed hoặc thiếu → `available:false` kèm `reason`; probe thật khớp báo cáo.
+
+### R10e/dev-01: DONE
+- Vòng: 1. Commit: be13f18. Review: .autodev/reviews/R10e-dev-01-r1.json (PASS).
+- Khối `messages:` tiếng Việt trong config; ask/act lấy câu hỏi, halt, rollback, not_applied từ template; `halt_payload` đổi chữ ký (nhận config). 968 test pass.
+
+### R10e/dev-02: DONE
+- Vòng: 1. Commit: aa674aa. Review: .autodev/reviews/R10e-dev-02-r1.json (PASS).
+- `ui.language: vi` + `demo.texts` trong config; system prompt có chỉ dẫn ngôn ngữ; DemoLLM lấy chuỗi từ config. Phần LLM thật chỉ kiểm khi leader cho chạy. 976 test pass.
+
+### R10e/dev-03: DONE
+- Vòng: 1. Commit: 2e7ec50. Review: .autodev/reviews/R10e-dev-03-r1.json (PASS).
+- Thêm `measure.source_may_grow` (config); sandbox hết dữ liệu thì Measure hỏi một lần, chỉ `finish`. 6 test cũ thêm cfg GROWING (cờ allow-test-change, assert giữ nguyên). Chưa có fixture cho dạng halt `insufficient_evidence` options [finish] (đề xuất (a), việc vai D). 982 test pass.
+
+### R10e/dev-04: DONE
+- Vòng: 2. Commit: 749f117. Review: .autodev/reviews/R10e-dev-04-r1.json (FAIL), -r2.json (PASS).
+- Vòng 1 FAIL: khớp giả thuyết-tín hiệu bằng chuỗi con làm "material_batch, not wrong_setpoint" thành confirmed. Vòng 2: `_claimed_signal` (trường signal hoặc mô tả đúng bằng một tên). Eval LLM giả 5 seed: right passed 100%, cause_confirmed 100%; wrong passed 100%, cause_confirmed 0%; unsure 0%/0%. 1001 test pass. Đề xuất (c): trường `signal` cho LLM thật.
+
+### R10e/dev-05: DONE
+- Vòng: 1. Commit: cc81b0c. Review: .autodev/reviews/R10e-dev-05-r1.json (PASS).
+- `GET /config/domain` chỉ đọc (domain, kpis, machines, shifts, sops, llm); không trả tên model; version SOP đọc từ sop_versions. 1005 test pass.
+
+### R10e/dev-06: DONE
+- Vòng: 1. Commit: e8c3978. Review: .autodev/reviews/R10e-dev-06-r1.json (PASS).
+- `/metrics` có `llm`/`limits`, từ chối báo cáo sai `months`, NaN/inf -> `available:false`; `demo.sh --fresh-db` sinh báo cáo (seed 42 cố định), `--check` đòi có số. Reviewer chạy thật demo.sh --fresh-db --check: CHECK PASSED. 1014 test pass.
+
+### R10e/dev-07: DONE
+- Vòng: 1. Commit: 34a024d. Review: .autodev/reviews/R10e-dev-07-r1.json (PASS).
+- export_fixtures sinh trên DB tạm, chuẩn hoá id/phiên bản/giờ; thêm ví dụ run-insufficient-evidence-final; payloads.md khớp code. 6 vitest của vai D đỏ do dữ liệu ví dụ mới (liệt kê trong báo cáo mốc). 1028 test pass.
