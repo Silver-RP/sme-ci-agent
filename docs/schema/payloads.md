@@ -1,15 +1,16 @@
 # Payload của event và API (cho team frontend)
 
-`docs/schema/events.json` là hợp đồng **vỏ** event (`event_id`, `run_id`, `ts`, `type`, `agent`, `domain`, `payload`). File này mô tả **payload** từng loại event và dạng trả về của API, theo code tại `main` ngày 2026-10-09 (sau R8). Tài liệu này không đổi hợp đồng: đổi `events.json` vẫn phải qua PR riêng.
+`docs/schema/events.json` là hợp đồng **vỏ** event (`event_id`, `run_id`, `ts`, `type`, `agent`, `domain`, `payload`). File này mô tả **payload** từng loại event và dạng trả về của API, theo code tại nhánh mốc R10e ngày 2026-10-12 (sau R10d, kèm các thay đổi R10e). Tài liệu này không đổi hợp đồng: đổi `events.json` vẫn phải qua PR riêng.
 
-Ví dụ thật (sinh bằng `uv run python scripts/export_fixtures.py`, qua API, LLM giả, dữ liệu synthetic). Mỗi file có `steps` (request, body, http, response, `last_event`) và `events` (luồng SSE cuối):
+Ví dụ thật (sinh bằng `uv run python scripts/export_fixtures.py`, qua API, LLM giả, dữ liệu synthetic; lệnh chạy trên DB tạm `<tên>_fixtures_demo`, chuẩn hoá id, số phiên bản SOP và giờ của event nên kết quả không phụ thuộc DB dev, và chép sang `dashboard/fixtures/examples/` giống từng byte). Câu chữ hiển thị trong ví dụ là tiếng Việt (lấy từ `messages` của config). Mỗi file có `steps` (request, body, http, response, `last_event`) và `events` (luồng SSE cuối):
 
 | File | Nhánh | Kết thúc |
 |---|---|---|
 | `run-happy.json` | hỏi, duyệt, KPI đạt, Learn | `run_finished` completed |
 | `run-rollback.json` | sửa sai, Measure không đạt, người xác nhận rollback, điều tra lại, sửa đúng | `run_finished` completed |
 | `run-rollback-declined.json` | người từ chối rollback | pending `halt` `rollback_declined` |
-| `run-insufficient-evidence.json` | Measure chưa đủ mẫu | pending `answer` |
+| `run-insufficient-evidence.json` | Measure chưa đủ mẫu, nguồn có thể có thêm dữ liệu (`more_data_possible: true`) | pending `answer` |
+| `run-insufficient-evidence-final.json` | Measure chưa đủ mẫu, nguồn không thêm điểm (sandbox): halt một lần, người chọn `finish` | `run_finished` closed (`closed_by_human`) |
 | `run-revise.json` | người gửi đề xuất lại (`revise`) | `run_finished` completed |
 | `run-halt-max-questions.json` | hỏi quá số lần cho phép | pending `halt` `max_questions_reached` |
 | `run-error-retry.json` | LLM lỗi, Retry | `run_finished` completed (bước đầu là `error` retryable) |
@@ -38,7 +39,7 @@ Ký hiệu: `?` = có thể vắng; `|` = một trong các giá trị.
 
 ```json
 {"kpi": "defect_rate", "machine": "M02", "shift": "night", "start": "2026-03-10T22:00:00", "end": "2026-06-30T22:00:00",
- "value": 0.061942, "peak": 0.071583, "baseline": 0.019544, "sigma": 0.003667, "upper_limit": 0.030544, "n_points": 337, "planned": false}
+ "value": 0.06214, "peak": 0.086749, "baseline": 0.019594, "sigma": 0.00462, "upper_limit": 0.033454, "n_points": 337, "planned": false}
 ```
 
 ### hypothesis_updated (investigation)
@@ -99,13 +100,13 @@ Có hai dạng; phân biệt bằng `kind`.
   - Không còn trường `sim` (nội bộ simulator, từng lộ `fixed`, H-06, H-25).
 
 ### kpi_measured (quality)
-`{kpi, direction, target, tolerance, status, passed, before, after, machine_id, change_time, window_days, delta, sufficient, n_before, n_after, n_unit, mttd_hours, mttr_hours}`
+`{kpi, direction, target, tolerance, status, passed, before, after, machine_id, change_time, window_days, delta, sufficient, n_before, n_after, n_unit, mttd_hours, mttr_hours}`, thêm `more_data_possible?`, `min_units_after?`, `min_samples_after?`, `reason?` tuỳ `status` (xem dưới)
 
 `before`/`after` là tỷ lệ gộp trên `production_log` (tổng tử số / tổng mẫu số của KPI trong cửa sổ, không trung bình tỷ lệ từng ca). `n_before`/`n_after` đếm theo `n_unit`: `"units"` là số đơn vị (tổng mẫu số) khi tính từ `production_log`; `"points"` là số điểm `kpi_log` khi quay về đường cũ. Ngưỡng "chưa đủ bằng chứng" tương ứng: `min_units_after` (đơn vị, config `measure.min_units_after`) hoặc `min_samples_after` (điểm, đường `kpi_log`).
 
 `status` có ba giá trị:
 - `measured`: `passed` là `true` hoặc `false`.
-- `insufficient_evidence`: có thêm `more_data_possible` (bool, R10e). `false` trên sandbox (config `measure.source_may_grow: false`, dữ liệu sau thay đổi là hàm của `run_id` nên chờ cũng không có điểm mới): Measure không hỏi chờ, chỉ báo một lần bằng event `question_asked` dạng halt (`reason: "insufficient_evidence"`, `options: ["finish"]`, `question` từ `messages.evidence_final_question`); chọn `finish` thì `run_finished` `status: "closed"`, `reason: "closed_by_human"`; gửi `investigate` bị từ chối. Không rollback, không tính là KPI thất bại. Phần mô tả tiếp theo (hỏi `answer`, đo lại) chỉ áp dụng khi `more_data_possible` là `true` (nguồn có thể có thêm điểm). `passed: null`, có thêm `min_units_after` (khi `n_unit` là `"units"`) hoặc `min_samples_after` (khi `"points"`). Run hỏi người: `pending` là `{type: "answer", question, run_id}` (R9, H-09). Trả lời bằng `POST /runs/{id}/answer` (ví dụ "chờ thêm dữ liệu") thì Measure chạy lại; hết số lần cho phép thì dừng với `reason: "insufficient_evidence"`. Xem `run-insufficient-evidence.json`.
+- `insufficient_evidence`: có thêm `more_data_possible` (bool, R10e). `false` trên sandbox (config `measure.source_may_grow: false`, dữ liệu sau thay đổi là hàm của `run_id` nên chờ cũng không có điểm mới): Measure không hỏi chờ, chỉ báo một lần bằng event `question_asked` dạng halt (`reason: "insufficient_evidence"`, `options: ["finish"]`, `question` từ `messages.evidence_final_question`); chọn `finish` thì `run_finished` `status: "closed"`, `reason: "closed_by_human"`; gửi `investigate` bị từ chối. Không rollback, không tính là KPI thất bại. Phần mô tả tiếp theo (hỏi `answer`, đo lại) chỉ áp dụng khi `more_data_possible` là `true` (nguồn có thể có thêm điểm). `passed: null`, `before`/`after`/`delta` là `null`, `sufficient: false`, có thêm `n_unit` cùng ngưỡng: `min_units_after` (khi `n_unit` là `"units"`, so với `n_after`) và/hoặc `min_samples_after` (số điểm tối thiểu của config; có mặt cả khi `n_unit` là `"units"`, nhưng khi đó ngưỡng quyết định là `min_units_after`). Run hỏi người: `pending` là `{type: "answer", question, run_id}` (R9, H-09). Trả lời bằng `POST /runs/{id}/answer` (ví dụ "chờ thêm dữ liệu") thì Measure chạy lại; hết số lần cho phép thì dừng với `reason: "insufficient_evidence"`. Xem `run-insufficient-evidence.json`.
 - `not_applied`: `passed: null`, có thêm `reason`.
 
 `mttd_hours` và `mttr_hours` hiện luôn là `null` trong vòng lặp (H-11).
@@ -116,7 +117,9 @@ Có hai dạng; phân biệt bằng `kind`.
 `conflict` (chuỗi, R10c, H-14) chỉ có khi rollback không thực hiện được vì SOP đã bị run khác đổi (`rolled_back: false`, kèm `current_version`).
 
 ### learning_saved (improvement)
-`{learning_id, domain, content: {anomaly, root_cause, change, rationale, sop_id, sop_version, kpi, kpi_before, kpi_after, outcome, cause_status}}`
+`{learning_id, domain, content: {anomaly, root_cause, change, action, rationale, sop_id, sop_version, kpi, kpi_before, kpi_after, outcome, cause_status}}`
+
+`action` là hành động có cấu trúc đã áp dụng `{parameter, machine_id, value}` (giống `sop_applied.action`).
 
 `outcome` là `success` hoặc `no_change`: hành động có làm KPI đạt hay không.
 
@@ -149,8 +152,8 @@ Có hai dạng; phân biệt bằng `kind`.
 | GET | `/audit?run_id=&limit=` | | `{rows: [AuditRow]}`, mới nhất trước. `limit` 1..500 (mặc định 100), ngoài khoảng thì 422 |
 | GET | `/learnings?limit=` | | `{learnings: [{learning_id, run_id, created_at, content}]}` từ `learning_store` của domain đang chạy, mới nhất trước; `content` cùng hình dạng `learning_saved.content`. `limit` 1..500 (mặc định 50), ngoài khoảng thì 422. Chỉ đọc; không có `DATABASE_URL` thì `{learnings: []}`. Còn sau khi app khởi động lại (R10d) |
 | GET | `/sop/{sop_id}/versions` | | `{sop_id, versions: [SopVersion]}`, cũ nhất trước; 404 nếu `sop_id` không có trong config. Từ R10b1: khi chạy với `SME_DATASET=<tên>` thì SOP gốc là SOP trong `sop.csv` của dataset (SOP chỉ có trong config thì 404) |
-| GET | `/metrics` | | `{metrics: [Metric]}`, luôn đúng 3 phần tử theo thứ tự: KPI chính (tên, đơn vị lấy từ config), `mttd_mttr`, `recurrence_rate` (R10a) |
-| GET | `/kpi/series?kpi=&machine=&shift=&start=&end=` | `kpi` bắt buộc | chuỗi KPI từ dữ liệu sandbox của app (R10b1 đổi nguồn sang `production_log`). `kpi`, `machine`, `shift` lạ hoặc `start`/`end` sai định dạng thì 422. `start`/`end` là giờ không múi giờ (giờ sandbox), ví dụ `2026-01-01T00:00:00`; có múi giờ (`Z`, `+09:00`) thì 422 với `detail` nêu tên tham số, không quy đổi. `start <= ts < end`; khoảng rỗng thì `points: []` |
+| GET | `/metrics` | | `{dataset, seed, generated_at, assumptions, llm, limits, metrics: [Metric]}`; `metrics` luôn đúng 3 phần tử theo thứ tự: KPI chính (tên, đơn vị lấy từ config), `mttd_mttr`, `recurrence_rate`. Mỗi `Metric` là `{name, unit, before, after, available, reason, run_id}`. Xem ví dụ và quy tắc `available` bên dưới (R10a, R10b2, R10e) |
+| GET | `/kpi/series?kpi=&machine=&shift=&start=&end=` | `kpi` bắt buộc | chuỗi KPI từ bảng `kpi_log` của dữ liệu sandbox của app (bảng này suy ra từ `production_log`, hợp đồng dữ liệu 2.8; nhiều máy cùng thời điểm được lấy trung bình). `kpi`, `machine`, `shift` lạ hoặc `start`/`end` sai định dạng thì 422. `start`/`end` là giờ không múi giờ (giờ sandbox), ví dụ `2026-01-01T00:00:00`; có múi giờ (`Z`, `+09:00`) thì 422 với `detail` nêu tên tham số, không quy đổi. `start <= ts < end`; khoảng rỗng thì `points: []` |
 
 Ví dụ phản hồi `GET /kpi/series`:
 

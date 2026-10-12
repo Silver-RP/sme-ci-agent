@@ -64,7 +64,7 @@ def finished_run(client):
 
 @pytest.mark.parametrize("path", EXAMPLES, ids=lambda p: p.name)
 def test_committed_fixtures_pass_the_format_check(path):
-    assert len(EXAMPLES) == 8
+    assert len(EXAMPLES) == 9  # R10e/dev-07 added run-insufficient-evidence-final.json
     check_fixture_format(json.loads(path.read_text()))
 
 
