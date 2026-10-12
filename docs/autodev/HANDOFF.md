@@ -18,6 +18,14 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 
 ## Bước tiếp theo (cập nhật 2026-10-12 rạng sáng, đóng phiên: cổng 13/10 go, tag v0.1-e2e)
 
+### R10e ✅ merge #138 (supervisor `--review-only`, 12/10; mới nhất, đọc trước)
+- Worker 7/7 DONE, 8 vòng (dev-04 2 vòng). Supervisor tự chạy: **1028 passed**, smoke 4/4, `demo.sh --fresh-db --check` xanh; A4 theo nguyên nhân (LLM giả) `right` confirmed 5/5, `wrong` 0/5 (8 seed: 8/8, 0/8). Test H-32/H-34/H-66, #111, #114 đỏ trên main qua `git archive`. Bảng tiêu chí + pre-mortem: `PROGRESS.md` mục R10e. 287 phút / 200–270 (B3 1,06); 7,05 + ~1,19 USD / 9–11.
+- Đóng **H-32, H-34, H-66**; H-65 còn (b, f, g) phía UI. Đóng issue #111, #114. Supervisor tick R10e trong TASKS.md (bỏ H-32 khỏi dòng R11a).
+- **(c) supervisor quyết:** tiêu chí 1 ("verify sạch") tính đạt phần backend dù **6 vitest dashboard đỏ** (kỳ vọng cũ tiếng Anh, số phiên bản phụ thuộc DB dev); plan dev-07 cấm sửa `dashboard/tests` và pre-mortem 3 đã dự kiến. Giao vai D ở **#139** (gán Finn; kèm lỗi nghĩa "4270 / 6" ở thẻ thiếu bằng chứng, H-65 b/f/g, H-67..H-69). **Hệ quả:** `verify.py` của mốc kế sẽ báo `dashboard` đỏ "mới so với baseline" cho tới khi #139 merge → trước khi chạy R11a, hoặc chờ #139, hoặc ghi rõ trong plan R11a là lỗi đã biết.
+- **Đề xuất (c) của worker chờ leader** (PR #138): (1) thêm trường `signal` vào Hypothesis + prompt + eval (LLM thật hiện luôn `unconfirmed`) → R11a; (2) `new_content` SOP của LLM giả còn tiếng Anh; (3) `demo.sh` cố định seed 42 cho báo cáo `/metrics`; (4) LLM thật trả tiếng Việt chưa kiểm (cần leader cho chạy LLM thật).
+- Còn tiếng Anh tới dashboard (không do agent sinh): `limits` của `/metrics`, `reason` người gõ trong kịch bản `export_fixtures.py`.
+- Mục 2 của "Làm tiếp theo thứ tự" dưới đây (mốc backend kế) **đã xong ở R10e**; việc kế là R11a (mục 3).
+
 ### Bối cảnh
 - **Team 4 người** (`docs/PLAN.md` mục 4). Ranh giới: auto-dev không làm thay việc của vai A/D/Q, kể cả khi không đụng file của họ (**trùng việc** khác **trùng file**).
 
