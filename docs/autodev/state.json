@@ -1,6 +1,6 @@
 {
-  "updated": "2026-10-12",
-  "source": "audit 2026-10-12 (sau R10d, R10b1, R10b2) + audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10) + R10e merge #138 + đo nền LLM thật và ADR-010 (12/10)",
+  "updated": "2026-10-13",
+  "source": "audit 2026-10-12 (sau R10d, R10b1, R10b2) + audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10) + R10e merge #138 + đo nền LLM thật và ADR-010 (12/10) + kế hoạch tổng thể tới Demo Day (leader duyệt 2026-10-13)",
   "milestones": {
     "project": [
       {
@@ -499,6 +499,10 @@
   ],
   "decisions": [
     {
+      "date": "2026-10-13",
+      "text": "Leader chốt điều 1 = 0 (đúng luật công thức, ghi kèm 'nền LLM thật 3/3 bài dễ'). P8a để sau freeze. Quy tắc tên phiên leader-<MMDD>-<việc>. Duyệt kế hoạch tổng thể 13/10 → 07/11: hạn mức tuần 97% (reset 14/10 13:00, lần sau 21/10) nên mọi việc tới freeze nằm trong một tuần; tách R11a (eval trung thực) / R11c (ADR-010 backend + vững); P4 tối thiểu trước chuỗi; đo A4/A5 LLM thật sau R11a; R11b không có D4 tới 16/10 tối thì leader chọn holdout do người ngoài backend soạn hoặc điều 1 ≤ 60% khi pitch; thứ tự cắt R12 → H-52/53/55 → ghi run phát lại."
+    },
+    {
       "date": "2026-10-12",
       "text": "Đóng phiên chiều: đo nền LLM thật lần đầu cho điều 1 (leader cho chạy): DB sạch 3/3, DB dùng chung 67% (lỗi chấm + bài học lộ đáp án); ~0,4 USD cả hai lần (ước từ token). ADR-010 (leader chốt): mọi chữ trên UI tiếng Việt, mã giữ trong code/API, thuật ngữ ngành giữ nguyên có giải nghĩa, dữ liệu nguồn hiện dạng trích nguyên văn; vai D #141. R11a bắt buộc: trường signal (chấm theo mã), eval luôn trên DB sạch, ≥ 1 kịch bản khó. Comment #63 làm rõ dạng bàn giao D4/D6. % đạt giữ 0/67/67; leader có thể chốt lại điều 1."
     },
@@ -742,25 +746,40 @@
     {
       "id": "R11a",
       "date": "14–15/10",
-      "goal": "Điều 1: cơ chế eval trung thực (trường signal, eval trên DB sạch), 1 kịch bản khó do backend soạn; ADR-010 phía backend (labels, prompt dùng nhãn, new_content tiếng Việt)",
+      "goal": "Điều 1: eval trung thực (trường signal, chấm theo mã, DB sạch, --set dev|holdout, nhãn expect cho A2/A3), tập dev ≥ 4 kịch bản khó do backend soạn",
       "gaps": [
         "H-28",
         "H-29",
-        "H-36",
-        "H-18"
+        "H-63",
+        "H-18",
+        "H-56",
+        "H-36"
+      ],
+      "needs_team": false
+    },
+    {
+      "id": "R11c",
+      "date": "15/10",
+      "goal": "ADR-010 phía backend (labels + thuật ngữ qua /config/domain cho #141, prompt dùng nhãn, new_content và SOP gốc tiếng Việt) + vững trước freeze",
+      "gaps": [
+        "H-52",
+        "H-53",
+        "H-55",
+        "H-60",
+        "H-61"
       ],
       "needs_team": false
     },
     {
       "id": "R11b",
-      "date": "15–17/10",
-      "goal": "Điều 1: nhập D4/D5 của vai A, eval nhiều seed",
+      "date": "16–17/10",
+      "goal": "Điều 1: nhập D4/D5 làm tập giữ lại, eval LLM thật nhiều seed; ghi run tốt để phát lại; A8 LLM thật; audit 5 sau mốc",
       "needs_team": true
     },
     {
       "id": "R12",
       "date": "18–19/10",
-      "goal": "Gom lỗi bug bash 2, audit 4, bộ dữ liệu demo (D6); freeze 20/10",
+      "goal": "Lỗ hổng từ audit 5, bộ dữ liệu demo D6, H-64 khi có D3; cổng và freeze 20/10",
       "needs_team": true
     }
   ]

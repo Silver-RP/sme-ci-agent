@@ -46,4 +46,9 @@ Chọn:
 ```
 Số chỉ có nghĩa trong tin đó.
 
+## 4. Tên phiên
+Phiên runner có tên gọn vì mỗi phiên một việc. Phiên leader theo cùng quy tắc: **một phiên = một việc**, tên dạng `leader-<MMDD>-<việc>`, `<việc>` ngắn, chữ thường, gạch nối, ví dụ `leader-1012-mo-phien`, `leader-1014-sua-p4`, `leader-1014-plan-r11a`, `leader-1015-review-pr-150`.
+- Dòng đầu báo cáo: `Tên phiên: /rename leader-<MMDD>-mo-phien` (leader dán chạy).
+- Khi leader chọn một việc lớn (viết plan, sửa plugin, review PR, chạy mốc): đề xuất mở phiên mới bằng `/session-start <việc>` hoặc `/rename leader-<MMDD>-<việc>` nếu ở lại phiên này. Việc nhỏ (trả lời, xoá worktree, chốt số) làm luôn, không đổi tên.
+
 Nếu có $ARGUMENTS thì sau báo cáo, đọc thêm tài liệu liên quan chủ đề đó (plan, brief, issue) và nói bước đầu tiên bạn sẽ làm.

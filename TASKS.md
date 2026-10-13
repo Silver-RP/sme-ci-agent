@@ -57,9 +57,10 @@ Chi tiết, pre-mortem và thứ tự cắt: `docs/autodev/ROADMAP.md` mục "K�
 - [x] R10b2 (12–13/10): điều 3 (H-11, T-042, `/metrics` thật, `scripts/metrics_report.py` có đối chứng; giả định lấy nguồn từ D3); H-33, H-39 (H-31 đã đóng ở R10ch). [A7, A4] PR #132; 4 giả định còn "giả định, chờ D3".
 - [x] Cổng 13/10 (`docs/eval/criteria.md` mục 3) → tag v0.1-e2e (leader duyệt 12/10, biên bản `docs/qa/gate-v0.1-e2e.md`; H-32 sửa trước freeze); cổng UI FR-01..05 (vai D). R10b2 trễ thì A7 không thuộc cổng 13/10, chuyển sang cổng 20/10 (leader quyết).
 - [x] R10e (12/10): câu chữ tiếng Việt từ config, `GET /config/domain` (#114), Measure không hỏi lặp (H-34, #111), Learn `cause_status` (H-32), `/metrics` trung thực (H-65 a, c, d, e), ví dụ sinh lại (H-66). [A4 theo nguyên nhân: right 5/5, wrong 0/5] PR #138; 6 vitest của vai D cần cập nhật kỳ vọng.
-- [ ] R11a (13–14/10): chấm theo mã nguyên nhân, `--set dev|holdout`, nhãn `expect` (H-28, H-29, H-36, H-18; H-32 xong ở R10e), kịch bản khó do backend soạn. [A1–A3 tập dev]
-- [ ] R11b (15–17/10): nhập D4/D5 của vai A làm tập giữ lại, eval nhiều seed LLM thật. [A1 tập giữ lại ≥ 0,7]
-- [ ] R12 (18–19/10): gom lỗi bug bash 2, audit 4, bộ dữ liệu demo (D6) → cổng 20/10 → freeze
+- [ ] R11a (14–15/10): trường `signal`, chấm theo mã nguyên nhân, eval trên DB sạch, `--set dev|holdout`, nhãn `expect` (H-28, H-29, H-63, H-18, H-56, H-36), tập dev ≥ 4 kịch bản khó do backend soạn. [A1–A3 tập dev; sau mốc đo A4/A5 LLM thật]
+- [ ] R11c (15/10): ADR-010 phía backend (`labels` + thuật ngữ qua `/config/domain` cho #141, prompt dùng nhãn, `new_content`/SOP gốc tiếng Việt); H-52, H-53, H-55. [kế hoạch tổng thể, leader duyệt 13/10]
+- [ ] R11b (16–17/10): nhập D4/D5 của vai A làm tập giữ lại, eval nhiều seed LLM thật; ghi run để phát lại. [A1 tập giữ lại ≥ 0,7]
+- [ ] R12 (18–19/10): lỗ hổng audit 5, bộ dữ liệu demo (D6), H-64 khi có D3 → cổng 20/10 → freeze
 
 ## Backlog sau 13/10 (G6 → G8)
 

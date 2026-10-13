@@ -52,15 +52,17 @@ Ngày là đề xuất; leader chỉnh khi cần. Luồng dự án do runner ch�
 | 10–11/10 | R10a ✅ merge #82 (10/10) | P6a: mẫu plan + reviewer cấp mục tiêu + supervisor đối chiếu ước tính | R10a là plan đầu theo mẫu mới: 7/7 PASS vòng 1, 73 phút / ước tính 55–75, 4,00 USD worker / 4–5: B3 = 1,0 |
 | 10–12/10 | R10c ✅ merge #84 (10/10, chạy trước theo leader) → audit 3 → R10b1 (sau D1 #66) → R10b2 | P4: kiểm hạn mức trước mốc; P6b: số đo phiên vào PROGRESS | R10c: 7/7 PASS vòng 1, ~115 phút / 90–120, 5,81 USD worker / 7–9 gồm supervisor: B3 ≈ 1,0; A6 = 0 vi phạm. R10ch ✅ merge #91 (sửa nhanh sau audit 3): 4/4 PASS vòng 1, 111 phút / 40–60 (B3 1,85), 3,51 USD worker / 3–4; A5 đo thật (b) đúng 1,00, sai 0. R10d ✅ merge #120 (11/10, API cho dashboard, H-49, H-57): 5/5 PASS vòng 1 sau một lần supervisor trả về (dev-05 (b)), 161 phút / 100–130 (B3 1,24), ~3,63 USD / 4–6. R10b1 ✅ merge #130 (11/10, dữ liệu theo hợp đồng D1, import CSV + V01–V09): 7/7 DONE, 8 vòng, 267 phút / 175–240 (B3 1,11), 9,10 + ~1,04 USD / 7–10 (B3 ~1,01); 31/31 bộ D2 đúng mã. R10b2 ✅ merge #132 (12/10, điều 3, `metrics_report.py` có đối chứng, A4 LLM giả 5/5; đóng H-11, H-33, H-39): 7/7 DONE, 8 vòng, 350 phút / 195–255 (B3 1,37), 8,76 + ~1,11 USD / 8,5–10,5 (B3 ~1,00); chuỗi R10b1 → R10b2 chạy chế độ B không dừng (B4 = 0). R10e ✅ merge #138 (12/10, câu chữ tiếng Việt, `/config/domain`, H-32, H-34, H-65 a/c/d/e, H-66; A4 theo nguyên nhân LLM giả right 5/5, wrong 0/5): 7/7 DONE, 8 vòng, 287 phút / 200–270 (B3 1,06), 7,05 + ~1,19 USD / 9–11 (B3 ~0,92); B4 = 0; 6 vitest vai D đỏ (#139) |
 | 13/10 | demo #1, tag v0.1-e2e (cổng UI: hỏi leader) | P6 ✅ (đóng sớm 10/10); đóng P5 (trang trạng thái Artifact) | |
-| 13–17/10 | R11a, R11b | P7a: Telegram một chiều + API trạng thái chỉ đọc; P9 | R11 chạy dài |
-| 17–20/10 | R12, freeze 20/10 | P7b: Telegram hai chiều mức xem/nhận/trả lời (điều khiển chỉ khi leader duyệt) | |
-| 20/10–7/11 | chỉ sửa lỗi; Pitch 24/10; Demo Day 7/11 | P8; hook PreCompact; log stream-json | dự án thứ hai do leader chọn |
+| 13/10 | không chạy runner (tuần 97%); viết plan R11a, R11c | | |
+| 14–15/10 | sau reset 13:00 14/10: chuỗi R11a → R11c (~16–20 USD); sau đó đo A1–A3 dev, A4/A5 LLM thật (~1–2 USD API) | P4 tối thiểu trước chuỗi (runner nhận PR mốc đang mở, worker kéo commit supervisor, `pgrep` của `/session-start`, `demo.sh` tự `yarn install`, supervisor chạy `.autodev/tests` trước khi merge hồ sơ) | R11a, R11c |
+| 16–17/10 | R11b (D4/D5 → holdout; không có D4 tới 16/10 tối thì leader chọn holdout do người ngoài backend soạn, hoặc điều 1 ≤ 60% khi pitch) → audit 5 | | |
+| 18–20/10 | R12 → cổng, freeze 20/10 | | |
+| 21/10–7/11 | chỉ sửa lỗi; Pitch 24/10 (số liệu trung thực, video backup); 25/10 quyết scenario 2–3 (đề xuất: không, thay bằng phỏng vấn 1 người làm QA thật); Demo Day 7/11 (chạy lại cổng 2 ngày trước) | sau pitch: P4 còn lại (hook `SubagentStop`, verify nhanh, `metrics.py`) → P9 → P8a → P7a; đo reviewer ≥ 5 ca | dự án thứ hai do leader chọn |
 
-Mốc dự án chi tiết: `docs/autodev/PROJECT_STATE.md` mục "Tầm nhìn". Ước tính backend R10a → R12: 25–30 USD, 6–8 giờ máy.
+Mốc dự án chi tiết: `docs/autodev/PROJECT_STATE.md` mục "Tầm nhìn". Cập nhật 13/10 (leader duyệt kế hoạch tổng thể): hạn mức tuần 97%, reset 14/10 13:00, lần sau 21/10 (sau freeze), nên R11a → R12 + audit 5 (~36 USD, ước 55–60% tuần) nằm trong một tuần hạn mức. Đọc `/usage` sau R11a; tuần ≥ 80% thì dừng chuỗi, áp thứ tự cắt.
 
 ### Thứ tự cắt
-- Dự án: R12 → R11b (giữ R11a) → FR-09/11/12 → phần H-14/H-20 của R10c. Không cắt R10a, R10b1, R10b2, H-15.
-- Plugin: P8 → P7b → P7a → P9. Không cắt P6 (đánh vào lỗi lớn nhất) và P4 kiểm hạn mức (chuỗi R10 cần).
+- Dự án (13/10): R12 (chỉ giữ cổng) → H-52/53/55 của R11c → R11b ghi run phát lại → FR-09/11/12. Không cắt R11a, nhãn ADR-010 (vai D cần), cổng freeze.
+- Plugin: P7b → P7a → P8 → P9. Không cắt P4 tối thiểu (chuỗi R11 cần).
 
 ### Pre-mortem
 - **UI không kịp:** backend xong mà sân khấu không hiện thẻ đề xuất (H-44). Cổng 13/10: chưa có PR FR-01 của vai D thì hỏi leader có giao auto-dev không (trái quyết định 10/10, chỉ khi leader duyệt).
