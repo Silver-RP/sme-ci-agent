@@ -1,6 +1,6 @@
 {
-  "updated": "2026-10-13",
-  "source": "audit 2026-10-12 (sau R10d, R10b1, R10b2) + audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10) + R10e merge #138 + đo nền LLM thật và ADR-010 (12/10) + kế hoạch tổng thể tới Demo Day (leader duyệt 2026-10-13)",
+  "updated": "2026-10-14",
+  "source": "audit 2026-10-12 (sau R10d, R10b1, R10b2) + audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10) + R10e merge #138 + đo nền LLM thật và ADR-010 (12/10) + kế hoạch tổng thể tới Demo Day (leader duyệt 2026-10-13) + plan R11c/R11a #144, ranh giới vai A (2026-10-14)",
   "milestones": {
     "project": [
       {
@@ -499,6 +499,10 @@
   ],
   "decisions": [
     {
+      "date": "2026-10-14",
+      "text": "plan R11c + R11a merge #144. Ranh giới vai A (brief: R11 làm sau D4 + D5): luật chấm (H-28), kịch bản + injector, tập dev khó (H-29), eval A1–A3 chuyển sang R11b sau D4/D5; mốc dự phòng D5 17/10 (chưa có thì chấm tối thiểu khớp mã, ghi tạm, điều 1 ≤ 60% khi pitch). R11c chạy trước (vai D chờ nhãn), R11a còn 3 task (`signal`, H-63/H-18/H-56, H-36). Dọn nhánh đã merge."
+    },
+    {
       "date": "2026-10-13",
       "text": "Leader chốt điều 1 = 0 (đúng luật công thức, ghi kèm 'nền LLM thật 3/3 bài dễ'). P8a để sau freeze. Quy tắc tên phiên leader-<MMDD>-<việc>. Duyệt kế hoạch tổng thể 13/10 → 07/11: hạn mức tuần 97% (reset 14/10 13:00, lần sau 21/10) nên mọi việc tới freeze nằm trong một tuần; tách R11a (eval trung thực) / R11c (ADR-010 backend + vững); P4 tối thiểu trước chuỗi; đo A4/A5 LLM thật sau R11a; R11b không có D4 tới 16/10 tối thì leader chọn holdout do người ngoài backend soạn hoặc điều 1 ≤ 60% khi pitch; thứ tự cắt R12 → H-52/53/55 → ghi run phát lại."
     },
@@ -744,23 +748,9 @@
       "status": "merged #138"
     },
     {
-      "id": "R11a",
-      "date": "14–15/10",
-      "goal": "Điều 1: eval trung thực (trường signal, chấm theo mã, DB sạch, --set dev|holdout, nhãn expect cho A2/A3), tập dev ≥ 4 kịch bản khó do backend soạn",
-      "gaps": [
-        "H-28",
-        "H-29",
-        "H-63",
-        "H-18",
-        "H-56",
-        "H-36"
-      ],
-      "needs_team": false
-    },
-    {
       "id": "R11c",
-      "date": "15/10",
-      "goal": "ADR-010 phía backend (labels + thuật ngữ qua /config/domain cho #141, prompt dùng nhãn, new_content và SOP gốc tiếng Việt) + vững trước freeze",
+      "date": "14–15/10",
+      "goal": "ADR-010 phía backend + vững trước freeze (chạy trước R11a, vai D chờ nhãn cho #141)",
       "gaps": [
         "H-52",
         "H-53",
@@ -771,10 +761,26 @@
       "needs_team": false
     },
     {
+      "id": "R11a",
+      "date": "15/10",
+      "goal": "Trường signal (đo được A4/A5 LLM thật), bằng chứng thật theo vòng, điều tra lại biết hành động thất bại; phần chồng D4/D5 sang R11b",
+      "gaps": [
+        "H-63",
+        "H-18",
+        "H-56",
+        "H-36"
+      ],
+      "needs_team": false
+    },
+    {
       "id": "R11b",
-      "date": "16–17/10",
-      "goal": "Điều 1: nhập D4/D5 làm tập giữ lại, eval LLM thật nhiều seed; ghi run tốt để phát lại; A8 LLM thật; audit 5 sau mốc",
-      "needs_team": true
+      "date": "sau D4/D5 (dự phòng 17/10)",
+      "goal": "Điều 1: luật chấm theo mã (H-28), kịch bản + injector, tập dev khó (H-29), eval A1–A3 trên DB sạch, lưu kết quả thô; nhập D4 làm holdout, A1 holdout LLM thật; ghi run phát lại; A8 LLM thật; audit 5 sau mốc",
+      "needs_team": true,
+      "gaps": [
+        "H-28",
+        "H-29"
+      ]
     },
     {
       "id": "R12",

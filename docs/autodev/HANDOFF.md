@@ -16,7 +16,7 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao" hay "là gì" (**giải thích đơn giản trước**, chi tiết khi được hỏi thêm). Cuối mỗi báo cáo có câu hỏi "làm gì tiếp": danh sách **đánh số kèm nội dung**, leader trả lời bằng số.
 - **Đo bằng số, không ước lượng:** % đạt 3 điều tính theo `docs/eval/criteria.md` (A1–A8, luật chỉ số nhiều phần); chỉ số plugin B1–B6 bằng `python3 .autodev/metrics.py`.
 
-## Bước tiếp theo (cập nhật 2026-10-13, đóng phiên: kế hoạch tổng thể tới Demo Day, điều 1 giữ 0, quy tắc tên phiên)
+## Bước tiếp theo (cập nhật 2026-10-14 sáng, đóng phiên: plan R11c + R11a merge, phần chồng D4/D5 sang R11b, dọn nhánh)
 
 ### Bối cảnh
 - **Team 4 người** (`docs/PLAN.md` mục 4). Ranh giới: auto-dev không làm thay việc của vai A/D/Q, kể cả khi không đụng file của họ (**trùng việc** khác **trùng file**).
@@ -30,33 +30,40 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 
 - **Mốc tham khảo:** Đợt 2 UI 17/10; freeze 20/10 (tag v0.2-freeze); Pitch 24/10.
 
-### Đã xong trong phiên 2026-10-12 tối → 13/10 (chỉ quyết định và tài liệu, không chạy runner)
-- **Hạn mức** leader báo 12/10 tối: 5 giờ 30%, tuần **97%**. Reset tuần 13:00 14/10, lần sau 13:00 21/10 (sau freeze) → mọi việc tới freeze nằm trong **một tuần hạn mức**.
-- **Leader chốt điều 1 = 0** (đúng luật công thức), ghi kèm "nền LLM thật 3/3 trên bài dễ"; không dùng số ước lượng.
-- **P8a để sau freeze.**
-- **Quy tắc tên phiên** (leader yêu cầu): một phiên = một việc, tên `leader-<MMDD>-<việc>`; `/session-start` mục 4 đưa sẵn lệnh `/rename`; đổi việc lớn thì mở phiên mới. Phiên này: `leader-1012-mo-phien`.
-- **Kế hoạch tổng thể 13/10 → 07/11** (leader duyệt): ghi vào `ROADMAP.md` mục "Kế hoạch hai luồng" (lịch, thứ tự cắt, ngân sách tuần) và `PROJECT_STATE.md` mục "Tầm nhìn". Điểm chính: tách R11a cũ thành **R11a** (eval trung thực điều 1) + **R11c** (ADR-010 backend + vững); P4 tối thiểu trước chuỗi; đo A4/A5 LLM thật sau R11a (điều 2 có thể lên 100); R11b chờ D4, không có D4 tới 16/10 tối thì leader chọn người ngoài backend soạn holdout hoặc điều 1 ≤ 60% khi pitch.
-- **Worktree:** leader đã xoá `-d2` và `-bench`. Xoá `-bench` là do Claude đưa nhầm lệnh (bàn giao ghi worktree này cố định); không hại gì, vì `bench_reviewer.py` tự `git worktree add` lại ở lần chạy sau.
+### Đã xong trong phiên 13/10 → 14/10 sáng (plan, không chạy runner; PR #143, #144)
+- **#143** bàn giao 13/10 (kế hoạch tổng thể, điều 1 = 0, P8a sau freeze, quy tắc tên phiên).
+- **#144 plan R11c + R11a merge** (leader duyệt). Ranh giới với vai A: leader hỏi "plan có chồng lên việc của Bảo không?". Câu trả lời là có: brief `docs/briefs/data-research.md` giao D4 (kịch bản khó) và D5 (luật chấm, cách đo độ khó), và ghi "sau D4 + D5 mới làm R11". **Leader chốt 14/10:**
+  - **R11c chạy trước** (6 task: nhãn ADR-010 cho #141, H-52, H-53, H-55), vì Finn đang chờ;
+  - **R11a rút còn 3 task** (`signal`, H-63/H-18/H-56, H-36), không đụng việc của ai;
+  - luật chấm (H-28), định dạng kịch bản + injector, tập dev khó (H-29), eval theo tập đo A1–A3, lưu kết quả thô để chấm lại **chuyển sang R11b, làm sau D4/D5**;
+  - **mốc dự phòng D5 = 17/10**: chưa có thì backend chấm tối thiểu (khớp đúng mã), ghi là tạm, điều 1 ≤ 60% khi pitch.
+  - Bảng gợi ý đo độ khó (z 2–4σ, \|r\| tín hiệu đúng ≤ 0,6, khoảng cách với nhiễu ≤ 0,2, ≥ 2 nhiễu trùng thời điểm, cổng "bộ giải ngây thơ chọn \|r\| cao nhất phải sai") chỉ là gợi ý cho D5; chưa gửi Bảo.
+- **Dọn nhánh** (leader duyệt, leader tự chạy lệnh): xoá 19 nhánh trên GitHub và 20 nhánh trên máy, tất cả đã merge. Giữ `main`, `plan/r11`, `chore/autodev-handoff-20261013`, `milestone/R10e` (worktree `-autodev`), `chore/autodev-r10e-review` (worktree `-supervisor`) và mọi nhánh của Bảo, Finn.
+- **Leader hỏi, chưa quyết:**
+  - (1) Cơ chế nhắc thành viên: đề xuất GitHub Action cron 9:00 JST, nhắc `@tên` khi issue có người được gán ≥ 48 giờ không hoạt động, kèm milestone có hạn (0 USD).
+  - (2) Phân tích thương mại hoá bằng skill `deep-research` (cần ngoại lệ subagent, ~5–10% tuần): leader chọn bỏ qua để chốt kế hoạch trước.
 
 ### Làm tiếp theo thứ tự
 1. **Chờ leader:**
-   - (a) Viết `plan/R11a.md` + `plan/R11c.md` (phiên `leader-1013-plan-r11` hoặc `leader-1014-plan-r11`): "viết plan". Viết plan không cần chờ reset; chạy runner thì phải sau 13:00 14/10.
-   - (b) 14/10 sau 13:00: gửi 2 số `/usage` rồi chọn "sửa P4".
+   - (a) Sau 13:00 14/10 (reset tuần): gửi 2 số `/usage`, rồi chọn "sửa P4" (phiên `leader-1014-sua-p4`).
+   - (b) Workflow nhắc + hạn issue: "làm" kèm hạn từng việc (ví dụ "D3D4 15/10, D5 16/10, #139 14/10, #141 17/10") / "để sau".
+   - (c) Phân tích thương mại hoá (`deep-research`, xuất Claude Docs): "làm" / "để sau pitch".
    - Không nhắc trong báo cáo: nhắc Bảo/Daivon, giờ kickoff, ROADMAP nghiên cứu (bộ nhớ `skip-team-reminders`).
-2. **P4 tối thiểu** (phiên `leader-1014-sua-p4`, ~30–45 phút, trước chuỗi R11):
+2. **P4 tối thiểu** (~30–45 phút chat, trước chuỗi):
    - runner không chạy tiếp được mốc đã có PR mở (`new_milestone_pr` chỉ nhận PR mới);
    - worktree worker không kéo commit (b) supervisor đẩy lên nhánh mốc;
    - `/session-start` kiểm runner bằng `pgrep -fl 'autodev/run.py'` (`autodev-run` không khớp);
    - `demo.sh`: tự `yarn install` khi `dashboard/package.json`/`yarn.lock` đổi;
    - supervisor chạy `.autodev/tests` trước khi merge PR hồ sơ (#125).
    - **Để sau freeze:** hook `SubagentStop` không chạy (`hook_runs` đứng ở 67), tăng tốc verify (`pytest-xdist`, `--durations=20`), `metrics.py` đọc phạm vi audit, đo reviewer ≥ 5 ca.
-3. **Chuỗi R11a → R11c** (chế độ B, ~16–20 USD, ~8–10 giờ máy; `--audit-every` đặt để audit 5 chạy sau R11b):
-   - **R11a** (≤ 7 task): trường `signal` + prompt + chấm theo mã (H-28); eval luôn trên DB sạch, không đọc `learning_store` run khác, `--set dev|holdout`; nhãn `expect` (cause/ask/none) đo A2, A3; tập dev ≥ 4 kịch bản do backend soạn (H-29: 2–3σ tăng dần, zone3 ±2 °C thường xuyên, nhiễu trùng thời điểm, dữ liệu `environment_log`/`training_level`, A2 khác nguyên nhân, 1 `ask`, 1 `none`); H-63, H-18, H-56; H-36. Lỗi đã biết: `verify.py` đỏ `dashboard` tới khi #139 merge.
-   - **R11c** (≤ 6 task): khối `labels` + bảng thuật ngữ trong `data/context_profile.yaml` qua `/config/domain` (báo #141, không đổi `events.json`); prompt dùng nhãn thay mã, `new_content` tiếng Việt, SOP gốc + ghi chú simulator + `demo_llm` tiếng Việt; H-52, H-53, H-55; H-60, H-61 nếu còn chỗ; treo từ R10ch: bản SOP trùng nếu kill giữa commit và checkpoint.
-   - Sau chuỗi (leader cho phép, ~1–2 USD API): `eval_rootcause.py --llm real --set dev --seeds 3` (A1–A3 dev, không tính %), `--until learn --llm real --seeds 3` (A4, A5 LLM thật); ghi `docs/token-cost.md`.
-   - Đọc `/usage` sau R11a; tuần ≥ 80% thì dừng chuỗi, áp thứ tự cắt (ROADMAP).
-4. **R11b** (16–17/10, ~8 USD): D4/D5 → holdout, A1 tập giữ lại LLM thật; ghi run tốt để phát lại; A8 LLM thật. Rồi **audit 5**.
-5. **R12** (18–19/10) → cổng 20/10 (`criteria.md` mục 3, biên bản `docs/qa/gate-v0.2-freeze.md`), leader tag `v0.2-freeze`. Sau đó chỉ sửa lỗi + pitch; plugin sau pitch: P4 còn lại → P9 → P8a → P7a.
+3. **Chuỗi R11c → R11a** (chế độ B, `plan/R11c.md` + `plan/R11a.md` đã trên main; ~11–15 USD, ~5–6 giờ máy):
+   - lệnh (xem "Môi trường" để có PATH và biến supervisor): `nohup .autodev/autodev-run.sh --audit-every 4 R11c R11a`; với `--audit-every 4`, audit chạy sau R11b chứ không sau R11a;
+   - `verify.py` đỏ `dashboard` tới khi #139 merge: lỗi đã biết, ghi trong cả hai plan;
+   - đọc `/usage` sau R11c; tuần ≥ 80% thì dừng chuỗi, áp thứ tự cắt (ROADMAP);
+   - sau chuỗi (leader cho phép, ~1 USD API): `eval_rootcause.py --until learn --llm real --seeds 3` trên DB sạch → A4/A5 phần LLM thật (điều 2 có thể lên 100); ghi `docs/token-cost.md`;
+   - sau R11c: comment #141 hình dạng `labels`/`glossary` (báo cáo mốc có sẵn đoạn này).
+4. **R11b** (sau D4/D5, hoặc 17/10 nếu chưa có D5): viết plan sau khi đọc D4/D5. Gồm luật chấm theo mã (H-28), định dạng `data/scenarios/<set>/` + loader + injector, tập dev khó (H-29), eval theo tập trên DB sạch đo A1–A3, lưu kết quả thô để chấm lại, nhập D4 làm holdout, A1 holdout LLM thật, ghi run tốt để phát lại, A8 LLM thật. Rồi **audit 5**.
+5. **R12** (18–19/10): lỗ hổng audit 5, H-60, H-61, D6, H-64 khi có D3 → cổng 20/10 (`criteria.md` mục 3, biên bản `docs/qa/gate-v0.2-freeze.md`), leader tag `v0.2-freeze`. Sau đó chỉ sửa lỗi + pitch; plugin sau pitch: P4 còn lại → P9 → P8a → P7a.
 
 **Tín hiệu team còn lại** (`/session-start` kiểm):
 | Tín hiệu | Việc đầu tiên |
@@ -78,17 +85,18 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **`plugin-guard`** cho qua 6 PR của team (#116–#118 `dashboard/`; #122, #123, #126 vùng vai A). Nhánh chặn chưa có dịp thử.
 - **Review PR của team:** Claude kiểm phía backend, comment, approve; merge là quyết định của leader. Không merge PR draft; không bỏ draft hộ tác giả.
 
-## Trạng thái hiện tại (2026-10-13)
+## Trạng thái hiện tại (2026-10-14 sáng)
 - **Dự án:**
   - M0–M3 xong; M4 3/6 (T-040..T-042); T-043 (vai D), T-044, T-045 (vai Q) mở; cổng 13/10 go, tag `v0.1-e2e` (c60fec5);
   - 1028 passed trên main (R10e); **6 vitest dashboard đỏ trên main** (#139, vai D);
   - % đạt 3 điều: **0 / 67 / 67** (leader chốt điều 1 = 0 ngày 13/10).
 - **Plugin:** P1–P3, P5, P6 xong; P4 đang làm (mục 2 "Làm tiếp"); P7–P9 chưa làm.
-- **Runner:** rảnh (R10e xong 11:34 12/10; `audit.json` pending `["R10e"]`, `--audit-every` mặc định 2 → audit chạy sau mốc kế).
+- **Runner:** rảnh (R10e xong 11:34 12/10; `audit.json` pending `["R10e"]`; mặc định 2 sẽ chạy audit ngay sau R11c, nên chuỗi R11c → R11a dùng `--audit-every 4` để audit 5 rơi vào sau R11b). Plan R11c, R11a đã trên main (#144).
 - **Demo:** tắt. DB demo `sme_ci_demo` còn các run thử LLM thật của leader (xoá khi `--fresh-db` lần sau). Bật: `scripts/demo.sh --fresh-db` (thêm `SME_LLM=real` cho LLM thật, mở `/?source=live`); tắt: `lsof -ti tcp:8000,3000 -sTCP:LISTEN | xargs kill`. Phải tắt khi runner chạy.
 - **PR mở:** không có (sau PR bàn giao này).
-- **Worktree:** chính, `-autodev` (worker), `-supervisor`. `-bench` tự dựng lại khi chạy `bench_reviewer.py`; `-d2` đã xoá.
-- **Hạn mức:** leader báo 12/10 tối: 5 giờ 30%, tuần **97%** → không chạy runner tới reset 13:00 14/10; hỏi `/usage` đầu phiên sau.
+- **Worktree:** chính, `-autodev` (worker, nhánh `milestone/R10e`), `-supervisor` (nhánh `chore/autodev-r10e-review`). `-bench` tự dựng lại khi chạy `bench_reviewer.py`; `-d2` đã xoá.
+- **Nhánh:** dọn 14/10; còn của leader: `main`, `plan/r11`, `chore/autodev-handoff-20261013`, `chore/autodev-handoff-20261014`, 2 nhánh R10e của worktree.
+- **Hạn mức:** leader báo 12/10 tối: 5 giờ 30%, tuần **97%**; reset 13:00 14/10 → hỏi `/usage` trước khi chạy chuỗi.
 
 ## Môi trường
 - **Repo:** `~/dev/sme-ci-agent/` chứa 3 worktree cạnh nhau:
@@ -149,4 +157,5 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - 2026-10-11 chiều → 12/10 rạng sáng: #126 (D2 thêm), #129 (plan R10b2), R10b1 #130, R10b2 #132, audit 4 #134; điều 3 chốt 67; A8 10/10; cổng 13/10 go (#135), tag `v0.1-e2e`.
 - 2026-10-12 sáng → chiều: plan R10e #137, R10e #138 + hồ sơ #140 (tiếng Việt, `/config/domain`, H-32, H-34, H-66); đo nền LLM thật lần đầu (DB sạch 3/3); ADR-010; issue #139, #141 cho vai D; comment #63.
 - 2026-10-12 tối → 13/10: tuần 97%, không chạy runner; điều 1 chốt 0; P8a sau freeze; quy tắc tên phiên; kế hoạch tổng thể tới Demo Day (tách R11a/R11c).
+- 2026-10-13 → 14/10 sáng: plan R11c + R11a (#144); ranh giới vai A: phần chồng D4/D5 sang R11b, mốc dự phòng D5 17/10; R11c chạy trước; dọn nhánh.
 - Chi tiết trong `PROGRESS.md`.
