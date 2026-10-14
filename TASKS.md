@@ -40,13 +40,13 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 - [x] T-040 [Core] 3 cạnh quay lại: bác bỏ/bổ sung thông tin, từ chối đề xuất, rollback. Due 12/10
 - [x] T-041 [Core] Temperature thấp + record/replay một lần chạy tốt. Due 12/10. Owner: auto-dev R10a. (Temperature đã thay bằng `LLM_EFFORT` ở R9h; còn phần record/replay, phục vụ FR-07.)
 - [x] T-042 [Data] Lấy số liệu 3 chỉ số (defect %, MTTD/MTTR, tỷ lệ tái diễn). Due 12/10. Owner: auto-dev R10b2 (sau R10b1, tức sau khi D1 #66 của vai A merge).
-- [ ] T-043 [Demo] Số liệu lên dashboard; kịch bản 4 phút v1 (docs/demoscript.md). Due 12/10. Owner: vai D (#64). Kịch bản v1 nay là `docs/demo-storyboard.md`.
-- [ ] T-044 [Tools] Sổ chi phí token docs/token-cost.md (cập nhật hằng ngày). Due 13/10. Owner: vai Q (#65, Q6).
-- [ ] T-045 [All] Bug bash 12/10, tag v0.1-e2e, demo nội bộ #1 13/10. Owner: vai Q chủ trì (#65, Q4); leader tag.
+- [ ] T-043 [Demo] Số liệu lên dashboard; kịch bản 4 phút v1 (docs/demoscript.md). Due 12/10. Owner: auto-dev R11d (ADR-011; trước là vai D #64). Kịch bản v1 nay là `docs/demo-storyboard.md`.
+- [x] T-044 [Tools] Sổ chi phí token docs/token-cost.md (cập nhật mỗi lần chạy LLM thật). Owner: leader/Claude (ADR-011). Có từ 14/10, ghi lại 2 lần đo 12/10.
+- [ ] T-045 [All] Bug bash bấm tay toàn kịch bản demo, demo nội bộ. Owner: leader (ADR-011; tag v0.1-e2e đã có 12/10). Làm sau R11d, trước cổng freeze.
 
-## Mốc backend auto-dev đến freeze (leader duyệt 10/10)
+## Mốc backend auto-dev đến freeze (lập lại 14/10, ADR-011)
 
-Chi tiết, pre-mortem và thứ tự cắt: `docs/autodev/ROADMAP.md` mục "Kế hoạch hai luồng"; bảng mốc: `docs/autodev/PROJECT_STATE.md` mục "Tầm nhìn". Ngày là đề xuất. Chỉ số [A..] theo `docs/eval/criteria.md`: mốc xong khi chỉ số của nó **đo được** (có lệnh và số), không chỉ khi test xanh.
+Từ 14/10 leader + auto-dev làm cả việc của vai A, D, Q (ADR-011); bỏ ngày cũ, leader tự đặt ngày. Chi tiết, thứ tự, pre-mortem và thứ tự cắt: `docs/autodev/ROADMAP.md` mục "Kế hoạch lại 14/10"; bảng mốc: `docs/autodev/PROJECT_STATE.md` mục "Tầm nhìn". Chỉ số [A..] theo `docs/eval/criteria.md`: mốc xong khi chỉ số của nó **đo được** (có lệnh và số), không chỉ khi test xanh.
 
 - [x] R10a (10–11/10): API storyboard (FR-09..12), T-041 record/replay; H-13, H-16, H-26. [A5 LLM giả, A8 `--repeat`]
 - [ ] Đo nền LLM thật sau R10a (leader cho phép, ≤ 2 USD): A1 + chi phí mỗi run vào `docs/token-cost.md`
@@ -57,15 +57,21 @@ Chi tiết, pre-mortem và thứ tự cắt: `docs/autodev/ROADMAP.md` mục "K�
 - [x] R10b2 (12–13/10): điều 3 (H-11, T-042, `/metrics` thật, `scripts/metrics_report.py` có đối chứng; giả định lấy nguồn từ D3); H-33, H-39 (H-31 đã đóng ở R10ch). [A7, A4] PR #132; 4 giả định còn "giả định, chờ D3".
 - [x] Cổng 13/10 (`docs/eval/criteria.md` mục 3) → tag v0.1-e2e (leader duyệt 12/10, biên bản `docs/qa/gate-v0.1-e2e.md`; H-32 sửa trước freeze); cổng UI FR-01..05 (vai D). R10b2 trễ thì A7 không thuộc cổng 13/10, chuyển sang cổng 20/10 (leader quyết).
 - [x] R10e (12/10): câu chữ tiếng Việt từ config, `GET /config/domain` (#114), Measure không hỏi lặp (H-34, #111), Learn `cause_status` (H-32), `/metrics` trung thực (H-65 a, c, d, e), ví dụ sinh lại (H-66). [A4 theo nguyên nhân: right 5/5, wrong 0/5] PR #138; 6 vitest của vai D cần cập nhật kỳ vọng.
-- [ ] R11c (14–15/10, chạy trước): ADR-010 phía backend (`labels` + thuật ngữ qua `/config/domain` cho #141, prompt dùng nhãn, `new_content`/SOP gốc tiếng Việt); H-52, H-53, H-55. `plan/R11c.md`
-- [ ] R11a (15/10): trường `signal`, bằng chứng thật theo vòng (H-63, H-18, H-56), H-36. [sau mốc đo A4/A5 LLM thật] `plan/R11a.md`
-- [ ] R11b (sau D4/D5 của vai A, dự phòng 17/10): luật chấm theo mã (H-28), định dạng kịch bản + injector, tập dev khó (H-29), eval A1–A3 trên DB sạch, lưu kết quả thô; nhập D4 làm tập giữ lại, eval nhiều seed LLM thật; ghi run để phát lại. [A1 tập giữ lại ≥ 0,7]
-- [ ] R12 (18–19/10): lỗ hổng audit 5, bộ dữ liệu demo (D6), H-64 khi có D3 → cổng 20/10 → freeze
+- [ ] P4 tối thiểu (phiên chat, trước chuỗi 1): xem ROADMAP mục "Kế hoạch lại 14/10", việc 0.
+- [ ] Chuỗi 1, R11c: ADR-010 phía backend (`labels` + thuật ngữ qua `/config/domain`, prompt dùng nhãn, `new_content`/SOP gốc tiếng Việt); H-52, H-53, H-55. `plan/R11c.md`
+- [ ] Chuỗi 1, R11a: trường `signal`, bằng chứng thật theo vòng (H-63, H-18, H-56), H-36. [sau mốc đo A4/A5 LLM thật] `plan/R11a.md`
+- [ ] Chuỗi 1, R11d (việc vai D cũ): #139 (6 vitest + lỗi nghĩa `n_after`), H-65 b/f/g, H-67, H-68, H-69, #141 (nhãn từ API, mã ở chú thích, chip, "trích nguyên văn", thuật ngữ); FR còn thiếu; ảnh chụp 1920×1080 trong PR. `plan/R11d.md` (viết trước chuỗi) [`verify.py` xanh cả `dashboard`]
+- [ ] Nghiên cứu (phiên chat, song song chuỗi 1; việc vai A cũ): D3 `docs/research/reflow_domain.md` có nguồn; D5 `docs/research/scoring.md`; định dạng kịch bản `docs/research/scenarios.md`.
+- [ ] Tập giữ lại niêm phong (phiên cách ly, ADR-011): ≥ 4 kịch bản ngoài repo, SHA-256 trong `docs/research/holdout-seal.md`; leader duyệt đáp án.
+- [ ] Chuỗi 2, R11b: luật chấm theo mã theo D5 (H-28), loader + injector theo định dạng, tập dev khó ≥ 4 (H-29), eval A1–A3 trên DB sạch, lưu kết quả thô, chấm tập giữ lại (kiểm mã băm), ghi run để phát lại, A8 LLM thật → audit 5. [A1 tập giữ lại ≥ 0,7]
+- [ ] Đo LLM thật (leader cho phép từng lần, ≤ 3 USD/lần): A4/A5 sau chuỗi 1; A1–A3 tập giữ lại sau R11b; ghi `docs/token-cost.md`.
+- [ ] R12: lỗ hổng audit 5, H-60, H-61, H-62, H-64 (nguồn D3), D6 bộ dữ liệu demo, `docs/qa/responsible-ai.md` (Q5), `docs/qa/rehearsal-checklist.md` (Q7) → cổng freeze (`docs/qa/gate-v0.2-freeze.md`) → leader tag `v0.2-freeze`
+- [ ] Leader (không thay được): bug bash bấm tay (T-045), diễn tập ≥ 2 lần, video dự phòng, slide pitch, ngân hàng Q&A
 
 ## Backlog sau 13/10 (G6 → G8)
 
 - [ ] Scenario ẩn (tồn kho hụt vì defect, hoặc 2 nguyên nhân cùng lúc)
 - [ ] Case "chưa đủ bằng chứng" và case false positive hoàn chỉnh
 - [ ] Tập demo #2, cập nhật ngân hàng Q&A
-- [ ] Freeze 20/10, tag v0.2-freeze, video backup, checklist Tokyo
-- [ ] Scenario 2–3 và Orchestrator (quyết định lại 17/10 và 25/10)
+- [ ] Checklist Tokyo (sau freeze)
+- [ ] Scenario 2–3 và Orchestrator: ngoài kế hoạch lại 14/10 (chỉ xét lại sau pitch)

@@ -57,6 +57,16 @@ Trạng thái: đã chốt (leader xác nhận 2026-10-08, xem ADR-009).
   - Vai A: nội dung SOP gốc tiếng Việt (#122).
 - Hệ quả: thêm `labels` vào `/config/domain` là thêm trường, ghi vào `docs/schema/payloads.md`; không đổi `events.json`.
 
+## ADR-011: Leader + auto-dev tiếp quản các vai A, D, Q; tập giữ lại soạn bằng phiên cách ly
+
+- Bối cảnh (2026-10-14 tối): sau D1, D2 (vai A) và FR-01..05 (vai D), việc còn lại của ba vai (D3–D6, #139, #141, Q1–Q7) đứng yên từ 12/10, trong khi điều 1 (0%) và giao diện ADR-010 nằm trên đường găng. Mọi mốc backend còn lại (R11b, R12) đang chờ sản phẩm của team.
+- Quyết định (leader chốt 2026-10-14):
+  1. Leader + Claude/auto-dev làm **toàn bộ** việc còn lại của vai A, D, Q. Issue #63, #64, #65, #139, #141 chuyển về leader; thành viên được báo một lần (comment), vẫn giữ quyền repo. PR của thành viên gửi tới vẫn được xem như trước.
+  2. **Bỏ mốc ngày cũ:** việc xếp theo giá trị và chi phí (`docs/autodev/ROADMAP.md`); leader tự đặt ngày.
+  3. **Tập giữ lại (holdout) cho điều 1** không còn do vai A soạn. Thay bằng **phiên cách ly**: một phiên Claude riêng chỉ đọc hợp đồng dữ liệu, ghi chú ngành (D3), đặc tả chấm (D5), định dạng kịch bản; **không** đọc `backend/`, prompt, tập dev hay kết quả eval. Phiên đó soạn ≥ 4 kịch bản, lưu **ngoài repo** tới lúc chấm; mã băm SHA-256 từng file ghi vào repo ngay khi soạn xong (niêm phong). Leader đọc đáp án và duyệt trước khi niêm phong. Khi pitch nêu rõ cách soạn này.
+  4. Nguyên tắc "người kiểm khác người làm" của vai Q giữ bằng: reviewer + supervisor độc lập cho code; leader bấm tay (bug bash, diễn tập) cho giao diện; audit 5 cho cả hệ.
+- Hệ quả: `docs/eval/criteria.md` mục 1, 3, 5 sửa theo; `team-task-boundaries` hết hiệu lực; auto-dev được sửa `dashboard/` (cả phần trình bày), `docs/research/`, `data/scenarios/`, `docs/qa/`. Kiến trúc (ADR-001..006) không đổi.
+
 ## Việc cần sửa sau khi chạy (log lỗi M3)
 
 ### T-030 lần 1 (2026-10-09, LLM thật `claude-sonnet-5-5`, chạy qua API của `demo.sh`, người trả lời trung tính)

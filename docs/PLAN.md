@@ -36,6 +36,8 @@ Bản gốc: G3 3/10, G4 8/10, G5 13/10. Thực tế G3 chưa làm khi bắt đ�
 
 ## 4. Phân công (4 người, đổi vai được)
 
+**Cập nhật 2026-10-14 (ADR-011):** leader + Claude/auto-dev tiếp quản toàn bộ việc còn lại của vai A, D, Q; bảng dưới chỉ còn giá trị lịch sử (D1, D2 của vai A và FR-01..05 của vai D đã merge). Kế hoạch mới, không theo ngày cũ: `docs/autodev/ROADMAP.md` mục "Kế hoạch lại 14/10".
+
 Cập nhật 2026-10-10: backend (vai B + C cũ) do leader + auto-dev làm. Ba thành viên nhận vai mới, mỗi vai có brief và issue.
 
 | Vai | Phụ trách | Người | Brief / issue |

@@ -1,5 +1,7 @@
 # Giao việc: nghiên cứu dữ liệu đầu vào và kịch bản (vai A: Data)
 
+> **Cập nhật 2026-10-14 (ADR-011):** D1, D2 đã xong (#122, #123, #126, cảm ơn @bobbibao). D3–D6 chuyển cho leader + auto-dev; tập giữ lại (D4 holdout) do phiên cách ly soạn. Brief giữ làm đặc tả; kế hoạch: `docs/autodev/ROADMAP.md` mục "Kế hoạch lại 14/10".
+
 - **Người giao:** leader. **Ngày:** 2026-10-10.
 - **Người nhận:** thành viên phụ trách nghiên cứu và chuẩn hoá dữ liệu.
 - **Đọc file này trước tiên;** mọi tài liệu khác được dẫn link ở mục 7.
