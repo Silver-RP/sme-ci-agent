@@ -16,7 +16,7 @@ Không tin bàn giao một mình. So với thực tế:
 - `gh pr list --state open --json number,title,author,headRefName,statusCheckRollup`.
 - `gh issue list --state open --limit 30 --json number,title,assignees,labels,updatedAt`. Chú ý issue và comment mới của team kể từ ngày cập nhật HANDOFF: `gh issue list --search "updated:>=<ngày>"`.
 - Team: `gh api repos/{owner}/{repo}/invitations --jq '.[].invitee.login'` và `.../collaborators --jq '.[].login'`. Ai đã nhận lời mà chưa được gán issue thì đề xuất gán (theo bảng vai trong HANDOFF).
-- Runner: `tail -5 .autodev/runs/run.log`, `ls -t .autodev/runs/STOPPED-* | head -1`; tiến trình `pgrep -fl autodev-run`.
+- Runner: `tail -5 .autodev/runs/run.log`, `ls -t .autodev/runs/STOPPED-* | head -1`; tiến trình `pgrep -fl 'autodev/run.py'` (tên tiến trình thật của runner; `autodev-run` chỉ là script khởi chạy).
 - Demo: `lsof -iTCP:8000 -iTCP:3000 -sTCP:LISTEN`.
 - Hạn mức: `python3 .autodev/usage.py show --last 3` (% 5 giờ, % tuần, tuổi số liệu, 3 nhiệm vụ cuối). Số liệu cũ (status line chỉ chạy trong terminal, không chạy trong VS Code) thì xin leader 2 số từ `/usage`.
 

@@ -190,6 +190,46 @@ class PrepareWorker(unittest.TestCase):
         self.assertEqual(cm.exception.code, 2)
         self.assertIn("plan/R9.md", (run.RUNS / "STOPPED.md").read_text())
 
+    def _push_branch(self, msg):
+        """Commit on the seed's milestone/R4 and push it (worker commits, then the supervisor's task (b))."""
+        (self.seed / f"{msg}.txt").write_text(msg)
+        git(self.seed, "add", ".")
+        git(self.seed, "commit", "-q", "-m", msg)
+        git(self.seed, "push", "-q", "origin", "milestone/R4")
+        return git(self.seed, "rev-parse", "HEAD")
+
+    def test_open_pr_branch_pulls_supervisor_commits(self):
+        # P4 (14/10): the supervisor pushed a task onto the open milestone PR; the worker must continue from it
+        git(self.seed, "switch", "-q", "-c", "milestone/R4")
+        self._push_branch("worker")
+        git(self.worker, "fetch", "-q", "origin")
+        git(self.worker, "switch", "-q", "-c", "milestone/R4", "origin/milestone/R4")
+        head = self._push_branch("supervisor")
+        run.prepare_worker("R4", self.worker, branch="milestone/R4")
+        self.assertEqual(git(self.worker, "branch", "--show-current"), "milestone/R4")
+        self.assertEqual(git(self.worker, "rev-parse", "HEAD"), head)
+
+    def test_open_pr_branch_checked_out_when_missing_locally(self):
+        git(self.seed, "switch", "-q", "-c", "milestone/R4")
+        head = self._push_branch("worker")
+        run.prepare_worker("R4", self.worker, branch="milestone/R4")
+        self.assertEqual(git(self.worker, "branch", "--show-current"), "milestone/R4")
+        self.assertEqual(git(self.worker, "rev-parse", "HEAD"), head)
+
+    def test_open_pr_branch_diverged_stops(self):
+        git(self.seed, "switch", "-q", "-c", "milestone/R4")
+        self._push_branch("worker")
+        git(self.worker, "fetch", "-q", "origin")
+        git(self.worker, "switch", "-q", "-c", "milestone/R4", "origin/milestone/R4")
+        (self.worker / "local.txt").write_text("unpushed\n")
+        git(self.worker, "add", ".")
+        git(self.worker, "commit", "-q", "-m", "unpushed")
+        self._push_branch("supervisor")
+        with self.assertRaises(SystemExit) as cm:
+            run.prepare_worker("R4", self.worker, branch="milestone/R4")
+        self.assertEqual(cm.exception.code, 2)
+        self.assertIn("milestone/R4", (run.RUNS / "STOPPED.md").read_text())
+
 
 class Helpers(unittest.TestCase):
     def setUp(self):
@@ -328,6 +368,51 @@ class ResumeUnfinished(unittest.TestCase):
         (self.worker / ".autodev" / "state.json").write_text("{bad")
         self.assertEqual(run.unfinished_tasks(self.worker, "R9"), [])
 
+class ResumeOpenPr(unittest.TestCase):
+    """P4 (14/10): a milestone whose PR is still open (supervisor added a task) resumes without --skip-merge-check."""
+
+    def setUp(self):
+        self.OLD = {"number": 150, "headRefName": "milestone/R11c", "createdAt": "2026-10-14T01:00:00Z", "state": "OPEN"}
+        self.tmp = tempfile.TemporaryDirectory()
+        base = Path(self.tmp.name)
+        names = ("RUNS", "run_step", "prepare_worker", "merge_docs_chore_prs", "list_prs", "pr_state")
+        self.old = {n: getattr(run, n) for n in names}
+        run.RUNS = base / "runs"
+        self.prompts, self.prepared, self.merged = [], [], []
+        run.run_step = lambda prompt, cwd, allowed, label, **kw: self.prompts.append(prompt) or {"total_cost_usd": 0.1}
+        run.prepare_worker = lambda m, w, branch=None: self.prepared.append((m, branch))
+        run.merge_docs_chore_prs = lambda cwd, since: self.merged.append(since)
+        run.pr_state = lambda cwd, number: "MERGED" if number == 150 else "OPEN"
+        self.dirs = [f"--worker-dir={base}", f"--supervisor-dir={base}", "--audit-every", "0"]
+
+    def tearDown(self):
+        for n, v in self.old.items():
+            setattr(run, n, v)
+        self.tmp.cleanup()
+
+    def test_open_pr_is_resumed_and_checked(self):
+        run.list_prs = lambda cwd: [self.OLD]
+        self.assertEqual(run.main(["R11c", *self.dirs]), 0)
+        self.assertEqual(self.prepared, [("R11c", "milestone/R11c")])
+        self.assertEqual(self.prompts, ["/run-milestone R11c", "/supervise R11c --review-only"])
+        self.assertEqual(len(self.merged), 1)  # record PR merged by the runner, not by hand
+
+    def test_open_pr_not_merged_stops(self):
+        run.list_prs = lambda cwd: [self.OLD]
+        run.pr_state = lambda cwd, number: "OPEN"
+        with self.assertRaises(SystemExit) as cm:
+            run.main(["R11c", *self.dirs])
+        self.assertEqual(cm.exception.code, 4)
+        self.assertIn("#150", (run.RUNS / "STOPPED.md").read_text())
+
+    def test_merged_or_other_prs_do_not_resume(self):
+        prs = [
+            {**self.OLD, "state": "MERGED"},
+            {**self.OLD, "number": 151, "headRefName": "milestone/R11a"},
+        ]
+        self.assertIsNone(run.open_milestone_pr(prs, "R11c"))
+        self.assertEqual(run.open_milestone_pr(prs, "R11a")["number"], 151)
+
 
 class AuditEvery(unittest.TestCase):
     """P5: a headless /audit runs after every N merged R milestones (counter survives across runs)."""
@@ -339,7 +424,7 @@ class AuditEvery(unittest.TestCase):
         run.RUNS = base / "runs"
         self.prompts = []
         run.run_step = lambda prompt, cwd, allowed, label, **kw: self.prompts.append(prompt) or {"total_cost_usd": 0.1}
-        run.prepare_worker = lambda m, w: None
+        run.prepare_worker = lambda m, w, **kw: None
         run.merge_docs_chore_prs = lambda cwd, since: None
         self.dirs = [f"--worker-dir={base}", f"--supervisor-dir={base}", "--skip-merge-check"]
         os.environ.pop("AUTODEV_AUDIT_EVERY", None)

@@ -107,6 +107,14 @@ if [ "$FRESH_DB" = "1" ]; then
 fi
 uv run alembic upgrade head
 
+# After a merge that changed dashboard/package.json or yarn.lock, node_modules is stale ("module not found"):
+# install again when yarn's integrity marker is missing or older than either file.
+INTEGRITY=dashboard/node_modules/.yarn-integrity
+if [ ! -f "$INTEGRITY" ] || [ dashboard/yarn.lock -nt "$INTEGRITY" ] || [ dashboard/package.json -nt "$INTEGRITY" ]; then
+  echo "Dashboard dependencies missing or stale; running yarn install --frozen-lockfile..."
+  (cd dashboard && yarn install --frozen-lockfile)
+fi
+
 uv run uvicorn backend.api.app:create_app --factory --port "$API_PORT" &
 PIDS+=($!)
 (cd dashboard && NEXT_PUBLIC_API_URL="http://localhost:$API_PORT" exec yarn dev --port "$DASH_PORT") &

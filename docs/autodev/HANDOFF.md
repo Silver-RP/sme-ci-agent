@@ -78,7 +78,7 @@ Cổng hạn mức: `/usage` sau chuỗi 1 và chuỗi 2; tuần ≥ 80% thì d�
   nohup .autodev/autodev-run.sh [--audit-every N] <mốc> [<mốc> ...] > .autodev/runs/nohup.out 2>&1 &
   ```
   `--audit-every` (mặc định 2) đếm cả `pending` còn lại trong `audit.json`; chọn N để audit chạy sau đúng mốc mong muốn. Runner chuyển sang mốc kế **ngay** khi mốc trước merge: sửa plan mốc sau phải merge trước lúc đó.
-  **Chạy tiếp mốc đã có PR mở** (sau khi supervisor thêm task (b)): `git -C ../sme-ci-agent-autodev merge --ff-only origin/milestone/<M>` rồi chạy với `--skip-merge-check`; sau đó tự kiểm PR mốc đã merge và tự merge PR hồ sơ (chờ sửa plugin).
+  **Chạy tiếp mốc đã có PR mở** (sau khi supervisor thêm task (b)): chạy runner như thường, không cần `--skip-merge-check`. Runner thấy PR mở, đưa worker lên `origin/milestone/<M>` bằng fast-forward (lệch nhánh thì dừng, mã 2), rồi kiểm PR đã merge và tự merge PR hồ sơ (P4, 14/10).
   Ngay sau đó, bằng Bash `run_in_background`, chạy vòng `until` chờ thêm dòng "Hoàn tất|STOP" trong `.autodev/runs/run.log` hoặc `autodev/run.py` thoát, để phiên chat được báo khi xong.
 - **Phạm vi audit:** runner đọc `.autodev/runs/audit.json` (`pending`, không commit) đúng lúc quyết định có chạy audit hay không.
 - **Theo dõi:** `.autodev/watch.sh` (terminal) hoặc trang trạng thái Artifact (ảnh chụp).
