@@ -7,7 +7,7 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
   - **Plan lớn** là xây plugin auto-dev (`docs/autodev/`, mốc **P1–P9**).
   - **Plan nhỏ** là dự án SME CI Agent (`TASKS.md` và `docs/PLAN.md`, mốc dự án **M0–M4**).
   - Mỗi **lần chạy auto-dev** là một mốc **R** (`plan/R4.md`…`plan/R10b2.md`): worker làm vài task TASKS.md, đồng thời kiểm chứng một khả năng của plugin. Mốc tên kết thúc bằng `h` là sửa nhanh, không tính vào `--audit-every`.
-  - Ưu tiên auto-dev, nhưng mốc dự án vẫn phải đúng TASKS.md, PLAN.md, DoD.
+  - Ưu tiên auto-dev, nhưng mốc dự án vẫn phải đúng TASKS.md, PLAN.md, DoD. **Từ 15/10 (ADR-012):** dồn 100% vào auto-dev; SME CI Agent chỉ là dự án thử.
 - **Phiên supervisor đóng vai leader kỹ thuật kiêm BA:**
   - lập plan, giao mốc, duyệt, merge, sửa plugin;
   - viết brief và issue cho team.
@@ -16,29 +16,28 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao" hay "là gì" (**giải thích đơn giản trước**, chi tiết khi được hỏi thêm). Cuối mỗi báo cáo có câu hỏi "làm gì tiếp": danh sách **đánh số kèm nội dung**, leader trả lời bằng số.
 - **Đo bằng số, không ước lượng:** % đạt 3 điều tính theo `docs/eval/criteria.md` (A1–A8, luật chỉ số nhiều phần); chỉ số plugin B1–B6 bằng `python3 .autodev/metrics.py`.
 
-## Bước tiếp theo (cập nhật 2026-10-14 tối: lập lại kế hoạch, ADR-011)
+## Bước tiếp theo (cập nhật 2026-10-15: chuyển hướng sang auto-dev, ADR-012)
 
 ### Bối cảnh
-- **Leader chốt 14/10 tối (ADR-011):** leader + Claude/auto-dev **làm toàn bộ việc còn lại của vai A, D, Q**; bỏ mốc ngày cũ, xếp theo giá trị/chi phí, leader tự đặt ngày. Kế hoạch đầy đủ (phân tích, thứ tự 0–9, pre-mortem, thứ tự cắt): `docs/autodev/ROADMAP.md` mục "Kế hoạch lại 14/10".
-- Ranh giới vai cũ (bộ nhớ `team-task-boundaries`) **hết hiệu lực**: auto-dev được sửa `dashboard/` (cả trình bày), `docs/research/`, `data/scenarios/`, `docs/qa/`.
-- **Tập giữ lại** cho điều 1: phiên cách ly soạn, leader duyệt đáp án, lưu ngoài repo, SHA-256 niêm phong (`docs/eval/criteria.md` mục 1).
-- Team (@bobbibao, @Finnng1104, @daivonpham) vẫn là collaborator. Daivon **đã nhận lời mời** (lệch với bàn giao sáng). Báo team: Claude soạn comment cho #63, #64, #65, #139, #141, **leader duyệt rồi Claude đăng**, sau đó bỏ gán, gán @Silver-RP. Issue đóng khi việc xong, không đóng ngay.
-- Hạn mức: leader báo 14/10 22:40: 5 giờ 1%, tuần 0% (reset 14/10 13:00; lần sau 21/10 13:00).
+- **Leader chốt 15/10 (ADR-012):** từ phiên sau **dồn 100% vào phát triển auto-dev**. SME CI Agent quay về đúng vai **dự án thử** cho auto-dev: không còn là mục tiêu tự thân; các mốc R tiếp theo chỉ chạy khi phục vụ kiểm chứng một khả năng của plugin.
+- **Mục tiêu auto-dev (leader):** leader chỉ đưa **mục tiêu + kết quả mong muốn**; auto-dev tự phân tích, hỏi thông tin còn thiếu, lập kế hoạch, tự điều phối qua lại giữa các vai (lập plan, làm, review, giám sát, audit) để hoàn thành dự án.
+- Hiện leader còn phải làm tay (đầu vào cho phân tích khoảng cách): viết/duyệt `plan/Rx.md` và ROADMAP; chọn thứ tự mốc; quyết đề xuất (c); khởi động runner và vòng chờ; đọc `/usage`; mở/đóng phiên; merge khi classifier chặn; viết brief/issue.
+- Đã xong phiên 14/10 tối → 15/10: P4 tối thiểu (#147: runner tự chạy tiếp mốc có PR mở, worker fast-forward lên nhánh PR, `demo.sh` tự `yarn install`, supervisor chạy `.autodev/tests` trước PR hồ sơ, `pgrep 'autodev/run.py'`); plan R11d (#148). Bình luận báo team và gán lại #63, #64, #65, #139, #141 cho @Silver-RP đã làm 14/10 (issue vẫn mở).
+- **Nghiên cứu thị trường** (leader yêu cầu, ngoài repo, không commit): `~/dev/sme-ci-agent/research/reports/Thị trường SME CI Agent.md` (+ ghi chú `research_notes/`). Kết luận: nhu cầu có (JETRO FY2024: 60,9% doanh nghiệp Nhật ở VN thiếu nhà cung cấp đạt chất lượng), rủi ro lớn là Luật BVDLCN 91/2025 + Nghị định 356/2025 (chuyển dữ liệu công nhân ra nước ngoài). Chỉ dùng nếu leader quay lại hướng thương mại.
+- Hạn mức: số liệu `usage.py` cũ (~90 giờ); lần cuối leader báo 14/10 22:40: 5 giờ 1%, tuần 0% (reset 21/10 13:00).
 
 ### Làm tiếp theo thứ tự
-1. **Chờ leader:** duyệt PR kế hoạch này; duyệt nội dung comment báo team.
-2. **P4 tối thiểu** (phiên `leader-<MMDD>-sua-p4`, 30–45 phút, 0 USD API): runner chạy tiếp mốc đã có PR mở; worktree worker kéo commit supervisor; `/session-start` dùng `pgrep -fl 'autodev/run.py'`; `demo.sh` tự `yarn install`; supervisor chạy `.autodev/tests` trước khi merge PR hồ sơ. Để sau: hook `SubagentStop`, verify nhanh, `metrics.py` đọc phạm vi audit.
-3. **Plan R11d** (giao diện, PR plan): #139 (6 vitest + lỗi nghĩa `n_after`/`min_units_after`), H-65 b/f/g, H-67, H-68, H-69, #141 (nhãn từ `/config/domain` của R11c, mã ở chú thích, chip, "trích nguyên văn", thuật ngữ); đối chiếu FR-06..12 với code thật (`dashboard/app/` đã có `kaizen`, `overview`, `audit`, `runs`); ảnh chụp Playwright 1920×1080 trong PR. Sửa phạm vi "Ngoài: dashboard (vai D)" trong `plan/R11c.md`, `plan/R11a.md` thành "R11d".
-4. **Chuỗi 1** (runner chế độ B): `nohup .autodev/autodev-run.sh --audit-every 4 R11c R11a R11d` (~18–25 USD, ~8–10 giờ máy). `verify.py` đỏ `dashboard` tới khi R11d sửa #139 (lỗi đã biết). Sau chuỗi: `/usage`; đo A4/A5 LLM thật nếu leader cho (`eval_rootcause.py --until learn --llm real --seeds 3` trên DB sạch, ~1 USD), ghi `docs/token-cost.md`.
-5. **Song song chuỗi 1, phiên chat** (không đụng file của mốc): D3 `docs/research/reflow_domain.md` (tìm web, có nguồn; nguồn cho 4 giả định điều 3, H-64), D5 `docs/research/scoring.md` (luật chấm theo mã, đúng một phần, đo độ khó; bảng gợi ý z 2–4σ, \|r\| ≤ 0,6, ≥ 2 nhiễu trùng thời điểm, bộ giải ngây thơ phải sai), định dạng kịch bản `docs/research/scenarios.md`. Leader duyệt PR.
-6. **Tập giữ lại niêm phong** (phiên cách ly): chỉ đọc hợp đồng dữ liệu, D3, D5, định dạng; ≥ 4 kịch bản (≥ 1 `ask`, ≥ 1 `none`, ≥ 1 nhiễu trùng thời điểm); lưu ngoài repo; `docs/research/holdout-seal.md` ghi SHA-256; leader duyệt đáp án trước khi niêm phong.
-7. **Plan R11b → chuỗi 2:** R11b (H-28 theo D5, loader + injector, tập dev khó ≥ 4 (H-29), eval A1–A3 DB sạch, lưu kết quả thô, chấm tập giữ lại có kiểm mã băm, ghi run phát lại, A8 LLM thật) → audit 5 (~13–19 USD). Rồi đo A1–A3 tập giữ lại LLM thật 3 seed (≤ 3 USD, leader cho phép).
-8. **R12 → cổng v0.2:** lỗ hổng audit 5, H-60, H-61, H-62, H-64, D6, `docs/qa/responsible-ai.md`, `docs/qa/rehearsal-checklist.md`, biên bản `docs/qa/gate-v0.2-freeze.md`; leader tag `v0.2-freeze`.
-9. **Leader làm tay:** bug bash bấm tay (T-045), diễn tập ≥ 2 lần, video dự phòng, slide trình bày, Q&A.
+1. **Chờ leader** (phiên mới `/session-start phan-tich-autodev`, tên `leader-<MMDD>-phan-tich-autodev`): trả lời 3 điều để bắt đầu phân tích:
+   - (a) "xong" của auto-dev đo bằng gì (ví dụ: số lần leader phải can thiệp mỗi dự án, % mốc tự hoàn thành, USD/mốc);
+   - (b) ngân sách hạn mức cho giai đoạn này;
+   - (c) chuỗi 1 (R11c → R11a → R11d, plan đã trên main) chạy ngay làm tải thử để đo khoảng cách, hay chờ phân tích xong.
+2. **Phân tích khoảng cách** (phiên chat, 0 USD): đọc `docs/autodev/auto-dev-review-design.md`, ROADMAP (P1–P9), PROGRESS (số đo B1–B5), LESSONS; liệt kê từng việc leader đang làm tay (bối cảnh trên) → khả năng plugin cần có. Đề xuất mốc plugin mới (ví dụ: lệnh nhận mục tiêu → hỏi → viết ROADMAP + plan; supervisor tự lập plan mốc kế; tự chạy chuỗi + cổng `/usage`; tự quyết (c) trong ngưỡng); xem lại P7–P9 còn hợp không. Kết quả là PR sửa ROADMAP, leader duyệt.
+3. **Câu hỏi kiến trúc cho leader:** ADR-001 ("không multi-agent, không Agent Manager") là luật của **sản phẩm** SME CI Agent; auto-dev vốn đã có nhiều vai (developer, reviewer, supervisor, auditor). Cần leader xác nhận phạm vi ADR-001 không chặn việc auto-dev tự điều phối các vai (ghi vào ADR-012 khi chốt).
+4. Sau khi duyệt ROADMAP mới: làm mốc plugin đầu tiên, dùng một mốc R của SME CI Agent (R11c/R11a/R11d hoặc R11b) làm bài thử.
 
-Cổng hạn mức: `/usage` sau chuỗi 1 và chuỗi 2; tuần ≥ 80% thì dừng, áp thứ tự cắt (ROADMAP) hoặc chờ reset 21/10.
+Kế hoạch SME CI Agent cũ (ROADMAP "Kế hoạch lại 14/10", việc 2–9) **tạm giữ, không chủ động chạy**; dùng làm tải thử theo mục 4.
 
-**Tín hiệu team** (`/session-start` vẫn kiểm): PR mới của thành viên → kiểm như trước (test, demo, hợp đồng), leader merge; nếu trùng việc auto-dev đang làm thì leader chọn bản nào giữ.
+**Tín hiệu team** (`/session-start` vẫn kiểm): PR mới của thành viên → kiểm như trước, leader merge.
 
 ### Cách làm việc (sau ADR-011)
 - **Chỉ leader/Claude chạy auto-dev** (`/run-milestone`, `/supervise`, `/audit`). Vùng file theo vai không còn giới hạn auto-dev.
@@ -48,18 +47,17 @@ Cổng hạn mức: `/usage` sau chuỗi 1 và chuỗi 2; tuần ≥ 80% thì d�
 - **Claude của thành viên không có quyền tự merge** (quyền đó nằm trong `settings.local.json` của máy leader).
 - **PR của thành viên:** Claude kiểm phía backend, comment, approve; merge là quyết định của leader. Không merge PR draft.
 
-## Trạng thái hiện tại (2026-10-14 sáng)
-- **Dự án:**
-  - M0–M3 xong; M4 3/6 (T-040..T-042); T-043 (vai D), T-044, T-045 (vai Q) mở; cổng 13/10 go, tag `v0.1-e2e` (c60fec5);
-  - 1028 passed trên main (R10e); **6 vitest dashboard đỏ trên main** (#139, vai D);
-  - % đạt 3 điều: **0 / 67 / 67** (leader chốt điều 1 = 0 ngày 13/10).
-- **Plugin:** P1–P3, P5, P6 xong; P4 đang làm (mục 2 "Làm tiếp"); P7–P9 chưa làm.
-- **Runner:** rảnh (R10e xong 11:34 12/10; `audit.json` pending `["R10e"]`; mặc định 2 sẽ chạy audit ngay sau R11c, nên chuỗi R11c → R11a dùng `--audit-every 4` để audit 5 rơi vào sau R11b). Plan R11c, R11a đã trên main (#144).
+## Trạng thái hiện tại (2026-10-15)
+- **Dự án (dự án thử, ADR-012):**
+  - M0–M3 xong; M4 4/6; tag `v0.1-e2e` (c60fec5);
+  - 1028 passed trên main; **6 vitest dashboard đỏ trên main** (#139, R11d sửa);
+  - % đạt 3 điều: **0 / 67 / 67**. Plan R11c, R11a, R11d trên main, chưa chạy.
+- **Plugin:** P1–P3, P5, P6 xong; P4 tối thiểu xong (#147), phần để sau: hook `SubagentStop`, verify nhanh, `metrics.py` đọc phạm vi audit; P7–P9 chưa làm (xem lại ở mục 2 "Làm tiếp").
+- **Runner:** rảnh (R10e xong 12/10). `audit.json` pending `["R10e"]`; chuỗi R11c → R11a → R11d dùng `--audit-every 4`.
 - **Demo:** tắt. DB demo `sme_ci_demo` còn các run thử LLM thật của leader (xoá khi `--fresh-db` lần sau). Bật: `scripts/demo.sh --fresh-db` (thêm `SME_LLM=real` cho LLM thật, mở `/?source=live`); tắt: `lsof -ti tcp:8000,3000 -sTCP:LISTEN | xargs kill`. Phải tắt khi runner chạy.
 - **PR mở:** không có (sau PR bàn giao này).
-- **Worktree:** chính, `-autodev` (worker, nhánh `milestone/R10e`), `-supervisor` (nhánh `chore/autodev-r10e-review`). `-bench` tự dựng lại khi chạy `bench_reviewer.py`; `-d2` đã xoá.
-- **Nhánh:** dọn 14/10; còn của leader: `main`, `plan/r11`, `chore/autodev-handoff-20261013`, `chore/autodev-handoff-20261014`, 2 nhánh R10e của worktree.
-- **Hạn mức:** leader báo 14/10 22:40: 5 giờ 1%, tuần 0%; reset tuần sau 21/10 13:00.
+- **Worktree:** chính, `-autodev` (worker, nhánh `milestone/R10e`), `-supervisor` (nhánh `chore/autodev-r10e-review`). `-bench` tự dựng lại khi chạy `bench_reviewer.py`.
+- **Nhánh của leader:** `main`, `plan/r11`, `plan/r11d`, `plan/replan-1014`, `chore/p4-min`, `chore/autodev-handoff-20261013/1014/1015`, 2 nhánh R10e của worktree (dọn khi leader duyệt).
 
 ## Môi trường
 - **Repo:** `~/dev/sme-ci-agent/` chứa 3 worktree cạnh nhau:
@@ -121,4 +119,5 @@ Cổng hạn mức: `/usage` sau chuỗi 1 và chuỗi 2; tuần ≥ 80% thì d�
 - 2026-10-12 sáng → chiều: plan R10e #137, R10e #138 + hồ sơ #140 (tiếng Việt, `/config/domain`, H-32, H-34, H-66); đo nền LLM thật lần đầu (DB sạch 3/3); ADR-010; issue #139, #141 cho vai D; comment #63.
 - 2026-10-12 tối → 13/10: tuần 97%, không chạy runner; điều 1 chốt 0; P8a sau freeze; quy tắc tên phiên; kế hoạch tổng thể tới Demo Day (tách R11a/R11c).
 - 2026-10-13 → 14/10 sáng: plan R11c + R11a (#144); ranh giới vai A: phần chồng D4/D5 sang R11b, mốc dự phòng D5 17/10; R11c chạy trước; dọn nhánh.
+- 2026-10-14 tối → 15/10: ADR-011 (tiếp quản vai A/D/Q, gỡ mốc ngày, #146); P4 tối thiểu #147; plan R11d #148; phân tích + nghiên cứu thị trường (ngoài repo); **chuyển hướng ADR-012: dồn lực auto-dev**.
 - Chi tiết trong `PROGRESS.md`.

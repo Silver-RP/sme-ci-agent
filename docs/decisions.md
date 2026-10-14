@@ -67,6 +67,16 @@ Trạng thái: đã chốt (leader xác nhận 2026-10-08, xem ADR-009).
   4. Nguyên tắc "người kiểm khác người làm" của vai Q giữ bằng: reviewer + supervisor độc lập cho code; leader bấm tay (bug bash, diễn tập) cho giao diện; audit 5 cho cả hệ.
 - Hệ quả: `docs/eval/criteria.md` mục 1, 3, 5 sửa theo; `team-task-boundaries` hết hiệu lực; auto-dev được sửa `dashboard/` (cả phần trình bày), `docs/research/`, `data/scenarios/`, `docs/qa/`. Kiến trúc (ADR-001..006) không đổi.
 
+## ADR-012: Dồn lực phát triển auto-dev; SME CI Agent là dự án thử
+
+- Bối cảnh (2026-10-15): sau phân tích mở rộng và nghiên cứu thị trường (ngoài repo), leader chọn tập trung vào công cụ làm ra sản phẩm thay vì sản phẩm.
+- Quyết định (leader chốt 2026-10-15):
+  1. Từ phiên sau, **100% nỗ lực cho auto-dev** (`docs/autodev/`, `.autodev/`, `.claude/`).
+  2. **Mục tiêu auto-dev:** leader chỉ đưa mục tiêu và kết quả mong muốn; auto-dev tự phân tích, hỏi thông tin cần thiết, lập kế hoạch, tự điều phối giữa các vai để hoàn thành dự án.
+  3. SME CI Agent quay về vai **dự án thử**: mốc R chỉ chạy khi kiểm chứng một khả năng của plugin. Kế hoạch "Kế hoạch lại 14/10" tạm giữ, không chủ động chạy.
+- Còn mở (leader chốt ở phiên phân tích): thước đo "xong" của auto-dev; ngân sách; phạm vi ADR-001 (luật của sản phẩm SME CI Agent, không phải của plugin auto-dev).
+- Hệ quả: ROADMAP plugin sẽ viết lại sau phân tích khoảng cách (PR riêng). Kiến trúc sản phẩm (ADR-001..006) không đổi.
+
 ## Việc cần sửa sau khi chạy (log lỗi M3)
 
 ### T-030 lần 1 (2026-10-09, LLM thật `claude-sonnet-5-5`, chạy qua API của `demo.sh`, người trả lời trung tính)
