@@ -53,22 +53,52 @@ Ngày là đề xuất; leader chỉnh khi cần. Luồng dự án do runner ch�
 | 10–12/10 | R10c ✅ merge #84 (10/10, chạy trước theo leader) → audit 3 → R10b1 (sau D1 #66) → R10b2 | P4: kiểm hạn mức trước mốc; P6b: số đo phiên vào PROGRESS | R10c: 7/7 PASS vòng 1, ~115 phút / 90–120, 5,81 USD worker / 7–9 gồm supervisor: B3 ≈ 1,0; A6 = 0 vi phạm. R10ch ✅ merge #91 (sửa nhanh sau audit 3): 4/4 PASS vòng 1, 111 phút / 40–60 (B3 1,85), 3,51 USD worker / 3–4; A5 đo thật (b) đúng 1,00, sai 0. R10d ✅ merge #120 (11/10, API cho dashboard, H-49, H-57): 5/5 PASS vòng 1 sau một lần supervisor trả về (dev-05 (b)), 161 phút / 100–130 (B3 1,24), ~3,63 USD / 4–6. R10b1 ✅ merge #130 (11/10, dữ liệu theo hợp đồng D1, import CSV + V01–V09): 7/7 DONE, 8 vòng, 267 phút / 175–240 (B3 1,11), 9,10 + ~1,04 USD / 7–10 (B3 ~1,01); 31/31 bộ D2 đúng mã. R10b2 ✅ merge #132 (12/10, điều 3, `metrics_report.py` có đối chứng, A4 LLM giả 5/5; đóng H-11, H-33, H-39): 7/7 DONE, 8 vòng, 350 phút / 195–255 (B3 1,37), 8,76 + ~1,11 USD / 8,5–10,5 (B3 ~1,00); chuỗi R10b1 → R10b2 chạy chế độ B không dừng (B4 = 0). R10e ✅ merge #138 (12/10, câu chữ tiếng Việt, `/config/domain`, H-32, H-34, H-65 a/c/d/e, H-66; A4 theo nguyên nhân LLM giả right 5/5, wrong 0/5): 7/7 DONE, 8 vòng, 287 phút / 200–270 (B3 1,06), 7,05 + ~1,19 USD / 9–11 (B3 ~0,92); B4 = 0; 6 vitest vai D đỏ (#139) |
 | 13/10 | demo #1, tag v0.1-e2e (cổng UI: hỏi leader) | P6 ✅ (đóng sớm 10/10); đóng P5 (trang trạng thái Artifact) | |
 | 13/10 | không chạy runner (tuần 97%); viết plan R11a, R11c | | |
-| 14–15/10 | sau reset 13:00 14/10: chuỗi R11c → R11a (~11–15 USD, `--audit-every 4`); sau đó đo A4/A5 LLM thật (~1 USD API). Leader chốt 14/10: phần chồng D4/D5 của vai A sang R11b | P4 tối thiểu trước chuỗi (runner nhận PR mốc đang mở, worker kéo commit supervisor, `pgrep` của `/session-start`, `demo.sh` tự `yarn install`, supervisor chạy `.autodev/tests` trước khi merge hồ sơ) | R11a, R11c |
-| 16–17/10 | R11b sau D4/D5 (luật chấm, kịch bản + injector, tập dev khó, eval A1–A3, D4 → holdout); mốc dự phòng D5 17/10: chưa có thì chấm tối thiểu khớp mã, ghi tạm, điều 1 ≤ 60% khi pitch → audit 5 | | |
-| 18–20/10 | R12 → cổng, freeze 20/10 | | |
-| 21/10–7/11 | chỉ sửa lỗi; Pitch 24/10 (số liệu trung thực, video backup); 25/10 quyết scenario 2–3 (đề xuất: không, thay bằng phỏng vấn 1 người làm QA thật); Demo Day 7/11 (chạy lại cổng 2 ngày trước) | sau pitch: P4 còn lại (hook `SubagentStop`, verify nhanh, `metrics.py`) → P9 → P8a → P7a; đo reviewer ≥ 5 ca | dự án thứ hai do leader chọn |
+| 14/10 tối | **Lập lại kế hoạch (ADR-011):** leader + auto-dev tiếp quản vai A, D, Q; bỏ mốc ngày cũ; xem mục "Kế hoạch lại 14/10" | | |
 
-Mốc dự án chi tiết: `docs/autodev/PROJECT_STATE.md` mục "Tầm nhìn". Cập nhật 13/10 (leader duyệt kế hoạch tổng thể): hạn mức tuần 97%, reset 14/10 13:00, lần sau 21/10 (sau freeze), nên R11a → R12 + audit 5 (~36 USD, ước 55–60% tuần) nằm trong một tuần hạn mức. Đọc `/usage` sau R11a; tuần ≥ 80% thì dừng chuỗi, áp thứ tự cắt.
+Kế hoạch trước 14/10 (chờ D4/D5 của vai A, R11b dự phòng 17/10, freeze 20/10) thay bằng mục dưới.
+
+## Kế hoạch lại 14/10 (leader chốt, ADR-011)
+
+### Phân tích: vì sao đổi
+- **Điều 1 = 0 là điểm yếu lớn nhất** và là việc duy nhất phụ thuộc người ngoài backend (D4 holdout, D5 luật chấm). Từ 12/10 không có sản phẩm mới từ vai A, D, Q; R11b và R12 bị chặn.
+- **Giao diện đứng yên:** 6 vitest đỏ trên main (#139) làm `verify.py` đỏ phần `dashboard` ở mọi mốc; nhãn ADR-010 (#141) chưa có ai làm; H-65 (b, f, g), H-67..69 mở.
+- **Vai Q chưa từng bắt đầu:** T-044 (sổ token), T-045 (bug bash), Q5 (Responsible AI), Q7 (diễn tập) không có người.
+- **Hạn mức:** tuần vừa reset (14/10, 0%), lần sau 21/10 13:00. Toàn bộ việc dưới đây ước 40–55 USD worker, tức khoảng 60–90% tuần theo tỷ lệ đã đo (~36 USD ≈ 55–60%). Không đủ dư cho làm lại lớn → đặt cổng `/usage` sau mỗi chuỗi.
+
+### Nguyên tắc
+1. Xếp theo **giá trị cho 3 điều + sân khấu / chi phí**, không theo ngày. Leader đặt ngày.
+2. Runner chạy chuỗi không cần người (chế độ B); **cùng lúc** phiên chat của leader làm việc nghiên cứu (D3, D5, định dạng kịch bản) vì không đụng file của mốc.
+3. Người làm khác người kiểm: worker ≠ reviewer ≠ supervisor; tập giữ lại do phiên cách ly soạn (ADR-011); giao diện do leader bấm tay.
+4. Kiến trúc ADR-001..006 không đổi; không multi-agent, không scenario 2–3.
+
+### Thứ tự việc
+| # | Việc | Ai / cách chạy | Gồm (nguồn cũ) | Ước tính | Xong khi |
+|---|---|---|---|---|---|
+| 0 | P4 tối thiểu | phiên chat `leader-<MMDD>-sua-p4` | runner nhận PR mốc đang mở, worker kéo commit supervisor, `pgrep 'autodev/run.py'`, `demo.sh` tự `yarn install`, supervisor chạy `.autodev/tests` trước merge hồ sơ | 30–45 phút, 0 USD API | `.autodev/tests` xanh |
+| 1 | Plan R11d (giao diện) | phiên chat, PR plan | #139 (6 vitest + lỗi nghĩa `n_after`/`min_units_after`), H-65 b/f/g, H-67, H-68, H-69, #141 (nhãn từ `/config/domain` sau R11c, mã ở chú thích, chip, "trích nguyên văn", thuật ngữ); đối chiếu FR-06..12 với code thật | 30–40 phút | leader duyệt |
+| 2 | **Chuỗi 1:** R11c → R11a → R11d | runner `--audit-every 4` | R11c, R11a giữ nguyên plan (#144); R11d là vai D cũ | 18–25 USD, ~8–10 giờ máy | 3 PR mốc merge; `verify.py` xanh cả `dashboard` sau R11d |
+| 3 | D3 + D5 + định dạng kịch bản (song song với 2) | phiên chat, tìm web có nguồn | `docs/research/reflow_domain.md` (D3: khoảng giá trị, nguồn cho 4 giả định điều 3, H-64), `docs/research/scoring.md` (D5: luật chấm theo mã, đúng một phần, đo độ khó), `docs/research/scenarios.md` mục định dạng (D4) | 1,5–2,5 giờ chat | leader duyệt PR |
+| 4 | Tập giữ lại niêm phong | phiên cách ly (ADR-011), leader duyệt đáp án | ≥ 4 kịch bản (≥ 1 `ask`, ≥ 1 `none`, ≥ 1 có nhiễu trùng thời điểm), lưu ngoài repo, SHA-256 vào `docs/research/holdout-seal.md` | 45–60 phút chat | mã băm trên main |
+| 5 | Plan R11b → **chuỗi 2:** R11b → audit 5 | runner | H-28 luật chấm theo D5, loader + injector theo định dạng, tập dev khó ≥ 4 (H-29), eval A1–A3 trên DB sạch, lưu kết quả thô, chấm tập giữ lại (nạp từ ngoài repo, kiểm mã băm), ghi run tốt để phát lại, A8 LLM thật | 13–19 USD | A1–A3 tập dev có số; audit 5 xong |
+| 6 | Đo LLM thật | leader cho phép từng lần | A4/A5 LLM thật 3 seed (sau R11a, có thể chạy ngay sau chuỗi 1); A1–A3 tập giữ lại 3 seed (sau R11b); ghi `docs/token-cost.md` | ≤ 3 USD API mỗi lần | % đạt điều 1, 2 tính lại theo `criteria.md` |
+| 7 | R12 → cổng v0.2 | runner, rồi leader tag `v0.2-freeze` | lỗ hổng audit 5, H-60, H-61, H-62, H-64 (nguồn D3), D6 bộ dữ liệu demo, Q5 `docs/qa/responsible-ai.md` (từ test bất biến + audit_log), Q7 `docs/qa/rehearsal-checklist.md`, biên bản `docs/qa/gate-v0.2-freeze.md` | 8–10 USD | cổng `criteria.md` mục 3 |
+| 8 | Việc chỉ người làm được | leader (khi leader đặt lịch trình bày) | bug bash bấm tay toàn kịch bản demo (T-045), diễn tập ≥ 2 lần trên máy chiếu, video dự phòng, slide trình bày, ngân hàng Q&A | — | pitch |
+| 9 | Sau cổng v0.2 | | sửa lỗi theo góp ý; plugin: P4 còn lại → P9 → P8a → P7a; trước mỗi buổi trình diễn: chạy lại cổng | | |
+
+Cổng hạn mức: đọc `/usage` sau chuỗi 1 và sau chuỗi 2. Tuần ≥ 80% thì dừng, áp thứ tự cắt, hoặc đợi reset 21/10 13:00.
+
+Vai cũ → việc mới: A (D3 → #3, D4 dev → R11b, D4 holdout → #4, D5 → #3 + R11b, D6 → R12); D (#139, #141, H-65/67/68/69 → R11d; FR còn thiếu → R11d hoặc R12); Q (Q1 thay bằng test tự động + checklist bấm tay; Q2 → reviewer + V01–V09 + leader duyệt holdout; Q3 → ảnh chụp e2e trong PR R11d + leader xem; Q4, Q7 diễn tập → #8; Q5 → R12; Q6 `docs/token-cost.md` → có từ 14/10).
 
 ### Thứ tự cắt
-- Dự án (13/10): R12 (chỉ giữ cổng) → H-52/53/55 của R11c → R11b ghi run phát lại → FR-09/11/12. Không cắt R11a, nhãn ADR-010 (vai D cần), cổng freeze.
-- Plugin: P7b → P7a → P8 → P9. Không cắt P4 tối thiểu (chuỗi R11 cần).
+- Dự án: FR-09/11/12 → H-52/53/55 của R11c → R11b ghi run phát lại → R12 chỉ giữ cổng. **Không cắt:** tập giữ lại + A1, R11a, nhãn ADR-010 trên UI, cổng v0.2, chế độ phát lại sân khấu (FR-07).
+- Plugin: P7b → P7a → P8 → P9. Không cắt P4 tối thiểu (chuỗi cần).
 
 ### Pre-mortem
-- **UI không kịp:** backend xong mà sân khấu không hiện thẻ đề xuất (H-44). Cổng 13/10: chưa có PR FR-01 của vai D thì hỏi leader có giao auto-dev không (trái quyết định 10/10, chỉ khi leader duyệt).
-- **Eval tự đúng lần hai:** kịch bản do chính bên viết code soạn thì điều 1 dừng ở ≈ 60%; phải nói rõ giới hạn khi pitch nếu R11b không có đề của vai A.
-- **Hạn mức tuần (chưa từng chạm thật):** 6 mốc trong 4 ngày có thể chạm; P4 kiểm trước mốc.
-- **R10b1 đổi schema làm vỡ fixture → vỡ UI vai D:** `events.json` không đổi; fixture sinh lại trong cùng PR; báo vai D trước.
+- **Một người ôm mọi vai:** leader thành nút thắt (duyệt plan, PR, đáp án holdout, bấm tay). → Chỉ 4 điểm dừng cần leader: duyệt plan R11d, duyệt D3/D5, duyệt đáp án holdout, bấm tay + tag. Mọi thứ khác chạy chuỗi.
+- **Eval tự đúng lần hai:** phiên cách ly vẫn là Claude, có thể soạn đề "hợp gu" agent. → Phiên cách ly không đọc prompt/backend; leader đọc đáp án; ≥ 1 đề có nhiễu trùng thời điểm và bộ giải ngây thơ (chọn \|r\| cao nhất) phải sai; khi trình bày ra ngoài nêu rõ cách soạn.
+- **Auto-dev sửa UI mà không có mắt người:** test xanh nhưng màn hình xấu, chữ tràn. → R11d bắt buộc ảnh chụp Playwright 1920×1080 trong PR (supervisor vẫn tự merge để chuỗi không dừng); leader xem ảnh sau đó, lỗi trình bày đưa vào R12.
+- **Hạn mức tuần:** 40–55 USD ≈ 60–90% tuần. → Cổng `/usage` sau mỗi chuỗi; cắt theo thứ tự trên.
+- **Đổi schema làm vỡ fixture → vỡ UI:** `events.json` không đổi; fixture sinh lại trong cùng PR; R11d chạy sau R11c để dùng nhãn mới.
 - **Sửa plugin trong lúc runner chạy:** chỉ merge thay đổi `.autodev/*.py`, `.claude/` khi runner dừng hoặc giữa hai mốc.
 
 ## Để sau (người dùng chốt 2026-10-08)

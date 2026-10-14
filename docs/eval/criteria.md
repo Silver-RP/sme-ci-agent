@@ -5,14 +5,14 @@ Tài liệu dùng chung cho cả team. Thay cho "% đạt" do audit ước lư�
 ## 1. Cách đánh giá thực tế áp dụng
 - **Tập dev và tập giữ lại (như eval mô hình học máy).**
   - Tập dev: kịch bản do backend/auto-dev soạn, dùng khi phát triển.
-  - Tập giữ lại: kịch bản do vai A soạn (D4), backend không xem trước khi chấm.
-  - Báo cáo riêng hai con số. **Chỉ tập giữ lại được tính vào điều 1**, để tránh "tự đúng" (H-28).
+  - Tập giữ lại: từ 2026-10-14 (ADR-011) do **phiên cách ly** soạn: phiên Claude riêng chỉ đọc `docs/schema/data_contract.md`, `docs/research/reflow_domain.md` (D3), `docs/research/scoring.md` (D5), định dạng ở `docs/research/scenarios.md` và mục 4 dưới đây; không đọc `backend/`, prompt, tập dev hay kết quả eval. Leader đọc đáp án, duyệt; file lưu ngoài repo tới lúc chấm, mã băm SHA-256 ghi vào repo khi niêm phong (`docs/research/holdout-seal.md`). Chấm xong mới đưa file vào repo.
+  - Báo cáo riêng hai con số. **Chỉ tập giữ lại được tính vào điều 1**, để tránh "tự đúng" (H-28). Khi trình bày ra ngoài nêu rõ tập giữ lại do phiên cách ly soạn, không phải người ngoài đội.
 - **Thời gian phát hiện tính từ lúc lỗi xảy ra (như vận hành nhà máy).** MTTD đo khi Detect chạy theo dòng thời gian (mỗi ca chỉ thấy dữ liệu đến ca đó), không nhìn lại cả 6 tháng.
-- **Có đối chứng.** Chỉ số trước/sau so với đường "không có agent": phát hiện và sửa thủ công theo giả định có nguồn (D3 của vai A, `docs/research/reflow_domain.md`).
-- **Nhiều seed, ghi chi phí.** Mỗi lần chạy LLM thật ghi vào `docs/token-cost.md` (vai Q, Q6): lệnh, seed, kết quả, USD.
+- **Có đối chứng.** Chỉ số trước/sau so với đường "không có agent": phát hiện và sửa thủ công theo giả định có nguồn (D3, `docs/research/reflow_domain.md`).
+- **Nhiều seed, ghi chi phí.** Mỗi lần chạy LLM thật ghi vào `docs/token-cost.md`: lệnh, seed, kết quả, USD.
 
 ## 2. Chỉ số sản phẩm
-| Mã | Chỉ số | Định nghĩa đo | Nền (10/10) | Ngưỡng v0.1 (13/10) | Ngưỡng freeze (20/10) | Lệnh đo (mốc làm) |
+| Mã | Chỉ số | Định nghĩa đo | Nền (10/10) | Ngưỡng v0.1 | Ngưỡng v0.2 | Lệnh đo (mốc làm) |
 |---|---|---|---|---|---|---|
 | A1 | Độ đúng nguyên nhân top-1 | tỷ lệ run có nhóm + **mã nguyên nhân** cuối cùng = ground truth | chưa đo được: eval chấm theo chuỗi (H-28); LLM giả chỉ kiểm bộ chấm (right 100%, wrong 0%) | tập dev ≥ 0,7 | **tập giữ lại ≥ 0,7**, tập dev ≥ 0,8 | `eval_rootcause.py --llm real --set dev\|holdout --seeds 3` (R11a, R11b) |
 | A2 | Hỏi người đúng lúc | precision và recall của "có hỏi" so với nhãn `expect: ask` của kịch bản | chưa có nhãn; LLM giả "unsure": hỏi 100% | recall ≥ 0,8 | precision ≥ 0,6, recall ≥ 0,8 | như A1 |
@@ -24,27 +24,27 @@ Tài liệu dùng chung cho cả team. Thay cho "% đạt" do audit ước lư�
 | A8 | Độ tin cậy demo | `demo.sh --check` trọn vòng: số lần đạt trong 10 lần liên tiếp; run LLM thật thành công trên 5; p95 thời gian một run; USD trên run | chỉ kiểm khởi động | 10/10 (LLM giả) | 10/10, LLM thật 5/5, p95 ≤ 30 s | `demo.sh --check --repeat 10` (R10a) |
 
 ### % đạt (thay cho ước lượng)
-Mỗi chỉ số quy về điểm `min(giá trị / ngưỡng freeze, 1)`. Chỉ số "càng ít càng tốt" (A3, A6) được 1 khi bằng ngưỡng và 0 khi vượt.
+Mỗi chỉ số quy về điểm `min(giá trị / ngưỡng v0.2, 1)`. Chỉ số "càng ít càng tốt" (A3, A6) được 1 khi bằng ngưỡng và 0 khi vượt.
 - Điều 1 = trung bình A1 (tập giữ lại), A2, A3.
 - Điều 2 = trung bình A4, A5, A6.
 - Điều 3 = trung bình 3 phần của A7.
 - A8 là cổng demo, không tính vào %. Chỉ số chưa đo được tính 0.
-- **Chỉ số nhiều phần** (leader chốt 2026-10-10): ngưỡng freeze gồm nhiều phần đo riêng (ví dụ A5 = LLM giả 5 seed + LLM thật 3 seed; A4 = LLM giả + LLM thật) thì mỗi phần có trọng số bằng nhau. Điểm của chỉ số = trung bình điểm các phần; phần chưa đo tính 0. Ví dụ: A5 đạt đủ phần LLM giả, chưa chạy LLM thật → A5 = 0,5.
+- **Chỉ số nhiều phần** (leader chốt 2026-10-10): ngưỡng v0.2 gồm nhiều phần đo riêng (ví dụ A5 = LLM giả 5 seed + LLM thật 3 seed; A4 = LLM giả + LLM thật) thì mỗi phần có trọng số bằng nhau. Điểm của chỉ số = trung bình điểm các phần; phần chưa đo tính 0. Ví dụ: A5 đạt đủ phần LLM giả, chưa chạy LLM thật → A5 = 0,5.
 - Một phần chỉ được tính khi phép đo không "đạt theo cấu tạo": kết quả phải đổi được khi agent làm sai (ví dụ A5(b) đọc `kpi_measured.passed`, có đối chứng "không áp dụng gì" cho KPI không đổi; H-54). Audit thấy phép đo đạt theo cấu tạo thì phần đó tính 0 đến khi sửa.
 
 Audit vẫn tìm lỗ hổng (H-xx) nhưng không còn tự đặt %.
 
 ## 3. Cổng go/no-go
-- **13/10, tag v0.1-e2e:**
+- **Cổng v0.1, tag v0.1-e2e (đã qua 12/10):**
   - A6 = 0; A8 = 10/10 (LLM giả); A4, A5 đạt ngưỡng v0.1; A7 tính được.
   - UI FR-01..05 có PR. Không đạt thì leader quyết.
-- **20/10, freeze:**
-  - mọi ngưỡng freeze của mục 2;
-  - A1 trên tập giữ lại có số. Thiếu đề của vai A thì ghi rõ giới hạn khi pitch, và điều 1 không được báo quá 60%.
+- **Cổng v0.2, tag v0.2-freeze (không gắn ngày, ADR-011):**
+  - mọi ngưỡng v0.2 của mục 2;
+  - A1 trên tập giữ lại có số. Chưa có tập giữ lại niêm phong thì ghi rõ giới hạn khi trình bày ra ngoài, và điều 1 không được báo quá 60%.
 
-Vai Q ghi kết quả từng cổng vào biên bản go/no-go (`docs/qa/demo-1.md`), kèm lệnh và đầu ra.
+Supervisor ghi kết quả từng cổng vào biên bản go/no-go (`docs/qa/gate-<tag>.md`), kèm lệnh và đầu ra; leader quyết go/no-go.
 
-## 4. Yêu cầu với kịch bản (cho D4, D5 của vai A)
+## 4. Yêu cầu với kịch bản (tập dev và tập giữ lại)
 Mỗi kịch bản YAML cần:
 - `expect`: `conclude` | `ask` | `none`;
 - `ground_truth.cause_code`: mã nguyên nhân thuộc `hypothesis_groups` trong `data/context_profile.yaml`, kèm máy và thời điểm;
@@ -55,5 +55,5 @@ Mỗi kịch bản YAML cần:
 | Chỉ số | Ai chạy | Khi nào |
 |---|---|---|
 | A4–A8 (LLM giả) | runner auto-dev, supervisor kiểm | mỗi mốc có liên quan; trước mỗi cổng |
-| A1–A5 (LLM thật) | vai Q, leader cho phép từng lần, ≤ 2 USD/ngày | sau R10a (đo nền), R11a, R11b, trước freeze |
+| A1–A5 (LLM thật) | leader/Claude, leader cho phép từng lần, ≤ 3 USD/lần | sau R11a (A4/A5), sau R11b (A1–A3 dev + tập giữ lại), trước freeze |
 | B1–B6 (plugin) | leader/Claude, `python3 .autodev/metrics.py --write` | sau mỗi mốc và mỗi audit |

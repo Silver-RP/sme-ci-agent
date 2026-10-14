@@ -1,5 +1,7 @@
 # Giao việc: kiểm chứng dữ liệu, kịch bản và giao diện (vai Q: QA / Kiểm chứng)
 
+> **Cập nhật 2026-10-14 (ADR-011):** Q1–Q7 chuyển cho leader + auto-dev (cách chia: `docs/autodev/ROADMAP.md` mục "Kế hoạch lại 14/10", dòng "Vai cũ → việc mới"). Sổ token (Q6) có từ 14/10. Brief giữ làm đặc tả checklist.
+
 - **Người giao:** leader. **Ngày:** 2026-10-10.
 - **Người nhận:** thành viên phụ trách kiểm chứng.
 - Làm việc cặp với vai A (Dữ liệu, `docs/briefs/data-research.md`) và vai D (Giao diện, `docs/briefs/frontend.md`).

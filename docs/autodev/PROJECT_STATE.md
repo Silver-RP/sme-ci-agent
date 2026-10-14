@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-14 (plan R11c + R11a, ranh giới vai A) · Nguồn: audit `docs/audits/2026-10-12.md` (audit 4) + audit `2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10) + bộ thử reviewer (#105–#108) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10) + R10e merge #138 + đo nền LLM thật và ADR-010 (12/10).
+Cập nhật: 2026-10-14 tối (kế hoạch lại, ADR-011: tiếp quản vai A, D, Q) · Nguồn: audit `docs/audits/2026-10-12.md` (audit 4) + audit `2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10) + bộ thử reviewer (#105–#108) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10) + R10e merge #138 + đo nền LLM thật và ADR-010 (12/10).
 
 ## Mốc
 
@@ -10,7 +10,7 @@ Cập nhật: 2026-10-14 (plan R11c + R11a, ranh giới vai A) · Nguồn: audit
 |---|---|---|---|
 | Dự án | M0–M2 | ✅ 19/19 task | |
 | Dự án | M3 | ✅ 2/2 | T-030 xong 10/10: vòng LLM thật khép kín; dashboard lỗi H-44 |
-| Dự án | M4 | 🔄 3/6 | T-040..T-042 xong; T-043 (vai D), T-044, T-045 (vai Q) mở; **cổng 13/10 go, tag `v0.1-e2e` trên c60fec5 (#135, 12/10)** |
+| Dự án | M4 | 🔄 4/6 | T-040..T-042, T-044 xong; T-043 → R11d, T-045 bug bash → leader (ADR-011); **cổng 13/10 go, tag `v0.1-e2e` trên c60fec5 (#135, 12/10)** |
 | Chạy | R4–R9, R9h, R9i, R9ih, R10a, R10c, R10ch, R10d, R10b1, R10b2, R10e | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55, #58, #82, #84, #91, #120, #130, #132, #138 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 / ~0,64 / 4,00 / 5,81 / 3,51 / ~3,63 / 9,10 / 8,76 / 7,05 (worker) USD |
 | Plugin | P1–P3 | ✅ | |
 | Plugin | P4 | 🔄 | chờ reset hạn mức phiên đã chạy thật (R9); còn kiểm hạn mức trước mốc, hạn mức tuần mới thử bằng test giả |
@@ -86,6 +86,7 @@ Từ `docs/audits/2026-10-12.md` (mới) và `2026-10-10.md`, `2026-10-09_2.md` 
 | H-70 | vừa | Khoá lesson không có dataset/seed; `no_change` tính là đã xử lý |
 | H-71, H-72, H-73, H-74 | thấp | Learn chưa commit; Learn chỉ khi pass; target NaN; gom nhỏ (xem audit 2026-10-12) |
 ## Quyết định gần đây
+- **2026-10-14 tối, ADR-011:** leader + auto-dev **tiếp quản toàn bộ việc còn lại của vai A, D, Q**; bỏ mốc ngày cũ, xếp theo giá trị/chi phí (ROADMAP "Kế hoạch lại 14/10"). Tập giữ lại do **phiên cách ly** soạn (không đọc backend, prompt, tập dev), leader duyệt đáp án, lưu ngoài repo, SHA-256 niêm phong; khi trình bày ra ngoài nêu rõ (`criteria.md` mục 1). Thứ tự: P4 tối thiểu → plan R11d → chuỗi 1 R11c → R11a → R11d (song song D3, D5, định dạng kịch bản) → tập giữ lại → R11b → audit 5 → đo LLM thật → R12 → cổng v0.2. Ước 40–55 USD worker (~60–90% tuần); cổng `/usage` sau mỗi chuỗi. Sổ `docs/token-cost.md` (T-044).
 - 2026-10-13: leader chốt **điều 1 = 0** (đúng luật công thức; ghi kèm "nền LLM thật 3/3 bài dễ"). P8a để sau freeze. Quy tắc tên phiên `leader-<MMDD>-<việc>`. **Duyệt kế hoạch tổng thể 13/10 → 07/11:** tuần 97% (reset 14/10 13:00, lần sau 21/10) nên mọi việc tới freeze nằm trong một tuần hạn mức; tách R11a (eval trung thực) / R11c (ADR-010 backend + vững); P4 tối thiểu trước chuỗi; đo A4/A5 LLM thật sau R11a; R11b không có D4 tới 16/10 tối thì leader chọn holdout do người ngoài backend soạn, hoặc điều 1 ≤ 60% khi pitch. Thứ tự cắt: R12 → H-52/53/55 → ghi run phát lại (ROADMAP). **2026-10-14:** plan R11c + R11a merge #144. Ranh giới vai A (brief: R11 làm sau D4 + D5): luật chấm (H-28), kịch bản + injector, tập dev khó (H-29), eval A1–A3 chuyển sang R11b sau D4/D5; mốc dự phòng D5 17/10 (chưa có thì chấm tối thiểu khớp mã, ghi tạm, điều 1 ≤ 60% khi pitch). R11c chạy trước (vai D chờ nhãn), R11a còn 3 task (`signal`, H-63/H-18/H-56, H-36). Dọn nhánh đã merge.
 
 - 2026-10-12 (đóng phiên chiều): **đo nền LLM thật lần đầu** cho điều 1 (leader cho chạy): DB sạch 3/3, DB dùng chung 67% (lỗi chấm + bài học lộ đáp án); ~0,4 USD cả hai lần (ước từ token). **ADR-010** (leader chốt): mọi chữ trên UI tiếng Việt, mã giữ trong code/API, thuật ngữ ngành giữ nguyên có giải nghĩa, dữ liệu nguồn hiện dạng "trích nguyên văn"; vai D #141. R11a bắt buộc: trường `signal` (chấm theo mã), eval luôn trên DB sạch, ≥ 1 kịch bản khó (phân tích seed 42: zone3 chỉ đổi đúng 2 lần = 2 anomaly, `correlate` r ≈ 0,95, 7/9 giả thuyết `no_data`). Comment #63 làm rõ dạng bàn giao D4/D6 (đáp án theo mã, CSV ≥ 42 ngày qua `import_data.py`). % đạt giữ 0/67/67; leader có thể chốt lại điều 1.
@@ -117,33 +118,31 @@ Từ `docs/audits/2026-10-12.md` (mới) và `2026-10-10.md`, `2026-10-09_2.md` 
 - 2026-10-09: audit 2 (sau R9 + R9h): 15 lỗ hổng mới H-27..H-41 (4 cao), 0 đóng, 27 mở. % đạt 45/70/10 → 30/55/5: eval tự đúng (H-28, H-29), bỏ `action` là tắt được rollback (H-27), MTTD ≈ 0 theo cấu tạo. Đề xuất R9i (H-27, H-30) trước T-030.
 
 - 2026-10-09: R9h merge #49 (T-030 lần đầu chạy thật dừng vì SDK bỏ `temperature`; H-23 chỉ kiểm bằng client giả). Thêm test so khoá request với chữ ký SDK đã cài. Supervisor chấp nhận `backend/api/app.py` (2 dòng, ngoài danh sách file) như điều chỉnh (a).
-- 2026-10-09: R9 merge #44. Đóng 9 lỗ hổng; % đạt 45/70/10. Lần đầu chạm hạn mức thật: runner chờ reset rồi chạy tiếp đúng (P4).
-
-- 2026-10-09: R9 merge (PR #44): Measure theo hành động có cấu trúc, eval nguyên nhân (LLM giả), e2e uvicorn chuỗi rollback, 8 fixture. Supervisor chưa đưa eval vào smoke.
+- 2026-10-09: R9 merge #44 (Measure theo hành động có cấu trúc, eval nguyên nhân LLM giả, e2e uvicorn chuỗi rollback, 8 fixture). Đóng 9 lỗ hổng; % đạt 45/70/10. Lần đầu chạm hạn mức thật: runner chờ reset rồi chạy tiếp đúng (P4).
 - 2026-10-09: **người dùng chọn hướng R9 theo audit**. R9 làm điều 1–2 thật: H-10 trước tiên, rồi H-06, eval, e2e rollback, H-07/08/09/17/21, temperature. R10 làm điều 3 và luồng demo. Hoãn đến sau v0.1-e2e: checkpointer Postgres, invariants, API danh sách run, khoá SOP.
 - 2026-10-09: audit đầu: 21 lỗ hổng (7 cao), % đạt hạ còn 25/40/10. Đề xuất R9 làm điều 1–2 thật, R10 làm điều 3 (chờ người dùng duyệt ở P6).
 - 2026-10-09: thứ tự sau R8: P5 → audit đầu → gói bàn giao UI → T-030 → P6 → R9 → R10 (người dùng duyệt).
-- 2026-10-09: UI sản phẩm do bạn frontend làm; từ R9 auto-dev không sửa phần trình bày trong `dashboard/`.
-- 2026-10-08: R8-c2 (e2e uvicorn rollback) chuyển sang R9.
-- 2026-10-08: supervisor Opus effort medium, worker Sonnet; smoke bắt buộc trước merge.
+- 2026-10-09: UI sản phẩm do bạn frontend làm; từ R9 auto-dev không sửa phần trình bày trong `dashboard/` (hết hiệu lực 14/10, ADR-011).
+- 2026-10-08: R8-c2 (e2e uvicorn rollback) chuyển sang R9. Supervisor Opus effort medium, worker Sonnet; smoke bắt buộc trước merge.
 
 ## Tầm nhìn 3–5 mốc tới
 
-Kế hoạch P6 (duyệt 10/10; đầy đủ, kèm luồng plugin, pre-mortem, thứ tự cắt: `docs/autodev/ROADMAP.md` mục "Kế hoạch hai luồng"). Ngày là đề xuất.
+Kế hoạch lại 14/10 (ADR-011; đầy đủ, kèm phân tích, pre-mortem, thứ tự cắt: `docs/autodev/ROADMAP.md` mục "Kế hoạch lại 14/10"). Không theo ngày cũ; leader đặt ngày.
 
 | Mốc | Ngày | Mục tiêu | Lỗ hổng / task | Chờ team? |
 |---|---|---|---|---|
-| R10a | ✅ 10/10 #82 | API storyboard + dự phòng sân khấu | T-041; H-13, H-16, H-26 | |
-| R10c | ✅ 10/10 #84 | Bền cho demo | H-14, H-15, H-19, H-20, H-37, H-38; A6 = 0 | |
-| Audit 3 | ✅ 10/10 #86 | Rà R9i, R9ih, R10a, R10c | B1 = 0,71 (ngưỡng ≤ 0,5); H-45..H-59 | |
-| R10ch | ✅ 10/10 #91 | Sửa nhanh sau audit 3 | H-31, H-45, H-47, H-48, H-50, H-51, H-54; A5 LLM giả đo thật | |
+| R10a, R10c, audit 3, R10ch | ✅ 10/10 #82, #84, #86, #91 | API storyboard, bền cho demo, sửa sau audit 3 | T-041; H-13..H-54 (xem PROGRESS); A6 = 0; A5 LLM giả đo thật | |
 | R10d | ✅ 11/10 #120 | API cho dashboard | #110, #112, #113, #115; H-49, H-57 | |
 | R10b1 | ✅ 11/10 #130 | Dữ liệu theo hợp đồng **D1 đã chốt** (#122) | `production_log`, `material_batches`, `sop`, simulator nhị thức, `import_data.py` + V01–V09 (dùng D2 #123); plan #124 | không (D1, D2 đã merge) |
 | R10b2 | ✅ 12/10 #132 | Điều 3 | H-11, T-042, `/metrics` thật, `metrics_report.py` có đối chứng; H-33, H-39; audit 4 sau mốc này (`--audit-every 3`) | giả định cần D3 |
 | Cổng 13/10 | ✅ 12/10 #135 | tag v0.1-e2e (leader duyệt) | A6 0, A8 10/10 p95 0,8 s, A5 1,0/1,0, A7 tính được, A4 1,0 (H-32 sửa trước freeze), FR-01..05 #116–#118 | |
-| R11c | 14–15/10 | ADR-010 backend + vững (chạy trước) | `labels` + thuật ngữ qua `/config/domain` (#141), prompt dùng nhãn, `new_content`/SOP gốc tiếng Việt; H-52, H-53, H-55 | không |
-| R11a | 15/10 | `signal` + bằng chứng thật | `signal` (A4/A5 LLM thật đo được), H-63, H-18, H-56, H-36; phần chồng D4/D5 sang R11b | không |
-| R11b | sau D4/D5 (dự phòng 17/10) | Điều 1: chấm theo mã + đề | H-28 luật chấm, kịch bản + injector, tập dev khó (H-29), eval A1–A3 trên DB sạch, lưu kết quả thô; nhập D4 làm holdout; ghi run phát lại; A8 LLM thật; audit 5 sau mốc | vai A |
-| R12 | 18–19/10 | Lỗ hổng audit 5, dữ liệu demo D6, H-64 khi có D3 → cổng, freeze 20/10 | | vai A |
+| P4 tối thiểu | trước chuỗi 1 | Runner chạy chuỗi R11 được | phiên chat | không |
+| R11c | chuỗi 1 | ADR-010 backend + vững | `labels` + thuật ngữ qua `/config/domain`, prompt dùng nhãn, `new_content`/SOP gốc tiếng Việt; H-52, H-53, H-55 | không |
+| R11a | chuỗi 1 | `signal` + bằng chứng thật | `signal` (A4/A5 LLM thật đo được), H-63, H-18, H-56, H-36 | không |
+| R11d | chuỗi 1 | Giao diện (việc vai D cũ) | #139, #141, H-65 b/f/g, H-67..H-69, FR còn thiếu, T-043; ảnh chụp 1920×1080 | không (ADR-011) |
+| Nghiên cứu | song song chuỗi 1 | D3, D5, định dạng kịch bản (việc vai A cũ) | `docs/research/reflow_domain.md` có nguồn (H-64), `scoring.md`, `scenarios.md` | không |
+| Tập giữ lại | sau nghiên cứu | ≥ 4 kịch bản, phiên cách ly soạn, leader duyệt | SHA-256 trong `docs/research/holdout-seal.md` | không |
+| R11b | chuỗi 2 | Điều 1: chấm theo mã + đề | H-28, loader + injector, tập dev khó (H-29), eval A1–A3 DB sạch, chấm tập giữ lại, ghi run phát lại, A8 LLM thật; audit 5 sau mốc | không |
+| R12 | sau audit 5 | Lỗ hổng audit 5, H-60..H-62, H-64, D6, Q5, Q7 → cổng v0.2 → tag | | không |
 
-Chỉ số mỗi mốc phải đo được khi xong: R10b2 → A4, A7; R11a → A1–A3 tập dev; R11b → A1 tập giữ lại (`TASKS.md`, `docs/eval/criteria.md`). R10b2 trễ thì A7 chuyển sang cổng 20/10.
+Chỉ số mỗi mốc phải đo được khi xong: R11a → A4/A5 LLM thật đo được; R11b → A1–A3 tập dev + A1 tập giữ lại (`TASKS.md`, `docs/eval/criteria.md`).

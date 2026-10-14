@@ -1,5 +1,7 @@
 # Giao việc: giao diện demo SME CI Agent (vai D: Demo/UI)
 
+> **Cập nhật 2026-10-14 (ADR-011):** FR-01..05 đã xong (#116–#118, cảm ơn @Finnng1104). Việc còn lại (#139, #141, H-65 b/f/g, H-67..H-69, FR còn thiếu) chuyển cho leader + auto-dev, mốc R11d. Brief giữ làm đặc tả (FR, NFR, DoD vẫn áp dụng).
+
 - **Người giao:** leader (kiêm BA). **Ngày:** 2026-10-10.
 - **Người nhận:** thành viên frontend.
 - **Trạng thái:** bản yêu cầu v1. Thay đổi yêu cầu sẽ ghi ở mục 12.

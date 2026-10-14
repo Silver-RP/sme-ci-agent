@@ -2,7 +2,7 @@
 
 Cập nhật 5/10/2026. Lịch đã dời lại so với bản gốc vì repo mới được dựng ngày 5/10 (xem mục 3).
 
-> Các ngày, hạn và điểm go/no-go trong file này chỉ để tham khảo; leader điều chỉnh khi cần (xem CLAUDE.md, mục Mốc).
+> **Từ 2026-10-14 (ADR-011) mọi ngày, hạn và lịch trong file này vô hiệu**, chỉ còn giá trị lịch sử; leader đặt lại khi cần (CLAUDE.md, mục "Mốc thời gian"). Thứ tự việc hiện hành: `docs/autodev/ROADMAP.md` mục "Kế hoạch lại 14/10".
 
 ## 1. Mục tiêu
 
@@ -14,11 +14,11 @@ Ba điều cần kiểm chứng
 2. Đề xuất sau khi được duyệt làm KPI cải thiện; nếu không thì rollback và điều tra lại.
 3. Đo được 3 chỉ số trước/sau trên 6 tháng dữ liệu mô phỏng: defect (%), MTTD/MTTR, tỷ lệ lỗi tái diễn.
 
-Cách đo từng điều (chỉ số A1–A8, ngưỡng, cổng go/no-go 13/10 và 20/10): `docs/eval/criteria.md`.
+Cách đo từng điều (chỉ số A1–A8, ngưỡng, cổng v0.1 và v0.2): `docs/eval/criteria.md`.
 
-Mốc cuộc thi: v0.1-e2e 13/10 · freeze 20/10 · Pitch Day 24/10 · Demo Day 07/11.
+Mốc cuộc thi: không gắn ngày (ADR-011); leader đặt lại khi cần.
 
-Ngoài phạm vi đến 13/10: multi-agent hoặc Agent Manager dùng LLM, scenario 2–3, biểu đồ phức tạp, dữ liệu thật.
+Ngoài phạm vi: multi-agent hoặc Agent Manager dùng LLM, scenario 2–3, biểu đồ phức tạp, dữ liệu thật.
 
 ## 2. Mốc (milestone)
 
@@ -35,6 +35,8 @@ Ngoài phạm vi đến 13/10: multi-agent hoặc Agent Manager dùng LLM, scena
 Bản gốc: G3 3/10, G4 8/10, G5 13/10. Thực tế G3 chưa làm khi bắt đầu, và 4–5/10 dành cho proposal. Giữ nguyên 13/10 và 20/10; dời M1 sang 8/10 và M2 sang 10/10. Core và Dashboard chạy song song bằng fake tool và mock event để không chờ Data. Nếu cả team đồng ý lịch này thì ghi vào docs/decisions.md (ADR-008).
 
 ## 4. Phân công (4 người, đổi vai được)
+
+**Cập nhật 2026-10-14 (ADR-011):** leader + Claude/auto-dev tiếp quản toàn bộ việc còn lại của vai A, D, Q; bảng dưới chỉ còn giá trị lịch sử (D1, D2 của vai A và FR-01..05 của vai D đã merge). Kế hoạch mới, không theo ngày cũ: `docs/autodev/ROADMAP.md` mục "Kế hoạch lại 14/10".
 
 Cập nhật 2026-10-10: backend (vai B + C cũ) do leader + auto-dev làm. Ba thành viên nhận vai mới, mỗi vai có brief và issue.
 
@@ -88,5 +90,4 @@ Không cắt: vòng Detect → Learn chạy thật, 3 chỉ số thật từ 6 t
 
 ## 9. Quyết định cần xem lại
 
-- 17/10: có nâng lớp điều phối thành Orchestrator (LLM) cho riêng bước Evaluate không? Chỉ xem xét nếu scenario 1 ổn định, case false positive và "chưa đủ bằng chứng" chạy được, token còn dư.
-- 25/10 (G8): Orchestrator thật và scenario 2–3.
+- Orchestrator (LLM) cho riêng bước Evaluate; Orchestrator thật và scenario 2–3: ngoài kế hoạch hiện hành, chỉ xét lại khi leader yêu cầu (không gắn ngày).
