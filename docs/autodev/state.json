@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-14",
+  "updated": "2026-10-15",
   "source": "audit 2026-10-12 (sau R10d, R10b1, R10b2) + audit 2026-10-10 (sau R9i, R9ih, R10a, R10c) + audit 2026-10-09 lần 2 + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 2026-10-10 + kế hoạch P6 duyệt 2026-10-10 + tiêu chí đo được docs/eval/criteria.md (2026-10-10) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10) + R10e merge #138 + đo nền LLM thật và ADR-010 (12/10) + kế hoạch tổng thể tới Demo Day (leader duyệt 2026-10-13) + plan R11c/R11a #144, ranh giới vai A (2026-10-14)",
   "milestones": {
     "project": [
@@ -172,7 +172,7 @@
       {
         "id": "P4",
         "status": "in_progress",
-        "note": "chờ reset hạn mức phiên đã chạy thật (R9); còn kiểm hạn mức trước mốc"
+        "note": "P4 tối thiểu xong #147 (chạy tiếp mốc có PR mở, worker kéo commit supervisor); còn kiểm hạn mức trước mốc, hạn mức tuần, hook SubagentStop, verify nhanh"
       },
       {
         "id": "P5",
@@ -498,6 +498,10 @@
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-15",
+      "text": "2026-10-15, ADR-012: leader chuyển hướng: dồn 100% vào auto-dev; SME CI Agent là dự án thử (mốc R chỉ chạy khi kiểm chứng plugin; kế hoạch 14/10 tạm giữ). Mục tiêu auto-dev: leader chỉ đưa mục tiêu + kết quả mong muốn, auto-dev tự phân tích, hỏi, lập kế hoạch, điều phối các vai. Còn mở: thước đo \"xong\", ngân sách, phạm vi ADR-001. Cùng phiên: P4 tối thiểu #147, plan R11d #148; nghiên cứu thị trường ngoài repo."
+    },
     {
       "date": "2026-10-14",
       "text": "Tối 14/10, ADR-011: leader + auto-dev tiếp quản toàn bộ việc còn lại của vai A, D, Q; bỏ mốc ngày cũ, xếp theo giá trị/chi phí (ROADMAP 'Kế hoạch lại 14/10'). Tập giữ lại do phiên cách ly soạn (không đọc backend/prompt/tập dev), leader duyệt đáp án, lưu ngoài repo, SHA-256 niêm phong trong repo; khi trình bày ra ngoài nêu rõ. Thứ tự: P4 tối thiểu → plan R11d → chuỗi 1 R11c → R11a → R11d (song song: D3, D5, định dạng kịch bản ở phiên chat) → holdout niêm phong → R11b → audit 5 → đo LLM thật → R12 → cổng v0.2. Ước 40–55 USD worker (~60–90% tuần); cổng /usage sau mỗi chuỗi. Sổ token docs/token-cost.md (T-044)."

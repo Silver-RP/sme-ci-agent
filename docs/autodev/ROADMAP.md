@@ -59,6 +59,8 @@ Kế hoạch trước 14/10 (chờ D4/D5 của vai A, R11b dự phòng 17/10, fr
 
 ## Kế hoạch lại 14/10 (leader chốt, ADR-011)
 
+> **15/10 (ADR-012):** leader dồn 100% vào auto-dev; kế hoạch dưới đây tạm giữ làm tải thử (đã xong: việc 0 P4 tối thiểu #147, việc 1 plan R11d #148). ROADMAP plugin viết lại sau phân tích khoảng cách (HANDOFF "Làm tiếp" mục 2).
+
 ### Phân tích: vì sao đổi
 - **Điều 1 = 0 là điểm yếu lớn nhất** và là việc duy nhất phụ thuộc người ngoài backend (D4 holdout, D5 luật chấm). Từ 12/10 không có sản phẩm mới từ vai A, D, Q; R11b và R12 bị chặn.
 - **Giao diện đứng yên:** 6 vitest đỏ trên main (#139) làm `verify.py` đỏ phần `dashboard` ở mọi mốc; nhãn ADR-010 (#141) chưa có ai làm; H-65 (b, f, g), H-67..69 mở.

@@ -57,7 +57,7 @@ Từ 14/10 leader + auto-dev làm cả việc của vai A, D, Q (ADR-011); bỏ 
 - [x] R10b2 (12–13/10): điều 3 (H-11, T-042, `/metrics` thật, `scripts/metrics_report.py` có đối chứng; giả định lấy nguồn từ D3); H-33, H-39 (H-31 đã đóng ở R10ch). [A7, A4] PR #132; 4 giả định còn "giả định, chờ D3".
 - [x] Cổng 13/10 (`docs/eval/criteria.md` mục 3) → tag v0.1-e2e (leader duyệt 12/10, biên bản `docs/qa/gate-v0.1-e2e.md`; H-32 sửa trước freeze); cổng UI FR-01..05 (vai D). R10b2 trễ thì A7 không thuộc cổng 13/10, chuyển sang cổng 20/10 (leader quyết).
 - [x] R10e (12/10): câu chữ tiếng Việt từ config, `GET /config/domain` (#114), Measure không hỏi lặp (H-34, #111), Learn `cause_status` (H-32), `/metrics` trung thực (H-65 a, c, d, e), ví dụ sinh lại (H-66). [A4 theo nguyên nhân: right 5/5, wrong 0/5] PR #138; 6 vitest của vai D cần cập nhật kỳ vọng.
-- [ ] P4 tối thiểu (phiên chat, trước chuỗi 1): xem ROADMAP mục "Kế hoạch lại 14/10", việc 0.
+- [x] P4 tối thiểu (phiên chat, trước chuỗi 1): xem ROADMAP mục "Kế hoạch lại 14/10", việc 0. PR #147 (15/10). **Từ 15/10 (ADR-012) các việc chuỗi dưới đây tạm giữ làm tải thử cho auto-dev.**
 - [ ] Chuỗi 1, R11c: ADR-010 phía backend (`labels` + thuật ngữ qua `/config/domain`, prompt dùng nhãn, `new_content`/SOP gốc tiếng Việt); H-52, H-53, H-55. `plan/R11c.md`
 - [ ] Chuỗi 1, R11a: trường `signal`, bằng chứng thật theo vòng (H-63, H-18, H-56), H-36. [sau mốc đo A4/A5 LLM thật] `plan/R11a.md`
 - [ ] Chuỗi 1, R11d (việc vai D cũ): #139 (6 vitest + lỗi nghĩa `n_after`), H-65 b/f/g, H-67, H-68, H-69, #141 (nhãn từ API, mã ở chú thích, chip, "trích nguyên văn", thuật ngữ); FR còn thiếu; ảnh chụp 1920×1080 trong PR. `plan/R11d.md` (viết trước chuỗi) [`verify.py` xanh cả `dashboard`]

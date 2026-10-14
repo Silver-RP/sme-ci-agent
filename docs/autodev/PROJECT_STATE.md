@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-14 tối (kế hoạch lại, ADR-011: tiếp quản vai A, D, Q) · Nguồn: audit `docs/audits/2026-10-12.md` (audit 4) + audit `2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10) + bộ thử reviewer (#105–#108) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10) + R10e merge #138 + đo nền LLM thật và ADR-010 (12/10).
+Cập nhật: 2026-10-15 (ADR-012: dồn lực auto-dev; P4 tối thiểu #147) · Nguồn: audit `docs/audits/2026-10-12.md` (audit 4) + audit `2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10) + bộ thử reviewer (#105–#108) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10) + R10e merge #138 + đo nền LLM thật và ADR-010 (12/10).
 
 ## Mốc
 
@@ -13,7 +13,7 @@ Cập nhật: 2026-10-14 tối (kế hoạch lại, ADR-011: tiếp quản vai A
 | Dự án | M4 | 🔄 4/6 | T-040..T-042, T-044 xong; T-043 → R11d, T-045 bug bash → leader (ADR-011); **cổng 13/10 go, tag `v0.1-e2e` trên c60fec5 (#135, 12/10)** |
 | Chạy | R4–R9, R9h, R9i, R9ih, R10a, R10c, R10ch, R10d, R10b1, R10b2, R10e | ✅ merge #19, #21, #27, #31, #37, #44, #49, #55, #58, #82, #84, #91, #120, #130, #132, #138 | 2,29 / 3,01 / 1,81 / 2,58 / 6,40 / 7,18 / ~1,15 / ~1,60 / ~0,64 / 4,00 / 5,81 / 3,51 / ~3,63 / 9,10 / 8,76 / 7,05 (worker) USD |
 | Plugin | P1–P3 | ✅ | |
-| Plugin | P4 | 🔄 | chờ reset hạn mức phiên đã chạy thật (R9); còn kiểm hạn mức trước mốc, hạn mức tuần mới thử bằng test giả |
+| Plugin | P4 | 🔄 | P4 tối thiểu xong #147 (chạy tiếp mốc có PR mở, worker kéo commit supervisor); còn: kiểm hạn mức trước mốc, hạn mức tuần (test giả), hook `SubagentStop`, verify nhanh |
 | Plugin | P5 | ✅ | audit + trạng thái (file này); trang trạng thái Artifact làm mới bằng `.autodev/export_status.py` khi leader yêu cầu (đóng 10/10) |
 | Plugin | P6 | ✅ | kế hoạch hai luồng duyệt 10/10; P6a (ước tính + pre-mortem) dùng từ R10a; P6b `metrics.py` (3 lỗi sửa 10/10); báo cáo đối chiếu R10a–R10ch trong PROGRESS (B3 3/3 mốc đạt; luật ước tính + pre-mortem mới ở thiết kế 6.5) |
 | Plugin | P7, P8, P9 | ⏳ | Telegram + API trạng thái; đóng gói; reviewer cho PR của team |
@@ -86,9 +86,9 @@ Từ `docs/audits/2026-10-12.md` (mới) và `2026-10-10.md`, `2026-10-09_2.md` 
 | H-70 | vừa | Khoá lesson không có dataset/seed; `no_change` tính là đã xử lý |
 | H-71, H-72, H-73, H-74 | thấp | Learn chưa commit; Learn chỉ khi pass; target NaN; gom nhỏ (xem audit 2026-10-12) |
 ## Quyết định gần đây
+- **2026-10-15, ADR-012:** leader chuyển hướng: **dồn 100% vào auto-dev**; SME CI Agent là dự án thử (mốc R chỉ chạy khi kiểm chứng plugin; kế hoạch 14/10 tạm giữ). Mục tiêu auto-dev: leader chỉ đưa mục tiêu + kết quả mong muốn, auto-dev tự phân tích, hỏi, lập kế hoạch, điều phối các vai. Còn mở: thước đo "xong", ngân sách, phạm vi ADR-001. Cùng phiên: P4 tối thiểu #147, plan R11d #148; nghiên cứu thị trường ngoài repo.
 - **2026-10-14 tối, ADR-011:** leader + auto-dev **tiếp quản toàn bộ việc còn lại của vai A, D, Q**; bỏ mốc ngày cũ, xếp theo giá trị/chi phí (ROADMAP "Kế hoạch lại 14/10"). Tập giữ lại do **phiên cách ly** soạn (không đọc backend, prompt, tập dev), leader duyệt đáp án, lưu ngoài repo, SHA-256 niêm phong; khi trình bày ra ngoài nêu rõ (`criteria.md` mục 1). Thứ tự: P4 tối thiểu → plan R11d → chuỗi 1 R11c → R11a → R11d (song song D3, D5, định dạng kịch bản) → tập giữ lại → R11b → audit 5 → đo LLM thật → R12 → cổng v0.2. Ước 40–55 USD worker (~60–90% tuần); cổng `/usage` sau mỗi chuỗi. Sổ `docs/token-cost.md` (T-044).
 - 2026-10-13: leader chốt **điều 1 = 0** (đúng luật công thức; ghi kèm "nền LLM thật 3/3 bài dễ"). P8a để sau freeze. Quy tắc tên phiên `leader-<MMDD>-<việc>`. **Duyệt kế hoạch tổng thể 13/10 → 07/11:** tuần 97% (reset 14/10 13:00, lần sau 21/10) nên mọi việc tới freeze nằm trong một tuần hạn mức; tách R11a (eval trung thực) / R11c (ADR-010 backend + vững); P4 tối thiểu trước chuỗi; đo A4/A5 LLM thật sau R11a; R11b không có D4 tới 16/10 tối thì leader chọn holdout do người ngoài backend soạn, hoặc điều 1 ≤ 60% khi pitch. Thứ tự cắt: R12 → H-52/53/55 → ghi run phát lại (ROADMAP). **2026-10-14:** plan R11c + R11a merge #144. Ranh giới vai A (brief: R11 làm sau D4 + D5): luật chấm (H-28), kịch bản + injector, tập dev khó (H-29), eval A1–A3 chuyển sang R11b sau D4/D5; mốc dự phòng D5 17/10 (chưa có thì chấm tối thiểu khớp mã, ghi tạm, điều 1 ≤ 60% khi pitch). R11c chạy trước (vai D chờ nhãn), R11a còn 3 task (`signal`, H-63/H-18/H-56, H-36). Dọn nhánh đã merge.
-
 - 2026-10-12 (đóng phiên chiều): **đo nền LLM thật lần đầu** cho điều 1 (leader cho chạy): DB sạch 3/3, DB dùng chung 67% (lỗi chấm + bài học lộ đáp án); ~0,4 USD cả hai lần (ước từ token). **ADR-010** (leader chốt): mọi chữ trên UI tiếng Việt, mã giữ trong code/API, thuật ngữ ngành giữ nguyên có giải nghĩa, dữ liệu nguồn hiện dạng "trích nguyên văn"; vai D #141. R11a bắt buộc: trường `signal` (chấm theo mã), eval luôn trên DB sạch, ≥ 1 kịch bản khó (phân tích seed 42: zone3 chỉ đổi đúng 2 lần = 2 anomaly, `correlate` r ≈ 0,95, 7/9 giả thuyết `no_data`). Comment #63 làm rõ dạng bàn giao D4/D6 (đáp án theo mã, CSV ≥ 42 ngày qua `import_data.py`). % đạt giữ 0/67/67; leader có thể chốt lại điều 1.
 - 2026-10-12: R10e merge #138 (câu chữ tiếng Việt từ config, `/config/domain`, Learn `cause_status`, Measure không hỏi lặp, `/metrics` trung thực, ví dụ sinh lại). Supervisor tự kiểm: 1028 passed, smoke 4/4, `demo.sh --fresh-db --check` xanh, A4 theo nguyên nhân `right` 5/5, `wrong` 0/5 (8 seed cũng 8/8, 0/8). Đóng H-32, H-34, H-66 (test đỏ trên main); H-65 còn phần UI. Đóng #111, #114. **(c) supervisor quyết:** tiêu chí 1 tính đạt phần backend dù 6 vitest dashboard đỏ (plan cấm sửa `dashboard/tests`, đã dự kiến) → vai D #139. % đạt giữ 0/67/67.
 - 2026-10-12 (đóng phiên): cổng 13/10 **go**, tag `v0.1-e2e` trên c60fec5 (biên bản `docs/qa/gate-v0.1-e2e.md`, #135); A4 tính đạt theo chữ ngưỡng v0.1, **H-32 phải sửa trước freeze 20/10**. Điều 3 chốt **67** (tái diễn = 0 theo luật "đạt theo cấu tạo"; H-64 chờ D3). #126 (5 bộ D2 thêm) merge; R10b2 dev-07 thêm test 37 bộ D2 (#129). Guard giữ nguyên, không thêm duyệt xoá một lần. Phiên sau: câu chữ cho người dùng bằng tiếng Việt (đang hard-code tiếng Anh ở `ask.py`), #114, #111.
@@ -114,9 +114,7 @@ Từ `docs/audits/2026-10-12.md` (mới) và `2026-10-10.md`, `2026-10-09_2.md` 
 - 2026-10-09: sau T-030, tạm dừng thêm tính năng để chuẩn hoá dữ liệu (hợp đồng + nhập CSV) và làm UI demo (`docs/demo-storyboard.md`) trước P6.
 - 2026-10-09: R9ih merge #58: prompt Improve có danh mục SOP (id, version hiệu lực tính `sop_versions`, title, nội dung cắt theo config); `sop_id` lạ → thông báo sửa lại nêu id hợp lệ. Đóng H-43. % đạt giữ nguyên (cần T-030 lần 3 với LLM thật để chứng minh vòng khép). Supervisor tự kiểm 3 tiêu chí cấp mốc, 6 test mới đỏ trên main.
 - 2026-10-09: R9i merge #55: đề xuất thiếu `action` hoặc `sop_proposal`, `new_content` rỗng, `action` NaN/inf/ngoài miền YAML/máy lạ → gửi lại LLM, hết lượt thì `error` retryable. Đóng H-27, H-30, H-41, H-42; điều 2: 55 → 65. Supervisor tự kiểm 5 tiêu chí cấp mốc, test mới đỏ trên main.
-
 - 2026-10-09: audit 2 (sau R9 + R9h): 15 lỗ hổng mới H-27..H-41 (4 cao), 0 đóng, 27 mở. % đạt 45/70/10 → 30/55/5: eval tự đúng (H-28, H-29), bỏ `action` là tắt được rollback (H-27), MTTD ≈ 0 theo cấu tạo. Đề xuất R9i (H-27, H-30) trước T-030.
-
 - 2026-10-09: R9h merge #49 (T-030 lần đầu chạy thật dừng vì SDK bỏ `temperature`; H-23 chỉ kiểm bằng client giả). Thêm test so khoá request với chữ ký SDK đã cài. Supervisor chấp nhận `backend/api/app.py` (2 dòng, ngoài danh sách file) như điều chỉnh (a).
 - 2026-10-09: R9 merge #44 (Measure theo hành động có cấu trúc, eval nguyên nhân LLM giả, e2e uvicorn chuỗi rollback, 8 fixture). Đóng 9 lỗ hổng; % đạt 45/70/10. Lần đầu chạm hạn mức thật: runner chờ reset rồi chạy tiếp đúng (P4).
 - 2026-10-09: **người dùng chọn hướng R9 theo audit**. R9 làm điều 1–2 thật: H-10 trước tiên, rồi H-06, eval, e2e rollback, H-07/08/09/17/21, temperature. R10 làm điều 3 và luồng demo. Hoãn đến sau v0.1-e2e: checkpointer Postgres, invariants, API danh sách run, khoá SOP.
@@ -127,7 +125,7 @@ Từ `docs/audits/2026-10-12.md` (mới) và `2026-10-10.md`, `2026-10-09_2.md` 
 
 ## Tầm nhìn 3–5 mốc tới
 
-Kế hoạch lại 14/10 (ADR-011; đầy đủ, kèm phân tích, pre-mortem, thứ tự cắt: `docs/autodev/ROADMAP.md` mục "Kế hoạch lại 14/10"). Không theo ngày cũ; leader đặt ngày.
+**Từ 15/10 (ADR-012) bảng dưới tạm giữ làm tải thử; tầm nhìn mới của auto-dev viết sau phân tích khoảng cách (HANDOFF).** Kế hoạch lại 14/10 (ADR-011; đầy đủ, kèm phân tích, pre-mortem, thứ tự cắt: `docs/autodev/ROADMAP.md` mục "Kế hoạch lại 14/10"). Không theo ngày cũ; leader đặt ngày.
 
 | Mốc | Ngày | Mục tiêu | Lỗ hổng / task | Chờ team? |
 |---|---|---|---|---|
