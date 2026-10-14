@@ -50,6 +50,7 @@ Bạn là SUPERVISOR của hệ thống auto-dev cho mốc $ARGUMENTS (thiết k
    - Đạt: chờ check bắt buộc (`gh pr checks <số> --required --watch`; main bắt buộc `plugin-guard`), rồi merge (`gh pr merge <số> --merge`, không xoá nhánh). Chuyển số đo của báo cáo mốc vào `docs/autodev/PROGRESS.md` (ghi **trên** dòng `<!-- metrics:start`: mọi thứ giữa `metrics:start` và `metrics:end` bị `metrics.py --write` ghi đè), cập nhật trạng thái mốc plugin trong `ROADMAP.md`, qua một PR `chore/autodev-*`.
    - Chưa đạt: ghi vấn đề thành task mới (b) trong `plan/$ARGUMENTS.md` hoặc gửi worker yêu cầu sửa, rồi lặp lại từ bước 3.
 10. Cập nhật `docs/autodev/HANDOFF.md` (trạng thái, việc mở, mốc kế tiếp) trong cùng PR ở bước 9, để người dùng đóng phiên này và mở phiên supervisor mới bất cứ lúc nào.
+10a. Trước khi đẩy PR hồ sơ (runner sẽ tự merge, CI không chạy test plugin): trên nhánh hồ sơ chạy `python3 -m unittest discover -s .autodev/tests -q` (có `test_project_state`: PROJECT_STATE dưới 150 dòng, khớp `state.json`). Đỏ thì sửa hồ sơ cho xanh; không xanh được thì không mở PR, ghi lý do vào báo cáo.
 11. Báo người dùng ngắn gọn: kết quả, quyết định (c) đã tự quyết, việc cần họ xem, % hạn mức nếu đo được.
 
 Trả lời bằng tiếng Việt, ngắn gọn; chi tiết để trong file và PR.

@@ -232,10 +232,12 @@ def git_out(cwd: Path, *args: str) -> tuple[int, str]:
     return proc.returncode, (proc.stdout + proc.stderr).strip()
 
 
-def prepare_worker(milestone: str, worker: Path) -> None:
+def prepare_worker(milestone: str, worker: Path, branch: str | None = None) -> None:
     """Put the worker worktree on origin/main before /run-milestone (it reads plan/<M>.md first).
 
-    An unmerged milestone/<M> branch (resume after a stop) is kept; a dirty worktree stops the run.
+    `branch` = head of the milestone's open PR: the worker continues on it, fast-forwarded to origin
+    (the supervisor may have pushed a task (b) onto it). Otherwise an unmerged milestone/<M> branch
+    (resume after a stop) is kept. A dirty worktree or a diverged PR branch stops the run.
     """
     code, out = git_out(worker, "fetch", "-q", "origin")
     if code:
@@ -243,6 +245,14 @@ def prepare_worker(milestone: str, worker: Path) -> None:
     _, dirty = git_out(worker, "status", "--porcelain")
     if dirty:
         stop(f"Worktree worker {worker} có thay đổi chưa commit; cần người xem trước khi chạy {milestone}.\n\n{dirty}", 2)
+    if branch:
+        code, out = git_out(worker, "switch", "-q", branch)
+        if not code:
+            code, out = git_out(worker, "merge", "-q", "--ff-only", f"origin/{branch}")
+        if code:
+            stop(f"Không đưa worktree worker lên origin/{branch} (PR mốc đang mở) bằng fast-forward:\n\n{out}", 2)
+        log(f"worker chạy tiếp trên {branch} (PR đang mở) tại {git_out(worker, 'rev-parse', '--short', 'HEAD')[1]}")
+        return
     _, branch = git_out(worker, "branch", "--show-current")
     _, ahead = git_out(worker, "log", "--oneline", "origin/main..HEAD")
     if has_milestone_head([branch], milestone) and ahead:
@@ -293,6 +303,12 @@ def new_milestone_pr(prs: list[dict], milestone: str, since: dt.datetime) -> dic
         and dt.datetime.fromisoformat(p["createdAt"].replace("Z", "+00:00")) >= since
     ]
     return max(fresh, key=lambda p: p["number"]) if fresh else None
+
+
+def open_milestone_pr(prs: list[dict], milestone: str) -> dict | None:
+    """The milestone's PR still open from an earlier run (e.g. the supervisor sent it back with a task (b))."""
+    still_open = [p for p in prs if p.get("state") == "OPEN" and has_milestone_head([p.get("headRefName", "")], milestone)]
+    return max(still_open, key=lambda p: p["number"]) if still_open else None
 
 
 def pr_state(cwd: Path, number: int) -> str:
@@ -413,7 +429,10 @@ def main(argv: list[str] | None = None) -> int:
         log(f"Hoàn tất audit; chi phí ước tính {total:.2f} USD")
         return 0
     for m in args.milestones:
-        prepare_worker(m, worker)
+        existing = None if args.skip_merge_check else open_milestone_pr(list_prs(worker), m)
+        if existing:
+            log(f"{m} còn PR #{existing['number']} đang mở; worker chạy tiếp trên {existing['headRefName']}")
+        prepare_worker(m, worker, branch=existing["headRefName"] if existing else None)
         started = dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=1)
         w = run_step(f"/run-milestone {m}", worker, WORKER_ALLOWED, f"{m}-worker", role="worker")
         pr = None if args.skip_merge_check else new_milestone_pr(list_prs(worker), m, started)
@@ -425,6 +444,7 @@ def main(argv: list[str] | None = None) -> int:
             total += float(w.get("total_cost_usd") or 0)
             w = run_step(f"/run-milestone {m}", worker, WORKER_ALLOWED, f"{m}-worker-resume", role="worker")
             pr = new_milestone_pr(list_prs(worker), m, started)
+        pr = pr or existing  # resumed milestone: the worker pushes onto the PR that is already open
         if not args.skip_merge_check and pr is None:
             stop(f"Worker {m} kết thúc mà không mở PR mới (có thể không làm gì); không chuyển sang supervisor.\n\n{w.get('result', '')[-1500:]}", 4)
         sup_started = dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=1)
