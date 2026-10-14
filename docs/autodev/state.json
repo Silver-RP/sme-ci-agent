@@ -500,7 +500,7 @@
   "decisions": [
     {
       "date": "2026-10-14",
-      "text": "Tối 14/10, ADR-011: leader + auto-dev tiếp quản toàn bộ việc còn lại của vai A, D, Q; bỏ mốc ngày cũ, xếp theo giá trị/chi phí (ROADMAP 'Kế hoạch lại 14/10'). Tập giữ lại do phiên cách ly soạn (không đọc backend/prompt/tập dev), leader duyệt đáp án, lưu ngoài repo, SHA-256 niêm phong trong repo; pitch nêu rõ. Thứ tự: P4 tối thiểu → plan R11d → chuỗi 1 R11c → R11a → R11d (song song: D3, D5, định dạng kịch bản ở phiên chat) → holdout niêm phong → R11b → audit 5 → đo LLM thật → R12 → cổng freeze. Ước 40–55 USD worker (~60–90% tuần); cổng /usage sau mỗi chuỗi. Sổ token docs/token-cost.md (T-044)."
+      "text": "Tối 14/10, ADR-011: leader + auto-dev tiếp quản toàn bộ việc còn lại của vai A, D, Q; bỏ mốc ngày cũ, xếp theo giá trị/chi phí (ROADMAP 'Kế hoạch lại 14/10'). Tập giữ lại do phiên cách ly soạn (không đọc backend/prompt/tập dev), leader duyệt đáp án, lưu ngoài repo, SHA-256 niêm phong trong repo; khi trình bày ra ngoài nêu rõ. Thứ tự: P4 tối thiểu → plan R11d → chuỗi 1 R11c → R11a → R11d (song song: D3, D5, định dạng kịch bản ở phiên chat) → holdout niêm phong → R11b → audit 5 → đo LLM thật → R12 → cổng v0.2. Ước 40–55 USD worker (~60–90% tuần); cổng /usage sau mỗi chuỗi. Sổ token docs/token-cost.md (T-044)."
     },
     {
       "date": "2026-10-14",
@@ -820,7 +820,7 @@
     {
       "id": "R12",
       "date": "sau audit 5",
-      "goal": "Lỗ hổng audit 5, H-60, H-61, H-62, H-64, D6, Q5, Q7 → cổng freeze → tag v0.2-freeze",
+      "goal": "Lỗ hổng audit 5, H-60, H-61, H-62, H-64, D6, Q5, Q7 → cổng v0.2 → tag v0.2-freeze",
       "gaps": [
         "H-60",
         "H-61",

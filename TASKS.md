@@ -42,9 +42,9 @@ Quy ước: [ ] chưa làm, [x] xong. Nhãn: [Core] agent LangGraph · [Data] sa
 - [x] T-042 [Data] Lấy số liệu 3 chỉ số (defect %, MTTD/MTTR, tỷ lệ tái diễn). Due 12/10. Owner: auto-dev R10b2 (sau R10b1, tức sau khi D1 #66 của vai A merge).
 - [ ] T-043 [Demo] Số liệu lên dashboard; kịch bản 4 phút v1 (docs/demoscript.md). Due 12/10. Owner: auto-dev R11d (ADR-011; trước là vai D #64). Kịch bản v1 nay là `docs/demo-storyboard.md`.
 - [x] T-044 [Tools] Sổ chi phí token docs/token-cost.md (cập nhật mỗi lần chạy LLM thật). Owner: leader/Claude (ADR-011). Có từ 14/10, ghi lại 2 lần đo 12/10.
-- [ ] T-045 [All] Bug bash bấm tay toàn kịch bản demo, demo nội bộ. Owner: leader (ADR-011; tag v0.1-e2e đã có 12/10). Làm sau R11d, trước cổng freeze.
+- [ ] T-045 [All] Bug bash bấm tay toàn kịch bản demo, demo nội bộ. Owner: leader (ADR-011; tag v0.1-e2e đã có 12/10). Làm sau R11d, trước cổng v0.2.
 
-## Mốc backend auto-dev đến freeze (lập lại 14/10, ADR-011)
+## Mốc backend auto-dev (lập lại 14/10, ADR-011; không gắn ngày)
 
 Từ 14/10 leader + auto-dev làm cả việc của vai A, D, Q (ADR-011); bỏ ngày cũ, leader tự đặt ngày. Chi tiết, thứ tự, pre-mortem và thứ tự cắt: `docs/autodev/ROADMAP.md` mục "Kế hoạch lại 14/10"; bảng mốc: `docs/autodev/PROJECT_STATE.md` mục "Tầm nhìn". Chỉ số [A..] theo `docs/eval/criteria.md`: mốc xong khi chỉ số của nó **đo được** (có lệnh và số), không chỉ khi test xanh.
 
@@ -65,13 +65,13 @@ Từ 14/10 leader + auto-dev làm cả việc của vai A, D, Q (ADR-011); bỏ 
 - [ ] Tập giữ lại niêm phong (phiên cách ly, ADR-011): ≥ 4 kịch bản ngoài repo, SHA-256 trong `docs/research/holdout-seal.md`; leader duyệt đáp án.
 - [ ] Chuỗi 2, R11b: luật chấm theo mã theo D5 (H-28), loader + injector theo định dạng, tập dev khó ≥ 4 (H-29), eval A1–A3 trên DB sạch, lưu kết quả thô, chấm tập giữ lại (kiểm mã băm), ghi run để phát lại, A8 LLM thật → audit 5. [A1 tập giữ lại ≥ 0,7]
 - [ ] Đo LLM thật (leader cho phép từng lần, ≤ 3 USD/lần): A4/A5 sau chuỗi 1; A1–A3 tập giữ lại sau R11b; ghi `docs/token-cost.md`.
-- [ ] R12: lỗ hổng audit 5, H-60, H-61, H-62, H-64 (nguồn D3), D6 bộ dữ liệu demo, `docs/qa/responsible-ai.md` (Q5), `docs/qa/rehearsal-checklist.md` (Q7) → cổng freeze (`docs/qa/gate-v0.2-freeze.md`) → leader tag `v0.2-freeze`
-- [ ] Leader (không thay được): bug bash bấm tay (T-045), diễn tập ≥ 2 lần, video dự phòng, slide pitch, ngân hàng Q&A
+- [ ] R12: lỗ hổng audit 5, H-60, H-61, H-62, H-64 (nguồn D3), D6 bộ dữ liệu demo, `docs/qa/responsible-ai.md` (Q5), `docs/qa/rehearsal-checklist.md` (Q7) → cổng v0.2 (`docs/qa/gate-v0.2-freeze.md`) → leader tag `v0.2-freeze`
+- [ ] Leader (không thay được): bug bash bấm tay (T-045), diễn tập ≥ 2 lần, video dự phòng, slide trình bày, ngân hàng Q&A
 
 ## Backlog sau 13/10 (G6 → G8)
 
 - [ ] Scenario ẩn (tồn kho hụt vì defect, hoặc 2 nguyên nhân cùng lúc)
 - [ ] Case "chưa đủ bằng chứng" và case false positive hoàn chỉnh
 - [ ] Tập demo #2, cập nhật ngân hàng Q&A
-- [ ] Checklist Tokyo (sau freeze)
-- [ ] Scenario 2–3 và Orchestrator: ngoài kế hoạch lại 14/10 (chỉ xét lại sau pitch)
+- [ ] Checklist Tokyo (khi leader đặt lịch)
+- [ ] Scenario 2–3 và Orchestrator: ngoài kế hoạch lại 14/10 (chỉ xét lại khi leader yêu cầu)

@@ -81,21 +81,21 @@ Kế hoạch trước 14/10 (chờ D4/D5 của vai A, R11b dự phòng 17/10, fr
 | 4 | Tập giữ lại niêm phong | phiên cách ly (ADR-011), leader duyệt đáp án | ≥ 4 kịch bản (≥ 1 `ask`, ≥ 1 `none`, ≥ 1 có nhiễu trùng thời điểm), lưu ngoài repo, SHA-256 vào `docs/research/holdout-seal.md` | 45–60 phút chat | mã băm trên main |
 | 5 | Plan R11b → **chuỗi 2:** R11b → audit 5 | runner | H-28 luật chấm theo D5, loader + injector theo định dạng, tập dev khó ≥ 4 (H-29), eval A1–A3 trên DB sạch, lưu kết quả thô, chấm tập giữ lại (nạp từ ngoài repo, kiểm mã băm), ghi run tốt để phát lại, A8 LLM thật | 13–19 USD | A1–A3 tập dev có số; audit 5 xong |
 | 6 | Đo LLM thật | leader cho phép từng lần | A4/A5 LLM thật 3 seed (sau R11a, có thể chạy ngay sau chuỗi 1); A1–A3 tập giữ lại 3 seed (sau R11b); ghi `docs/token-cost.md` | ≤ 3 USD API mỗi lần | % đạt điều 1, 2 tính lại theo `criteria.md` |
-| 7 | R12 → cổng freeze | runner, rồi leader tag `v0.2-freeze` | lỗ hổng audit 5, H-60, H-61, H-62, H-64 (nguồn D3), D6 bộ dữ liệu demo, Q5 `docs/qa/responsible-ai.md` (từ test bất biến + audit_log), Q7 `docs/qa/rehearsal-checklist.md`, biên bản `docs/qa/gate-v0.2-freeze.md` | 8–10 USD | cổng `criteria.md` mục 3 |
-| 8 | Việc chỉ người làm được | leader | bug bash bấm tay toàn kịch bản demo (T-045), diễn tập ≥ 2 lần trên máy chiếu, video dự phòng, slide pitch, ngân hàng Q&A | — | pitch |
-| 9 | Sau pitch | | sửa lỗi theo góp ý; plugin: P4 còn lại → P9 → P8a → P7a; Demo Day: chạy lại cổng 2 ngày trước | | |
+| 7 | R12 → cổng v0.2 | runner, rồi leader tag `v0.2-freeze` | lỗ hổng audit 5, H-60, H-61, H-62, H-64 (nguồn D3), D6 bộ dữ liệu demo, Q5 `docs/qa/responsible-ai.md` (từ test bất biến + audit_log), Q7 `docs/qa/rehearsal-checklist.md`, biên bản `docs/qa/gate-v0.2-freeze.md` | 8–10 USD | cổng `criteria.md` mục 3 |
+| 8 | Việc chỉ người làm được | leader (khi leader đặt lịch trình bày) | bug bash bấm tay toàn kịch bản demo (T-045), diễn tập ≥ 2 lần trên máy chiếu, video dự phòng, slide trình bày, ngân hàng Q&A | — | pitch |
+| 9 | Sau cổng v0.2 | | sửa lỗi theo góp ý; plugin: P4 còn lại → P9 → P8a → P7a; trước mỗi buổi trình diễn: chạy lại cổng | | |
 
 Cổng hạn mức: đọc `/usage` sau chuỗi 1 và sau chuỗi 2. Tuần ≥ 80% thì dừng, áp thứ tự cắt, hoặc đợi reset 21/10 13:00.
 
 Vai cũ → việc mới: A (D3 → #3, D4 dev → R11b, D4 holdout → #4, D5 → #3 + R11b, D6 → R12); D (#139, #141, H-65/67/68/69 → R11d; FR còn thiếu → R11d hoặc R12); Q (Q1 thay bằng test tự động + checklist bấm tay; Q2 → reviewer + V01–V09 + leader duyệt holdout; Q3 → ảnh chụp e2e trong PR R11d + leader xem; Q4, Q7 diễn tập → #8; Q5 → R12; Q6 `docs/token-cost.md` → có từ 14/10).
 
 ### Thứ tự cắt
-- Dự án: FR-09/11/12 → H-52/53/55 của R11c → R11b ghi run phát lại → R12 chỉ giữ cổng. **Không cắt:** tập giữ lại + A1, R11a, nhãn ADR-010 trên UI, cổng freeze, chế độ phát lại sân khấu (FR-07).
+- Dự án: FR-09/11/12 → H-52/53/55 của R11c → R11b ghi run phát lại → R12 chỉ giữ cổng. **Không cắt:** tập giữ lại + A1, R11a, nhãn ADR-010 trên UI, cổng v0.2, chế độ phát lại sân khấu (FR-07).
 - Plugin: P7b → P7a → P8 → P9. Không cắt P4 tối thiểu (chuỗi cần).
 
 ### Pre-mortem
 - **Một người ôm mọi vai:** leader thành nút thắt (duyệt plan, PR, đáp án holdout, bấm tay). → Chỉ 4 điểm dừng cần leader: duyệt plan R11d, duyệt D3/D5, duyệt đáp án holdout, bấm tay + tag. Mọi thứ khác chạy chuỗi.
-- **Eval tự đúng lần hai:** phiên cách ly vẫn là Claude, có thể soạn đề "hợp gu" agent. → Phiên cách ly không đọc prompt/backend; leader đọc đáp án; ≥ 1 đề có nhiễu trùng thời điểm và bộ giải ngây thơ (chọn \|r\| cao nhất) phải sai; pitch nêu rõ cách soạn.
+- **Eval tự đúng lần hai:** phiên cách ly vẫn là Claude, có thể soạn đề "hợp gu" agent. → Phiên cách ly không đọc prompt/backend; leader đọc đáp án; ≥ 1 đề có nhiễu trùng thời điểm và bộ giải ngây thơ (chọn \|r\| cao nhất) phải sai; khi trình bày ra ngoài nêu rõ cách soạn.
 - **Auto-dev sửa UI mà không có mắt người:** test xanh nhưng màn hình xấu, chữ tràn. → R11d bắt buộc ảnh chụp Playwright 1920×1080 trong PR (supervisor vẫn tự merge để chuỗi không dừng); leader xem ảnh sau đó, lỗi trình bày đưa vào R12.
 - **Hạn mức tuần:** 40–55 USD ≈ 60–90% tuần. → Cổng `/usage` sau mỗi chuỗi; cắt theo thứ tự trên.
 - **Đổi schema làm vỡ fixture → vỡ UI:** `events.json` không đổi; fixture sinh lại trong cùng PR; R11d chạy sau R11c để dùng nhãn mới.

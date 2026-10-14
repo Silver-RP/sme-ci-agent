@@ -4,11 +4,9 @@
 
 MVP = scenario 1 chạy đủ vòng Detect → Learn từ dashboard, trên dữ liệu sandbox (synthetic). Ngôn ngữ: code và tên biến bằng tiếng Anh; tài liệu bằng tiếng Việt.
 
-## Mốc (tham khảo)
+## Mốc thời gian
 
-Proposal nộp hạn 5/10 21:59 JST · tag v0.1-e2e 13/10 · freeze code 20/10 (v0.2-freeze) · Pitch Day 24/10 · Demo Day 07/11.
-
-Các ngày ở đây và hạn (Due) trong TASKS.md, docs/PLAN.md chỉ để tham khảo; leader tự điều chỉnh. Agent không tự hoãn, cắt việc hay từ chối task vì hạn.
+Không có mốc ngày (leader gỡ 2026-10-14, ADR-011). Mọi ngày, hạn (Due), lịch pitch, freeze, Demo Day từng ghi trong TASKS.md, docs/PLAN.md, ROADMAP, brief, plan/Rx.md **đều vô hiệu**; leader sẽ đặt lại khi cần. Việc xếp theo thứ tự ở `docs/autodev/ROADMAP.md` mục "Kế hoạch lại 14/10". Agent không tự đặt hạn, không hoãn, cắt việc hay từ chối task vì thời gian. Tag `v0.1-e2e` đã gắn; `v0.2-freeze` gắn khi qua cổng v0.2 (`docs/eval/criteria.md` mục 3).
 
 ## Kiến trúc đã chốt (xem docs/decisions.md)
 
@@ -41,9 +39,8 @@ docs/schema/events.json là hợp đồng backend ↔ dashboard. Đổi file nà
 ## Quy ước làm việc
 
 - Nhánh: feat/<mốc>-<tên> (ví dụ feat/m1-detect). Commit: init / chore / feat / fix.
-- Mỗi PR có 1 người review, review trong 12 giờ.
-- Không commit API key. Tag: v0.1-e2e (13/10), v0.2-freeze (20/10).
-- Sync 15 phút mỗi ngày; review mốc mỗi thứ Bảy.
+- Mỗi PR có 1 lượt review (reviewer/supervisor của auto-dev hoặc leader).
+- Không commit API key. Tag: v0.1-e2e (đã gắn), v0.2-freeze (khi qua cổng v0.2).
 
 ## Công cụ (Claude Code)
 

@@ -33,8 +33,8 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 5. **Song song chuỗi 1, phiên chat** (không đụng file của mốc): D3 `docs/research/reflow_domain.md` (tìm web, có nguồn; nguồn cho 4 giả định điều 3, H-64), D5 `docs/research/scoring.md` (luật chấm theo mã, đúng một phần, đo độ khó; bảng gợi ý z 2–4σ, \|r\| ≤ 0,6, ≥ 2 nhiễu trùng thời điểm, bộ giải ngây thơ phải sai), định dạng kịch bản `docs/research/scenarios.md`. Leader duyệt PR.
 6. **Tập giữ lại niêm phong** (phiên cách ly): chỉ đọc hợp đồng dữ liệu, D3, D5, định dạng; ≥ 4 kịch bản (≥ 1 `ask`, ≥ 1 `none`, ≥ 1 nhiễu trùng thời điểm); lưu ngoài repo; `docs/research/holdout-seal.md` ghi SHA-256; leader duyệt đáp án trước khi niêm phong.
 7. **Plan R11b → chuỗi 2:** R11b (H-28 theo D5, loader + injector, tập dev khó ≥ 4 (H-29), eval A1–A3 DB sạch, lưu kết quả thô, chấm tập giữ lại có kiểm mã băm, ghi run phát lại, A8 LLM thật) → audit 5 (~13–19 USD). Rồi đo A1–A3 tập giữ lại LLM thật 3 seed (≤ 3 USD, leader cho phép).
-8. **R12 → cổng freeze:** lỗ hổng audit 5, H-60, H-61, H-62, H-64, D6, `docs/qa/responsible-ai.md`, `docs/qa/rehearsal-checklist.md`, biên bản `docs/qa/gate-v0.2-freeze.md`; leader tag `v0.2-freeze`.
-9. **Leader làm tay:** bug bash bấm tay (T-045), diễn tập ≥ 2 lần, video dự phòng, slide pitch, Q&A.
+8. **R12 → cổng v0.2:** lỗ hổng audit 5, H-60, H-61, H-62, H-64, D6, `docs/qa/responsible-ai.md`, `docs/qa/rehearsal-checklist.md`, biên bản `docs/qa/gate-v0.2-freeze.md`; leader tag `v0.2-freeze`.
+9. **Leader làm tay:** bug bash bấm tay (T-045), diễn tập ≥ 2 lần, video dự phòng, slide trình bày, Q&A.
 
 Cổng hạn mức: `/usage` sau chuỗi 1 và chuỗi 2; tuần ≥ 80% thì dừng, áp thứ tự cắt (ROADMAP) hoặc chờ reset 21/10.
 
@@ -102,7 +102,7 @@ Cổng hạn mức: `/usage` sau chuỗi 1 và chuỗi 2; tuần ≥ 80% thì d�
 ## Việc mở / cần để ý
 - **Lỗ hổng dự án:** PROJECT_STATE mục "Lỗ hổng mở" (nguồn `docs/audits/2026-10-12.md`); 31 mở, cao: H-28, H-29, H-64.
 - **Điều 1 = 0:** đã có nền LLM thật (12/10, DB sạch 3/3 trên bài dễ); R11b (chấm theo mã, tập dev khó) + tập giữ lại niêm phong là đường để có số A1 trước freeze.
-- **Cổng freeze:** A1 trên tập giữ lại phải có số (chưa niêm phong được thì ghi giới hạn khi pitch, điều 1 không báo quá 60%). H-32 đã sửa ở R10e.
+- **Cổng v0.2:** A1 trên tập giữ lại phải có số (chưa niêm phong được thì ghi giới hạn khi trình bày ra ngoài, điều 1 không báo quá 60%). H-32 đã sửa ở R10e.
 - **Eval trên DB dùng chung `sme_ci` sai số:** `learning_store` có ~185 bài học từ run LLM giả lộ đáp án; chạy eval LLM thật trên `sme_ci_demo` sạch (`fresh_db.py` + `alembic upgrade head`) tới khi R11a sửa.
 - **B1:** `metrics.py --write` (12/10) ra **2,20** cho audit 4, nhưng chỉ nhận R10d làm phạm vi (11 lỗ hổng / 5 task); đúng phải là R10d + R10b1 + R10b2 (19 task → ~0,58, vẫn > 0,5). Sửa cách `metrics.py` đọc phạm vi audit (P4).
 - **pytest chập chờn:** đỏ 1/4 lần trên main trước đây, không bắt được tên test. Gặp lại thì ghi tên test.
