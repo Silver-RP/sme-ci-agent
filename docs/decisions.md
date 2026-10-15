@@ -74,8 +74,11 @@ Trạng thái: đã chốt (leader xác nhận 2026-10-08, xem ADR-009).
   1. Từ phiên sau, **100% nỗ lực cho auto-dev** (`docs/autodev/`, `.autodev/`, `.claude/`).
   2. **Mục tiêu auto-dev:** leader chỉ đưa mục tiêu và kết quả mong muốn; auto-dev tự phân tích, hỏi thông tin cần thiết, lập kế hoạch, tự điều phối giữa các vai để hoàn thành dự án.
   3. SME CI Agent quay về vai **dự án thử**: mốc R chỉ chạy khi kiểm chứng một khả năng của plugin. Kế hoạch "Kế hoạch lại 14/10" tạm giữ, không chủ động chạy.
-- Còn mở (leader chốt ở phiên phân tích): thước đo "xong" của auto-dev; ngân sách; phạm vi ADR-001 (luật của sản phẩm SME CI Agent, không phải của plugin auto-dev).
-- Hệ quả: ROADMAP plugin sẽ viết lại sau phân tích khoảng cách (PR riêng). Kiến trúc sản phẩm (ADR-001..006) không đổi.
+- Chốt ở phiên phân tích (leader, 2026-10-15):
+  4. **Thước đo "xong" của auto-dev:** B7 can thiệp của leader ≤ 1 / mốc; B8 ≥ 80% mốc tự xong (plan → merge không dừng); USD / mốc (B5). Cổng chất lượng giữ B1 ≤ 0,5 (ROADMAP bảng B).
+  5. **Ngân sách:** chạy đến khi hết hạn mức (runner dừng khi chạm hạn mức tuần, chờ khi chạm hạn mức 5 giờ, như P4). Không đặt trần USD riêng.
+  6. **Phạm vi ADR-001:** "một agent, không multi-agent, không Agent Manager" là luật của **sản phẩm** SME CI Agent. Không áp cho plugin auto-dev; auto-dev được tự điều phối nhiều vai (planner, developer, reviewer, supervisor, auditor).
+- Hệ quả: ROADMAP plugin thêm P10–P13 và chỉ số B7, B8 (phân tích khoảng cách 15/10). Kiến trúc sản phẩm (ADR-001..006) không đổi.
 
 ## Việc cần sửa sau khi chạy (log lỗi M3)
 
