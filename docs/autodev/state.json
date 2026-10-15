@@ -186,16 +186,23 @@
       },
       {
         "id": "P7",
-        "status": "todo"
+        "status": "todo",
+        "note": "gộp vào P13 (2026-10-15)"
       },
       {
         "id": "P8",
-        "status": "todo"
+        "status": "todo",
+        "note": "đóng gói; làm sau P10–P13"
       },
       {
         "id": "P9",
         "status": "todo",
-        "note": "reviewer cho PR của team, chỉ comment; sau v0.1"
+        "note": "hoãn 2026-10-15: team không còn hoạt động"
+      },
+      {
+        "id": "P10-P13",
+        "status": "todo",
+        "note": "/goal, tự lập plan, vòng tự chạy, hàng đợi câu hỏi (ADR-012, PR #150); thứ tự P10 → P11 → P12 → P13"
       }
     ]
   },
@@ -498,6 +505,10 @@
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-15",
+      "text": "2026-10-15 (phiên phân tích): leader chốt phần còn mở của ADR-012: \"xong\" = B7 ≤ 1 can thiệp/mốc, B8 ≥ 80% mốc tự xong, USD/mốc, giữ B1 ≤ 0,5; ngân sách = chạy đến hết hạn mức; ADR-001 chỉ áp cho sản phẩm. ROADMAP thêm P10 /goal, P11 supervisor tự lập plan, P12 vòng tự chạy (gộp phần P4 còn lại), P13 hàng đợi câu hỏi + Telegram (gộp P7); P8 sau, P9 hoãn. PR #150. Chuỗi R11c → R11a → R11d chờ, làm tải thử cho P11/P12."
+    },
     {
       "date": "2026-10-15",
       "text": "2026-10-15, ADR-012: leader chuyển hướng: dồn 100% vào auto-dev; SME CI Agent là dự án thử (mốc R chỉ chạy khi kiểm chứng plugin; kế hoạch 14/10 tạm giữ). Mục tiêu auto-dev: leader chỉ đưa mục tiêu + kết quả mong muốn, auto-dev tự phân tích, hỏi, lập kế hoạch, điều phối các vai. Còn mở: thước đo \"xong\", ngân sách, phạm vi ADR-001. Cùng phiên: P4 tối thiểu #147, plan R11d #148; nghiên cứu thị trường ngoài repo."
