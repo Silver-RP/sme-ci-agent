@@ -16,26 +16,28 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao" hay "là gì" (**giải thích đơn giản trước**, chi tiết khi được hỏi thêm). Cuối mỗi báo cáo có câu hỏi "làm gì tiếp": danh sách **đánh số kèm nội dung**, leader trả lời bằng số.
 - **Đo bằng số, không ước lượng:** % đạt 3 điều tính theo `docs/eval/criteria.md` (A1–A8, luật chỉ số nhiều phần); chỉ số plugin B1–B6 bằng `python3 .autodev/metrics.py`.
 
-## Bước tiếp theo (cập nhật 2026-10-15: chuyển hướng sang auto-dev, ADR-012)
+## Bước tiếp theo (cập nhật 2026-10-15 chiều: phân tích khoảng cách auto-dev xong, PR #150)
 
 ### Bối cảnh
-- **Leader chốt 15/10 (ADR-012):** từ phiên sau **dồn 100% vào phát triển auto-dev**. SME CI Agent quay về đúng vai **dự án thử** cho auto-dev: không còn là mục tiêu tự thân; các mốc R tiếp theo chỉ chạy khi phục vụ kiểm chứng một khả năng của plugin.
-- **Mục tiêu auto-dev (leader):** leader chỉ đưa **mục tiêu + kết quả mong muốn**; auto-dev tự phân tích, hỏi thông tin còn thiếu, lập kế hoạch, tự điều phối qua lại giữa các vai (lập plan, làm, review, giám sát, audit) để hoàn thành dự án.
-- Hiện leader còn phải làm tay (đầu vào cho phân tích khoảng cách): viết/duyệt `plan/Rx.md` và ROADMAP; chọn thứ tự mốc; quyết đề xuất (c); khởi động runner và vòng chờ; đọc `/usage`; mở/đóng phiên; merge khi classifier chặn; viết brief/issue.
-- Đã xong phiên 14/10 tối → 15/10: P4 tối thiểu (#147: runner tự chạy tiếp mốc có PR mở, worker fast-forward lên nhánh PR, `demo.sh` tự `yarn install`, supervisor chạy `.autodev/tests` trước PR hồ sơ, `pgrep 'autodev/run.py'`); plan R11d (#148). Bình luận báo team và gán lại #63, #64, #65, #139, #141 cho @Silver-RP đã làm 14/10 (issue vẫn mở).
-- **Nghiên cứu thị trường** (leader yêu cầu, ngoài repo, không commit): `~/dev/sme-ci-agent/research/reports/Thị trường SME CI Agent.md` (+ ghi chú `research_notes/`). Kết luận: nhu cầu có (JETRO FY2024: 60,9% doanh nghiệp Nhật ở VN thiếu nhà cung cấp đạt chất lượng), rủi ro lớn là Luật BVDLCN 91/2025 + Nghị định 356/2025 (chuyển dữ liệu công nhân ra nước ngoài). Chỉ dùng nếu leader quay lại hướng thương mại.
-- Hạn mức: số liệu `usage.py` cũ (~90 giờ); lần cuối leader báo 14/10 22:40: 5 giờ 1%, tuần 0% (reset 21/10 13:00).
+- **ADR-012:** dồn 100% vào auto-dev. Mục tiêu: leader chỉ đưa **mục tiêu và kết quả mong muốn**, auto-dev tự lo phần còn lại. SME CI Agent chỉ là dự án thử.
+- **Leader chốt 15/10 (phiên phân tích, ghi trong ADR-012 mục 4–6):**
+  - "xong" = B7 ≤ 1 can thiệp/mốc, B8 ≥ 80% mốc tự xong, USD/mốc; giữ B1 ≤ 0,5;
+  - ngân sách = **chạy đến khi hết hạn mức**;
+  - ADR-001 chỉ áp cho sản phẩm, không chặn auto-dev điều phối nhiều vai.
+- **Phát hiện chính:** trong mốc đã gần tự chủ (R4–R10e: 3 lần runner dừng / 18 mốc). Việc tay nằm giữa và trên mốc: 93/127 PR từ 06/10 là `chore`.
+- **ROADMAP mới (PR #150):** P10 `/goal` → P11 supervisor tự lập plan → P12 vòng tự chạy (gộp phần P4 còn lại) → P13 hàng đợi câu hỏi + Telegram (gộp P7) → P8. P9 hoãn.
+- Đã xong trong phiên 15/10 chiều: phân tích khoảng cách (trong chat); PR #150 (ROADMAP + ADR-012), check `plugin-guard` xanh.
+- **Classifier chế độ Auto** chặn commit/push từ clone scratchpad ("Out-of-Place Publication") và chặn `gh pr merge` khi viết dạng lệnh ghép. Đã đưa leader đoạn `settings.local.json` mới (thêm luật `git -C /private/tmp/claude-501/* add|commit|push -u origin chore/*|plan/*`, `gh pr create *`, một dòng `autoMode.allow`). Leader **chưa dán**. Bài học: chạy `gh pr merge <n> --merge` thành một lệnh riêng để luật allow có sẵn khớp.
+- Hạn mức (leader báo 15/10): 5 giờ 2%, tuần 6%.
 
 ### Làm tiếp theo thứ tự
-1. **Chờ leader** (phiên mới `/session-start phan-tich-autodev`, tên `leader-<MMDD>-phan-tich-autodev`): trả lời 3 điều để bắt đầu phân tích:
-   - (a) "xong" của auto-dev đo bằng gì (ví dụ: số lần leader phải can thiệp mỗi dự án, % mốc tự hoàn thành, USD/mốc);
-   - (b) ngân sách hạn mức cho giai đoạn này;
-   - (c) chuỗi 1 (R11c → R11a → R11d, plan đã trên main) chạy ngay làm tải thử để đo khoảng cách, hay chờ phân tích xong.
-2. **Phân tích khoảng cách** (phiên chat, 0 USD): đọc `docs/autodev/auto-dev-review-design.md`, ROADMAP (P1–P9), PROGRESS (số đo B1–B5), LESSONS; liệt kê từng việc leader đang làm tay (bối cảnh trên) → khả năng plugin cần có. Đề xuất mốc plugin mới (ví dụ: lệnh nhận mục tiêu → hỏi → viết ROADMAP + plan; supervisor tự lập plan mốc kế; tự chạy chuỗi + cổng `/usage`; tự quyết (c) trong ngưỡng); xem lại P7–P9 còn hợp không. Kết quả là PR sửa ROADMAP, leader duyệt.
-3. **Câu hỏi kiến trúc cho leader:** ADR-001 ("không multi-agent, không Agent Manager") là luật của **sản phẩm** SME CI Agent; auto-dev vốn đã có nhiều vai (developer, reviewer, supervisor, auditor). Cần leader xác nhận phạm vi ADR-001 không chặn việc auto-dev tự điều phối các vai (ghi vào ADR-012 khi chốt).
-4. Sau khi duyệt ROADMAP mới: làm mốc plugin đầu tiên, dùng một mốc R của SME CI Agent (R11c/R11a/R11d hoặc R11b) làm bài thử.
+1. **Chờ leader:**
+   - (a) merge **#150** (`gh pr merge 150 --merge`) và PR bàn giao này nếu classifier chặn;
+   - (b) có dán đoạn `settings.local.json` mới không (nội dung nằm trong hội thoại phiên `leader-1015-phan-tich-autodev`; nếu mất thì viết lại theo mục Bối cảnh trên).
+2. **Plan P10 `/goal`** (phiên mới `/session-start p10-goal`, 0 USD): thiết kế lệnh nhận mục tiêu → hỏi (câu hỏi đánh số) → tiêu chí đo được + ROADMAP mốc; leader duyệt một lần. Tải thử: mục tiêu "qua cổng v0.2 của SME CI Agent". Ghi thiết kế vào `auto-dev-review-design.md` (mục mới) và plan mốc plugin; PR cho leader.
+3. P11 → P12 → P13 theo ROADMAP. Chuỗi R11c → R11a → R11d (plan trên main) là tải thử của P11/P12, **chưa chạy**.
 
-Kế hoạch SME CI Agent cũ (ROADMAP "Kế hoạch lại 14/10", việc 2–9) **tạm giữ, không chủ động chạy**; dùng làm tải thử theo mục 4.
+Kế hoạch SME CI Agent cũ (ROADMAP "Kế hoạch lại 14/10") **tạm giữ, không chủ động chạy**.
 
 **Tín hiệu team** (`/session-start` vẫn kiểm): PR mới của thành viên → kiểm như trước, leader merge.
 
@@ -52,10 +54,10 @@ Kế hoạch SME CI Agent cũ (ROADMAP "Kế hoạch lại 14/10", việc 2–9)
   - M0–M3 xong; M4 4/6; tag `v0.1-e2e` (c60fec5);
   - 1028 passed trên main; **6 vitest dashboard đỏ trên main** (#139, R11d sửa);
   - % đạt 3 điều: **0 / 67 / 67**. Plan R11c, R11a, R11d trên main, chưa chạy.
-- **Plugin:** P1–P3, P5, P6 xong; P4 tối thiểu xong (#147), phần để sau: hook `SubagentStop`, verify nhanh, `metrics.py` đọc phạm vi audit; P7–P9 chưa làm (xem lại ở mục 2 "Làm tiếp").
+- **Plugin:** P1–P3, P5, P6 xong; P4 tối thiểu xong (#147), phần để sau: hook `SubagentStop`, verify nhanh, `metrics.py` đọc phạm vi audit; P10–P13 mới (PR #150), P7 gộp vào P13, P8 sau, P9 hoãn.
 - **Runner:** rảnh (R10e xong 12/10). `audit.json` pending `["R10e"]`; chuỗi R11c → R11a → R11d dùng `--audit-every 4`.
 - **Demo:** tắt. DB demo `sme_ci_demo` còn các run thử LLM thật của leader (xoá khi `--fresh-db` lần sau). Bật: `scripts/demo.sh --fresh-db` (thêm `SME_LLM=real` cho LLM thật, mở `/?source=live`); tắt: `lsof -ti tcp:8000,3000 -sTCP:LISTEN | xargs kill`. Phải tắt khi runner chạy.
-- **PR mở:** không có (sau PR bàn giao này).
+- **PR mở:** #150 (ROADMAP P10–P13, check xanh, chờ leader merge) nếu chưa merge.
 - **Worktree:** chính, `-autodev` (worker, nhánh `milestone/R10e`), `-supervisor` (nhánh `chore/autodev-r10e-review`). `-bench` tự dựng lại khi chạy `bench_reviewer.py`.
 - **Nhánh của leader:** `main`, `plan/r11`, `plan/r11d`, `plan/replan-1014`, `chore/p4-min`, `chore/autodev-handoff-20261013/1014/1015`, 2 nhánh R10e của worktree (dọn khi leader duyệt).
 
@@ -120,4 +122,5 @@ Kế hoạch SME CI Agent cũ (ROADMAP "Kế hoạch lại 14/10", việc 2–9)
 - 2026-10-12 tối → 13/10: tuần 97%, không chạy runner; điều 1 chốt 0; P8a sau freeze; quy tắc tên phiên; kế hoạch tổng thể tới Demo Day (tách R11a/R11c).
 - 2026-10-13 → 14/10 sáng: plan R11c + R11a (#144); ranh giới vai A: phần chồng D4/D5 sang R11b, mốc dự phòng D5 17/10; R11c chạy trước; dọn nhánh.
 - 2026-10-14 tối → 15/10: ADR-011 (tiếp quản vai A/D/Q, gỡ mốc ngày, #146); P4 tối thiểu #147; plan R11d #148; phân tích + nghiên cứu thị trường (ngoài repo); **chuyển hướng ADR-012: dồn lực auto-dev**.
+- 2026-10-15 chiều: phân tích khoảng cách; leader chốt thước đo, ngân sách (đến hết hạn mức), phạm vi ADR-001; ROADMAP P10–P13 (#150).
 - Chi tiết trong `PROGRESS.md`.
