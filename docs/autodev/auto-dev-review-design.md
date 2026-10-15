@@ -600,6 +600,90 @@ WORKER (phiên ở worktree, lệnh /run-milestone Mx): developer ⇄ reviewer �
 
 **Bài học dẫn tới quy tắc "không xoá khi chưa duyệt":** ngày 2026-10-07, lệnh `gh pr merge --delete-branch` xoá nhánh mốc đang được dùng trong worktree, và `gh` gỡ luôn thư mục worktree (mất `.claude/settings.local.json`).
 
+### 6.16 `/autodev-goal`: từ mục tiêu tới ROADMAP đã duyệt (P10, bổ sung ở bản 1.4)
+
+Leader chốt qua brainstorm ngày 2026-10-15 (ADR-012). Đây là bước đầu của chuỗi P10 → P11 → P12 → P13.
+
+**Mục đích.** Leader chỉ đưa mục tiêu và kết quả mong muốn. Lệnh tự đọc repo, hỏi phần còn thiếu, rồi viết tiêu chí đo được và ROADMAP mốc. Leader duyệt **một lần**, ở mức ROADMAP. Kết quả này thay cho phần việc leader làm tay ở "Kế hoạch lại 14/10".
+
+**Thành công.** Chạy với mục tiêu "qua cổng v0.2 của SME CI Agent" ra được ROADMAP ít nhất tương đương "Kế hoạch lại 14/10" mà leader không phải sửa tay. Leader chỉ trả lời câu hỏi và merge PR.
+
+**Đã chốt:**
+
+| Điểm | Chốt |
+|---|---|
+| Tên lệnh | `/autodev-goal <mục tiêu>`. Không dùng `/goal`: tên này trùng lệnh có sẵn của Claude Code |
+| Nơi ghi | mỗi mục tiêu một thư mục `docs/goals/<slug>/` gồm `brief.md`, `criteria.md`, `roadmap.md`, `goal.json` |
+| Cách hỏi | nhiều vòng như brainstorm, mỗi tin một câu, đánh số, có đáp án khuyến nghị. Lần chạm trong `/autodev-goal` không tính vào B7 (B7 đo can thiệp trong mốc) |
+| Duyệt | merge PR `goal/<slug>` là duyệt; `goal.json` vào PR với `status: approved` |
+| Kế hoạch có sẵn | là đầu vào: lệnh đọc hết (kể cả plan chưa chạy), giữ phần còn hợp lệ, ghi chỗ đổi và lý do |
+| Cách làm | một slash command chạy trong phiên chính + script kiểm `.autodev/goal_check.py`. Chưa tách subagent planner; P11 cần thì tách sau |
+| Phạm vi | dừng ở ROADMAP đã duyệt. Viết `plan/Rx.md` là việc của P11 |
+
+**Luồng.**
+1. **Ghi nhận:** `usage.py start`. Tạo `<slug>` từ mục tiêu. Thư mục đã có thì hỏi: sửa mục tiêu cũ hay tạo mới.
+2. **Đọc (chỉ đọc):**
+   - `CLAUDE.md`, `PROJECT_STATE.md` + `state.json`, file tiêu chí của dự án (ở đây `docs/eval/criteria.md`);
+   - `TASKS.md`, ROADMAP;
+   - `plan/*.md` chưa chạy, audit mới nhất (H-xx mở), `PROGRESS.md` (thời gian, USD thực tế mỗi mốc);
+   - hạn mức (`usage.py show`).
+3. **Viết lại cách hiểu:** tách "leader nói" và "tôi giả định"; nêu chỉ số hiện tại so với ngưỡng.
+4. **Hỏi nhiều vòng:** chỉ hỏi điều repo không trả lời được ("xong" là gì, việc không được cắt, giới hạn chi phí, việc chỉ người làm). Hỏi đến khi đủ hoặc leader gõ "đủ".
+5. **Đề xuất 2–3 hướng ROADMAP**, có khuyến nghị; leader chọn số.
+6. **Trình bày ROADMAP theo phần**, leader gật từng phần: tiêu chí → mốc (thứ tự, ước tính, "xong khi") → pre-mortem → thứ tự cắt.
+7. **Viết 4 file**, chạy `goal_check.py`, mở PR `goal/<slug>`, `usage.py end`.
+
+Phiên đứt trước bước 7 thì không có file nào; chạy lại lệnh và hỏi lại phần còn thiếu.
+
+**Luật của lệnh:**
+- Không sửa code dự án, không chạy auto-dev hay LLM thật.
+- Ước tính lấy từ số đo trong `PROGRESS.md` (luật ước tính mục 6.5), không tự đặt.
+- Mỗi mốc gắn với ít nhất một chỉ số của tiêu chí; mốc không đẩy chỉ số nào phải có `reason`.
+
+**Khuôn file.**
+- `brief.md`: mục tiêu, kết quả mong muốn (nguyên văn leader), cách hiểu đã chốt, nhật ký hỏi đáp, giả định còn lại.
+- `criteria.md`: bảng chỉ số (mã, định nghĩa, lệnh đo, nền, ngưỡng, công thức % đạt). Dự án đã có file tiêu chí thì trỏ tới nó và chỉ ghi phần thêm hoặc sửa.
+- `roadmap.md`: mỗi mốc có tên, mục tiêu, phạm vi (việc, H-xx, mã T), chỉ số đẩy lên, ước tính (USD, giờ máy), "xong khi", phụ thuộc, pre-mortem 2–4 dòng. Cuối file: thứ tự cắt, "không cắt", việc chỉ người làm.
+- `goal.json` (P11/P12 đọc):
+
+```json
+{
+  "slug": "v0.2-gate",
+  "goal": "Qua cổng v0.2 của SME CI Agent",
+  "status": "approved",
+  "done_when": [
+    {"id": "A1", "cmd": "uv run python scripts/eval_rootcause.py --llm real --set holdout --seeds 3", "threshold": ">= 0.7"}
+  ],
+  "milestones": [
+    {"id": "R11c", "title": "...", "depends_on": [], "metrics": ["A4"],
+     "est_usd": 6, "est_hours": 3, "status": "planned", "plan_file": "plan/R11c.md"}
+  ],
+  "cut_order": ["R11c"],
+  "human_only": ["T-045 bug bash"]
+}
+```
+
+`status` của mục tiêu: `draft | approved | done | dropped`. `status` của mốc: `planned | done | cut`. `plan_file` có thì trỏ tới plan sẵn có; không có thì P11 viết. Mốc không có `metrics` thì phải có `reason`.
+
+**`goal_check.py <goal.json ...>`** (thư viện chuẩn; TDD, test ở `.autodev/tests/test_goal_check.py`). Mã thoát khác 0 khi:
+- thiếu trường bắt buộc, hoặc `status` sai giá trị;
+- `id` mốc trùng, `depends_on` trỏ tới mốc không có, hoặc phụ thuộc vòng tròn;
+- mốc không có `metrics` lẫn `reason`; `est_usd` ≤ 0;
+- `plan_file` không tồn tại;
+- `cut_order` trỏ tới mốc không có;
+- `status` khác `draft` mà `done_when` rỗng.
+
+**CI.** `.github/workflows/goal-check.yml` chạy trên `pull_request` đổi `docs/goals/**`, gọi `goal_check.py` cho mọi `goal.json`. Script và workflow nằm trong vùng `plugin-guard` bảo vệ.
+
+**Giao ước với P11/P12 (chưa làm ở P10).**
+- P11 chọn mốc kế: mốc `planned` mà mọi `depends_on` đã `done`; chưa có `plan_file` thì viết plan.
+- P12 dừng khi mọi `done_when` đạt, rồi đặt `status: done`.
+- Việc phát sinh ngoài ROADMAP vào hàng đợi câu hỏi (P13).
+
+**Giao hàng.**
+1. PR plugin: mục này, `plan/P10.md`, `.claude/commands/autodev-goal.md`, `goal_check.py` + test, workflow CI, dòng P10 trong ROADMAP.
+2. PR thử tải: `/autodev-goal "qua cổng v0.2 của SME CI Agent"` → `docs/goals/v0.2-gate/`. Mục "Kế hoạch lại 14/10" thay bằng dòng trỏ sang thư mục mới. Ghi số lần leader chạm vào PR.
+
 ---
 
 ## 7. Điểm chưa chốt `[CHƯA CHỐT]`
@@ -714,6 +798,7 @@ Thay vì chọn giữa "quay lại SME CI Agent" và "nghiên cứu tiếp", **d
 | Phiên bản | Ngày | Thay đổi |
 |---|---|---|
 | 1.0 | 2026-10-05 | Bản đầu: yêu cầu đã xác nhận, các phương án đã loại, thiết kế chốt, các điểm còn mở, lộ trình |
+| 1.4 | 2026-10-15 | Thêm mục 6.16 `/autodev-goal` (P10, ADR-012): luồng đọc → hỏi nhiều vòng → ROADMAP, thư mục `docs/goals/<slug>/`, `goal.json`, `goal_check.py`, duyệt bằng merge PR |
 | 1.3 | 2026-10-07 | Thêm mục 6.15 (supervisor đại diện con người, giao tiếp giữa hai phiên, bảng quyền); sửa nguyên tắc 8; ghi bài học xoá worktree. Kết quả M1–M2: vòng REWORK chạy thật ở M2, hook `SubagentStop` chạy đủ, mỗi lần chạy mốc tốn 7–18% hạn mức cửa sổ 5 giờ. |
 | 1.2 | 2026-10-06 | Chuyển vào `docs/autodev/`. Chốt Q2 (chạy tiếp task không phụ thuộc), Q5 (3 vòng), Q6 (Sonnet), Q7 (Python/uv; verify = ruff + pytest, chưa có typecheck/e2e), Q9 (hạn chỉ tham khảo); Q1 hoãn. Kiểm chứng lại matcher `SubagentStop` và frontmatter agent (`hooks`, `maxTurns`, `isolation`). Thiết lập chế độ A. |
 | 1.1 | 2026-10-06 | Thêm mục 6.13 (thông báo và điều khiển từ xa: ntfy, bot Telegram, Telegram channel, Remote Control), mục 6.14 (giải thích framework và plugin, lộ trình triển khai), mục 9.1 (khuyến nghị dùng SME CI Agent làm dự án chạy thử, có giới hạn thời gian), Q9; cập nhật Q1, Q3, thuật ngữ, nguồn, và 2 rủi ro về bảo mật thông báo |
