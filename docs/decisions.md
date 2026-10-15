@@ -80,6 +80,14 @@ Trạng thái: đã chốt (leader xác nhận 2026-10-08, xem ADR-009).
   6. **Phạm vi ADR-001:** "một agent, không multi-agent, không Agent Manager" là luật của **sản phẩm** SME CI Agent. Không áp cho plugin auto-dev; auto-dev được tự điều phối nhiều vai (planner, developer, reviewer, supervisor, auditor).
 - Hệ quả: ROADMAP plugin thêm P10–P13 và chỉ số B7, B8 (phân tích khoảng cách 15/10). Kiến trúc sản phẩm (ADR-001..006) không đổi.
 
+## ADR-013: Tách auto-dev ra repo riêng, đóng băng dự án này (2026-10-15)
+
+- **Quyết định (leader chốt 2026-10-15 tối):** auto-dev phát triển tiếp ở `Silver-RP/autodev` (private, plugin Claude Code, `~/dev/autodev`). `sme-ci-agent` đóng băng nguyên trạng: không chạy mốc R mới, không sửa plugin ở đây. Kế hoạch "Kế hoạch lại 14/10", chuỗi R11c → R11a → R11d và lần thử `/autodev-goal v0.2-gate` huỷ.
+- **Lý do:** leader không muốn phát triển auto-dev chung với SME CI; plugin cần dùng lại cho nhiều dự án của leader, sau khi ổn định mới công khai. Dự án thử mới là `Silver-RP/autodev-sandbox`.
+- **Đã làm:** repo `autodev` có bản plugin dùng chung (autodev #2, merge 15/10; tách gốc plugin/gốc dự án, lệnh `/autodev:*`, hook trong plugin, `/autodev:init`). Spec và kế hoạch: `docs/superpowers/` của repo đó.
+- **Giữ lại:** lịch sử R4–R10e, số đo B1–B6, audit, LESSONS làm hồ sơ. Nhánh và worktree cũ để nguyên đến khi leader duyệt dọn.
+- **Thay:** ADR-012 phần "SME CI Agent là dự án thử".
+
 ## Việc cần sửa sau khi chạy (log lỗi M3)
 
 ### T-030 lần 1 (2026-10-09, LLM thật `claude-sonnet-5-5`, chạy qua API của `demo.sh`, người trả lời trung tính)

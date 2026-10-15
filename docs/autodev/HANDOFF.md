@@ -16,9 +16,18 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao" hay "là gì" (**giải thích đơn giản trước**, chi tiết khi được hỏi thêm). Cuối mỗi báo cáo có câu hỏi "làm gì tiếp": danh sách **đánh số kèm nội dung**, leader trả lời bằng số.
 - **Đo bằng số, không ước lượng:** % đạt 3 điều tính theo `docs/eval/criteria.md` (A1–A8, luật chỉ số nhiều phần); chỉ số plugin B1–B6 bằng `python3 .autodev/metrics.py`.
 
-## Bước tiếp theo (cập nhật 2026-10-15 tối: P10 `/autodev-goal` xong #152, superpowers cho team #153)
+## Bước tiếp theo (cập nhật 2026-10-15 khuya: ĐÓNG BĂNG, ADR-013)
 
-### Bối cảnh
+> **Repo này đóng băng.** Auto-dev phát triển tiếp ở `Silver-RP/autodev` (`~/dev/autodev`, private). Mở phiên ở thư mục đó; bàn giao mới nằm ở `~/dev/autodev/docs/HANDOFF.md` (sẽ viết lại ở phiên đầu tiên bên đó). Ở đây không chạy mốc R, không sửa plugin.
+
+### Phiên 15/10 khuya (`leader-1015-tach-autodev`)
+- Thử `/autodev-goal v0.2-gate` **huỷ** ở bước 3: leader không muốn phát triển auto-dev chung với SME CI nữa.
+- Brainstorm → spec → plan → làm (superpowers). Leader chốt: plugin dùng lại cho các dự án của leader + phát triển riêng, sau ổn định mới công khai; `sme-ci-agent` đóng băng nguyên trạng; dự án thử mới `autodev-sandbox` (CLI todo nhỏ); lịch sử git mới; repo private; dạng plugin Claude Code.
+- **autodev #2 merge** (Task 0–6 của `docs/superpowers/plans/2026-10-15-tach-autodev.md`): spike xác nhận hook plugin chạy headless, lệnh `/autodev:*` gọi được, `${CLAUDE_PLUGIN_ROOT}` được thay trong thân lệnh (không chắc trong thân agent); `paths.py`; runner `--plugin-dir`; lệnh và vai dùng chung; khuôn; `hooks/hooks.json`; `/autodev:init`. 162 test, CI `tests` xanh. Reviewer Opus: 4 Important đã sửa, 7 Minor để sau (ledger trong PR #2).
+- #153 + #155 merge (superpowers bật trong `.claude/settings.json`).
+- Còn lại của kế hoạch tách: **Task 7** (sandbox + tải thử, 2–4 USD) làm ở phiên mới trong `~/dev/autodev`; Task 8 = PR ADR-013 này.
+
+### Bối cảnh trước khi tách (giữ để tra)
 - **ADR-012:** dồn 100% vào auto-dev. Mục tiêu: leader chỉ đưa **mục tiêu và kết quả mong muốn**, auto-dev tự lo phần còn lại. SME CI Agent chỉ là dự án thử.
 - **Leader chốt 15/10 (phiên phân tích, ghi trong ADR-012 mục 4–6):**
   - "xong" = B7 ≤ 1 can thiệp/mốc, B8 ≥ 80% mốc tự xong, USD/mốc; giữ B1 ≤ 0,5;
@@ -34,13 +43,12 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - Hạn mức: chưa có số mới; `usage-latest.json` cũ từ 11/10 (VS Code không chạy status line). Hỏi leader `/usage`.
 
 ### Làm tiếp theo thứ tự
-1. **Chờ leader:**
-   - (a) commit dòng `enabledPlugins` đã thêm rồi push lên #153: `git -C ~/dev/sme-ci-agent/sme-ci-agent switch chore/autodev-superpowers-team && git add .claude/settings.json && git commit -m "chore(autodev): bật superpowers trong settings dự án" && git push`; rồi merge #153 (`gh pr merge 153 --merge`);
-   - (b) 2 số `/usage` (5 giờ, tuần).
-2. **Thử tải P10** (phiên mới `/session-start thu-autodev-goal`, 0 USD): chạy `/autodev-goal qua cổng v0.2 của SME CI Agent` → PR `goal/v0.2-gate`; đếm số lần leader trả lời; so với "Kế hoạch lại 14/10"; sửa 4 Minor của #152 nếu gặp. Sau merge, đổi dòng P10 trong ROADMAP thành ✅.
-3. P11 → P12 → P13 theo ROADMAP. Chuỗi R11c → R11a → R11d (plan trên main) là tải thử của P11/P12, **chưa chạy**; khi chạy thì thử luôn việc gắn skill superpowers vào vai (ROADMAP, #153).
+1. **Chờ leader:** mở phiên mới ở `~/dev/autodev` (`/rename leader-<MMDD>-sandbox-autodev`), gửi 2 số `/usage` (5 giờ, tuần) và đồng ý 2–4 USD cho Task 7.
+2. Task 7 (ở repo `autodev`): tạo `autodev-sandbox`, leader push commit đầu + `/plugin marketplace add ~/dev/autodev` + `/plugin install autodev@autodev`, `/autodev:init`, kiểm guard headless, `/autodev:autodev-goal` + một mốc qua runner.
+3. Chép bộ nhớ dùng chung sang thư mục nhớ của `~/dev/autodev` (kế hoạch Task 8 Step 4) nếu chưa làm.
+4. Sau đó P11 → P12 → P13 trong repo `autodev`.
 
-Kế hoạch SME CI Agent cũ (ROADMAP "Kế hoạch lại 14/10") **tạm giữ, không chủ động chạy**.
+Kế hoạch SME CI Agent cũ (ROADMAP "Kế hoạch lại 14/10"), chuỗi R11c → R11a → R11d: **huỷ** (ADR-013). Dọn nhánh/worktree cũ: chờ leader duyệt.
 
 **Tín hiệu team** (`/session-start` vẫn kiểm): PR mới của thành viên → kiểm như trước, leader merge.
 

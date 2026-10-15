@@ -6,6 +6,8 @@ MVP = scenario 1 chạy đủ vòng Detect → Learn từ dashboard, trên dữ 
 
 **Từ 2026-10-15 (ADR-012):** ưu tiên 100% phát triển auto-dev (leader chỉ đưa mục tiêu + kết quả mong muốn, auto-dev tự phân tích, hỏi, lập kế hoạch, điều phối các vai). Dự án này là dự án thử cho auto-dev; mốc R chỉ chạy khi kiểm chứng một khả năng của plugin.
 
+**Từ 2026-10-15 tối (ADR-013):** dự án đóng băng; auto-dev ở repo `Silver-RP/autodev` (`~/dev/autodev`). Không chạy mốc R, không sửa plugin ở đây.
+
 ## Mốc thời gian
 
 Không có mốc ngày (leader gỡ 2026-10-14, ADR-011). Mọi ngày, hạn (Due), lịch pitch, freeze, Demo Day từng ghi trong TASKS.md, docs/PLAN.md, ROADMAP, brief, plan/Rx.md **đều vô hiệu**; leader sẽ đặt lại khi cần. Việc xếp theo thứ tự ở `docs/autodev/ROADMAP.md` mục "Kế hoạch lại 14/10". Agent không tự đặt hạn, không hoãn, cắt việc hay từ chối task vì thời gian. Tag `v0.1-e2e` đã gắn; `v0.2-freeze` gắn khi qua cổng v0.2 (`docs/eval/criteria.md` mục 3).
