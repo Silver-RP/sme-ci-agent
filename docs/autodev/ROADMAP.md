@@ -75,6 +75,7 @@ Ngày là đề xuất; leader chỉnh khi cần. Luồng dự án do runner ch�
 | 13/10 | demo #1, tag v0.1-e2e (cổng UI: hỏi leader) | P6 ✅ (đóng sớm 10/10); đóng P5 (trang trạng thái Artifact) | |
 | 13/10 | không chạy runner (tuần 97%); viết plan R11a, R11c | | |
 | 14/10 tối | **Lập lại kế hoạch (ADR-011):** leader + auto-dev tiếp quản vai A, D, Q; bỏ mốc ngày cũ; xem mục "Kế hoạch lại 14/10" | | |
+| 15/10 tối | **ADR-013:** tách auto-dev ra `Silver-RP/autodev`; dự án đóng băng; kế hoạch 14/10 huỷ | autodev #2 (plugin dùng chung) | |
 
 Kế hoạch trước 14/10 (chờ D4/D5 của vai A, R11b dự phòng 17/10, freeze 20/10) thay bằng mục dưới.
 

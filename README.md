@@ -1,5 +1,7 @@
 # SME CI Agent
 
+> **Đóng băng từ 2026-10-15 (ADR-013).** Auto-dev phát triển tiếp ở [Silver-RP/autodev](https://github.com/Silver-RP/autodev).
+
 Agentic AI giúp SME cải tiến vận hành liên tục: phát hiện bất thường, điều tra nguyên nhân gốc, đề xuất cải tiến, cập nhật SOP sau khi được duyệt, đo KPI trước/sau và học để ngăn lỗi tái diễn.
 
 Hackathon: Vietnam Japan AI Hackathon 2026. Pitch Day 24/10 (Tokyo), Demo Day 07/11.
