@@ -181,5 +181,63 @@ class CheckFile(Base):
         self.assertIn("status", out)
 
 
+class Hardening(Base):
+    """Final review 2026-10-15: odd values must be error lines, and a passing file must be usable by P11/P12."""
+
+    def mutate(self, fn):
+        d = valid()
+        fn(d)
+        return d
+
+    def test_odd_values_are_errors_not_crashes(self):
+        cases = {
+            "cut_order": lambda d: d.update(cut_order=[[1]]),
+            "plan_file": lambda d: d["milestones"][1].update(plan_file=[1]),
+            "id": lambda d: d["milestones"][0].update(id={"a": 1}),
+        }
+        for needle, fn in cases.items():
+            with self.subTest(field=needle):
+                self.assertError(self.mutate(fn), needle)
+
+    def test_ids_and_references_must_be_strings(self):
+        cases = {
+            "id": lambda d: d["milestones"][0].update(id=[1]),
+            "depends_on": lambda d: d["milestones"][1].update(depends_on=[1]),
+            "metrics": lambda d: d["milestones"][0].update(metrics="A1"),
+            "cut_order": lambda d: d.update(cut_order=[1]),
+        }
+        for needle, fn in cases.items():
+            with self.subTest(field=needle):
+                self.assertError(self.mutate(fn), needle)
+
+    def test_estimates_must_be_finite_positive_numbers(self):
+        for field in ("est_usd", "est_hours"):
+            for bad in (float("nan"), float("inf"), "lots", -1, True):
+                with self.subTest(field=field, value=bad):
+                    d = valid()
+                    d["milestones"][0][field] = bad
+                    self.assertError(d, field)
+
+    def test_done_when_cmd_and_threshold_must_be_strings(self):
+        d = self.mutate(lambda d: d["done_when"][0].update(cmd=5, threshold=["x"]))
+        self.assertError(d, "cmd")
+        self.assertError(d, "threshold")
+
+    def test_approved_goal_needs_milestones(self):
+        self.assertError(self.mutate(lambda d: d.update(milestones=[], cut_order=[])), "milestones")
+        self.assertEqual(self.errors(self.mutate(lambda d: d.update(milestones=[], cut_order=[], status="draft"))), [])
+
+
+class SlugRule(Base):
+    def test_empty_slug_is_an_error(self):
+        folder = self.root / "docs" / "goals" / "demo-goal"
+        folder.mkdir(parents=True)
+        d = valid()
+        d["slug"] = ""
+        (folder / "goal.json").write_text(json.dumps(d), encoding="utf-8")
+        errs = gc.check_file(folder / "goal.json", self.root)
+        self.assertTrue(any("slug" in e for e in errs), errs)
+
+
 if __name__ == "__main__":
     unittest.main()
