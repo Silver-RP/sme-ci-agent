@@ -107,3 +107,34 @@ def _find_cycle(deps: dict[str, list[str]]) -> list[str] | None:
             if found:
                 return found
     return None
+
+
+def check_file(path: Path, root: Path = ROOT) -> list[str]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        return [f"không đọc được JSON: {e}"]
+    errs = check(data, root)
+    if isinstance(data, dict) and data.get("slug") and data["slug"] != path.parent.name:
+        errs.append(f"`slug` = {data['slug']!r} khác tên thư mục {path.parent.name!r}")
+    return errs
+
+
+def main(argv: list[str], root: Path = ROOT) -> int:
+    if not argv:
+        print("Cách dùng: python3 .autodev/goal_check.py docs/goals/<slug>/goal.json [...]")
+        return 2
+    failed = 0
+    for arg in argv:
+        errs = check_file(Path(arg), root)
+        for e in errs:
+            print(f"{arg}: {e}")
+        if errs:
+            failed += 1
+        else:
+            print(f"{arg}: ok")
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

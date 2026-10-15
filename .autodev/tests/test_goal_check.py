@@ -136,5 +136,50 @@ class Check(Base):
         self.assertError(d, "R5")
 
 
+class CheckFile(Base):
+    def write(self, data, slug="demo-goal", raw=None):
+        folder = self.root / "docs" / "goals" / slug
+        folder.mkdir(parents=True, exist_ok=True)
+        path = folder / "goal.json"
+        path.write_text(raw if raw is not None else json.dumps(data, ensure_ascii=False), encoding="utf-8")
+        return path
+
+    def run_main(self, argv):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = gc.main(argv, self.root)
+        return code, out.getvalue()
+
+    def test_check_file_ok(self):
+        self.assertEqual(gc.check_file(self.write(valid()), self.root), [])
+
+    def test_check_file_bad_json_is_an_error_not_a_crash(self):
+        errs = gc.check_file(self.write(None, raw='{"slug": "demo-goal",}'), self.root)
+        self.assertEqual(len(errs), 1)
+        self.assertIn("JSON", errs[0])
+
+    def test_check_file_missing_file(self):
+        errs = gc.check_file(self.root / "docs" / "goals" / "x" / "goal.json", self.root)
+        self.assertIn("JSON", errs[0])
+
+    def test_check_file_slug_must_match_folder(self):
+        errs = gc.check_file(self.write(valid(), slug="other-goal"), self.root)
+        self.assertTrue(any("slug" in e for e in errs), errs)
+
+    def test_main_exit_codes(self):
+        good = self.write(valid())
+        bad_data = valid()
+        bad_data["status"] = "ok"
+        bad_data["slug"] = "bad-goal"
+        bad = self.write(bad_data, slug="bad-goal")
+        self.assertEqual(self.run_main([])[0], 2)
+        code, out = self.run_main([str(good)])
+        self.assertEqual(code, 0)
+        self.assertIn("ok", out)
+        code, out = self.run_main([str(good), str(bad)])
+        self.assertEqual(code, 1)
+        self.assertIn("status", out)
+
+
 if __name__ == "__main__":
     unittest.main()
