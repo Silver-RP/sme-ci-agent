@@ -16,7 +16,7 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
 - **Người dùng:** leader, nói tiếng Việt, gói Pro (tiết kiệm hạn mức), muốn tự động hoá tối đa, báo ngắn gọn, giải thích khi hỏi "tại sao" hay "là gì" (**giải thích đơn giản trước**, chi tiết khi được hỏi thêm). Cuối mỗi báo cáo có câu hỏi "làm gì tiếp": danh sách **đánh số kèm nội dung**, leader trả lời bằng số.
 - **Đo bằng số, không ước lượng:** % đạt 3 điều tính theo `docs/eval/criteria.md` (A1–A8, luật chỉ số nhiều phần); chỉ số plugin B1–B6 bằng `python3 .autodev/metrics.py`.
 
-## Bước tiếp theo (cập nhật 2026-10-15 chiều: phân tích khoảng cách auto-dev xong, PR #150)
+## Bước tiếp theo (cập nhật 2026-10-15 tối: P10 `/autodev-goal` xong #152, superpowers cho team #153)
 
 ### Bối cảnh
 - **ADR-012:** dồn 100% vào auto-dev. Mục tiêu: leader chỉ đưa **mục tiêu và kết quả mong muốn**, auto-dev tự lo phần còn lại. SME CI Agent chỉ là dự án thử.
@@ -25,17 +25,20 @@ Mở phiên: `/session-start`. Đóng phiên: `/session-end` (cập nhật file 
   - ngân sách = **chạy đến khi hết hạn mức**;
   - ADR-001 chỉ áp cho sản phẩm, không chặn auto-dev điều phối nhiều vai.
 - **Phát hiện chính:** trong mốc đã gần tự chủ (R4–R10e: 3 lần runner dừng / 18 mốc). Việc tay nằm giữa và trên mốc: 93/127 PR từ 06/10 là `chore`.
-- **ROADMAP mới (PR #150):** P10 `/goal` → P11 supervisor tự lập plan → P12 vòng tự chạy (gộp phần P4 còn lại) → P13 hàng đợi câu hỏi + Telegram (gộp P7) → P8. P9 hoãn.
-- Đã xong trong phiên 15/10 chiều: phân tích khoảng cách (trong chat); PR #150 (ROADMAP + ADR-012), check `plugin-guard` xanh.
-- **Classifier chế độ Auto** chặn commit/push từ clone scratchpad ("Out-of-Place Publication") và chặn `gh pr merge` khi viết dạng lệnh ghép. Đã đưa leader đoạn `settings.local.json` mới (thêm luật `git -C /private/tmp/claude-501/* add|commit|push -u origin chore/*|plan/*`, `gh pr create *`, một dòng `autoMode.allow`). Leader **chưa dán**. Bài học: chạy `gh pr merge <n> --merge` thành một lệnh riêng để luật allow có sẵn khớp.
-- Hạn mức (leader báo 15/10): 5 giờ 2%, tuần 6%.
+- **ROADMAP (PR #150):** P10 → P11 supervisor tự lập plan → P12 vòng tự chạy (gộp phần P4 còn lại) → P13 hàng đợi câu hỏi + Telegram (gộp P7) → P8. P9 hoãn.
+- **Đã xong trong phiên 15/10 tối (`leader-1015-p10-goal`, làm theo superpowers: brainstorming → writing-plans → executing-plans + TDD → reviewer Opus độc lập):**
+  - **P10 merge #152:** lệnh `/autodev-goal` (không dùng `/goal`: trùng lệnh có sẵn của Claude Code), thiết kế mục 6.16, `plan/P10.md`, `.autodev/goal_check.py` (27 test), CI `goal-check` (đã chạy xanh trên GitHub). Leader chốt: mỗi mục tiêu một thư mục `docs/goals/<slug>/` (4 file), hỏi nhiều vòng như brainstorm (lần chạm trong lệnh không tính B7), **merge PR = duyệt**, lệnh được đọc cả kế hoạch có sẵn ("Kế hoạch lại 14/10" là đầu vào, không thử mù). Reviewer tìm 3 lỗi Important, đã sửa có test; 4 Minor để sau (ghi trong PR #152).
+  - **#153 (mở):** luật dùng superpowers trong CLAUDE.md (ngoại lệ: phiên headless không brainstorm, không hỏi người; cho phép một reviewer cuối nhánh), ROADMAP thêm việc thử gắn skill vào vai developer/reviewer/supervisor khi chạy R11c → R11a → R11d.
+  - Superpowers là plugin cấp người dùng trên máy leader (cài 04/10), nên R4–R10e đều chạy có nó, không lần nào dừng vì skill hỏi.
+- **Classifier chế độ Auto** chặn Claude sửa **và cả commit** `.claude/settings.json` ("Self-Modification"), kể cả khi leader tự sửa file. Leader đã thêm `enabledPlugins` vào file này ở nhánh `chore/autodev-superpowers-team`, **chưa commit**. Cũng chặn commit/push từ clone scratchpad và `gh pr merge` dạng lệnh ghép (chạy `gh pr merge <n> --merge` thành lệnh riêng). Đoạn `settings.local.json` mới của phiên phân tích: chưa rõ leader đã dán chưa.
+- Hạn mức: chưa có số mới; `usage-latest.json` cũ từ 11/10 (VS Code không chạy status line). Hỏi leader `/usage`.
 
 ### Làm tiếp theo thứ tự
 1. **Chờ leader:**
-   - (a) merge **#150** (`gh pr merge 150 --merge`) và PR bàn giao này nếu classifier chặn;
-   - (b) có dán đoạn `settings.local.json` mới không (nội dung nằm trong hội thoại phiên `leader-1015-phan-tich-autodev`; nếu mất thì viết lại theo mục Bối cảnh trên).
-2. **Plan P10 `/goal`** (phiên mới `/session-start p10-goal`, 0 USD): thiết kế lệnh nhận mục tiêu → hỏi (câu hỏi đánh số) → tiêu chí đo được + ROADMAP mốc; leader duyệt một lần. Tải thử: mục tiêu "qua cổng v0.2 của SME CI Agent". Ghi thiết kế vào `auto-dev-review-design.md` (mục mới) và plan mốc plugin; PR cho leader.
-3. P11 → P12 → P13 theo ROADMAP. Chuỗi R11c → R11a → R11d (plan trên main) là tải thử của P11/P12, **chưa chạy**.
+   - (a) commit dòng `enabledPlugins` đã thêm rồi push lên #153: `git -C ~/dev/sme-ci-agent/sme-ci-agent switch chore/autodev-superpowers-team && git add .claude/settings.json && git commit -m "chore(autodev): bật superpowers trong settings dự án" && git push`; rồi merge #153 (`gh pr merge 153 --merge`);
+   - (b) 2 số `/usage` (5 giờ, tuần).
+2. **Thử tải P10** (phiên mới `/session-start thu-autodev-goal`, 0 USD): chạy `/autodev-goal qua cổng v0.2 của SME CI Agent` → PR `goal/v0.2-gate`; đếm số lần leader trả lời; so với "Kế hoạch lại 14/10"; sửa 4 Minor của #152 nếu gặp. Sau merge, đổi dòng P10 trong ROADMAP thành ✅.
+3. P11 → P12 → P13 theo ROADMAP. Chuỗi R11c → R11a → R11d (plan trên main) là tải thử của P11/P12, **chưa chạy**; khi chạy thì thử luôn việc gắn skill superpowers vào vai (ROADMAP, #153).
 
 Kế hoạch SME CI Agent cũ (ROADMAP "Kế hoạch lại 14/10") **tạm giữ, không chủ động chạy**.
 
@@ -54,12 +57,12 @@ Kế hoạch SME CI Agent cũ (ROADMAP "Kế hoạch lại 14/10") **tạm giữ
   - M0–M3 xong; M4 4/6; tag `v0.1-e2e` (c60fec5);
   - 1028 passed trên main; **6 vitest dashboard đỏ trên main** (#139, R11d sửa);
   - % đạt 3 điều: **0 / 67 / 67**. Plan R11c, R11a, R11d trên main, chưa chạy.
-- **Plugin:** P1–P3, P5, P6 xong; P4 tối thiểu xong (#147), phần để sau: hook `SubagentStop`, verify nhanh, `metrics.py` đọc phạm vi audit; P10–P13 mới (PR #150), P7 gộp vào P13, P8 sau, P9 hoãn.
+- **Plugin:** P1–P3, P5, P6 xong; P4 tối thiểu xong (#147), phần để sau: hook `SubagentStop`, verify nhanh, `metrics.py` đọc phạm vi audit; **P10 `/autodev-goal` merge #152, chờ thử tải**; P11–P13 chưa làm; P7 gộp vào P13, P8 sau, P9 hoãn. `.autodev/tests`: 148 OK.
 - **Runner:** rảnh (R10e xong 12/10). `audit.json` pending `["R10e"]`; chuỗi R11c → R11a → R11d dùng `--audit-every 4`.
 - **Demo:** tắt. DB demo `sme_ci_demo` còn các run thử LLM thật của leader (xoá khi `--fresh-db` lần sau). Bật: `scripts/demo.sh --fresh-db` (thêm `SME_LLM=real` cho LLM thật, mở `/?source=live`); tắt: `lsof -ti tcp:8000,3000 -sTCP:LISTEN | xargs kill`. Phải tắt khi runner chạy.
-- **PR mở:** #150 (ROADMAP P10–P13, check xanh, chờ leader merge) nếu chưa merge.
+- **PR mở:** #153 (superpowers cho team, `plugin-guard` xanh; chờ leader commit `enabledPlugins` rồi merge).
 - **Worktree:** chính, `-autodev` (worker, nhánh `milestone/R10e`), `-supervisor` (nhánh `chore/autodev-r10e-review`). `-bench` tự dựng lại khi chạy `bench_reviewer.py`.
-- **Nhánh của leader:** `main`, `plan/r11`, `plan/r11d`, `plan/replan-1014`, `chore/p4-min`, `chore/autodev-handoff-20261013/1014/1015`, 2 nhánh R10e của worktree (dọn khi leader duyệt).
+- **Nhánh của leader:** `main`, `plan/r11`, `plan/r11d`, `plan/replan-1014`, `chore/p4-min`, `chore/autodev-handoff-20261013/1014/1015/1015b/1015c`, `chore/autodev-p10-goal` (đã merge #152), `chore/autodev-superpowers-team` (#153), 2 nhánh R10e của worktree (dọn khi leader duyệt).
 
 ## Môi trường
 - **Repo:** `~/dev/sme-ci-agent/` chứa 3 worktree cạnh nhau:
@@ -123,4 +126,5 @@ Kế hoạch SME CI Agent cũ (ROADMAP "Kế hoạch lại 14/10") **tạm giữ
 - 2026-10-13 → 14/10 sáng: plan R11c + R11a (#144); ranh giới vai A: phần chồng D4/D5 sang R11b, mốc dự phòng D5 17/10; R11c chạy trước; dọn nhánh.
 - 2026-10-14 tối → 15/10: ADR-011 (tiếp quản vai A/D/Q, gỡ mốc ngày, #146); P4 tối thiểu #147; plan R11d #148; phân tích + nghiên cứu thị trường (ngoài repo); **chuyển hướng ADR-012: dồn lực auto-dev**.
 - 2026-10-15 chiều: phân tích khoảng cách; leader chốt thước đo, ngân sách (đến hết hạn mức), phạm vi ADR-001; ROADMAP P10–P13 (#150).
+- 2026-10-15 tối: P10 `/autodev-goal` (#152, thiết kế 6.16, `goal_check.py`, CI `goal-check`); dùng superpowers cho mọi việc (#153, bộ nhớ).
 - Chi tiết trong `PROGRESS.md`.
