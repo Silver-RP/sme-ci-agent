@@ -2,7 +2,7 @@
 
 Developer, reviewer, supervisor và auditor đọc file này trước `plan/Rx.md`. Bản máy đọc: `docs/autodev/state.json` (cùng nội dung). Cập nhật sau mỗi audit và mỗi mốc; giữ dưới 150 dòng (`.autodev/tests/test_project_state.py`).
 
-Cập nhật: 2026-10-15 (ADR-012: dồn lực auto-dev; P4 tối thiểu #147) · Nguồn: audit `docs/audits/2026-10-12.md` (audit 4) + audit `2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10) + bộ thử reviewer (#105–#108) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10) + R10e merge #138 + đo nền LLM thật và ADR-010 (12/10).
+Cập nhật: 2026-10-15 tối (P10 `/autodev-goal` #152; ADR-012: dồn lực auto-dev; P4 tối thiểu #147) · Nguồn: audit `docs/audits/2026-10-12.md` (audit 4) + audit `2026-10-10.md` (audit 3) + R9i merge #55 + R9ih merge #58 + R10a merge #82 + R10c merge #84 + R10ch merge #91 + quyết định team 10/10 + kế hoạch P6 (duyệt 10/10) + bộ thử reviewer (#105–#108) + R10d merge #120 + R10b1 merge #130 + R10b2 merge #132 + cổng 13/10 (#135, tag v0.1-e2e) + leader chốt điều 3 (12/10) + R10e merge #138 + đo nền LLM thật và ADR-010 (12/10).
 
 ## Mốc
 
@@ -17,7 +17,7 @@ Cập nhật: 2026-10-15 (ADR-012: dồn lực auto-dev; P4 tối thiểu #147) 
 | Plugin | P5 | ✅ | audit + trạng thái (file này); trang trạng thái Artifact làm mới bằng `.autodev/export_status.py` khi leader yêu cầu (đóng 10/10) |
 | Plugin | P6 | ✅ | kế hoạch hai luồng duyệt 10/10; P6a (ước tính + pre-mortem) dùng từ R10a; P6b `metrics.py` (3 lỗi sửa 10/10); báo cáo đối chiếu R10a–R10ch trong PROGRESS (B3 3/3 mốc đạt; luật ước tính + pre-mortem mới ở thiết kế 6.5) |
 | Plugin | P7, P8, P9 | ⏳ | P7 gộp vào P13; P8 đóng gói làm sau P10–P13; P9 hoãn (15/10) |
-| Plugin | P10–P13 | ⏳ | `/goal`, tự lập plan, vòng tự chạy, hàng đợi câu hỏi (ADR-012, PR #150); thứ tự P10 → P11 → P12 → P13 |
+| Plugin | P10–P13 | 🔄 | P10 `/autodev-goal` merge #152 (thiết kế 6.16, `goal_check.py`, CI `goal-check`), chờ thử tải mục tiêu v0.2; P11 tự lập plan, P12 vòng tự chạy, P13 hàng đợi câu hỏi chưa làm (ADR-012, PR #150) |
 
 ## Mục tiêu và 3 điều cần kiểm chứng
 
@@ -87,6 +87,7 @@ Từ `docs/audits/2026-10-12.md` (mới) và `2026-10-10.md`, `2026-10-09_2.md` 
 | H-70 | vừa | Khoá lesson không có dataset/seed; `no_change` tính là đã xử lý |
 | H-71, H-72, H-73, H-74 | thấp | Learn chưa commit; Learn chỉ khi pass; target NaN; gom nhỏ (xem audit 2026-10-12) |
 ## Quyết định gần đây
+- **2026-10-15 tối (phiên P10):** leader duyệt thiết kế P10 qua brainstorm: lệnh `/autodev-goal` (tránh trùng `/goal` có sẵn), mỗi mục tiêu một thư mục `docs/goals/<slug>/` (`brief`, `criteria`, `roadmap`, `goal.json`), hỏi nhiều vòng (không tính B7), merge PR = duyệt, kế hoạch có sẵn là đầu vào. Merge #152 (148 test `.autodev`). Leader yêu cầu **dùng superpowers cho mọi việc có skill phù hợp**; luật CLAUDE.md + việc thử gắn skill vào vai auto-dev khi chạy R11c → R11a → R11d ở #153.
 - **2026-10-15 (phiên phân tích):** leader chốt phần còn mở của ADR-012: "xong" = B7 ≤ 1 can thiệp/mốc, B8 ≥ 80% mốc tự xong, USD/mốc, giữ B1 ≤ 0,5; ngân sách = chạy đến hết hạn mức; ADR-001 chỉ áp cho sản phẩm. ROADMAP thêm P10 `/goal`, P11 supervisor tự lập plan, P12 vòng tự chạy (gộp phần P4 còn lại), P13 hàng đợi câu hỏi + Telegram (gộp P7); P8 sau, P9 hoãn. PR #150. Chuỗi R11c → R11a → R11d chờ, làm tải thử cho P11/P12.
 - **2026-10-15, ADR-012:** leader chuyển hướng: **dồn 100% vào auto-dev**; SME CI Agent là dự án thử (mốc R chỉ chạy khi kiểm chứng plugin; kế hoạch 14/10 tạm giữ). Mục tiêu auto-dev: leader chỉ đưa mục tiêu + kết quả mong muốn, auto-dev tự phân tích, hỏi, lập kế hoạch, điều phối các vai. Còn mở: thước đo "xong", ngân sách, phạm vi ADR-001. Cùng phiên: P4 tối thiểu #147, plan R11d #148; nghiên cứu thị trường ngoài repo.
 - **2026-10-14 tối, ADR-011:** leader + auto-dev **tiếp quản toàn bộ việc còn lại của vai A, D, Q**; bỏ mốc ngày cũ, xếp theo giá trị/chi phí (ROADMAP "Kế hoạch lại 14/10"). Tập giữ lại do **phiên cách ly** soạn (không đọc backend, prompt, tập dev), leader duyệt đáp án, lưu ngoài repo, SHA-256 niêm phong; khi trình bày ra ngoài nêu rõ (`criteria.md` mục 1). Thứ tự: P4 tối thiểu → plan R11d → chuỗi 1 R11c → R11a → R11d (song song D3, D5, định dạng kịch bản) → tập giữ lại → R11b → audit 5 → đo LLM thật → R12 → cổng v0.2. Ước 40–55 USD worker (~60–90% tuần); cổng `/usage` sau mỗi chuỗi. Sổ `docs/token-cost.md` (T-044).

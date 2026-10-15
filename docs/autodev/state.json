@@ -201,8 +201,8 @@
       },
       {
         "id": "P10-P13",
-        "status": "todo",
-        "note": "/goal, tự lập plan, vòng tự chạy, hàng đợi câu hỏi (ADR-012, PR #150); thứ tự P10 → P11 → P12 → P13"
+        "status": "in_progress",
+        "note": "P10 /autodev-goal merge #152 (thiết kế 6.16, goal_check.py, CI goal-check), chờ thử tải mục tiêu v0.2; P11 tự lập plan, P12 vòng tự chạy, P13 hàng đợi câu hỏi chưa làm (ADR-012, PR #150)"
       }
     ]
   },
@@ -505,6 +505,10 @@
     }
   ],
   "decisions": [
+    {
+      "date": "2026-10-15",
+      "text": "2026-10-15 tối (phiên P10): leader duyệt thiết kế P10 qua brainstorm: lệnh /autodev-goal (tránh trùng /goal có sẵn), mỗi mục tiêu một thư mục docs/goals/<slug>/ (brief, criteria, roadmap, goal.json), hỏi nhiều vòng (không tính B7), merge PR = duyệt, kế hoạch có sẵn là đầu vào. Merge #152 (148 test .autodev). Leader yêu cầu dùng superpowers cho mọi việc có skill phù hợp; luật CLAUDE.md + việc thử gắn skill vào vai auto-dev khi chạy R11c → R11a → R11d ở #153."
+    },
     {
       "date": "2026-10-15",
       "text": "2026-10-15 (phiên phân tích): leader chốt phần còn mở của ADR-012: \"xong\" = B7 ≤ 1 can thiệp/mốc, B8 ≥ 80% mốc tự xong, USD/mốc, giữ B1 ≤ 0,5; ngân sách = chạy đến hết hạn mức; ADR-001 chỉ áp cho sản phẩm. ROADMAP thêm P10 /goal, P11 supervisor tự lập plan, P12 vòng tự chạy (gộp phần P4 còn lại), P13 hàng đợi câu hỏi + Telegram (gộp P7); P8 sau, P9 hoãn. PR #150. Chuỗi R11c → R11a → R11d chờ, làm tải thử cho P11/P12."
