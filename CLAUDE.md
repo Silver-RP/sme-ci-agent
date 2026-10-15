@@ -50,7 +50,8 @@ docs/schema/events.json là hợp đồng backend ↔ dashboard. Đổi file nà
 - ADR trong docs/decisions.md và TASKS.md là cố định: không đề xuất lại multi-agent hay Agent Manager.
 - Brainstorm/lập kế hoạch chỉ trong phạm vi một task; ghi kế hoạch vào PR, không tạo file kế hoạch mới ở gốc repo.
 - Dùng TDD cho backend/detect, backend/sandbox, backend/tools.
-- Chỉ dùng subagent cho T-020 và T-024; các task khác làm trực tiếp để tiết kiệm token. Ngoại lệ: developer/reviewer khi chạy /run-milestone (auto-dev).
+- Chỉ dùng subagent cho T-020 và T-024; các task khác làm trực tiếp để tiết kiệm token. Ngoại lệ: developer/reviewer khi chạy /run-milestone (auto-dev); một reviewer cuối nhánh khi làm theo skill superpowers (`executing-plans`, `requesting-code-review`).
+- Superpowers (plugin, bật trong `.claude/settings.json`): việc nào có skill phù hợp (brainstorm, lập kế hoạch, TDD, gỡ lỗi, review, kiểm trước khi báo xong) thì dùng skill đó và nói đang dùng skill nào. Ngoại lệ: phiên headless (`claude -p`: worker, supervisor, audit của runner) không brainstorm và không hỏi người; plan mốc đã là spec.
 - Không đọc hay in nội dung .env.
 
 ## Lệnh thường dùng
