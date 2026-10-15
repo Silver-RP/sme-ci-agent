@@ -55,6 +55,7 @@ Hai luồng không sửa chung file nên chạy song song không xung đột. Li
 
 - **Rủi ro:** tự chủ cao hơn mà B1 (2,20 ở audit 4) vẫn trên ngưỡng 0,5 → audit giữ là cổng bắt buộc trong vòng P12, không bỏ.
 - **Thứ tự:** P10 → P11 → P12 → P13 → P8. Mốc R của SME CI Agent chỉ chạy làm tải thử.
+- **Thử superpowers trong vai auto-dev (leader chốt 15/10, chưa làm):** sau P10, khi chạy chuỗi R11c → R11a → R11d (tải thử P11/P12), gắn skill vào prompt vai: developer theo `test-driven-development`, reviewer theo `verification-before-completion`, supervisor theo `requesting-code-review`. Đo B1, B3, USD/mốc so với R10a–R10e; tốt hơn thì giữ, tốn hơn mà B1 không giảm thì bỏ. Không dùng `brainstorming` trong phiên headless.
 
 ## Kế hoạch hai luồng đến Demo Day (P6, người dùng duyệt 2026-10-10)
 
